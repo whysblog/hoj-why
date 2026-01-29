@@ -234,7 +234,8 @@ public class Constants {
 
         FILE_DOWNLOAD_TMP_FOLDER("/hoj/file/zip/download"),
 
-        CONTEST_AC_SUBMISSION_TMP_FOLDER("/hoj/file/zip/contest_ac");
+        CONTEST_AC_SUBMISSION_TMP_FOLDER("/hoj/file/zip/contest_ac"),
+        CERTIFICATE_FOLDER("/hoj/file/certificate");
 
         private final String path;
 

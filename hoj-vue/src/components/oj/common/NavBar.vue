@@ -68,6 +68,9 @@
               ></i
               >{{ $t('m.NavBar_Group') }}</el-menu-item
             >
+            <el-menu-item index="/certificate"
+              ><i class="el-icon-document-checked"></i>证书查询</el-menu-item
+            >
             <el-submenu index="about">
               <template slot="title"
                 ><i class="el-icon-info"></i>{{ $t('m.NavBar_About') }}</template

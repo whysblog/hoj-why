@@ -39,6 +39,7 @@
           <el-menu-item index="/admin/switch">{{
             $t('m.System_Switch')
           }}</el-menu-item>
+          <el-menu-item index="/admin/certificate">证书管理</el-menu-item>
         </el-submenu>
         <!-- <el-submenu index="problem" v-if="hasProblemPermission"> -->
         <el-submenu index="problem">

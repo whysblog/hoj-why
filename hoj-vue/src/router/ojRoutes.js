@@ -46,6 +46,7 @@ import GroupDiscussionList from '@/views/oj/group/children/GroupDiscussionList.v
 import GroupMemberList from '@/views/oj/group/children/GroupMemberList.vue'
 import GroupSetting from '@/views/oj/group/children/GroupSetting.vue'
 import GroupRank from '@/views/oj/group/children/GroupRank.vue'
+import Certificate from "@/views/oj/certificate/Certificate.vue"
 
 import NotFound from "@/views/404.vue"
 
@@ -320,10 +321,16 @@ const ojRoutes = [
     component: Discussion
   },
   {
-    path: '/group',
-    name: 'GroupList',
-    component: GroupList,
-    meta: {title: 'Group'}
+    path: '/about',
+    name: 'About',
+    component: Introduction,
+    meta: { title: 'About' }
+  },
+  {
+    path: '/certificate',
+    name: 'Certificate',
+    component: Certificate,
+    meta: { title: 'Certificate' }
   },
   {
     path: '/group/:groupID',

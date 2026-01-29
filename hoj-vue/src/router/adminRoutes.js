@@ -20,6 +20,7 @@ const TrainingList= ()=>import('@/views/admin/training/TrainingList')
 const TrainingProblemList= ()=>import('@/views/admin/training/TrainingProblemList')
 const TrainingCategory= ()=>import('@/views/admin/training/Category')
 const DiscussionList= ()=>import('@/views/admin/discussion/Discussion')
+const Certificate= ()=>import('@/views/admin/general/Certificate')
 const adminRoutes= [
     {
       path: '/admin/login',
@@ -49,6 +50,12 @@ const adminRoutes= [
           name: 'admin-user',
           component: User,
           meta: { requireSuperAdmin: true,title:'User Admin'},
+      },
+      {
+          path: 'certificate',
+          name: 'admin-certificate',
+          component: Certificate,
+          meta: { title:'Certificate Admin'},
       },
         {
           path: 'announcement',

@@ -445,9 +445,17 @@ const ojApi = {
   // ------------------------------------训练模块的请求---------------------------------------------
 
   // 获取训练分类列表
-  getTrainingCategoryList() {
-    return ajax('/api/get-training-category', 'get')
+  getT  getTrainingCategory() {
+    return ajax('/api/training-category', 'get')
   },
+  queryCertificates(name, idCard) {
+    return ajax('/api/certificate/query', 'get', {
+      params: {
+        name,
+        idCard
+      }
+    })
+  },},
 
 
   // 获取训练列表
@@ -1975,6 +1983,16 @@ const adminApi = {
   admin_updateDiscussionReport(data) {
     return ajax("/api/admin/discussion-report", 'put', {
       data
+    })
+  },
+  admin_getCertificateList() {
+    return ajax('/api/admin/certificate/list', 'get')
+  },
+  admin_deleteCertificate(id) {
+    return ajax('/api/admin/certificate/delete', 'get', {
+      params: {
+        id
+      }
     })
   }
 }
