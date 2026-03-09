@@ -21,8 +21,10 @@ import top.hcode.hoj.dao.user.UserInfoEntityService;
 import top.hcode.hoj.manager.admin.training.AdminTrainingRecordManager;
 import top.hcode.hoj.pojo.bo.Pair_;
 import top.hcode.hoj.pojo.dto.RegisterTrainingDTO;
+import top.hcode.hoj.pojo.entity.group.GroupMember;
 import top.hcode.hoj.pojo.entity.judge.Judge;
 import top.hcode.hoj.pojo.entity.training.*;
+import top.hcode.hoj.pojo.entity.user.UserInfo;
 import top.hcode.hoj.pojo.vo.*;
 import top.hcode.hoj.shiro.AccountProfile;
 import top.hcode.hoj.utils.Constants;
@@ -314,18 +316,13 @@ public class TrainingManager {
             TrainingRankVO trainingRankVo;
             Integer index = uidMapIndex.get(trainingRecordVo.getUid());
             if (index == null) {
-                trainingRankVo = new TrainingRankVO();
-                trainingRankVo.setRealname(trainingRecordVo.getRealname())
-                        .setAvatar(trainingRecordVo.getAvatar())
-                        .setSchool(trainingRecordVo.getSchool())
-                        .setGender(trainingRecordVo.getGender())
-                        .setUid(trainingRecordVo.getUid())
-                        .setUsername(trainingRecordVo.getUsername())
-                        .setNickname(trainingRecordVo.getNickname())
-                        .setAc(0)
-                        .setTotalRunTime(0);
-                HashMap<String, HashMap<String, Object>> submissionInfo = new HashMap<>();
-                trainingRankVo.setSubmissionInfo(submissionInfo);
+                trainingRankVo = getBaseTrainingRankVO(trainingRecordVo.getUid(),
+                        trainingRecordVo.getUsername(),
+                        trainingRecordVo.getNickname(),
+                        trainingRecordVo.getRealname(),
+                        trainingRecordVo.getSchool(),
+                        trainingRecordVo.getGender(),
+                        trainingRecordVo.getAvatar());
 
                 result.add(trainingRankVo);
                 uidMapIndex.put(trainingRecordVo.getUid(), pos);
@@ -365,6 +362,46 @@ public class TrainingManager {
             trainingRankVo.getSubmissionInfo().put(displayId, problemSubmissionInfo);
         }
 
+        // 团队训练将团队成员自动纳入榜单（包括未提交的成员）
+        if (gid != null) {
+            QueryWrapper<GroupMember> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("gid", gid).ge("auth", 3);
+            List<GroupMember> groupMemberList = groupMemberEntityService.list(queryWrapper);
+            if (!CollectionUtils.isEmpty(groupMemberList)) {
+                Set<String> memberUidSet = groupMemberList.stream().map(GroupMember::getUid).collect(Collectors.toSet());
+                if (!CollectionUtils.isEmpty(memberUidSet)) {
+                    List<UserInfo> groupUserInfoList = userInfoEntityService.listByIds(memberUidSet);
+                    for (UserInfo userInfo : groupUserInfoList) {
+                        if (userInfo == null || uidMapIndex.containsKey(userInfo.getUuid())) {
+                            continue;
+                        }
+                        if (username.equals(userInfo.getUsername()) || superAdminUidList.contains(userInfo.getUuid())) {
+                            continue;
+                        }
+                        if (StrUtil.isNotBlank(keyword)) {
+                            boolean isMatchKeyword = matchKeywordIgnoreCase(keyword, userInfo.getUsername())
+                                    || matchKeywordIgnoreCase(keyword, userInfo.getRealname())
+                                    || matchKeywordIgnoreCase(keyword, userInfo.getSchool());
+                            if (!isMatchKeyword) {
+                                continue;
+                            }
+                        }
+
+                        TrainingRankVO trainingRankVo = getBaseTrainingRankVO(userInfo.getUuid(),
+                                userInfo.getUsername(),
+                                userInfo.getNickname(),
+                                userInfo.getRealname(),
+                                userInfo.getSchool(),
+                                userInfo.getGender(),
+                                userInfo.getAvatar());
+                        result.add(trainingRankVo);
+                        uidMapIndex.put(userInfo.getUuid(), pos);
+                        pos++;
+                    }
+                }
+            }
+        }
+
         List<TrainingRankVO> orderResultList = result.stream().sorted(Comparator.comparing(TrainingRankVO::getAc, Comparator.reverseOrder()) // 先以总ac数降序
                 .thenComparing(TrainingRankVO::getTotalRunTime) //再以总耗时升序
         ).collect(Collectors.toList());
@@ -387,6 +424,27 @@ public class TrainingManager {
 
     private boolean matchKeywordIgnoreCase(String keyword, String content) {
         return content != null && content.toLowerCase().contains(keyword);
+    }
+
+    private TrainingRankVO getBaseTrainingRankVO(String uid,
+                                                 String username,
+                                                 String nickname,
+                                                 String realname,
+                                                 String school,
+                                                 String gender,
+                                                 String avatar) {
+        TrainingRankVO trainingRankVo = new TrainingRankVO();
+        trainingRankVo.setRealname(realname)
+                .setAvatar(avatar)
+                .setSchool(school)
+                .setGender(gender)
+                .setUid(uid)
+                .setUsername(username)
+                .setNickname(nickname)
+                .setAc(0)
+                .setTotalRunTime(0)
+                .setSubmissionInfo(new HashMap<>());
+        return trainingRankVo;
     }
 
     private Map<Long, String> getTPIdMapDisplayId(Long tid) {
