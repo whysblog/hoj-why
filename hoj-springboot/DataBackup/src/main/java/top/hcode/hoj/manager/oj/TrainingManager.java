@@ -370,7 +370,8 @@ public class TrainingManager {
             if (!CollectionUtils.isEmpty(groupMemberList)) {
                 Set<String> memberUidSet = groupMemberList.stream().map(GroupMember::getUid).collect(Collectors.toSet());
                 if (!CollectionUtils.isEmpty(memberUidSet)) {
-                    Collection<UserInfo> groupUserInfoList = userInfoEntityService.listByIds(memberUidSet);
+                    Collection<UserInfo> groupUserInfoCollection = userInfoEntityService.listByIds(memberUidSet);
+                    List<UserInfo> groupUserInfoList = new ArrayList<>(groupUserInfoCollection);
                     for (UserInfo userInfo : groupUserInfoList) {
                         if (userInfo == null || uidMapIndex.containsKey(userInfo.getUuid())) {
                             continue;
