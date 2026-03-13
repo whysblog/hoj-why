@@ -228,15 +228,26 @@ public class TrainingManager {
         // 获取当前登录的用户
         AccountProfile userRolesVo = (AccountProfile) SecurityUtils.getSubject().getPrincipal();
 
-        QueryWrapper<TrainingRegister> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("tid", tid).eq("uid", userRolesVo.getUid());
-        TrainingRegister trainingRegister = trainingRegisterEntityService.getOne(queryWrapper, false);
+        Training training = trainingEntityService.getById(tid);
+        if (training == null || !training.getStatus()) {
+            throw new StatusFailException("对不起，该训练不存在!");
+        }
+
         boolean access = false;
-        if (trainingRegister != null) {
-            access = true;
-            Training training = trainingEntityService.getById(tid);
-            if (training == null || !training.getStatus()) {
-                throw new StatusFailException("对不起，该训练不存在!");
+        if (userRolesVo != null) {
+            boolean isRoot = SecurityUtils.getSubject().hasRole("root");
+            boolean isAuthor = training.getAuthor().equals(userRolesVo.getUsername());
+
+            if (isRoot || isAuthor) {
+                access = true;
+            } else if (training.getGid() != null && groupValidator.isGroupMember(userRolesVo.getUid(), training.getGid())) {
+                // 团队训练默认可直接加入（不再要求私有训练额外注册）
+                access = true;
+            } else {
+                QueryWrapper<TrainingRegister> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("tid", tid).eq("uid", userRolesVo.getUid());
+                TrainingRegister trainingRegister = trainingRegisterEntityService.getOne(queryWrapper, false);
+                access = trainingRegister != null && trainingRegister.getStatus();
             }
         }
 
@@ -274,7 +285,7 @@ public class TrainingManager {
         if (StrUtil.isNotBlank(keyword)) {
             keyword = keyword.toLowerCase();
         }
-        return getTrainingRank(tid, training.getIsGroup() ? training.getGid() : null,
+        return getTrainingRank(tid, training.getGid(),
                 training.getAuthor(),
                 currentPage,
                 limit,
@@ -297,9 +308,10 @@ public class TrainingManager {
         HashMap<String, Integer> uidMapIndex = new HashMap<>();
         int pos = 0;
         for (TrainingRecordVO trainingRecordVo : trainingRecordVOList) {
-            // 超级管理员和训练创建者的提交不入排行榜
-            if (username.equals(trainingRecordVo.getUsername())
-                    || superAdminUidList.contains(trainingRecordVo.getUid())) {
+            // 非团队训练：超级管理员和训练创建者的提交不入排行榜
+            // 团队训练：按需求展示团队内所有成员（包括创建者/管理员）
+            if (gid == null && (username.equals(trainingRecordVo.getUsername())
+                    || superAdminUidList.contains(trainingRecordVo.getUid()))) {
                 continue;
             }
 
@@ -376,7 +388,8 @@ public class TrainingManager {
                         if (userInfo == null || uidMapIndex.containsKey(userInfo.getUuid())) {
                             continue;
                         }
-                        if (username.equals(userInfo.getUsername()) || superAdminUidList.contains(userInfo.getUuid())) {
+                        if (gid == null && (username.equals(userInfo.getUsername())
+                                || superAdminUidList.contains(userInfo.getUuid()))) {
                             continue;
                         }
                         if (StrUtil.isNotBlank(keyword)) {
