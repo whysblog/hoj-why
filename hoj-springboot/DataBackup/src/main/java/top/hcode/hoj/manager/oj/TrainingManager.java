@@ -228,15 +228,26 @@ public class TrainingManager {
         // 获取当前登录的用户
         AccountProfile userRolesVo = (AccountProfile) SecurityUtils.getSubject().getPrincipal();
 
-        QueryWrapper<TrainingRegister> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("tid", tid).eq("uid", userRolesVo.getUid());
-        TrainingRegister trainingRegister = trainingRegisterEntityService.getOne(queryWrapper, false);
+        Training training = trainingEntityService.getById(tid);
+        if (training == null || !training.getStatus()) {
+            throw new StatusFailException("对不起，该训练不存在!");
+        }
+
         boolean access = false;
-        if (trainingRegister != null) {
-            access = true;
-            Training training = trainingEntityService.getById(tid);
-            if (training == null || !training.getStatus()) {
-                throw new StatusFailException("对不起，该训练不存在!");
+        if (userRolesVo != null) {
+            boolean isRoot = SecurityUtils.getSubject().hasRole("root");
+            boolean isAuthor = training.getAuthor().equals(userRolesVo.getUsername());
+
+            if (isRoot || isAuthor) {
+                access = true;
+            } else if (training.getIsGroup() && groupValidator.isGroupMember(userRolesVo.getUid(), training.getGid())) {
+                // 团队训练默认可直接加入（不再要求私有训练额外注册）
+                access = true;
+            } else {
+                QueryWrapper<TrainingRegister> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("tid", tid).eq("uid", userRolesVo.getUid());
+                TrainingRegister trainingRegister = trainingRegisterEntityService.getOne(queryWrapper, false);
+                access = trainingRegister != null && trainingRegister.getStatus();
             }
         }
 
