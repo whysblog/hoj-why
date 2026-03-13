@@ -82,6 +82,11 @@ public class TrainingValidator {
                 return;
             }
 
+            // 团队内训练，无论是否私有，团队成员均可直接访问（无需额外私有密码注册）
+            if (training.getIsGroup() && isGroupMember) {
+                return;
+            }
+
             // 如果三者都不是，需要做注册权限校验
             checkTrainingRegister(training.getId(), userRolesVo.getUid());
         }
