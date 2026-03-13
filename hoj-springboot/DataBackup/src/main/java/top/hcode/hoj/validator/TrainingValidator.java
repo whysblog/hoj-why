@@ -53,7 +53,7 @@ public class TrainingValidator {
         boolean isRoot = SecurityUtils.getSubject().hasRole("root"); // 是否为超级管理员
         boolean isGroupMember = false;
 
-        if (training.getIsGroup()) {
+        if (training.getGid() != null) {
             if (userRolesVo == null && !isRoot) {
                 throw new StatusAccessDeniedException("请先登录后再访问团队训练！");
             }
@@ -73,7 +73,12 @@ public class TrainingValidator {
 
             boolean isAuthor = training.getAuthor().equals(userRolesVo.getUsername()); // 是否为该私有训练的创建者
 
-            if (isRoot || isAuthor || (training.getIsGroup() && groupValidator.isGroupRoot(userRolesVo.getUid(), training.getGid()))) {
+            if (isRoot || isAuthor || (training.getGid() != null && groupValidator.isGroupRoot(userRolesVo.getUid(), training.getGid()))) {
+                return;
+            }
+
+            // 团队内训练，无论是否私有，团队成员均可直接访问（无需额外私有密码注册）
+            if (training.getGid() != null && isGroupMember) {
                 return;
             }
 
@@ -113,7 +118,7 @@ public class TrainingValidator {
 
             if (isRoot
                     || isAuthor
-                    || (training.getIsGroup() && groupValidator.isGroupRoot(userRolesVo.getUid(), training.getGid()))) {
+                    || (training.getGid() != null && groupValidator.isGroupRoot(userRolesVo.getUid(), training.getGid()))) {
                 return true;
             }
 
