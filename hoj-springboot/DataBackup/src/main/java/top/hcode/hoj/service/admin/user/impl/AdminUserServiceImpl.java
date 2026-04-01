@@ -67,4 +67,14 @@ public class AdminUserServiceImpl implements AdminUserService {
             return CommonResult.errorResponse(e.getMessage());
         }
     }
+
+    @Override
+    public CommonResult<Void> unlockLogin(String uid) {
+        try {
+            adminUserManager.unlockLogin(uid);
+            return CommonResult.successResponse();
+        } catch (StatusFailException e) {
+            return CommonResult.errorResponse(e.getMessage());
+        }
+    }
 }

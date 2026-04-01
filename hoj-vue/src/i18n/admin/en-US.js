@@ -71,6 +71,8 @@ export const m = {
   Disable: 'Disable',
   Edit_User: 'Edit User',
   Delete_User: 'Delete User',
+  Unlock_Login: 'Unlock Login',
+  Unlock_Login_Success: 'Login restriction cleared',
   Import_User: 'Import User',
   Import_User_Tips1: 'The imported user data only supports user data in CSV format.',
   Import_User_Tips2: 'There are seven columns of data: username, password, email, realname and gender. The username and password cannot be empty, others can be enmpty, otherwise the data in this row may fail to be imported.',
