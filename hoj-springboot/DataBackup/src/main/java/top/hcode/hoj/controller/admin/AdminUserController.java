@@ -66,4 +66,11 @@ public class AdminUserController {
         return adminUserService.generateUser(params);
     }
 
+    @PutMapping("/unlock-login")
+    @RequiresPermissions("user_admin")
+    @RequiresAuthentication
+    public CommonResult<Void> unlockLogin(@RequestBody Map<String, String> params) {
+        return adminUserService.unlockLogin(params.get("uid"));
+    }
+
 }

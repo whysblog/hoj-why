@@ -71,6 +71,8 @@ export const m = {
   Disable: '封禁',
   Edit_User: '编辑用户',
   Delete_User: '删除用户',
+  Unlock_Login: '解除登录限制',
+  Unlock_Login_Success: '已解除该用户登录限制',
   Import_User: '导入用户',
   Import_User_Tips1: '用户数据导入仅支持csv格式的用户数据。',
   Import_User_Tips2: '共七列数据：用户名和密码不能为空，邮箱、真实姓名、性别、昵称和学校可选填，否则该行数据可能导入失败。',

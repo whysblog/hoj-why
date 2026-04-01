@@ -286,4 +286,21 @@ public class AdminUserManager {
             throw new StatusFailException("生成指定用户失败！注意查看组合生成的用户名是否已有存在的！");
         }
     }
+
+    public void unlockLogin(String uid) throws StatusFailException {
+        if (StrUtil.isBlank(uid)) {
+            throw new StatusFailException("用户ID不能为空！");
+        }
+
+        UserInfo userInfo = userInfoEntityService.getById(uid);
+        if (userInfo == null) {
+            throw new StatusFailException("用户不存在！");
+        }
+
+        String keyPrefix = Constants.Account.TRY_LOGIN_NUM.getCode() + userInfo.getUsername() + "_";
+        Set<String> lockKeys = redisUtils.keys(keyPrefix);
+        if (lockKeys != null && !lockKeys.isEmpty()) {
+            redisUtils.del(lockKeys);
+        }
+    }
 }
