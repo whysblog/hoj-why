@@ -520,17 +520,28 @@ read -p "是否重启服务? (y/n, 默认: y): " RESTART_SERVICES
 RESTART_SERVICES=${RESTART_SERVICES:-y}
 
 if [ "$RESTART_SERVICES" = "y" ] || [ "$RESTART_SERVICES" = "Y" ]; then
-    echo -e "${YELLOW}重启服务...${NC}"
+    echo -e "${YELLOW}重建并重启服务（hoj-backend/hoj-frontend）...${NC}"
     cd "$DEPLOY_PATH"
     if [ -f "docker-compose.yml" ]; then
-        # 尝试使用docker-compose
+        REBUILD_OK=false
+        # 优先使用 docker-compose 执行重建
         if command -v docker-compose &> /dev/null; then
-            docker-compose restart hoj-backend hoj-frontend 2>/dev/null || true
-        # 尝试使用docker compose
+            if docker-compose up -d --build --force-recreate hoj-backend hoj-frontend; then
+                REBUILD_OK=true
+            fi
+        # 尝试使用 docker compose 执行重建
         elif docker compose version &> /dev/null 2>&1; then
-            docker compose restart hoj-backend hoj-frontend 2>/dev/null || true
+            if docker compose up -d --build --force-recreate hoj-backend hoj-frontend; then
+                REBUILD_OK=true
+            fi
         fi
-        echo -e "${GREEN}服务重启完成${NC}"
+
+        if [ "$REBUILD_OK" = true ]; then
+            echo -e "${GREEN}服务重建并重启完成${NC}"
+        else
+            echo -e "${RED}错误: 服务重建失败，请检查 docker-compose 配置和构建日志${NC}"
+            exit 1
+        fi
     else
         echo -e "${YELLOW}警告: 未找到docker-compose.yml文件${NC}"
     fi
@@ -553,4 +564,3 @@ echo -e "  docker-compose.yml: 已检查配置"
 echo -e ""
 echo -e "${YELLOW}请检查服务是否正常运行:${NC}"
 echo -e "  cd ${DEPLOY_PATH} && docker-compose ps"
-
