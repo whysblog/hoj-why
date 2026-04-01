@@ -103,7 +103,7 @@ public class PassportManager {
         Integer tryLoginCount = (Integer) redisUtils.get(key);
 
         if (tryLoginCount != null && tryLoginCount >= 20) {
-            throw new StatusFailException("对不起！登录失败次数过多！您的账号有风险，半个小时内暂时无法登录！");
+            throw new StatusFailException("登录次数过多，用户被禁止登录，超级管理员可以在用户管理中取消。");
         }
 
         UserRolesVO userRolesVo = userRoleEntityService.getUserRoles(null, loginDto.getUsername());

@@ -161,6 +161,19 @@
               >
               </el-button>
             </el-tooltip>
+            <el-tooltip
+              effect="dark"
+              :content="$t('m.Unlock_Login')"
+              placement="top"
+            >
+              <el-button
+                icon="el-icon-unlock"
+                size="mini"
+                @click.native="unlockLogin(row)"
+                type="success"
+              >
+              </el-button>
+            </el-tooltip>
           </template>
         </vxe-table-column>
       </vxe-table>
@@ -1303,6 +1316,15 @@ export default {
         `打回用户 ${user.username} 的实名认证，要求重新填写真实姓名`,
         { user: user }
       );
+    },
+
+    unlockLogin(user) {
+      api
+        .admin_unlockUserLogin(user.uid)
+        .then(() => {
+          myMessage.success(this.$i18n.t('m.Unlock_Login_Success'));
+        })
+        .catch(() => {});
     },
     
     // 执行打回实名操作

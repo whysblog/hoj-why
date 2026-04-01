@@ -1451,6 +1451,11 @@ const adminApi = {
       data
     })
   },
+  admin_unlockUserLogin(uid) {
+    return ajax('/api/admin/user/unlock-login', 'put', {
+      data: { uid }
+    })
+  },
   // 单个添加用户
   admin_addSingleUser(data) {
     return ajax('/api/admin/user/add-user', 'post', {
@@ -2026,4 +2031,3 @@ function ajax(url, method, options) {
     })
   })
 }
-

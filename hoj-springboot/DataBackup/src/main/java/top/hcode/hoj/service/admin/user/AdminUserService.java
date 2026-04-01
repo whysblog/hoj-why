@@ -25,4 +25,6 @@ public interface AdminUserService {
 
     public CommonResult<Map<Object,Object>> generateUser(Map<String, Object> params);
 
+    public CommonResult<Void> unlockLogin(String uid);
+
 }
