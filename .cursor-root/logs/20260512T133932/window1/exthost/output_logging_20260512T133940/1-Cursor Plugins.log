@@ -1,8 +1,0 @@
-[2026-05-12T05:39:41.688Z] marketplace listEnabledPlugins completed in 7.6ms (0 plugins)
-[2026-05-12T05:39:41.688Z] loadFromMarketplaceSource completed in 7.7ms (0 plugins loaded)
-[2026-05-12T05:39:41.688Z] loadAllEnabledPlugins: no installed plugins metadata found (9.5ms)
-[2026-05-12T05:39:41.688Z] loadUserLocalPlugins completed in 8.0ms (0 plugins loaded)
-[2026-05-12T05:39:46.127Z] marketplace listEnabledPlugins completed in 4447.0ms (0 plugins)
-[2026-05-12T05:39:46.127Z] loadFromMarketplaceSource completed in 4447.0ms (0 plugins loaded)
-[2026-05-12T05:39:46.127Z] loadAllPlugins completed in 4448.4ms (claude=true, userLocal=true, marketplace=2 sources, total=0 plugins)
-[2026-05-12T05:39:46.127Z] Plugins reload completed: 0 plugins loaded
