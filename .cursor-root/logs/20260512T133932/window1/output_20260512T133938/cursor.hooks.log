@@ -1,0 +1,18 @@
+[2026-05-12T05:39:39.390Z] Initializing Cursor Hooks Service...
+[2026-05-12T05:39:39.390Z] Claude user config path: /root/.claude/settings.json
+[2026-05-12T05:39:39.390Z] No workspace folder found, project hooks will not be available
+[2026-05-12T05:39:39.390Z] User config path: /root/.cursor/hooks.json
+[2026-05-12T05:39:39.390Z] Enterprise config path: file:///etc/cursor/hooks.json
+[2026-05-12T05:39:39.391Z] Reloading hooks configuration...
+[2026-05-12T05:39:39.398Z] No Claude user settings found
+[2026-05-12T05:39:39.404Z] No enterprise hooks configuration found
+[2026-05-12T05:39:39.407Z] No user hooks configuration found
+[2026-05-12T05:39:39.407Z] Project hooks disabled (experiment flag not enabled)
+[2026-05-12T05:39:39.408Z] Refreshing team hooks...
+[2026-05-12T05:39:39.408Z] Cursor Hooks Service initialized successfully
+[2026-05-12T05:39:41.682Z] Reloading hooks configuration...
+[2026-05-12T05:39:41.685Z] No Claude user settings found
+[2026-05-12T05:39:41.690Z] No enterprise hooks configuration found
+[2026-05-12T05:39:41.692Z] No user hooks configuration found
+[2026-05-12T05:39:41.692Z] Project hooks disabled (experiment flag not enabled)
+[2026-05-12T06:09:39.408Z] Refreshing team hooks...

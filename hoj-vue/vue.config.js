@@ -91,8 +91,8 @@ module.exports={
         if (isProduction || devNeedCdn) args[0].cdn = cdn
         return args
     })
-    config.plugin('webpack-bundle-analyzer') // 查看打包文件体积大小
-      .use(require('webpack-bundle-analyzer').BundleAnalyzerPlugin)
+    config.plugin('webpack-bundle-analyzer') // 查看打包文件体积大小（生产构建默认关闭，避免进程挂起）
+      .use(require('webpack-bundle-analyzer').BundleAnalyzerPlugin, [{ analyzerMode: 'disabled' }])
     // ============注入cdn end============
   },
   configureWebpack: (config) => {

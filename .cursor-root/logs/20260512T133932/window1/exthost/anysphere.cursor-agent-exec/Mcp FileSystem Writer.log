@@ -1,0 +1,5 @@
+2026-05-12 13:39:41.967 [info] Constructor: scheduling initial write
+2026-05-12 13:39:41.967 [info] fetchAndWrite: lease returned 0 tools across 0 clients
+2026-05-12 13:39:43.059 [info] Lease change event received
+2026-05-12 13:39:43.176 [info] fetchAndWrite: lease returned 0 tools across 1 clients
+2026-05-12 13:39:44.365 [info] Incremental write: 1 changed, 0 removed, 0 unchanged {"changedServerCount":1,"changedServers":[{"serverIdentifier":"cursor-ide-browser","sanitizedId":"cursor-ide-browser","toolCount":0}],"removedServerCount":0,"removedServerSanitizedIds":[],"unchangedServerCount":0,"totalServerCount":1,"mcpFsStructuredLogOptIn":true}

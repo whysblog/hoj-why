@@ -1,0 +1,24 @@
+[2026-05-12T05:39:43.056Z] [INFO] [general] Cursor Browser Automation extension activated
+[2026-05-12T05:39:43.057Z] [INFO] [general] Browser Automation MCP Provider initialized with direct execution
+[2026-05-12T05:39:43.058Z] [INFO] [general] injectBrowserUIScript called
+[2026-05-12T05:39:43.164Z] [ERROR] [general] Failed to inject browser UI script:: No browser view available
+[2026-05-12T05:39:43.164Z] [ERROR] [general] Error: No browser view available
+    at Jot (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46888:79767)
+    at vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46888:81319
+    at Xld.invokeFunction (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:47108:1028)
+    at vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46623:3251
+    at hkc (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:61:56242)
+    at qbe (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:61:56203)
+    at c4u._tryExecuteCommand (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46623:3103)
+    at c4u.executeCommandImpl (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46623:2286)
+    at c4u.executeCommand (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46623:1937)
+    at Onb.$executeCommand (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:43764:693)
+    at eBt._doInvokeHandler (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46642:24171)
+    at eBt._invokeHandler (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46642:23913)
+    at eBt._receiveRequest (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46642:22436)
+    at eBt._receiveOneMessage (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46642:20953)
+    at K2n.value (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:46642:18955)
+    at Qe._deliver (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:55:2962)
+    at Qe.fire (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:55:3283)
+    at YAn.fire (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:43787:12180)
+    at MessagePort.<anonymous> (vscode-file://vscode-app/usr/share/cursor/resources/app/out/vs/workbench/workbench.desktop.main.js:49778:18755)

@@ -21,6 +21,8 @@ const TrainingProblemList= ()=>import('@/views/admin/training/TrainingProblemLis
 const TrainingCategory= ()=>import('@/views/admin/training/Category')
 const DiscussionList= ()=>import('@/views/admin/discussion/Discussion')
 const Certificate= ()=>import('@/views/admin/general/Certificate')
+const AdminQuiz= ()=>import('@/views/admin/quiz/AdminQuiz')
+const AdminQuizPaper= ()=>import('@/views/admin/quiz/AdminQuizPaper')
 const adminRoutes= [
     {
       path: '/admin/login',
@@ -50,6 +52,18 @@ const adminRoutes= [
           name: 'admin-user',
           component: User,
           meta: { requireSuperAdmin: true,title:'User Admin'},
+      },
+      {
+          path: 'quiz',
+          name: 'admin-quiz',
+          component: AdminQuiz,
+          meta: { title:'Objective Quiz Admin'},
+      },
+      {
+          path: 'quiz-paper',
+          name: 'admin-quiz-paper',
+          component: AdminQuizPaper,
+          meta: { title:'Objective Quiz Paper Admin'},
       },
       {
           path: 'certificate',

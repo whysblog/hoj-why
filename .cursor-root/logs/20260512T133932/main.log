@@ -1,0 +1,5 @@
+2026-05-12 13:39:33.158 [info] updateURL https://api2.cursor.sh/updates/api/update/linux-x64/cursor/2.6.20/3bb597873c3d15375f3f4bf94851a3c9266ffe2413f47f436e3a71f2f8973f81/stable
+2026-05-12 13:39:33.159 [info] update#setState idle
+2026-05-12 13:39:47.398 [info] [CursorProclistService] Config enabled feature (subsample every 10s)
+2026-05-12 13:40:00.630 [info] update#setState checking for updates
+2026-05-12 13:40:00.919 [info] update#setState available for download

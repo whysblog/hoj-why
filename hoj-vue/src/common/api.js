@@ -457,6 +457,28 @@ const ojApi = {
   getTrainingCategoryList() {
     return ajax('/api/get-training-category', 'get')
   },
+  getQuizList(params) {
+    return ajax('/api/quiz/list', 'get', { params })
+  },
+  getQuizDetail(id) {
+    return ajax('/api/quiz/' + id, 'get')
+  },
+  submitQuizAnswer(id, answer) {
+    return ajax('/api/quiz/' + id + '/submit', 'post', {
+      data: { answer }
+    })
+  },
+  getQuizPaperList(params) {
+    return ajax('/api/quiz/paper/list', 'get', { params })
+  },
+  getQuizPaperDetail(id) {
+    return ajax('/api/quiz/paper/' + id, 'get')
+  },
+  submitQuizPaper(id, answers) {
+    return ajax('/api/quiz/paper/' + id + '/submit', 'post', {
+      data: { answers }
+    })
+  },
   queryCertificates(name, idCard) {
     return ajax('/api/certificate/query', 'get', {
       params: {
@@ -1998,6 +2020,41 @@ const adminApi = {
     return ajax("/api/admin/discussion-report", 'put', {
       data
     })
+  },
+  admin_getQuizList(params) {
+    return ajax('/api/admin/quiz/list', 'get', { params })
+  },
+  admin_getQuizDetail(id) {
+    return ajax('/api/admin/quiz/' + id, 'get')
+  },
+  admin_createQuiz(data) {
+    return ajax('/api/admin/quiz', 'post', { data })
+  },
+  admin_updateQuiz(id, data) {
+    return ajax('/api/admin/quiz/' + id, 'put', { data })
+  },
+  admin_deleteQuiz(id) {
+    return ajax('/api/admin/quiz/' + id, 'delete')
+  },
+  admin_getQuizPaperList(params) {
+    return ajax('/api/admin/quiz/paper/list', 'get', { params })
+  },
+  admin_getQuizPaperDetail(id) {
+    return ajax('/api/admin/quiz/paper/' + id, 'get')
+  },
+  admin_createQuizPaper(data) {
+    return ajax('/api/admin/quiz/paper', 'post', { data })
+  },
+  admin_updateQuizPaper(id, data) {
+    return ajax('/api/admin/quiz/paper/' + id, 'put', { data })
+  },
+  admin_saveQuizPaperItems(id, questionIds) {
+    return ajax('/api/admin/quiz/paper/' + id + '/items', 'put', {
+      data: { questionIds }
+    })
+  },
+  admin_deleteQuizPaper(id) {
+    return ajax('/api/admin/quiz/paper/' + id, 'delete')
   },
   admin_getCertificateList() {
     return ajax('/api/admin/certificate/list', 'get')

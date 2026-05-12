@@ -47,6 +47,11 @@ import GroupMemberList from '@/views/oj/group/children/GroupMemberList.vue'
 import GroupSetting from '@/views/oj/group/children/GroupSetting.vue'
 import GroupRank from '@/views/oj/group/children/GroupRank.vue'
 import Certificate from "@/views/oj/certificate/Certificate.vue"
+import QuizList from "@/views/oj/quiz/QuizList.vue"
+import QuizDetail from "@/views/oj/quiz/QuizDetail.vue"
+import QuizPaperList from "@/views/oj/quiz/QuizPaperList.vue"
+import QuizPaperDetail from "@/views/oj/quiz/QuizPaperDetail.vue"
+import QuizPaperResult from "@/views/oj/quiz/QuizPaperResult.vue"
 
 import NotFound from "@/views/404.vue"
 
@@ -325,6 +330,36 @@ const ojRoutes = [
     name: 'About',
     component: Introduction,
     meta: { title: 'About' }
+  },
+  {
+    path: '/quiz',
+    name: 'QuizList',
+    component: QuizList,
+    meta: { title: 'Objective Quiz' }
+  },
+  {
+    path: '/quiz/paper',
+    name: 'QuizPaperList',
+    component: QuizPaperList,
+    meta: { title: 'Objective Quiz Papers' }
+  },
+  {
+    path: '/quiz/paper/:paperId/result',
+    name: 'QuizPaperResult',
+    component: QuizPaperResult,
+    meta: { title: 'Quiz Paper Review', requireAuth: true }
+  },
+  {
+    path: '/quiz/paper/:paperId',
+    name: 'QuizPaperDetail',
+    component: QuizPaperDetail,
+    meta: { title: 'Quiz Paper' }
+  },
+  {
+    path: '/quiz/:quizId',
+    name: 'QuizDetail',
+    component: QuizDetail,
+    meta: { title: 'Quiz Detail' }
   },
   {
     path: '/certificate',

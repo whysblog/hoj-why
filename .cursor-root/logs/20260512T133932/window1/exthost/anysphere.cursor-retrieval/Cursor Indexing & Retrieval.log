@@ -1,0 +1,2 @@
+2026-05-12 13:39:43.236 [warning] [FastIndexer] getInitialValues: timeout waiting for auth {"hasCreds":true,"hasToken":false,"pollCount":5,"elapsedMs":2137}
+2026-05-12 13:39:43.239 [error] accessToken is undefined. User is not logged in. We shouldn't do any indexing.

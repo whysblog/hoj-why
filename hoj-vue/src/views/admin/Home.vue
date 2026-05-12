@@ -47,6 +47,8 @@
             ><i class="fa fa-bars fa-size" aria-hidden="true"></i
             >{{ $t('m.Problem_Admin') }}</template
           >
+          <el-menu-item index="/admin/quiz">客观题管理</el-menu-item>
+          <el-menu-item index="/admin/quiz-paper">客观题套卷</el-menu-item>
           <el-menu-item index="/admin/problems">{{
             $t('m.Problem_List')
           }}</el-menu-item>

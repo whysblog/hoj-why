@@ -1,0 +1,56 @@
+2026-05-12 13:39:40.274 [info] Extension host with pid 1965503 started
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] Detecting sandbox support...
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] Platform: linux, Shell type: unknown
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] dirname: /usr/share/cursor/resources/app/out/vs/workbench/api/node
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] Sandbox helper path: /usr/share/cursor/resources/app/resources/helpers/cursorsandbox
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] process.resourcesPath: /usr/share/cursor/resources
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] process.execPath: /usr/share/cursor/cursor
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] ripgrep path for sandboxing: /usr/share/cursor/resources/app/node_modules/@vscode/ripgrep/bin/rg
+2026-05-12 13:39:40.274 [info] [shell-exec:sandbox] [isSandboxHelperSupported] Starting sandbox support check...
+2026-05-12 13:39:40.274 [info] [shell-exec:sandbox] [checkBinaryAvailable] Resolved binary path: /usr/share/cursor/resources/app/resources/helpers/cursorsandbox
+2026-05-12 13:39:40.274 [info] [shell-exec:sandbox] [checkBinaryAvailable] Binary path exists: true
+2026-05-12 13:39:40.274 [info] [shell-exec:sandbox] [isSandboxHelperSupported] Running preflight with binary: /usr/share/cursor/resources/app/resources/helpers/cursorsandbox
+2026-05-12 13:39:40.274 [info] [shell-exec:sandbox] [isSandboxHelperSupported] CWD: /home/ubuntu/hoj-why
+2026-05-12 13:39:40.274 [error] [shell-exec:sandbox] [isSandboxHelperSupported] Preflight failed: Command failed: /usr/share/cursor/resources/app/resources/helpers/cursorsandbox --sandbox-policy-cwd /home/ubuntu/hoj-why --sandbox-policy {"type":"workspace_readwrite","cwd":"/home/ubuntu/hoj-why","additionalReadwritePaths":[],"additionalReadonlyPaths":["/etc/ssl/cert.pem","/private/etc/ssl/cert.pem","/etc/ssl/certs/ca-certificates.crt","/etc/ssl/ca-bundle.pem","/etc/pki/tls/certs/ca-bundle.crt","/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem","/root/.ssh"],"networkAccess":false,"disableTmpWrite":false} --preflight-only -- /bin/true
+Error: Failed to apply sandbox: IO error: Step 2.5/7 (loopback setup) failed: IO error: loopback: failed to bind NETLINK_ROUTE socket
+
+2026-05-12 13:39:40.274 [error] [shell-exec:sandbox] [isSandboxHelperSupported] Exit status: 1
+2026-05-12 13:39:40.274 [error] [shell-exec:sandbox] [isSandboxHelperSupported] Stderr: Error: Failed to apply sandbox: IO error: Step 2.5/7 (loopback setup) failed: IO error: loopback: failed to bind NETLINK_ROUTE socket
+
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] Sandbox support detected: false, platform: linux, kernelVersion: 6.8.0-111-generic
+2026-05-12 13:39:40.274 [info] [ExtHostShellExec] Initializing terminal executor with userTerminalHint: /usr/bin/bash
+2026-05-12 13:39:40.309 [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onLanguage'
+2026-05-12 13:39:40.353 [info] ExtensionService#_doActivateExtension Vue.volar, startup: false, activationEvent: 'onLanguage'
+2026-05-12 13:39:40.426 [info] Extension activated success: vscode.emmet — 56ms (code loading: 42ms, activate call: 14ms, activate resolved: 0ms)
+2026-05-12 13:39:40.431 [info] Extension activated success: Vue.volar — 60ms (code loading: 58ms, activate call: 2ms, activate resolved: 0ms)
+2026-05-12 13:39:40.441 [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: anysphere.cursor-agent-exec
+2026-05-12 13:39:40.443 [info] ExtensionService#_doActivateExtension anysphere.cursor-polyfills-remote, startup: true, activationEvent: '*'
+2026-05-12 13:39:40.472 [info] Extension activated success: vscode.git-base — 2ms (code loading: 2ms, activate call: 0ms, activate resolved: 0ms)
+2026-05-12 13:39:40.474 [info] Extension activated success: anysphere.cursor-polyfills-remote — 26ms (code loading: 26ms, activate call: 0ms, activate resolved: 0ms)
+2026-05-12 13:39:40.474 [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*', root cause: anysphere.cursor-agent-exec
+2026-05-12 13:39:40.538 [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+2026-05-12 13:39:40.602 [info] Extension activated success: vscode.github — 32ms (code loading: 26ms, activate call: 2ms, activate resolved: 4ms)
+2026-05-12 13:39:40.650 [info] Extension activated success: vscode.git — 145ms (code loading: 62ms, activate call: 5ms, activate resolved: 78ms)
+2026-05-12 13:39:40.668 [info] ExtensionService#_doActivateExtension anysphere.cursor-retrieval, startup: true, activationEvent: '*', root cause: anysphere.cursor-agent-exec
+2026-05-12 13:39:41.118 [info] Extension activated success: anysphere.cursor-retrieval — 431ms (code loading: 412ms, activate call: 2ms, activate resolved: 17ms)
+2026-05-12 13:39:41.125 [info] ExtensionService#_doActivateExtension anysphere.cursor-agent-exec, startup: true, activationEvent: '*'
+2026-05-12 13:39:41.695 [info] ExtensionService#_doActivateExtension anysphere.cursor-mcp, startup: false, activationEvent: 'api', root cause: anysphere.cursor-agent-exec
+2026-05-12 13:39:41.949 [info] Extension activated success: anysphere.cursor-mcp — 253ms (code loading: 232ms, activate call: 0ms, activate resolved: 21ms)
+2026-05-12 13:39:41.968 [info] Extension activated success: anysphere.cursor-agent-exec — 841ms (code loading: 481ms, activate call: 9ms, activate resolved: 351ms)
+2026-05-12 13:39:41.968 [info] Eager extensions activated
+2026-05-12 13:39:42.014 [info] ExtensionService#_doActivateExtension anysphere.cursor-always-local, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:42.467 [info] ExtensionService#_doActivateExtension cursor.cursor-browser-automation, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:42.484 [info] ExtensionService#_doActivateExtension anysphere.cursor-deeplink, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:42.570 [info] ExtensionService#_doActivateExtension anysphere.cursor-resolver, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:42.890 [info] ExtensionService#_doActivateExtension anysphere.cursor-shadow-workspace, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:43.007 [info] ExtensionService#_doActivateExtension anysphere.cursor-socket, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:43.009 [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:43.011 [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+2026-05-12 13:39:43.055 [info] Extension activated success: anysphere.cursor-always-local — 459ms (code loading: 453ms, activate call: 6ms, activate resolved: 0ms)
+2026-05-12 13:39:43.060 [info] Extension activated success: cursor.cursor-browser-automation — 19ms (code loading: 16ms, activate call: 1ms, activate resolved: 2ms)
+2026-05-12 13:39:43.062 [info] Extension activated success: anysphere.cursor-deeplink — 86ms (code loading: 85ms, activate call: 1ms, activate resolved: 0ms)
+2026-05-12 13:39:43.064 [info] Extension activated success: anysphere.cursor-resolver — 321ms (code loading: 319ms, activate call: 1ms, activate resolved: 1ms)
+2026-05-12 13:39:43.065 [info] Extension activated success: anysphere.cursor-shadow-workspace — 117ms (code loading: 116ms, activate call: 1ms, activate resolved: 0ms)
+2026-05-12 13:39:43.066 [info] Extension activated success: anysphere.cursor-socket — 2ms (code loading: 2ms, activate call: 0ms, activate resolved: 0ms)
+2026-05-12 13:39:43.067 [info] Extension activated success: vscode.debug-auto-launch — 3ms (code loading: 2ms, activate call: 1ms, activate resolved: 0ms)
+2026-05-12 13:39:43.087 [info] Extension activated success: vscode.merge-conflict — 31ms (code loading: 23ms, activate call: 3ms, activate resolved: 5ms)

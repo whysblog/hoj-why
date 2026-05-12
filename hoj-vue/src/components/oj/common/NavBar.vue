@@ -29,8 +29,20 @@
             >
             <el-menu-item index="/problem"
               ><i class="el-icon-s-grid"></i
-              >{{ $t('m.NavBar_Problem') }}</el-menu-item
+              >{{ $t('m.NavBar_Programming_Problem') }}</el-menu-item
             >
+            <el-submenu index="submenu-quiz">
+              <template slot="title"
+                ><i class="el-icon-document"></i
+                >{{ $t('m.NavBar_Objective_Quiz') }}</template
+              >
+              <el-menu-item index="/quiz">{{
+                $t('m.Quiz_Mode_Single')
+              }}</el-menu-item>
+              <el-menu-item index="/quiz/paper">{{
+                $t('m.Quiz_Mode_Paper')
+              }}</el-menu-item>
+            </el-submenu>
             <el-menu-item index="/course"
               ><i class="el-icon-s-claim"></i
               >{{ $t('m.NavBar_Training') }}</el-menu-item
@@ -428,7 +440,7 @@
                 }}</mu-list-item-title>
               </mu-list-item-content>
             </mu-list-item>
-          </mu-list>r
+          </mu-list>
         </mu-menu>
       </mu-appbar>
 
@@ -460,8 +472,48 @@
               <mu-icon value=":el-icon-s-grid" size="24"></mu-icon>
             </mu-list-item-action>
             <mu-list-item-title>{{
-              $t('m.NavBar_Problem')
+              $t('m.NavBar_Programming_Problem')
             }}</mu-list-item-title>
+          </mu-list-item>
+
+          <mu-list-item
+            button
+            :ripple="false"
+            nested
+            :open="openSideMenu === 'quiz'"
+            @toggle-nested="openSideMenu = arguments[0] ? 'quiz' : ''"
+          >
+            <mu-list-item-action>
+              <mu-icon value=":el-icon-document" size="24"></mu-icon>
+            </mu-list-item-action>
+            <mu-list-item-title>{{ $t('m.NavBar_Objective_Quiz') }}</mu-list-item-title>
+            <mu-list-item-action>
+              <mu-icon
+                class="toggle-icon"
+                size="24"
+                value=":el-icon-arrow-down"
+              ></mu-icon>
+            </mu-list-item-action>
+            <mu-list-item
+              button
+              :ripple="false"
+              slot="nested"
+              to="/quiz"
+              @click="opendrawer = !opendrawer"
+              active-class="mobile-menu-active"
+            >
+              <mu-list-item-title>{{ $t('m.Quiz_Mode_Single') }}</mu-list-item-title>
+            </mu-list-item>
+            <mu-list-item
+              button
+              :ripple="false"
+              slot="nested"
+              to="/quiz/paper"
+              @click="opendrawer = !opendrawer"
+              active-class="mobile-menu-active"
+            >
+              <mu-list-item-title>{{ $t('m.Quiz_Mode_Paper') }}</mu-list-item-title>
+            </mu-list-item>
           </mu-list-item>
 
           <mu-list-item
@@ -585,6 +637,18 @@
               <mu-icon value=":fa fa-users" size="24"></mu-icon>
             </mu-list-item-action>
             <mu-list-item-title>{{ $t('m.NavBar_Group') }}</mu-list-item-title>
+          </mu-list-item>
+
+          <mu-list-item
+            button
+            to="/certificate"
+            @click="opendrawer = !opendrawer"
+            active-class="mobile-menu-active"
+          >
+            <mu-list-item-action>
+              <mu-icon value=":el-icon-document-checked" size="24"></mu-icon>
+            </mu-list-item-action>
+            <mu-list-item-title>证书查询</mu-list-item-title>
           </mu-list-item>
 
           <mu-list-item
@@ -822,6 +886,11 @@ export default {
         return '/status';
       } else if (this.$route.path.split('/')[1] == 'discussion-detail') {
         return '/discussion';
+      } else if (this.$route.path.split('/')[1] == 'quiz') {
+        if (this.$route.path.startsWith('/quiz/paper')) {
+          return '/quiz/paper';
+        }
+        return '/quiz';
       }
       return '/' + this.$route.path.split('/')[1];
     },
@@ -862,9 +931,13 @@ export default {
         clearInterval(this.msgTimer);
       }
     },
-    $route(){
+    $route() {
       this.switchMode();
-    }
+      const p = this.$route.path;
+      if (p.startsWith('/quiz')) {
+        this.openSideMenu = 'quiz';
+      }
+    },
   },
 };
 </script>

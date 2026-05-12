@@ -14,6 +14,11 @@ export const m = {
   //  /components/oj/common/NavBar.vue 导航栏
   NavBar_Home: 'Home',
   NavBar_Problem: 'Problem',
+  NavBar_Programming_Problem: 'Programming',
+  NavBar_Objective_Quiz: 'Quiz',
+  NavBar_Objective_Quiz_Paper: 'Quiz papers',
+  Quiz_Mode_Single: 'Single',
+  Quiz_Mode_Paper: 'Paper set',
   NavBar_Training: 'Course',
   NavBar_Contest: 'Contest',
   NavBar_Status: 'Status',
