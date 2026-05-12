@@ -333,6 +333,12 @@ const ojRoutes = [
     meta: { title: 'Certificate' }
   },
   {
+    path: '/group',
+    name: 'GroupList',
+    component: GroupList,
+    meta: { title: 'Group', requireAuth: true }
+  },
+  {
     path: '/group/:groupID',
     name: 'GroupDetails',
     component: GroupDetails,

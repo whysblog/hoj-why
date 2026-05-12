@@ -175,6 +175,7 @@ export const m = {
   Email_BG_Desc: '请输入邮件背景图的URL链接',
   Send_Test_Email: '发送测试邮件',
   Email: '邮箱',
+  Phone: '手机号',
   Mobile_Config: '信息设置',
   Region_Id: '区域 ID',
   Domain: '域名',

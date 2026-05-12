@@ -36,6 +36,16 @@ email-username: ${EMAIL_USERNAME:your_email_username}
 # 邮箱授权码
 email-password: ${EMAIL_PASSWORD:your_email_password}
 
+# 阿里云短信配置（用于手机号找回密码）
+hoj:
+  sms:
+    aliyun:
+      access-key-id: ${ALIYUN_SMS_ACCESS_KEY_ID:}
+      access-key-secret: ${ALIYUN_SMS_ACCESS_KEY_SECRET:}
+      endpoint: ${ALIYUN_SMS_ENDPOINT:dysmsapi.aliyuncs.com}
+      sign-name: ${ALIYUN_SMS_SIGN_NAME:}
+      reset-template-code: ${ALIYUN_SMS_RESET_TEMPLATE_CODE:}
+
 # 以下为各个remote judge平台的账号配置
 hdu-username-list: ${HDU_ACCOUNT_USERNAME_LIST:}
 hdu-password-list: ${HDU_ACCOUNT_PASSWORD_LIST:}

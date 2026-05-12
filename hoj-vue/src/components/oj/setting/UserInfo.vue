@@ -144,6 +144,13 @@
           <el-form-item :label="$t('m.Student_Number')">
             <el-input v-model="formProfile.number" :maxlength="20" />
           </el-form-item>
+          <el-form-item :label="$t('m.Phone')">
+            <el-input
+              v-model="formProfile.phone"
+              :placeholder="$t('m.Phone_Format_Tip')"
+              :maxlength="20"
+            />
+          </el-form-item>
         </el-col>
         <el-col :md="4" :lg="4">
           <div class="separator hidden-md-and-down"></div>
@@ -243,6 +250,7 @@ export default {
         blog: '',
         school: '',
         github: '',
+        phone: '',
       },
     };
   },

@@ -22,6 +22,8 @@ public class AdminEditUserDTO {
 
     private String email;
 
+    private String phone;
+
     private String password;
 
     private Integer type;

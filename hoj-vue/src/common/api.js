@@ -265,6 +265,11 @@ const ojApi = {
       data
     })
   },
+  resetPasswordByPhone(data) {
+    return ajax('/api/reset-password-by-phone', 'post', {
+      data
+    })
+  },
   // Problem List页的相关请求
   getProblemTagList(oj) {
     return ajax('/api/get-all-problem-tags', 'get', {
@@ -445,8 +450,12 @@ const ojApi = {
   // ------------------------------------训练模块的请求---------------------------------------------
 
   // 获取训练分类列表
-  getT  getTrainingCategory() {
-    return ajax('/api/training-category', 'get')
+  getTrainingCategory() {
+    return ajax('/api/get-training-category', 'get')
+  },
+  // 兼容现有页面调用
+  getTrainingCategoryList() {
+    return ajax('/api/get-training-category', 'get')
   },
   queryCertificates(name, idCard) {
     return ajax('/api/certificate/query', 'get', {
@@ -455,7 +464,7 @@ const ojApi = {
         idCard
       }
     })
-  },},
+  },
 
 
   // 获取训练列表

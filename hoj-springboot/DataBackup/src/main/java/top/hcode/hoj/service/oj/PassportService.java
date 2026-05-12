@@ -6,6 +6,7 @@ import top.hcode.hoj.pojo.dto.ApplyResetPasswordDTO;
 import top.hcode.hoj.pojo.dto.LoginDTO;
 import top.hcode.hoj.pojo.dto.RegisterDTO;
 import top.hcode.hoj.pojo.dto.ResetPasswordDTO;
+import top.hcode.hoj.pojo.dto.ResetPasswordByPhoneDTO;
 import top.hcode.hoj.pojo.vo.RegisterCodeVO;
 import top.hcode.hoj.pojo.vo.UserInfoVO;
 
@@ -28,6 +29,8 @@ public interface PassportService {
     public CommonResult<Void> applyResetPassword(ApplyResetPasswordDTO applyResetPasswordDto);
 
     public CommonResult<Void> resetPassword(ResetPasswordDTO resetPasswordDto);
+
+    public CommonResult<Void> resetPasswordByPhone(ResetPasswordByPhoneDTO resetPasswordByPhoneDTO);
 
     public CommonResult<Void> logout();
 }

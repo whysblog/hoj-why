@@ -59,6 +59,9 @@ public class UserRolesVO implements Serializable {
     @ApiModelProperty(value = "邮箱")
     private String email;
 
+    @ApiModelProperty(value = "手机号")
+    private String phone;
+
     @ApiModelProperty(value = "头像地址")
     private String avatar;
 

@@ -47,14 +47,17 @@ router.beforeEach(async (to, from, next) => {
       const userInfo = store.getters.userInfo
       // 检查用户信息是否存在
       if (userInfo && userInfo.uid) {
-        // 只检查真实姓名是否完整
+        // 强制校验：真实姓名 + 手机号都必须完整
         const hasRealName = userInfo.realname && userInfo.realname.trim() !== ''
-        
-        // 如果真实姓名不完整，跳转到实名认证页面
-        if (!hasRealName) {
-          console.log('用户未实名，跳转到实名认证页面', {
+        const hasPhone = userInfo.phone && userInfo.phone.trim() !== ''
+
+        // 任一缺失都强制跳转实名认证页面
+        if (!hasRealName || !hasPhone) {
+          console.log('用户实名信息不完整，跳转到实名认证页面', {
             hasRealName,
-            realname: userInfo.realname
+            hasPhone,
+            realname: userInfo.realname,
+            phone: userInfo.phone
           })
           next({
             path: '/real-name-auth'

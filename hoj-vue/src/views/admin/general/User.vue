@@ -457,6 +457,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
+            <el-form-item :label="$t('m.Phone')" prop="phone">
+              <el-input v-model="selectUser.phone" size="small"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
             <el-form-item :label="$t('m.Set_New_PWD')">
               <el-switch
                 :active-value="true"
@@ -611,6 +616,11 @@
           <el-col :span="24">
             <el-form-item :label="$t('m.Email')" prop="email">
               <el-input v-model="addUserForm.email" size="small"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item :label="$t('m.Phone')" prop="phone">
+              <el-input v-model="addUserForm.phone" size="small"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -823,6 +833,7 @@ export default {
         username: '',
         realname: '',
         email: '',
+        phone: '',
         password: '',
         type: 1002,
         status: 0,
@@ -836,6 +847,7 @@ export default {
         password: '',
         realname: '',
         email: '',
+        phone: '',
         type: 1002,
         status: 0,
         titleName: '',
@@ -870,6 +882,22 @@ export default {
           {
             validator: CheckEmailNotExist,
             message: this.$i18n.t('m.The_email_already_exists'),
+            trigger: 'blur',
+          },
+        ],
+        phone: [
+          {
+            validator: (rule, value, callback) => {
+              if (!value) return callback();
+              const clean = String(value).replace(/^\+86\s*/, '').replace(/\s/g, '');
+              const phoneRegex = /^1[3-9]\d{9}$/;
+              if (!phoneRegex.test(clean)) {
+                callback(new Error(this.$i18n.t('m.Phone_Format_Error_China')));
+                return;
+              }
+              this.selectUser.phone = clean;
+              callback();
+            },
             trigger: 'blur',
           },
         ],
@@ -912,6 +940,22 @@ export default {
           {
             validator: CheckEmailNotExistForAdd,
             message: this.$i18n.t('m.The_email_already_exists'),
+            trigger: 'blur',
+          },
+        ],
+        phone: [
+          {
+            validator: (rule, value, callback) => {
+              if (!value) return callback();
+              const clean = String(value).replace(/^\+86\s*/, '').replace(/\s/g, '');
+              const phoneRegex = /^1[3-9]\d{9}$/;
+              if (!phoneRegex.test(clean)) {
+                callback(new Error(this.$i18n.t('m.Phone_Format_Error_China')));
+                return;
+              }
+              this.addUserForm.phone = clean;
+              callback();
+            },
             trigger: 'blur',
           },
         ],

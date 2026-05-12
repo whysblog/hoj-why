@@ -11,6 +11,7 @@ import top.hcode.hoj.pojo.dto.ApplyResetPasswordDTO;
 import top.hcode.hoj.pojo.dto.LoginDTO;
 import top.hcode.hoj.pojo.dto.RegisterDTO;
 import top.hcode.hoj.pojo.dto.ResetPasswordDTO;
+import top.hcode.hoj.pojo.dto.ResetPasswordByPhoneDTO;
 import top.hcode.hoj.pojo.vo.RegisterCodeVO;
 import top.hcode.hoj.pojo.vo.UserInfoVO;
 import top.hcode.hoj.service.oj.PassportService;
@@ -78,6 +79,16 @@ public class PassportServiceImpl implements PassportService {
     public CommonResult<Void> resetPassword(ResetPasswordDTO resetPasswordDto) {
         try {
             passportManager.resetPassword(resetPasswordDto);
+            return CommonResult.successResponse();
+        } catch (StatusFailException e) {
+            return CommonResult.errorResponse(e.getMessage());
+        }
+    }
+
+    @Override
+    public CommonResult<Void> resetPasswordByPhone(ResetPasswordByPhoneDTO resetPasswordByPhoneDTO) {
+        try {
+            passportManager.resetPasswordByPhone(resetPasswordByPhoneDTO);
             return CommonResult.successResponse();
         } catch (StatusFailException e) {
             return CommonResult.errorResponse(e.getMessage());

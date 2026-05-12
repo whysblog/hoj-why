@@ -175,6 +175,7 @@ export const m = {
   Email_BG_Desc: 'SMTP Template Background IMG Address',
   Send_Test_Email: 'Send Test Email',
   Email: 'Email',
+  Phone: 'Phone',
   Mobile_Config: 'Mobile Config',
   Region_Id: 'Region ID',
   Domain: 'Domain',

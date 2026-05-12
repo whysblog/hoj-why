@@ -10,6 +10,7 @@ import top.hcode.hoj.pojo.dto.ApplyResetPasswordDTO;
 import top.hcode.hoj.pojo.dto.LoginDTO;
 import top.hcode.hoj.pojo.dto.RegisterDTO;
 import top.hcode.hoj.pojo.dto.ResetPasswordDTO;
+import top.hcode.hoj.pojo.dto.ResetPasswordByPhoneDTO;
 import top.hcode.hoj.pojo.vo.RegisterCodeVO;
 import top.hcode.hoj.pojo.vo.UserInfoVO;
 import top.hcode.hoj.service.oj.PassportService;
@@ -95,6 +96,15 @@ public class PassportController {
     @AnonApi
     public CommonResult<Void> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDto) {
         return passportService.resetPassword(resetPasswordDto);
+    }
+
+    /**
+     * @Description 通过手机号+短信验证码重置密码
+     */
+    @PostMapping("/reset-password-by-phone")
+    @AnonApi
+    public CommonResult<Void> resetPasswordByPhone(@RequestBody ResetPasswordByPhoneDTO resetPasswordByPhoneDTO) {
+        return passportService.resetPasswordByPhone(resetPasswordByPhoneDTO);
     }
 
 

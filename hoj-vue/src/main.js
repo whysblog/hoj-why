@@ -52,7 +52,15 @@ import {Drawer,List,Menu,Icon,AppBar,Button,Divider} from 'muse-ui';
 import 'muse-ui/dist/muse-ui.css';
 
 import VueDOMPurifyHTML from 'vue-dompurify-html'
-Vue.use(VueDOMPurifyHTML)
+// 允许 Markdown 组件生成的 PDF 内嵌预览（object/embed）与卡片容器（file-card）。
+// 团队课程等场景使用 v-dompurify-html，默认配置会剥离上述标签导致复制到团队后 PDF 无法预览。
+Vue.use(VueDOMPurifyHTML, {
+  default: {
+    ADD_TAGS: ['object', 'embed', 'file-card'],
+    // <object data="..."> 的 data 属性不在 DOMPurify 默认允许列表中，需显式加入
+    ADD_ATTR: ['data'],
+  },
+})
 
 import router from './router'
 Vue.use(Drawer)

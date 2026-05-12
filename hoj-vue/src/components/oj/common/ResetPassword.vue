@@ -25,6 +25,32 @@
           </div>
         </div>
       </el-form-item>
+      <template v-if="isPhoneContact">
+        <el-form-item prop="smsCode">
+          <el-input
+            v-model="formResetPassword.smsCode"
+            prefix-icon="el-icon-chat-dot-round"
+            :placeholder="$t('m.Reset_Password_SMS_Code')"
+            maxlength="6"
+          ></el-input>
+        </el-form-item>
+        <el-form-item prop="newPassword">
+          <el-input
+            v-model="formResetPassword.newPassword"
+            type="password"
+            prefix-icon="el-icon-lock"
+            :placeholder="$t('m.Set_New_Password_Msg')"
+          ></el-input>
+        </el-form-item>
+        <el-form-item prop="newPasswordAgain">
+          <el-input
+            v-model="formResetPassword.newPasswordAgain"
+            type="password"
+            prefix-icon="el-icon-lock"
+            :placeholder="$t('m.Set_New_Password_Again_Msg')"
+          ></el-input>
+        </el-form-item>
+      </template>
     </el-form>
     <div class="footer">
       <el-button
@@ -34,6 +60,14 @@
         :disabled="btnResetPwdDisabled"
       >
         {{ resetText }}
+      </el-button>
+      <el-button
+        v-if="isPhoneContact"
+        type="success"
+        @click="handleResetByPhone"
+        :loading="btnResetByPhoneLoading"
+      >
+        {{ $t('m.Reset_Password_By_Phone') }}
       </el-button>
       <el-link type="primary" @click="switchMode('Login')">{{
         $t('m.Remember_Passowrd_To_Login')
@@ -47,8 +81,23 @@ import api from '@/common/api';
 import mMessage from '@/common/message';
 export default {
   data() {
-    const CheckEmailNotExist = (rule, value, callback) => {
-      api.checkUsernameOrEmail(undefined, value).then(
+    const CheckContact = (rule, value, callback) => {
+      const contact = (value || '').trim();
+      if (!contact) {
+        callback(new Error(this.$i18n.t('m.Reset_Password_Contact_Required')));
+        return;
+      }
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+      const isPhone = /^1[3-9]\d{9}$/.test(contact);
+      if (!isEmail && !isPhone) {
+        callback(new Error(this.$i18n.t('m.Reset_Password_Contact_Format')));
+        return;
+      }
+      if (isPhone) {
+        callback();
+        return;
+      }
+      api.checkUsernameOrEmail(undefined, contact).then(
         (res) => {
           if (res.data.data.email === false) {
             callback(new Error(this.$i18n.t('m.The_email_does_not_exists')));
@@ -63,11 +112,15 @@ export default {
       resetText: 'Send Password Reset Email',
       btnResetPwdLoading: false,
       btnResetPwdDisabled: false,
+      btnResetByPhoneLoading: false,
       captchaSrc: '',
       formResetPassword: {
         captcha: '',
         email: '',
         captchaKey: '',
+        smsCode: '',
+        newPassword: '',
+        newPasswordAgain: '',
       },
       rules: {
         captcha: [
@@ -80,19 +133,13 @@ export default {
           },
         ],
         email: [
-          {
-            required: true,
-            message: this.$i18n.t('m.Email_Check_Required'),
-            type: 'email',
-            trigger: 'blur',
-          },
-          { validator: CheckEmailNotExist, trigger: 'blur' },
+          { validator: CheckContact, trigger: 'blur' },
         ],
       },
     };
   },
   mounted() {
-    this.resetText = this.$i18n.t('m.Send_Password_Reset_Email');
+    this.resetText = this.$i18n.t('m.Send_Password_Reset_Msg');
     this.getCaptcha();
   },
   methods: {
@@ -111,10 +158,10 @@ export default {
     },
     countDown() {
       let i = this.time;
-      this.resetText = i + 's, ' + this.$i18n.t('m.Waiting_Can_Resend_Email');
+      this.resetText = i + 's, ' + this.$i18n.t('m.Waiting_Can_Resend_Reset_Msg');
       if (i == 0) {
         this.btnResetPwdDisabled = false;
-        this.resetText = this.$i18n.t('m.Send_Password_Reset_Email');
+        this.resetText = this.$i18n.t('m.Send_Password_Reset_Msg');
         return;
       }
       setTimeout(() => {
@@ -132,7 +179,7 @@ export default {
             (res) => {
               mMessage.message(
                 'success',
-                this.$i18n.t('m.ResetPwd_Send_Email_Msg'),
+                this.$i18n.t('m.ResetPwd_Send_Contact_Msg'),
                 10000
               );
               this.countDown();
@@ -147,16 +194,58 @@ export default {
               this.formResetPassword.captchaKey = '';
               this.btnResetPwdLoading = false;
               this.btnResetPwdDisabled = false;
-              this.resetText = this.$i18n.t('m.Send_Password_Reset_Email');
+              this.resetText = this.$i18n.t('m.Send_Password_Reset_Msg');
               this.getCaptcha();
             }
           );
         }
       });
     },
+    handleResetByPhone() {
+      const contact = (this.formResetPassword.email || '').trim();
+      if (!/^1[3-9]\d{9}$/.test(contact)) {
+        mMessage.error(this.$i18n.t('m.Phone_Format_Error_China'));
+        return;
+      }
+      const smsCode = (this.formResetPassword.smsCode || '').trim();
+      if (!/^\d{6}$/.test(smsCode)) {
+        mMessage.error(this.$i18n.t('m.Code_Check_Length'));
+        return;
+      }
+      if (!this.formResetPassword.newPassword) {
+        mMessage.error(this.$i18n.t('m.Password_Check_Required'));
+        return;
+      }
+      if (this.formResetPassword.newPassword.length < 6 || this.formResetPassword.newPassword.length > 20) {
+        mMessage.error(this.$i18n.t('m.Password_Check_Between'));
+        return;
+      }
+      if (this.formResetPassword.newPassword !== this.formResetPassword.newPasswordAgain) {
+        mMessage.error(this.$i18n.t('m.Password_does_not_match'));
+        return;
+      }
+      this.btnResetByPhoneLoading = true;
+      api.resetPasswordByPhone({
+        phone: contact,
+        smsCode: smsCode,
+        password: this.formResetPassword.newPassword,
+      }).then(
+        () => {
+          this.btnResetByPhoneLoading = false;
+          mMessage.success(this.$i18n.t('m.Your_password_has_been_reset'));
+          this.switchMode('Login');
+        },
+        () => {
+          this.btnResetByPhoneLoading = false;
+        }
+      );
+    },
   },
   computed: {
     ...mapGetters(['resetTimeOut', 'modalStatus']),
+    isPhoneContact() {
+      return /^1[3-9]\d{9}$/.test((this.formResetPassword.email || '').trim());
+    },
     time: {
       get() {
         return this.resetTimeOut;

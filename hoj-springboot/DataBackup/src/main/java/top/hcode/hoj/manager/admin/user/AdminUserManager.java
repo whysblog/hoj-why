@@ -4,6 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.lang.Validator;
 import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -70,6 +71,7 @@ public class AdminUserManager {
         String uid = adminEditUserDto.getUid();
         String realname = adminEditUserDto.getRealname();
         String email = adminEditUserDto.getEmail();
+        String phone = adminEditUserDto.getPhone();
         String password = adminEditUserDto.getPassword();
         int type = adminEditUserDto.getType();
         int status = adminEditUserDto.getStatus();
@@ -106,11 +108,27 @@ public class AdminUserManager {
             }
         }
 
+        if (StrUtil.isBlank(phone)) {
+            phone = null;
+        } else {
+            phone = phone.trim();
+            if (!Validator.isMobile(phone)) {
+                throw new StatusFailException("手机号格式不正确");
+            }
+            QueryWrapper<UserInfo> phoneUserInfoQueryWrapper = new QueryWrapper<>();
+            phoneUserInfoQueryWrapper.select("uuid", "phone").eq("phone", phone);
+            UserInfo phoneUser = userInfoEntityService.getOne(phoneUserInfoQueryWrapper, false);
+            if (phoneUser != null && !Objects.equals(phoneUser.getUuid(), adminEditUserDto.getUid())) {
+                throw new StatusFailException("修改失败，手机号已被使用，请重新设置其他手机号！");
+            }
+        }
+
         UpdateWrapper<UserInfo> userInfoUpdateWrapper = new UpdateWrapper<>();
         userInfoUpdateWrapper.eq("uuid", uid)
                 .set("username", username)
                 .set("realname", realname)
                 .set("email", email)
+                .set("phone", phone)
                 .set(setNewPwd, "password", SecureUtil.md5(password))
                 .set("title_name", titleName)
                 .set("title_color", titleColor)

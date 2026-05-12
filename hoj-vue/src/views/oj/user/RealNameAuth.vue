@@ -26,6 +26,13 @@
               show-word-limit
             ></el-input>
           </el-form-item>
+          <el-form-item :label="$t('m.Phone')" prop="phone" required>
+            <el-input
+              v-model="realNameForm.phone"
+              :placeholder="$t('m.Please_Enter_Phone_China')"
+              maxlength="20"
+            ></el-input>
+          </el-form-item>
           <el-form-item>
             <el-button 
               type="primary" 
@@ -90,9 +97,9 @@ export default {
   methods: {
     // 验证手机号码格式
     validatePhoneNumber(rule, value, callback) {
-      // 如果没有输入手机号，直接通过验证（手机号现在是可选的）
+      // 强制实名时手机号必填
       if (!value || value.trim() === '') {
-        callback()
+        callback(new Error(this.$i18n.t('m.Phone_Required')))
         return
       }
       

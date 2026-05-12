@@ -23,11 +23,13 @@ import top.hcode.hoj.dao.user.UserRecordEntityService;
 import top.hcode.hoj.dao.user.UserRoleEntityService;
 import top.hcode.hoj.manager.email.EmailManager;
 import top.hcode.hoj.manager.msg.NoticeManager;
+import top.hcode.hoj.manager.sms.SmsManager;
 import top.hcode.hoj.pojo.bo.EmailRuleBO;
 import top.hcode.hoj.pojo.dto.ApplyResetPasswordDTO;
 import top.hcode.hoj.pojo.dto.LoginDTO;
 import top.hcode.hoj.pojo.dto.RegisterDTO;
 import top.hcode.hoj.pojo.dto.ResetPasswordDTO;
+import top.hcode.hoj.pojo.dto.ResetPasswordByPhoneDTO;
 import top.hcode.hoj.pojo.entity.user.*;
 import top.hcode.hoj.pojo.vo.RegisterCodeVO;
 import top.hcode.hoj.pojo.vo.UserInfoVO;
@@ -81,6 +83,9 @@ public class PassportManager {
 
     @Resource
     private NoticeManager noticeManager;
+
+    @Resource
+    private SmsManager smsManager;
 
     public UserInfoVO login(LoginDTO loginDto, HttpServletResponse response, HttpServletRequest request) throws StatusFailException {
         // 去掉账号密码首尾的空格
@@ -261,20 +266,12 @@ public class PassportManager {
 
         String captcha = applyResetPasswordDto.getCaptcha();
         String captchaKey = applyResetPasswordDto.getCaptchaKey();
-        String email = applyResetPasswordDto.getEmail();
+        String contact = applyResetPasswordDto.getEmail();
 
-        if (StrUtil.isBlank(captcha) || StrUtil.isBlank(email) || StrUtil.isBlank(captchaKey)) {
-            throw new StatusFailException("邮箱或验证码不能为空");
+        if (StrUtil.isBlank(captcha) || StrUtil.isBlank(contact) || StrUtil.isBlank(captchaKey)) {
+            throw new StatusFailException("邮箱/手机号或验证码不能为空");
         }
-
-        if (!emailManager.isOk()) {
-            throw new StatusFailException("对不起！本站邮箱系统未配置，暂不支持重置密码！");
-        }
-
-        String lockKey = Constants.Email.RESET_EMAIL_LOCK + email;
-        if (redisUtils.hasKey(lockKey)) {
-            throw new StatusFailException("对不起，您的操作频率过快，请在" + redisUtils.getExpire(lockKey) + "秒后再次发送重置邮件！");
-        }
+        contact = contact.trim();
 
         // 获取redis中的验证码
         String redisCode = (String) redisUtils.get(captchaKey);
@@ -282,17 +279,45 @@ public class PassportManager {
             throw new StatusFailException("验证码不正确");
         }
 
+        boolean isEmail = Validator.isEmail(contact);
+        boolean isPhone = Validator.isMobile(contact);
+        String lockKey;
         QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
-        userInfoQueryWrapper.eq("email", email.trim());
-        UserInfo userInfo = userInfoEntityService.getOne(userInfoQueryWrapper, false);
-        if (userInfo == null) {
-            throw new StatusFailException("对不起，该邮箱无该用户，请重新检查！");
+        if (isEmail) {
+            if (!emailManager.isOk()) {
+                throw new StatusFailException("对不起！本站邮箱系统未配置，暂不支持邮箱重置密码！");
+            }
+            lockKey = Constants.Email.RESET_EMAIL_LOCK + contact;
+            userInfoQueryWrapper.eq("email", contact);
+        } else if (isPhone) {
+            if (!smsManager.isOk()) {
+                throw new StatusFailException("对不起！本站短信系统未配置，暂不支持手机号重置密码！");
+            }
+            lockKey = Constants.Email.RESET_SMS_LOCK + contact;
+            userInfoQueryWrapper.eq("phone", contact);
+        } else {
+            throw new StatusFailException("请输入正确的邮箱或手机号");
         }
 
-        String code = IdUtil.simpleUUID().substring(0, 21); // 随机生成20位数字与字母的组合
-        redisUtils.set(Constants.Email.RESET_PASSWORD_KEY_PREFIX.getValue() + userInfo.getUsername(), code, 10 * 60);//默认链接有效10分钟
-        // 发送邮件
-        emailManager.sendResetPassword(userInfo.getUsername(), code, email.trim());
+        if (redisUtils.hasKey(lockKey)) {
+            throw new StatusFailException("对不起，您的操作频率过快，请在" + redisUtils.getExpire(lockKey) + "秒后再次发送！");
+        }
+
+        UserInfo userInfo = userInfoEntityService.getOne(userInfoQueryWrapper, false);
+        if (userInfo == null) {
+            throw new StatusFailException("对不起，该邮箱/手机号无该用户，请重新检查！");
+        }
+
+        if (isEmail) {
+            String code = IdUtil.simpleUUID().substring(0, 21); // 随机生成20位数字与字母的组合
+            redisUtils.set(Constants.Email.RESET_PASSWORD_KEY_PREFIX.getValue() + userInfo.getUsername(), code, 10 * 60);//默认链接有效10分钟
+            emailManager.sendResetPassword(userInfo.getUsername(), code, contact);
+        } else {
+            // 短信验证码：6位数字，有效期120秒，且仅当手机号存在用户才发送（上面已校验）
+            String smsCode = RandomUtil.randomNumbers(6);
+            redisUtils.set(Constants.Email.RESET_SMS_CODE_PREFIX.getValue() + contact, smsCode, 120);
+            smsManager.sendResetPassword(userInfo.getUsername(), smsCode, contact);
+        }
         redisUtils.set(lockKey, 0, 90);
     }
 
@@ -322,6 +347,49 @@ public class PassportManager {
         UpdateWrapper<UserInfo> userInfoUpdateWrapper = new UpdateWrapper<>();
         userInfoUpdateWrapper.eq("username", username).set("password", SecureUtil.md5(password));
         boolean isOk = userInfoEntityService.update(userInfoUpdateWrapper);
+        if (!isOk) {
+            throw new StatusFailException("重置密码失败");
+        }
+        redisUtils.del(codeKey);
+    }
+
+    public void resetPasswordByPhone(ResetPasswordByPhoneDTO dto) throws StatusFailException {
+        String phone = dto.getPhone();
+        String password = dto.getPassword();
+        String smsCode = dto.getSmsCode();
+
+        if (StrUtil.isBlank(phone) || StrUtil.isBlank(password) || StrUtil.isBlank(smsCode)) {
+            throw new StatusFailException("手机号、新密码或短信验证码不能为空");
+        }
+        phone = phone.trim();
+        smsCode = smsCode.trim();
+
+        if (!Validator.isMobile(phone)) {
+            throw new StatusFailException("手机号格式不正确");
+        }
+        if (password.length() < 6 || password.length() > 20) {
+            throw new StatusFailException("新密码长度应该为6~20位！");
+        }
+
+        // 必须存在该手机号用户
+        UserInfo userInfo = userInfoEntityService.getOne(new QueryWrapper<UserInfo>().eq("phone", phone), false);
+        if (userInfo == null) {
+            throw new StatusFailException("对不起，该手机号无该用户，请重新检查！");
+        }
+
+        String codeKey = Constants.Email.RESET_SMS_CODE_PREFIX.getValue() + phone;
+        if (!redisUtils.hasKey(codeKey)) {
+            throw new StatusFailException("短信验证码不存在或已过期，请重新发送");
+        }
+        if (!Objects.equals(redisUtils.get(codeKey), smsCode)) {
+            throw new StatusFailException("短信验证码不正确");
+        }
+
+        boolean isOk = userInfoEntityService.update(
+                new UpdateWrapper<UserInfo>()
+                        .eq("uuid", userInfo.getUuid())
+                        .set("password", SecureUtil.md5(password))
+        );
         if (!isOk) {
             throw new StatusFailException("重置密码失败");
         }

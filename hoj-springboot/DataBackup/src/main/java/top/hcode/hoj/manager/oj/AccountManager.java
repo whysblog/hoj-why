@@ -3,6 +3,7 @@ package top.hcode.hoj.manager.oj;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Validator;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -497,6 +498,24 @@ public class AccountManager {
         commonValidator.validateContentLength(userInfoVo.getNumber(), "学号", 200);
         commonValidator.validateContentLength(userInfoVo.getCfUsername(), "Codeforces用户名", 255);
 
+        String phone = userInfoVo.getPhone();
+        if (StrUtil.isNotBlank(phone)) {
+            phone = phone.trim();
+            if (!Validator.isMobile(phone)) {
+                throw new StatusFailException("手机号格式不正确");
+            }
+            // 手机号唯一性校验（避免被别人占用）
+            UserInfo phoneUser = userInfoEntityService.getOne(
+                    new QueryWrapper<UserInfo>().select("uuid", "phone").eq("phone", phone),
+                    false
+            );
+            if (phoneUser != null && !Objects.equals(phoneUser.getUuid(), userRolesVo.getUid())) {
+                throw new StatusFailException("该手机号已被他人使用，请重新设置！");
+            }
+        } else {
+            phone = null;
+        }
+
         UpdateWrapper<UserInfo> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("uuid", userRolesVo.getUid())
                 .set("cf_username", userInfoVo.getCfUsername())
@@ -507,7 +526,8 @@ public class AccountManager {
                 .set("gender", userInfoVo.getGender())
                 .set("github", userInfoVo.getGithub())
                 .set("school", userInfoVo.getSchool())
-                .set("number", userInfoVo.getNumber());
+                .set("number", userInfoVo.getNumber())
+                .set("phone", phone);
 
         boolean isOk = userInfoEntityService.update(updateWrapper);
 

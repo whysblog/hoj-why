@@ -116,11 +116,18 @@ export const m = {
 
   // /components/oj/common/ResetPassword.vue 重置密码弹窗
   // /views/oj/user/SetNeWPassword.vue 设置新密码页
-  Reset_Password_Email: 'Please Enter Your Email',
+  Reset_Password_Email: 'Please enter your email or phone',
   Reset_Password_Captcha: 'Please Enter the captcha',
   Send_Password_Reset_Email: 'Send Password Reset Email',
+  Send_Password_Reset_Msg: 'Send Password Reset Message',
   Waiting_Can_Resend_Email: 'resend the Reset Email...',
+  Waiting_Can_Resend_Reset_Msg: 'resend the Reset Message...',
   ResetPwd_Send_Email_Msg: 'Reset password email has been sent to the designated mailbox! If you haven\'t received the email for a long time, please check whether your email is accurate!',
+  ResetPwd_Send_Contact_Msg: 'Reset message has been sent. If you do not receive it for a long time, please check your email or phone.',
+  Reset_Password_Contact_Required: 'Email or phone is required.',
+  Reset_Password_Contact_Format: 'Please enter a valid email or phone.',
+  Reset_Password_SMS_Code: 'Please enter SMS verification code',
+  Reset_Password_By_Phone: 'Reset Password by SMS Code',
   Remember_Passowrd_To_Login: 'Remember password? To login!',
   Set_New_Password: 'Set New Password',
   Set_New_Password_Msg: 'Please Enter New Password',

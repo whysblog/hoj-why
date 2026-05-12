@@ -265,6 +265,8 @@ public class Constants {
         CHANGE_EMAIL_KEY_PREFIX("change-email:"),
         RESET_PASSWORD_KEY_PREFIX("reset-password:"),
         RESET_EMAIL_LOCK("reset-email-lock:"),
+        RESET_SMS_LOCK("reset-sms-lock:"),
+        RESET_SMS_CODE_PREFIX("reset-sms-code:"),
         REGISTER_EMAIL_LOCK("register-email-lock:"),
         CHANGE_EMAIL_LOCK("change-email-lock:");
 
