@@ -462,11 +462,16 @@ export default {
           }
         }
         
+        // 训练详情接口中的 description 在部分场景可能是渲染后的 HTML，
+        // 其中附件链接可能包含时效参数，直接复用会导致复制后 PDF 无法预览。
+        // 因此优先使用列表中的原始 description（通常为 markdown 源文本）。
+        const copiedDescription = sourceTraining.description || trainingDetail.description || '';
+
         const newTrainingData = {
           training: {
             rank: sourceTraining.rank || 1000,
             title: sourceTraining.title + ' (副本)',
-            description: trainingDetail.description || '',
+            description: copiedDescription,
             privatePwd: sourceAuth === 'Private' ? sourcePrivatePwd : '', // 保持私有密码
             auth: sourceAuth, // 保持原课程的权限类型
             gid: this.groupId, // 团队ID应该放在training对象内部
@@ -529,42 +534,62 @@ export default {
             // 等待一小段时间让服务器完成创建
             await new Promise(resolve => setTimeout(resolve, 1500));
             
-            // 查询团队训练列表，获取最新创建的课程
-            const trainingListRes = await api.getGroupTrainingList(1, 10, this.groupId); // 获取前10个课程
-            console.log('查询团队训练列表响应:', trainingListRes);
-            
-            if (trainingListRes.data.data && trainingListRes.data.data.records && trainingListRes.data.data.records.length > 0) {
-              const trainingRecords = trainingListRes.data.data.records;
-              console.log('团队训练列表:', trainingRecords);
-              
-              // 查找包含"(副本)"的课程，匹配原课程标题
-              const originalTitle = sourceTraining.title.replace(' (副本)', '');
-              const expectedCopyTitle = sourceTraining.title + ' (副本)';
-              
-              // 先尝试完全匹配
-              let matchedTraining = trainingRecords.find(training => 
-                training.title === expectedCopyTitle
-              );
-              
-              // 如果没有完全匹配，尝试包含匹配
-              if (!matchedTraining) {
-                matchedTraining = trainingRecords.find(training => 
-                  training.title.includes('(副本)') && 
-                  training.title.includes(originalTitle)
-                );
+            // 查询团队训练列表，获取新创建的课程（多页查询，避免只查首页漏掉）
+            const normalizeTitle = (title) => {
+              if (!title) {
+                return '';
               }
-              
-              if (matchedTraining) {
+              // 去除半角/全角空格及其他空白字符，避免标题空格差异导致匹配失败
+              return title.replace(/[\s\u3000]+/g, '');
+            };
+
+            const originalTitle = sourceTraining.title.replace(' (副本)', '');
+            const expectedCopyTitle = sourceTraining.title + ' (副本)';
+            const normalizedOriginalTitle = normalizeTitle(originalTitle);
+            const normalizedExpectedCopyTitle = normalizeTitle(expectedCopyTitle);
+
+            const queryPageSize = 50;
+            const maxQueryPages = 5;
+            let trainingRecords = [];
+
+            for (let page = 1; page <= maxQueryPages; page++) {
+              const trainingListRes = await api.getGroupTrainingList(page, queryPageSize, this.groupId);
+              console.log(`查询团队训练列表响应（第${page}页）:`, trainingListRes);
+              const currentRecords = trainingListRes?.data?.data?.records || [];
+              if (currentRecords.length === 0) {
+                break;
+              }
+              trainingRecords = trainingRecords.concat(currentRecords);
+
+              if (currentRecords.length < queryPageSize) {
+                break;
+              }
+            }
+
+            if (trainingRecords.length > 0) {
+              console.log('团队训练列表（多页汇总）:', trainingRecords);
+
+              const matchedCandidates = trainingRecords.filter((training) => {
+                const normalizedTitle = normalizeTitle(training.title);
+                return normalizedTitle === normalizedExpectedCopyTitle ||
+                  (normalizedTitle.includes('(副本)') && normalizedTitle.includes(normalizedOriginalTitle));
+              });
+
+              if (matchedCandidates.length > 0) {
+                // 同名副本可能存在多个，优先使用ID最大的（通常最新创建）
+                const matchedTraining = matchedCandidates.reduce((latest, current) => {
+                  return current.id > latest.id ? current : latest;
+                });
                 newTrainingId = matchedTraining.id;
                 console.log('通过查询获取到新创建的课程ID:', newTrainingId);
                 console.log('匹配的课程详情:', matchedTraining);
               } else {
                 console.warn('无法找到匹配的课程，显示所有副本课程供调试');
-                const allCopyTrainings = trainingRecords.filter(t => t.title.includes('(副本)'));
+                const allCopyTrainings = trainingRecords.filter(t => normalizeTitle(t.title).includes('(副本)'));
                 console.log('所有副本课程:', allCopyTrainings);
                 console.log('期望的副本标题:', expectedCopyTitle);
                 console.log('原始标题:', originalTitle);
-                
+
                 // 如果找不到匹配的课程，跳过题目复制
                 console.warn('无法找到匹配的课程，跳过题目复制');
                 mMessage.warning(`训练课程"${sourceTraining.title}"创建成功，但无法复制题目（无法获取课程ID）`);
