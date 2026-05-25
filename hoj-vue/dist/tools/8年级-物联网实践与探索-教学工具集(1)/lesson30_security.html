@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第30课 · 系统安全需升级 — 漏洞修复与 OTA 升级</title>
+<style>
+  :root {
+    --bg: #fef2f2;
+    --bg-2: #fee2e2;
+    --ink: #450a0a;
+    --ink-soft: #7a4a4a;
+    --primary: #dc2626;
+    --primary-2: #ef4444;
+    --accent: #f97316;
+    --green: #10b981;
+    --warn: #f59e0b;
+    --line: #fecaca;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(220,38,38,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* OTA 模拟器 */
+  .ota-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .device-mock {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-radius: 12px; padding: 24px; max-width: 420px; margin: 0 auto;
+    text-align: center;
+  }
+  .device-screen {
+    background: #0f0a0a; color: #6ee7b7; padding: 20px;
+    border-radius: 8px; font-family: "JetBrains Mono",monospace;
+    min-height: 200px; text-align: left; font-size: 13px;
+    line-height: 1.8;
+  }
+  .device-screen h4 { color: #fbbf24; margin-bottom: 10px; font-size: 14px; font-family: "PingFang SC",sans-serif; }
+  .progress-bar {
+    width: 100%; height: 16px; background: rgba(255,255,255,.1); border-radius: 8px;
+    overflow: hidden; margin: 12px 0;
+  }
+  .progress-bar > div {
+    height: 100%; background: linear-gradient(90deg, #10b981, #34d399);
+    width: 0%; transition: width .3s;
+    text-align: center; color: #fff; font-size: 10px; line-height: 16px; font-weight: 700;
+  }
+  .ota-controls {
+    margin-top: 20px; display: flex; gap: 10px; justify-content: center;
+  }
+  .ota-btn {
+    padding: 12px 24px; background: var(--primary); color: #fff;
+    border: none; border-radius: 6px; cursor: pointer; font-size: 13px;
+    font-family: inherit; font-weight: 700;
+  }
+  .ota-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ota-btn.secondary { background: var(--bg-2); color: var(--ink); border: 1.5px solid var(--line); }
+
+  /* 升级原理 */
+  .principle { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .pr-flow {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 8px;
+    align-items: center; margin: 14px 0;
+  }
+  .pr-step {
+    background: var(--bg-2); padding: 14px 10px; border-radius: 8px; text-align: center;
+    border-top: 3px solid var(--primary);
+  }
+  .pr-step .ic { font-size: 26px; }
+  .pr-step h4 { font-size: 12px; margin: 4px 0 2px; }
+  .pr-step p { font-size: 10px; color: var(--ink-soft); line-height: 1.5; }
+  .pr-arrow { color: var(--primary); font-weight: 700; font-size: 16px; text-align: center; }
+
+  /* 安全策略 */
+  .practices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .practice {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+  }
+  .practice h4 { font-size: 14px; margin-bottom: 6px; color: var(--primary); }
+  .practice h4 .ic { margin-right: 6px; }
+  .practice p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .practice .example {
+    margin-top: 8px; padding: 8px 10px; background: var(--bg-2); border-radius: 4px;
+    font-size: 11px; font-family: "JetBrains Mono",monospace; color: var(--ink);
+  }
+
+  /* 漏洞应对流程 */
+  .resp-flow {
+    background: var(--card); padding: 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .resp-step {
+    display: grid; grid-template-columns: 50px 1fr; gap: 14px; padding: 12px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .resp-step:last-child { border: none; }
+  .resp-step .step-no {
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; background: var(--primary); color: #fff;
+    border-radius: 50%; font-weight: 700;
+  }
+  .resp-step h4 { font-size: 14px; margin-bottom: 3px; }
+  .resp-step p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .resp-step .time {
+    display: inline-block; padding: 2px 8px; background: var(--bg-2); border-radius: 99px;
+    font-size: 10px; color: var(--primary); margin-left: 6px;
+  }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .pr-flow { grid-template-columns: 1fr; }
+    .pr-arrow { display: none; }
+    .practices-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 30 课</span>系统安全需升级</h1>
+  <p class="lead">物联设备一旦投入使用，<strong>就要持续防御不断出现的新威胁</strong>。本课讲解物联设备如何通过<strong>OTA 远程升级</strong>修复漏洞、对抗新型攻击；以及厂商应对安全事件的标准流程。</p>
+</header>
+
+<main>
+
+  <!-- OTA 升级模拟器 -->
+  <section class="section">
+    <div class="section-title">一、OTA 远程升级模拟器</div>
+    <div class="ota-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px;"><strong>OTA（Over-The-Air，空中下载技术）</strong>让物联设备能像手机一样通过网络<strong>远程升级固件</strong>。这是修复安全漏洞、新增功能的关键手段。点击"检测更新"模拟整个升级过程：</p>
+      <div class="device-mock">
+        <div style="font-size:14px;margin-bottom:12px;color:var(--ink);"><strong>🚪 智能门锁 - 序列号 SLA-2024-001</strong></div>
+        <div class="device-screen" id="otaScreen">
+          <h4>系统状态</h4>
+          <div id="screenLine1">📱 当前固件版本：v1.0.3</div>
+          <div id="screenLine2">📅 最后更新：2024-01-15</div>
+          <div id="screenLine3">⚙ 状态：✓ 正常运行</div>
+          <div id="screenLine4" style="color:#fbbf24;margin-top:10px;">点击下方按钮检查是否有新版本...</div>
+        </div>
+        <div class="ota-controls">
+          <button class="ota-btn" id="checkBtn" onclick="checkUpdate()">🔍 检测更新</button>
+          <button class="ota-btn secondary" onclick="resetOta()">↺ 重置</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OTA 工作原理 -->
+  <section class="section">
+    <div class="section-title">二、OTA 升级工作原理</div>
+    <div class="principle">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">一次完整的 OTA 升级需要经过多个安全检查步骤：</p>
+      <div class="pr-flow">
+        <div class="pr-step"><span class="ic">🔍</span><h4>① 检测版本</h4><p>查询云端最新版本号</p></div>
+        <div class="pr-arrow">→</div>
+        <div class="pr-step"><span class="ic">📥</span><h4>② 下载固件</h4><p>HTTPS 加密传输</p></div>
+        <div class="pr-arrow">→</div>
+        <div class="pr-step"><span class="ic">✓</span><h4>③ 验证签名</h4><p>核对厂商数字签名</p></div>
+        <div class="pr-arrow">→</div>
+        <div class="pr-step"><span class="ic">⚙</span><h4>④ 写入升级</h4><p>断电保护双分区</p></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:14px;">
+        💡 <strong>关键安全设计：</strong>
+      </p>
+      <ul style="font-size:13px;color:var(--ink-soft);line-height:1.9;padding-left:22px;margin-top:6px;">
+        <li><strong>数字签名校验</strong>—— 只接受用厂商私钥签名的固件，防止恶意固件被植入</li>
+        <li><strong>双分区设计</strong>—— 升级失败时回滚到旧版本，避免"砖机"</li>
+        <li><strong>断电保护</strong>—— 升级过程中断电不会损坏设备</li>
+        <li><strong>HTTPS 加密下载</strong>—— 防止固件在传输过程中被篡改</li>
+        <li><strong>灰度发布</strong>—— 先推送给 1% 用户，确认无问题后逐步全量</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 维护安全的实践 -->
+  <section class="section">
+    <div class="section-title">三、保持物联设备安全的实践</div>
+    <div class="practices-grid">
+      <div class="practice">
+        <h4><span class="ic">🔄</span>定期更新固件</h4>
+        <p>开启自动更新，或定期检查是否有新版本。每个补丁都可能修复重要安全漏洞。</p>
+        <div class="example">✓ 设置 > 系统更新 > 自动检查更新</div>
+      </div>
+      <div class="practice">
+        <h4><span class="ic">🔐</span>更改默认密码</h4>
+        <p>买回家第一件事就是<strong>修改默认密码</strong>。"admin/admin" 是黑客最先尝试的组合。</p>
+        <div class="example">默认 admin/admin → 强密码 X#a$2024_!</div>
+      </div>
+      <div class="practice">
+        <h4><span class="ic">📶</span>分网隔离</h4>
+        <p>给物联设备使用<strong>独立的 Wi-Fi 网络</strong>，避免被攻击的摄像头入侵手机和电脑。</p>
+        <div class="example">主网络: 个人设备 | 访客网络: IoT 设备</div>
+      </div>
+      <div class="practice">
+        <h4><span class="ic">🚫</span>关闭无用功能</h4>
+        <p>不用的远程访问、UPnP、Telnet 等服务<strong>都要关闭</strong>，减少攻击面。</p>
+        <div class="example">高级设置 > 关闭远程管理</div>
+      </div>
+      <div class="practice">
+        <h4><span class="ic">📜</span>查阅安全公告</h4>
+        <p>关注厂商发布的<strong>安全公告（Security Advisory）</strong>，及时了解新漏洞和应对建议。</p>
+        <div class="example">订阅厂商安全邮件列表</div>
+      </div>
+      <div class="practice">
+        <h4><span class="ic">🗑</span>淘汰老旧设备</h4>
+        <p>厂商不再提供安全更新的设备 = 永远敞开的后门，应及时<strong>停用</strong>。</p>
+        <div class="example">EOL（End of Life）设备需更换</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 厂商应对流程 -->
+  <section class="section">
+    <div class="section-title">四、厂商发现漏洞后的标准应对流程</div>
+    <div class="resp-flow">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">当厂商收到漏洞报告（或自己发现漏洞）时，标准应对流程：</p>
+      <div class="resp-step">
+        <div class="step-no">1</div>
+        <div>
+          <h4>漏洞接收与确认<span class="time">⏱ 0-24 小时</span></h4>
+          <p>专门的安全应急响应中心（PSIRT）接收报告，分配编号（CVE-ID），评估严重程度（CVSS 评分）。</p>
+        </div>
+      </div>
+      <div class="resp-step">
+        <div class="step-no">2</div>
+        <div>
+          <h4>影响范围调查<span class="time">⏱ 1-7 天</span></h4>
+          <p>确认哪些产品、哪些版本、哪些用户受影响。这一步决定补丁的优先级。</p>
+        </div>
+      </div>
+      <div class="resp-step">
+        <div class="step-no">3</div>
+        <div>
+          <h4>开发补丁<span class="time">⏱ 7-30 天</span></h4>
+          <p>工程师定位漏洞代码，编写修复程序。同时设计回归测试，保证修复不影响正常功能。</p>
+        </div>
+      </div>
+      <div class="resp-step">
+        <div class="step-no">4</div>
+        <div>
+          <h4>内部测试<span class="time">⏱ 1-7 天</span></h4>
+          <p>QA 团队验证补丁有效性和兼容性。安全团队再次检查是否引入新漏洞。</p>
+        </div>
+      </div>
+      <div class="resp-step">
+        <div class="step-no">5</div>
+        <div>
+          <h4>灰度发布<span class="time">⏱ 1-3 天</span></h4>
+          <p>先推送给少量用户（如 1%-10%），监控异常率。确认稳定后逐步扩大范围。</p>
+        </div>
+      </div>
+      <div class="resp-step">
+        <div class="step-no">6</div>
+        <div>
+          <h4>全量推送 + 公告<span class="time">⏱ 同步</span></h4>
+          <p>向所有用户推送补丁，同时发布安全公告说明漏洞影响和修复方法。</p>
+        </div>
+      </div>
+      <div class="resp-step">
+        <div class="step-no">7</div>
+        <div>
+          <h4>事后复盘<span class="time">⏱ 完成后</span></h4>
+          <p>分析漏洞产生原因，改进开发流程和代码审查机制，避免类似问题再出现。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 30 课配套交互工具</footer>
+
+<script>
+var step = 0;
+var stageTimer = null;
+
+function checkUpdate() {
+  resetOta();
+  document.getElementById('checkBtn').disabled = true;
+  var screen = document.getElementById('otaScreen');
+
+  // Step 1: 检测
+  screen.innerHTML = '<h4>系统状态</h4>' +
+    '<div>📱 当前版本：v1.0.3</div>' +
+    '<div style="color:#fbbf24;margin-top:8px;">🔍 连接更新服务器...</div>';
+
+  stageTimer = setTimeout(function () {
+    // Step 2: 发现新版本
+    screen.innerHTML = '<h4>发现新版本</h4>' +
+      '<div>📱 当前：v1.0.3</div>' +
+      '<div style="color:#6ee7b7;">🆕 最新：v1.1.0</div>' +
+      '<div style="margin-top:8px;color:#fbbf24;">📋 更新内容：</div>' +
+      '<div>　 • 修复 CVE-2024-1234 安全漏洞</div>' +
+      '<div>　 • 增强 OTA 升级签名校验</div>' +
+      '<div>　 • 优化电池管理</div>' +
+      '<div style="margin-top:8px;color:#a78bfa;">📦 大小：2.4 MB · 预计 30 秒完成</div>';
+
+    stageTimer = setTimeout(function () {
+      // Step 3: 下载
+      screen.innerHTML = '<h4>下载中...</h4>' +
+        '<div>📡 HTTPS 加密传输</div>' +
+        '<div class="progress-bar"><div id="dlProgress" style="width:0%;">0%</div></div>' +
+        '<div style="color:#a78bfa;font-size:11px;">从 ota.example.com 下载...</div>';
+      animateProgress('dlProgress', 0, 100, 1500, function () {
+        // Step 4: 验证签名
+        screen.innerHTML = '<h4>验证签名</h4>' +
+          '<div>🔐 校验厂商数字签名...</div>' +
+          '<div style="margin-top:6px;">SHA256: <span style="color:#a78bfa">a7b3c9f2...</span></div>' +
+          '<div style="color:#6ee7b7;margin-top:6px;">✓ 签名验证通过！固件可信。</div>';
+
+        stageTimer = setTimeout(function () {
+          // Step 5: 写入
+          screen.innerHTML = '<h4>写入升级</h4>' +
+            '<div>⚠ 升级中请勿断电！</div>' +
+            '<div class="progress-bar"><div id="wrProgress" style="width:0%;">0%</div></div>' +
+            '<div style="color:#a78bfa;font-size:11px;">写入备份分区 B...</div>';
+          animateProgress('wrProgress', 0, 100, 2000, function () {
+            // Step 6: 完成
+            screen.innerHTML = '<h4>升级完成！</h4>' +
+              '<div style="color:#6ee7b7;">✓ 新版本 v1.1.0 已激活</div>' +
+              '<div>📅 升级时间：' + new Date().toLocaleString() + '</div>' +
+              '<div>⚙ 系统已重启</div>' +
+              '<div style="margin-top:10px;color:#fbbf24;">🛡 您的设备已受最新安全保护！</div>';
+            document.getElementById('checkBtn').disabled = false;
+          });
+        }, 800);
+      });
+    }, 1500);
+  }, 1200);
+}
+
+function animateProgress(id, from, to, duration, done) {
+  var start = Date.now();
+  var timer = setInterval(function () {
+    var elapsed = Date.now() - start;
+    var p = Math.min(1, elapsed / duration);
+    var pct = Math.floor(from + (to - from) * p);
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.width = pct + '%';
+      el.textContent = pct + '%';
+    }
+    if (p >= 1) {
+      clearInterval(timer);
+      if (done) setTimeout(done, 200);
+    }
+  }, 30);
+}
+
+function resetOta() {
+  if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
+  document.getElementById('checkBtn').disabled = false;
+  document.getElementById('otaScreen').innerHTML = '<h4>系统状态</h4>' +
+    '<div>📱 当前固件版本：v1.0.3</div>' +
+    '<div>📅 最后更新：2024-01-15</div>' +
+    '<div>⚙ 状态：✓ 正常运行</div>' +
+    '<div style="color:#fbbf24;margin-top:10px;">点击下方按钮检查是否有新版本...</div>';
+}
+
+window.checkUpdate = checkUpdate;
+window.resetOta = resetOta;
+</script>
+</body>
+</html>

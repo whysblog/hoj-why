@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动作编码推箱子 · 数据与编码</title>
+<style>
+:root{
+  --c-cyan:#00acc1;
+  --c-cyan-dark:#00838f;
+  --c-cyan-light:#e0f7fa;
+  --c-bg:#f4fbfc;
+  --c-text:#263238;
+  --c-muted:#607d8b;
+  --c-border:#b2ebf2;
+  --c-wall:#455a64;
+  --c-floor:#eceff1;
+  --c-box:#ff8a65;
+  --c-box-done:#66bb6a;
+  --c-target:#ffd54f;
+  --c-player:#26c6da;
+  --c-success:#66bb6a;
+  --c-error:#ef5350;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--c-bg);
+  color:var(--c-text);
+  min-height:100vh;
+  padding:20px;
+  line-height:1.6;
+}
+.container{max-width:1100px;margin:0 auto}
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--c-cyan-dark);text-decoration:none;
+  font-size:14px;margin-bottom:16px;
+  padding:6px 14px;background:#fff;border-radius:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+  transition:all .2s;
+}
+.back-link:hover{transform:translateX(-3px)}
+header{
+  background:linear-gradient(135deg,var(--c-cyan) 0%,var(--c-cyan-dark) 100%);
+  color:#fff;padding:30px 28px;border-radius:18px;
+  margin-bottom:22px;
+  box-shadow:0 8px 24px rgba(0,172,193,0.25);
+}
+.lesson-tag{
+  display:inline-block;background:rgba(255,255,255,0.25);
+  padding:4px 12px;border-radius:12px;
+  font-size:12px;margin-bottom:8px;
+}
+header h1{font-size:26px;margin-bottom:6px}
+header p{font-size:14px;opacity:0.92}
+.layout{
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:18px;
+}
+.card{
+  background:#fff;border-radius:14px;padding:22px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.06);
+  border:1px solid var(--c-border);
+}
+.card h2{
+  font-size:17px;color:var(--c-cyan-dark);
+  margin-bottom:14px;
+  padding-bottom:10px;
+  border-bottom:2px solid var(--c-cyan-light);
+  display:flex;align-items:center;gap:8px;
+}
+
+.game-area{
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--c-cyan-light);
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:14px;
+}
+#gameCanvas{
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  image-rendering:pixelated;
+}
+.game-info{
+  display:flex;justify-content:space-around;
+  width:100%;margin-top:14px;
+  flex-wrap:wrap;gap:10px;
+}
+.info-item{
+  background:#fff;padding:8px 14px;
+  border-radius:10px;font-size:13px;
+  border:1px solid var(--c-border);
+  min-width:90px;text-align:center;
+}
+.info-item .label{color:var(--c-muted);font-size:11px;display:block}
+.info-item .value{color:var(--c-cyan-dark);font-weight:bold;font-size:16px}
+
+.legend{
+  display:flex;gap:14px;flex-wrap:wrap;
+  font-size:12px;color:var(--c-muted);
+  margin-top:10px;
+}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-box{
+  width:14px;height:14px;border-radius:3px;
+  border:1px solid #ccc;
+}
+
+.code-table{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;margin-bottom:14px;
+}
+.code-cell{
+  background:var(--c-cyan-light);
+  border:2px solid var(--c-border);
+  border-radius:8px;padding:10px;
+  text-align:center;font-size:13px;
+}
+.code-cell .code{
+  font-size:20px;font-weight:bold;
+  color:var(--c-cyan-dark);
+  font-family:"Courier New",monospace;
+}
+.code-cell .arrow{font-size:20px;margin:0 4px}
+.code-cell .name{color:var(--c-muted);font-size:11px;margin-top:2px}
+
+.input-area{
+  margin-bottom:14px;
+}
+.input-area label{
+  display:block;font-size:13px;color:var(--c-muted);
+  margin-bottom:6px;
+}
+#codeInput{
+  width:100%;padding:10px;
+  border:2px solid var(--c-border);
+  border-radius:8px;font-size:18px;
+  font-family:"Courier New",monospace;
+  letter-spacing:3px;text-align:center;
+  background:#fff;color:var(--c-cyan-dark);
+}
+#codeInput:focus{outline:none;border-color:var(--c-cyan)}
+
+.btn-row{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.btn{
+  flex:1;min-width:80px;
+  padding:10px 14px;
+  border:none;border-radius:8px;
+  font-size:14px;font-weight:bold;
+  cursor:pointer;transition:all .2s;
+  font-family:inherit;
+}
+.btn-primary{
+  background:var(--c-cyan);color:#fff;
+}
+.btn-primary:hover{background:var(--c-cyan-dark);transform:translateY(-2px)}
+.btn-primary:disabled{background:#b0bec5;cursor:not-allowed;transform:none}
+.btn-secondary{
+  background:#fff;color:var(--c-cyan-dark);
+  border:2px solid var(--c-border);
+}
+.btn-secondary:hover{background:var(--c-cyan-light)}
+
+.steps-display{
+  background:var(--c-cyan-light);
+  border-radius:8px;
+  padding:10px;
+  min-height:50px;
+  font-family:"Courier New",monospace;
+  font-size:14px;
+  color:var(--c-cyan-dark);
+  word-break:break-all;
+  letter-spacing:2px;
+  text-align:center;
+}
+.step-current{
+  background:var(--c-cyan);color:#fff;
+  padding:2px 6px;border-radius:4px;
+  font-weight:bold;
+}
+
+.level-list{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.level-btn{
+  padding:10px;background:#fff;
+  border:2px solid var(--c-border);
+  border-radius:8px;cursor:pointer;
+  font-size:13px;text-align:center;
+  transition:all .2s;
+  font-family:inherit;
+  color:var(--c-text);
+}
+.level-btn:hover{background:var(--c-cyan-light);transform:translateY(-2px)}
+.level-btn.active{
+  background:var(--c-cyan);color:#fff;
+  border-color:var(--c-cyan);
+}
+.level-btn .lvl-name{font-weight:bold;display:block}
+.level-btn .lvl-tip{font-size:10px;opacity:0.7;margin-top:2px}
+
+.message{
+  padding:12px;border-radius:8px;
+  margin-top:10px;
+  text-align:center;font-size:14px;
+  font-weight:bold;
+  display:none;
+}
+.message.show{display:block;animation:fadeIn .3s}
+.message.success{background:#e8f5e9;color:var(--c-success);border:2px solid var(--c-success)}
+.message.error{background:#ffebee;color:var(--c-error);border:2px solid var(--c-error)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+
+.theory{
+  background:linear-gradient(135deg,#fff8e1 0%,#ffecb3 100%);
+  border-left:4px solid #ffa726;
+  padding:14px 18px;border-radius:8px;
+  margin-top:18px;font-size:13px;line-height:1.7;
+  color:#5d4037;
+}
+.theory h3{
+  color:#e65100;margin-bottom:6px;
+  font-size:14px;
+}
+
+@media (max-width:880px){
+  .layout{grid-template-columns:1fr}
+  .level-list{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header>
+    <span class="lesson-tag">第14课 · 用编码描述运动</span>
+    <h1>🎮 动作编码推箱子</h1>
+    <p>用简单的编码描述动作序列，让小人推箱子到目标位置！</p>
+  </header>
+
+  <div class="layout">
+    <div class="card">
+      <h2>🗺️ 游戏地图</h2>
+      <div class="game-area">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="game-info">
+          <div class="info-item">
+            <span class="label">关卡</span>
+            <span class="value" id="levelName">第1关</span>
+          </div>
+          <div class="info-item">
+            <span class="label">步数</span>
+            <span class="value" id="stepCount">0</span>
+          </div>
+          <div class="info-item">
+            <span class="label">状态</span>
+            <span class="value" id="gameStatus">等待</span>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-box" style="background:var(--c-player)"></span>小人</div>
+          <div class="legend-item"><span class="legend-box" style="background:var(--c-box)"></span>箱子</div>
+          <div class="legend-item"><span class="legend-box" style="background:var(--c-target)"></span>目标点</div>
+          <div class="legend-item"><span class="legend-box" style="background:var(--c-wall)"></span>墙</div>
+        </div>
+      </div>
+
+      <div class="theory">
+        <h3>💡 动作编码原理</h3>
+        我们把"上、下、左、右"四个动作分别用 <b>U、D、L、R</b> 来表示
+        （Up、Down、Left、Right 的首字母）。这样一长串动作就可以变成一段简短的代码！
+        计算机里的程序，本质上也是把复杂的任务，分解成一个个小动作，再用编码表示出来。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📝 编码控制</h2>
+
+      <div class="code-table">
+        <div class="code-cell">
+          <div><span class="code">U</span><span class="arrow">→</span>⬆️</div>
+          <div class="name">上 Up</div>
+        </div>
+        <div class="code-cell">
+          <div><span class="code">D</span><span class="arrow">→</span>⬇️</div>
+          <div class="name">下 Down</div>
+        </div>
+        <div class="code-cell">
+          <div><span class="code">L</span><span class="arrow">→</span>⬅️</div>
+          <div class="name">左 Left</div>
+        </div>
+        <div class="code-cell">
+          <div><span class="code">R</span><span class="arrow">→</span>➡️</div>
+          <div class="name">右 Right</div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <label>请输入动作编码（例如：RRUUL）</label>
+        <input type="text" id="codeInput" placeholder="UDLR..." maxlength="50">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">▶ 执行</button>
+        <button class="btn btn-secondary" id="resetBtn">↺ 重置</button>
+      </div>
+
+      <div class="input-area">
+        <label>执行进度</label>
+        <div class="steps-display" id="stepsDisplay">输入编码后点击"执行"</div>
+      </div>
+
+      <div class="message" id="message"></div>
+
+      <h2 style="margin-top:18px">🎯 选择关卡</h2>
+      <div class="level-list" id="levelList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 关卡数据：# = 墙, . = 空地, @ = 小人, $ = 箱子, * = 目标点, + = 小人在目标上
+const LEVELS = [
+  {
+    name:"第1关",
+    tip:"简单",
+    map:[
+      "######",
+      "#....#",
+      "#.@$.#",
+      "#...*#",
+      "#....#",
+      "######"
+    ],
+    hint:"提示：试试 RD"
+  },
+  {
+    name:"第2关",
+    tip:"入门",
+    map:[
+      "#######",
+      "#.....#",
+      "#.@$.*#",
+      "#.....#",
+      "#######"
+    ],
+    hint:"提示：箱子要被推到目标点"
+  },
+  {
+    name:"第3关",
+    tip:"转弯",
+    map:[
+      "#######",
+      "#.....#",
+      "#.@...#",
+      "#..$..#",
+      "#....*#",
+      "#######"
+    ],
+    hint:"提示：要绕到箱子上方"
+  },
+  {
+    name:"第4关",
+    tip:"多步",
+    map:[
+      "########",
+      "#......#",
+      "#.@....#",
+      "#.$....#",
+      "#......#",
+      "#.....*#",
+      "########"
+    ],
+    hint:"提示：把箱子推到右下角"
+  },
+  {
+    name:"第5关",
+    tip:"巧妙",
+    map:[
+      "########",
+      "#......#",
+      "#..#...#",
+      "#.@$..*#",
+      "#......#",
+      "#......#",
+      "########"
+    ],
+    hint:"提示：注意中间的墙"
+  },
+  {
+    name:"第6关",
+    tip:"挑战",
+    map:[
+      "#########",
+      "#.......#",
+      "#.@.....#",
+      "#...$...#",
+      "#.......#",
+      "#......*#",
+      "#########"
+    ],
+    hint:"提示：箱子要推到斜对角"
+  }
+];
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const codeInput = document.getElementById('codeInput');
+const runBtn = document.getElementById('runBtn');
+const resetBtn = document.getElementById('resetBtn');
+const stepsDisplay = document.getElementById('stepsDisplay');
+const messageEl = document.getElementById('message');
+const levelNameEl = document.getElementById('levelName');
+const stepCountEl = document.getElementById('stepCount');
+const gameStatusEl = document.getElementById('gameStatus');
+const levelListEl = document.getElementById('levelList');
+
+let currentLevel = 0;
+let gameState = null;
+let isRunning = false;
+let cellSize = 50;
+
+// 初始化关卡列表
+function initLevelList(){
+  levelListEl.innerHTML = '';
+  LEVELS.forEach((lvl, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'level-btn' + (idx === currentLevel ? ' active' : '');
+    btn.innerHTML = `<span class="lvl-name">${lvl.name}</span><span class="lvl-tip">${lvl.tip}</span>`;
+    btn.onclick = () => loadLevel(idx);
+    levelListEl.appendChild(btn);
+  });
+}
+
+// 加载关卡
+function loadLevel(idx){
+  currentLevel = idx;
+  const lvl = LEVELS[idx];
+  const grid = [];
+  let player = {x:0,y:0};
+  let boxes = [];
+  let targets = [];
+  
+  for(let y=0;y<lvl.map.length;y++){
+    const row = [];
+    for(let x=0;x<lvl.map[y].length;x++){
+      const c = lvl.map[y][x];
+      if(c === '#'){row.push('#')}
+      else{row.push('.')}
+      if(c === '@'){player = {x,y}}
+      if(c === '$'){boxes.push({x,y})}
+      if(c === '*'){targets.push({x,y})}
+    }
+    grid.push(row);
+  }
+  
+  gameState = {
+    grid,
+    player,
+    boxes,
+    targets,
+    steps: 0,
+    currentStep: 0,
+    code: ''
+  };
+  
+  // 自适应格子大小
+  const cols = grid[0].length;
+  const rows = grid.length;
+  const maxSize = 400;
+  cellSize = Math.floor(maxSize / Math.max(cols, rows));
+  canvas.width = cols * cellSize;
+  canvas.height = rows * cellSize;
+  
+  levelNameEl.textContent = lvl.name;
+  stepCountEl.textContent = '0';
+  gameStatusEl.textContent = '等待';
+  gameStatusEl.style.color = 'var(--c-cyan-dark)';
+  codeInput.value = '';
+  stepsDisplay.textContent = lvl.hint || '输入编码后点击"执行"';
+  hideMessage();
+  initLevelList();
+  draw();
+}
+
+// 绘制游戏
+function draw(){
+  if(!gameState) return;
+  const {grid, player, boxes, targets} = gameState;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for(let y=0;y<grid.length;y++){
+    for(let x=0;x<grid[y].length;x++){
+      const px = x * cellSize;
+      const py = y * cellSize;
+      
+      if(grid[y][x] === '#'){
+        ctx.fillStyle = '#455a64';
+        ctx.fillRect(px, py, cellSize, cellSize);
+        ctx.fillStyle = '#37474f';
+        ctx.fillRect(px+2, py+2, cellSize-4, cellSize-4);
+        ctx.strokeStyle = '#263238';
+        ctx.strokeRect(px, py, cellSize, cellSize);
+      } else {
+        ctx.fillStyle = '#eceff1';
+        ctx.fillRect(px, py, cellSize, cellSize);
+        ctx.strokeStyle = '#cfd8dc';
+        ctx.strokeRect(px, py, cellSize, cellSize);
+      }
+    }
+  }
+  
+  // 绘制目标点
+  targets.forEach(t => {
+    const px = t.x * cellSize;
+    const py = t.y * cellSize;
+    ctx.fillStyle = '#ffd54f';
+    ctx.beginPath();
+    ctx.arc(px + cellSize/2, py + cellSize/2, cellSize*0.18, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#f57f17';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+  
+  // 绘制箱子
+  boxes.forEach(b => {
+    const px = b.x * cellSize;
+    const py = b.y * cellSize;
+    const onTarget = targets.some(t => t.x === b.x && t.y === b.y);
+    ctx.fillStyle = onTarget ? '#66bb6a' : '#ff8a65';
+    ctx.fillRect(px+5, py+5, cellSize-10, cellSize-10);
+    ctx.strokeStyle = onTarget ? '#388e3c' : '#d84315';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px+5, py+5, cellSize-10, cellSize-10);
+    ctx.beginPath();
+    ctx.moveTo(px+5, py+5);
+    ctx.lineTo(px+cellSize-5, py+cellSize-5);
+    ctx.moveTo(px+cellSize-5, py+5);
+    ctx.lineTo(px+5, py+cellSize-5);
+    ctx.stroke();
+  });
+  
+  // 绘制小人
+  const px = player.x * cellSize;
+  const py = player.y * cellSize;
+  ctx.fillStyle = '#26c6da';
+  ctx.beginPath();
+  ctx.arc(px + cellSize/2, py + cellSize/2, cellSize*0.32, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#00838f';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // 眼睛
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(px + cellSize/2 - cellSize*0.1, py + cellSize/2 - cellSize*0.05, cellSize*0.06, 0, Math.PI*2);
+  ctx.arc(px + cellSize/2 + cellSize*0.1, py + cellSize/2 - cellSize*0.05, cellSize*0.06, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(px + cellSize/2 - cellSize*0.1, py + cellSize/2 - cellSize*0.05, cellSize*0.025, 0, Math.PI*2);
+  ctx.arc(px + cellSize/2 + cellSize*0.1, py + cellSize/2 - cellSize*0.05, cellSize*0.025, 0, Math.PI*2);
+  ctx.fill();
+}
+
+// 执行单个动作
+function tryMove(dir){
+  const {grid, player, boxes} = gameState;
+  let dx = 0, dy = 0;
+  if(dir === 'U') dy = -1;
+  else if(dir === 'D') dy = 1;
+  else if(dir === 'L') dx = -1;
+  else if(dir === 'R') dx = 1;
+  else return false;
+  
+  const nx = player.x + dx;
+  const ny = player.y + dy;
+  
+  // 检查是否撞墙
+  if(grid[ny] && grid[ny][nx] === '#') return false;
+  if(ny < 0 || ny >= grid.length || nx < 0 || nx >= grid[0].length) return false;
+  
+  // 检查是否有箱子
+  const boxIdx = boxes.findIndex(b => b.x === nx && b.y === ny);
+  if(boxIdx >= 0){
+    // 推箱子
+    const bnx = nx + dx;
+    const bny = ny + dy;
+    // 箱子不能撞墙
+    if(grid[bny] && grid[bny][bnx] === '#') return false;
+    if(bny < 0 || bny >= grid.length || bnx < 0 || bnx >= grid[0].length) return false;
+    // 箱子不能撞箱子
+    if(boxes.some(b => b.x === bnx && b.y === bny)) return false;
+    boxes[boxIdx].x = bnx;
+    boxes[boxIdx].y = bny;
+  }
+  
+  player.x = nx;
+  player.y = ny;
+  return true;
+}
+
+// 检查胜利
+function checkWin(){
+  const {boxes, targets} = gameState;
+  if(boxes.length !== targets.length) return false;
+  return boxes.every(b => targets.some(t => t.x === b.x && t.y === b.y));
+}
+
+// 显示编码进度
+function updateStepsDisplay(code, currentIdx){
+  if(!code){stepsDisplay.textContent = '输入编码后点击"执行"';return}
+  const html = code.split('').map((c, i) => {
+    if(i === currentIdx) return `<span class="step-current">${c}</span>`;
+    return c;
+  }).join('');
+  stepsDisplay.innerHTML = html;
+}
+
+// 执行编码
+async function runCode(){
+  if(isRunning) return;
+  const code = codeInput.value.toUpperCase().replace(/[^UDLR]/g, '');
+  if(!code){
+    showMessage('请输入动作编码！', 'error');
+    return;
+  }
+  codeInput.value = code;
+  
+  // 重置游戏状态
+  loadLevel(currentLevel);
+  isRunning = true;
+  runBtn.disabled = true;
+  hideMessage();
+  gameStatusEl.textContent = '执行中';
+  gameStatusEl.style.color = 'var(--c-cyan)';
+  
+  let stepNum = 0;
+  for(let i = 0; i < code.length; i++){
+    updateStepsDisplay(code, i);
+    const success = tryMove(code[i]);
+    if(success){
+      stepNum++;
+      stepCountEl.textContent = stepNum;
+    }
+    draw();
+    
+    if(checkWin()){
+      updateStepsDisplay(code, -1);
+      gameStatusEl.textContent = '🎉 成功';
+      gameStatusEl.style.color = 'var(--c-success)';
+      showMessage(`🎉 太棒了！用了 ${stepNum} 步完成关卡！`, 'success');
+      isRunning = false;
+      runBtn.disabled = false;
+      return;
+    }
+    
+    await sleep(300);
+  }
+  
+  updateStepsDisplay(code, -1);
+  if(!checkWin()){
+    gameStatusEl.textContent = '未完成';
+    gameStatusEl.style.color = 'var(--c-error)';
+    showMessage('编码执行完毕，但箱子还没到目标点。再想想吧！', 'error');
+  }
+  isRunning = false;
+  runBtn.disabled = false;
+}
+
+function sleep(ms){return new Promise(r => setTimeout(r, ms))}
+
+function showMessage(text, type){
+  messageEl.textContent = text;
+  messageEl.className = 'message show ' + type;
+}
+function hideMessage(){
+  messageEl.className = 'message';
+}
+
+runBtn.addEventListener('click', runCode);
+resetBtn.addEventListener('click', () => {
+  if(isRunning) return;
+  loadLevel(currentLevel);
+});
+
+// 输入时自动转大写
+codeInput.addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^UDLR]/g, '');
+});
+
+// 初始化
+loadLevel(0);
+</script>
+</body>
+</html>

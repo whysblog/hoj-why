@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电梯控制系统模拟器 · 第20-23课</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --bg: #eff6ff;
+    --card: #ffffff;
+    --text: #1e3a8a;
+    --muted: #64748b;
+    --border: #dbeafe;
+    --ok: #16a34a;
+    --warn: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .container { max-width: 1300px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  /* 电梯本体 */
+  .elevator-shaft {
+    background: white;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .floor-display {
+    background: #1e293b;
+    color: #f87171;
+    text-align: center;
+    padding: 8px;
+    font-family: "Courier New", monospace;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 2px solid #0f172a;
+    letter-spacing: 4px;
+  }
+  .floor-display .arrow { font-size: 14px; margin: 0 4px; }
+  .shaft {
+    position: relative;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    border-top: none;
+    height: 320px;
+    border-radius: 0 0 6px 6px;
+    overflow: hidden;
+  }
+  .floor-marker {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: #cbd5e1;
+    border-bottom: 1px dashed #cbd5e1;
+  }
+  .floor-marker .label {
+    position: absolute;
+    left: 4px;
+    top: -10px;
+    font-size: 11px;
+    color: var(--muted);
+    background: #f1f5f9;
+    padding: 0 4px;
+  }
+  .car {
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    height: 60px;
+    background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+    border: 2px solid #475569;
+    border-radius: 4px;
+    transition: bottom 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .car-doors {
+    position: absolute;
+    top: 4px; bottom: 4px;
+    left: 4px; right: 4px;
+    background: #475569;
+    border-radius: 2px;
+    display: flex;
+  }
+  .door {
+    flex: 1;
+    background: linear-gradient(180deg, #64748b, #475569);
+    border-right: 1px solid #1e293b;
+    transition: transform 0.6s ease-in-out;
+  }
+  .door:last-child { border-right: none; }
+  .car.door-open .door:first-child { transform: translateX(-100%); }
+  .car.door-open .door:last-child { transform: translateX(100%); }
+  .car-passengers {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    z-index: 0;
+    letter-spacing: 2px;
+  }
+  .alarm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(239, 68, 68, 0);
+    pointer-events: none;
+    transition: background 0.3s;
+    border-radius: 4px;
+  }
+  .car.alarm .alarm-overlay {
+    animation: alarm-flash 0.6s infinite alternate;
+  }
+  @keyframes alarm-flash {
+    from { background: rgba(239, 68, 68, 0); }
+    to { background: rgba(239, 68, 68, 0.4); }
+  }
+
+  .info-bar {
+    margin-top: 12px;
+    background: #f8fafc;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    border-left: 3px solid var(--primary);
+  }
+  .info-bar .key { color: var(--text); font-weight: 600; }
+
+  /* 控制台 */
+  .console {
+    background: white;
+    border-radius: 14px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .scenario-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .scenario-tabs button {
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    background: white;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .scenario-tabs button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .scenario-tabs button:hover:not(.active) { background: #f1f5f9; }
+
+  .scenario-panel { display: none; }
+  .scenario-panel.active { display: block; }
+
+  .scenario-title {
+    font-size: 17px;
+    margin-bottom: 6px;
+    color: var(--primary-dark);
+  }
+  .scenario-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.7;
+  }
+  .scenario-formula {
+    background: #eff6ff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-family: Georgia, serif;
+    font-size: 16px;
+    color: var(--primary-dark);
+    border-left: 3px solid var(--primary);
+  }
+  .scenario-formula .var { color: #0891b2; font-weight: bold; }
+  .scenario-formula .op { color: #7c3aed; padding: 0 6px; font-weight: bold; }
+
+  .input-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .input-cards.single { grid-template-columns: 1fr; }
+  .input-cards.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .ic {
+    background: #f8fafc;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+    transition: all 0.25s;
+  }
+  .ic.on { background: #dcfce7; border-color: var(--ok); }
+  .ic .ic-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .ic .ic-name { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .ic .ic-icon { font-size: 28px; margin: 4px 0; }
+  .ic .ic-state {
+    background: #1e293b;
+    color: #94a3b8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .ic.on .ic-state { background: #166534; color: #bbf7d0; }
+  .ic-btn {
+    border: none;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    background: #94a3b8;
+    color: white;
+    transition: all 0.2s;
+    margin-top: 6px;
+  }
+  .ic-btn.on { background: var(--ok); }
+
+  /* 数字键盘 */
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-width: 200px;
+    margin: 0 auto 12px;
+  }
+  .keypad button {
+    aspect-ratio: 1;
+    border: 1.5px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .keypad button:hover { background: #eff6ff; }
+  .keypad button.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* 输出 */
+  .output-box {
+    background: linear-gradient(135deg, #1e3a8a, #3730a3);
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .output-box .out-label { font-size: 12px; opacity: 0.7; margin-bottom: 4px; }
+  .output-box .out-value { font-size: 24px; font-weight: 700; line-height: 1.2; }
+  .output-box.warn { background: linear-gradient(135deg, #991b1b, #b91c1c); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  th { background: #eff6ff; color: var(--primary-dark); }
+  tr.highlight { background: #fef3c7; font-weight: bold; }
+
+  .weight-display {
+    text-align: center;
+    margin: 10px 0;
+  }
+  .weight-display .num {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: "Courier New", monospace;
+  }
+  .weight-bar {
+    height: 18px;
+    background: #e2e8f0;
+    border-radius: 9px;
+    margin: 8px 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .weight-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #facc15, #ef4444);
+    transition: width 0.4s;
+  }
+  .weight-bar .threshold-mark {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 2px;
+    background: #1e293b;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第六单元 · 第20-23课</span>
+    <h1>电梯控制系统模拟器 🛗</h1>
+    <p>体验电梯中的多种控制逻辑：呼叫系统、楼层选择（与运算）、开关门（或运算）、超载检测（非运算）</p>
+  </div>
+
+  <div class="layout">
+    <!-- 左侧：电梯可视化 -->
+    <div class="elevator-shaft">
+      <div class="floor-display">
+        <span class="arrow" id="dirArrow">▲</span>
+        <span id="floorNum">1F</span>
+        <span class="arrow">▲</span>
+      </div>
+      <div class="shaft" id="shaft">
+        <div class="car" id="car" style="bottom: 8px;">
+          <div class="car-passengers" id="passengers"></div>
+          <div class="car-doors">
+            <div class="door"></div>
+            <div class="door"></div>
+          </div>
+          <div class="alarm-overlay"></div>
+        </div>
+      </div>
+      <div class="info-bar">
+        <div><span class="key">当前楼层：</span><span id="curFloor">1</span></div>
+        <div><span class="key">门状态：</span><span id="doorState">关闭</span></div>
+        <div><span class="key">运行状态：</span><span id="runState">空闲</span></div>
+      </div>
+    </div>
+
+    <!-- 右侧：四种场景 -->
+    <div class="console">
+      <div class="scenario-tabs">
+        <button class="active" data-tab="call">第20课：呼叫系统</button>
+        <button data-tab="floor">第21课：到达楼层（与）</button>
+        <button data-tab="door">第22课：开关门（或）</button>
+        <button data-tab="overload">第23课：超载警报</button>
+      </div>
+
+      <!-- 场景1：呼叫电梯 -->
+      <div class="scenario-panel active" id="panel-call">
+        <h2 class="scenario-title">呼叫电梯：基本工作过程</h2>
+        <p class="scenario-desc">小智妈妈下班回家，在 1 层按下"上行键"呼叫电梯。系统接收指令后，电梯到达并自动开门。这是一个简单的"输入→计算→输出"过程。</p>
+        <div class="scenario-formula">
+          按上行键(1) <span class="op">→</span> 系统处理 <span class="op">→</span> <span class="var">电梯到达 + 开门</span>
+        </div>
+        <div class="input-cards single">
+          <div class="ic" id="callIC">
+            <div class="ic-label">输入</div>
+            <div class="ic-name">外部呼叫键</div>
+            <div class="ic-icon">⬆️</div>
+            <button class="ic-btn" onclick="press('call')">按下呼叫键</button>
+          </div>
+        </div>
+        <div class="output-box" id="callOut">
+          <div class="out-label">输出</div>
+          <div class="out-value">等待呼叫…</div>
+        </div>
+      </div>
+
+      <!-- 场景2：到达指定楼层（与运算） -->
+      <div class="scenario-panel" id="panel-floor">
+        <h2 class="scenario-title">到达指定楼层：与运算逻辑</h2>
+        <p class="scenario-desc">进入电梯后，需要<b>同时</b>满足"刷卡成功" <b>与</b> "选择楼层"两个条件，电梯才会运行。</p>
+        <div class="scenario-formula">
+          <span class="var">A 刷卡</span><span class="op">∧ (与)</span><span class="var">B 选楼层</span><span class="op">→</span><span class="var">C 电梯运行</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div class="ic" id="cardIC">
+            <div class="ic-label">输入 A</div>
+            <div class="ic-name">刷卡验证</div>
+            <div class="ic-icon">💳</div>
+            <button class="ic-btn" onclick="toggle('card')">未刷卡</button>
+            <div class="ic-state">A = 0</div>
+          </div>
+          <div>
+            <div style="text-align:center; font-size:13px; color:var(--muted); margin-bottom:8px;">输入 B：选择楼层</div>
+            <div class="keypad" id="keypad">
+              <button data-floor="1">1</button>
+              <button data-floor="2">2</button>
+              <button data-floor="3">3</button>
+              <button data-floor="4">4</button>
+              <button data-floor="5">5</button>
+              <button data-floor="6">6</button>
+            </div>
+            <div style="text-align:center;" class="ic-state" id="floorState">B = 0（未选）</div>
+          </div>
+        </div>
+
+        <div class="output-box" id="floorOut">
+          <div class="out-label">输出 C</div>
+          <div class="out-value">A = 0, B = 0 → C = 0（电梯不动）</div>
+        </div>
+
+        <table>
+          <thead><tr><th>A 刷卡</th><th>B 选楼层</th><th>C 运行</th></tr></thead>
+          <tbody>
+            <tr data-key="00"><td>0</td><td>0</td><td>0</td></tr>
+            <tr data-key="01"><td>0</td><td>1</td><td>0</td></tr>
+            <tr data-key="10"><td>1</td><td>0</td><td>0</td></tr>
+            <tr data-key="11"><td>1</td><td>1</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 场景3：电梯门开关（或运算） -->
+      <div class="scenario-panel" id="panel-door">
+        <h2 class="scenario-title">电梯门控制：或运算逻辑</h2>
+        <p class="scenario-desc">外面的人按"上行键" <b>或</b> 轿厢内的人按"开门键"，<b>只要其中一个</b>被按下，电梯门就保持打开。</p>
+        <div class="scenario-formula">
+          <span class="var">A 外部按键</span><span class="op">∨ (或)</span><span class="var">B 内部开门键</span><span class="op">→</span><span class="var">C 门打开</span>
+        </div>
+
+        <div class="input-cards">
+          <div class="ic" id="extIC">
+            <div class="ic-label">输入 A</div>
+            <div class="ic-name">外部上下行键</div>
+            <div class="ic-icon">🔼</div>
+            <button class="ic-btn" onclick="toggle('ext')">未按</button>
+            <div class="ic-state">A = 0</div>
+          </div>
+          <div class="ic" id="intIC">
+            <div class="ic-label">输入 B</div>
+            <div class="ic-name">轿厢内开门键</div>
+            <div class="ic-icon">⬜</div>
+            <button class="ic-btn" onclick="toggle('int')">未按</button>
+            <div class="ic-state">B = 0</div>
+          </div>
+        </div>
+
+        <div class="output-box" id="doorOut">
+          <div class="out-label">输出 C</div>
+          <div class="out-value">A = 0, B = 0 → C = 0（门关闭）</div>
+        </div>
+
+        <table id="orTable">
+          <thead><tr><th>A 外部</th><th>B 内部</th><th>C 门开</th></tr></thead>
+          <tbody>
+            <tr data-key="00"><td>0</td><td>0</td><td>0</td></tr>
+            <tr data-key="01"><td>0</td><td>1</td><td>1</td></tr>
+            <tr data-key="10"><td>1</td><td>0</td><td>1</td></tr>
+            <tr data-key="11"><td>1</td><td>1</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 场景4：超载警报 -->
+      <div class="scenario-panel" id="panel-overload">
+        <h2 class="scenario-title">超载警报：连续量 + 非运算</h2>
+        <p class="scenario-desc">通过传感器持续检测电梯轿厢内的载重值（连续量）。当超过阈值时，电梯停止运行并发出警报。<br>这里"是否超载"和"电梯是否动"之间存在<b>非运算</b>关系：超载=1时，运行=0。</p>
+        <div class="scenario-formula">
+          <span class="var">A 超载</span><span class="op">→ ¬ (非)</span><span class="op">→</span><span class="var">C 电梯运行</span>
+        </div>
+
+        <div class="weight-display">
+          <div style="font-size:13px; color:var(--muted);">当前载重</div>
+          <div class="num"><span id="weightNum">0</span> kg</div>
+        </div>
+        <div class="weight-bar">
+          <div class="fill" id="weightFill" style="width: 0%;"></div>
+          <div class="threshold-mark" id="threshMark" style="left: 80%;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+          <span>0</span>
+          <span id="threshLabel" style="color:var(--text); font-weight:600;">阈值 800kg</span>
+          <span>1000</span>
+        </div>
+
+        <div style="margin: 18px 0;">
+          <label style="font-size:13px; color:var(--muted);">添加乘客（每人 70 kg）：</label>
+          <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+            <button class="ic-btn" style="background:var(--primary);" onclick="addPerson()">+ 加 1 人</button>
+            <button class="ic-btn" style="background:#94a3b8;" onclick="removePerson()">- 减 1 人</button>
+            <button class="ic-btn" style="background:#64748b;" onclick="resetWeight()">↺ 清空</button>
+          </div>
+          <div style="margin-top: 8px; font-size:13px;">
+            人数：<span id="peopleCount" style="font-weight:bold;">0</span>
+          </div>
+        </div>
+
+        <div class="output-box" id="overOut">
+          <div class="out-label">输出</div>
+          <div class="out-value">未超载，电梯正常运行</div>
+        </div>
+
+        <table>
+          <thead><tr><th>A 超载</th><th>C 电梯运行</th></tr></thead>
+          <tbody>
+            <tr data-key="0"><td>0</td><td>1</td></tr>
+            <tr data-key="1"><td>1</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const car = document.getElementById('car');
+const shaft = document.getElementById('shaft');
+const floorNumEl = document.getElementById('floorNum');
+const dirArrowEl = document.getElementById('dirArrow');
+const curFloorEl = document.getElementById('curFloor');
+const doorStateEl = document.getElementById('doorState');
+const runStateEl = document.getElementById('runState');
+const passengersEl = document.getElementById('passengers');
+
+// 标记楼层
+const totalFloors = 6;
+const shaftHeight = 320 - 16;
+const carHeight = 60;
+const floorHeight = (shaftHeight - carHeight) / (totalFloors - 1);
+for (let i = 0; i < totalFloors; i++) {
+  const m = document.createElement('div');
+  m.className = 'floor-marker';
+  m.style.bottom = (i * floorHeight + carHeight/2 + 8) + 'px';
+  m.innerHTML = `<span class="label">${i+1}F</span>`;
+  shaft.appendChild(m);
+}
+
+let currentFloor = 1;
+
+function moveTo(floor) {
+  if (floor === currentFloor) {
+    openDoor();
+    return;
+  }
+  runStateEl.textContent = floor > currentFloor ? '上行' : '下行';
+  dirArrowEl.textContent = floor > currentFloor ? '▲' : '▼';
+  const newBottom = (floor - 1) * floorHeight + 8;
+  car.style.bottom = newBottom + 'px';
+  closeDoor();
+  setTimeout(() => {
+    currentFloor = floor;
+    floorNumEl.textContent = floor + 'F';
+    curFloorEl.textContent = floor;
+    runStateEl.textContent = '到达';
+    setTimeout(() => openDoor(), 200);
+  }, 1300);
+}
+
+function openDoor() {
+  car.classList.add('door-open');
+  doorStateEl.textContent = '打开';
+}
+
+function closeDoor() {
+  car.classList.remove('door-open');
+  doorStateEl.textContent = '关闭';
+}
+
+// === 标签切换 ===
+document.querySelectorAll('.scenario-tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.scenario-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.scenario-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// === 场景1：呼叫 ===
+function press(name) {
+  if (name === 'call') {
+    document.getElementById('callIC').classList.add('on');
+    document.querySelector('#callIC .ic-btn').textContent = '已按下 ✓';
+    document.getElementById('callOut').innerHTML = '<div class="out-label">输出</div><div class="out-value">收到呼叫，电梯前往 1 层…</div>';
+    moveTo(1);
+    setTimeout(() => {
+      document.getElementById('callIC').classList.remove('on');
+      document.querySelector('#callIC .ic-btn').textContent = '按下呼叫键';
+      document.getElementById('callOut').innerHTML = '<div class="out-label">输出</div><div class="out-value">等待呼叫…</div>';
+      closeDoor();
+    }, 4000);
+  }
+}
+
+// === 场景2：到达楼层（与运算） ===
+const state = { card: 0, floor: 0, ext: 0, int: 0, weight: 0, people: 0 };
+let selectedFloor = null;
+
+function toggle(name) {
+  state[name] = 1 - state[name];
+  if (name === 'card') {
+    const ic = document.getElementById('cardIC');
+    ic.classList.toggle('on', state.card === 1);
+    ic.querySelector('.ic-btn').textContent = state.card ? '已刷卡 ✓' : '未刷卡';
+    ic.querySelector('.ic-btn').classList.toggle('on', state.card === 1);
+    ic.querySelector('.ic-state').textContent = 'A = ' + state.card;
+    updateFloorPanel();
+  } else if (name === 'ext') {
+    const ic = document.getElementById('extIC');
+    ic.classList.toggle('on', state.ext === 1);
+    ic.querySelector('.ic-btn').textContent = state.ext ? '按下 ✓' : '未按';
+    ic.querySelector('.ic-btn').classList.toggle('on', state.ext === 1);
+    ic.querySelector('.ic-state').textContent = 'A = ' + state.ext;
+    updateDoorPanel();
+  } else if (name === 'int') {
+    const ic = document.getElementById('intIC');
+    ic.classList.toggle('on', state.int === 1);
+    ic.querySelector('.ic-btn').textContent = state.int ? '按下 ✓' : '未按';
+    ic.querySelector('.ic-btn').classList.toggle('on', state.int === 1);
+    ic.querySelector('.ic-state').textContent = 'B = ' + state.int;
+    updateDoorPanel();
+  }
+}
+
+document.querySelectorAll('#keypad button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#keypad button').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedFloor = +btn.dataset.floor;
+    state.floor = 1;
+    document.getElementById('floorState').textContent = `B = 1（已选 ${selectedFloor}F）`;
+    updateFloorPanel();
+  });
+});
+
+function updateFloorPanel() {
+  const A = state.card, B = state.floor;
+  const C = A & B;
+  const out = document.getElementById('floorOut');
+  if (C) {
+    out.classList.remove('warn');
+    out.innerHTML = `<div class="out-label">输出 C</div><div class="out-value">A=1 ∧ B=1 = 1 → 电梯运行至 ${selectedFloor}F</div>`;
+    setTimeout(() => moveTo(selectedFloor), 200);
+    // 重置
+    setTimeout(() => {
+      state.card = 0; state.floor = 0; selectedFloor = null;
+      const cIC = document.getElementById('cardIC');
+      cIC.classList.remove('on');
+      cIC.querySelector('.ic-btn').textContent = '未刷卡';
+      cIC.querySelector('.ic-btn').classList.remove('on');
+      cIC.querySelector('.ic-state').textContent = 'A = 0';
+      document.getElementById('floorState').textContent = 'B = 0（未选）';
+      document.querySelectorAll('#keypad button').forEach(b => b.classList.remove('selected'));
+      out.innerHTML = '<div class="out-label">输出 C</div><div class="out-value">A = 0, B = 0 → C = 0（电梯不动）</div>';
+      document.querySelectorAll('#panel-floor tr[data-key]').forEach(r => r.classList.remove('highlight'));
+    }, 4000);
+  } else {
+    out.innerHTML = `<div class="out-label">输出 C</div><div class="out-value">A = ${A}, B = ${B} → C = 0（电梯不动）</div>`;
+  }
+  document.querySelectorAll('#panel-floor tr[data-key]').forEach(r => r.classList.remove('highlight'));
+  document.querySelector(`#panel-floor tr[data-key="${A}${B}"]`).classList.add('highlight');
+}
+
+function updateDoorPanel() {
+  const A = state.ext, B = state.int;
+  const C = A | B;
+  const out = document.getElementById('doorOut');
+  out.innerHTML = `<div class="out-label">输出 C</div><div class="out-value">A = ${A}, B = ${B} → C = ${C}（${C ? '门打开' : '门关闭'}）</div>`;
+  if (C) openDoor(); else closeDoor();
+  document.querySelectorAll('#orTable tr[data-key]').forEach(r => r.classList.remove('highlight'));
+  document.querySelector(`#orTable tr[data-key="${A}${B}"]`).classList.add('highlight');
+}
+
+// === 场景4：超载 ===
+const WEIGHT_THRESHOLD = 800;
+const WEIGHT_MAX = 1000;
+
+function updateWeight() {
+  const w = state.weight;
+  document.getElementById('weightNum').textContent = w;
+  const pct = Math.min(100, (w / WEIGHT_MAX) * 100);
+  document.getElementById('weightFill').style.width = pct + '%';
+  document.getElementById('peopleCount').textContent = state.people;
+
+  // 显示乘客
+  passengersEl.textContent = '👤'.repeat(Math.min(state.people, 8));
+
+  const isOverload = w > WEIGHT_THRESHOLD;
+  const out = document.getElementById('overOut');
+  if (isOverload) {
+    out.classList.add('warn');
+    out.innerHTML = `<div class="out-label">⚠ 超载警报</div><div class="out-value">A=1（超载）→ ¬A=0 → 电梯停止 + 门打开 + 报警</div>`;
+    car.classList.add('alarm');
+    openDoor();
+    runStateEl.textContent = '⚠ 超载停止';
+  } else {
+    out.classList.remove('warn');
+    out.innerHTML = `<div class="out-label">输出</div><div class="out-value">A=0（不超载）→ ¬A=1 → 电梯正常运行</div>`;
+    car.classList.remove('alarm');
+    runStateEl.textContent = '空闲';
+  }
+  document.querySelectorAll('#panel-overload tr[data-key]').forEach(r => r.classList.remove('highlight'));
+  document.querySelector(`#panel-overload tr[data-key="${isOverload ? 1 : 0}"]`).classList.add('highlight');
+}
+
+function addPerson() {
+  state.people++;
+  state.weight = state.people * 70;
+  updateWeight();
+}
+function removePerson() {
+  if (state.people > 0) {
+    state.people--;
+    state.weight = state.people * 70;
+    updateWeight();
+  }
+}
+function resetWeight() {
+  state.people = 0; state.weight = 0;
+  updateWeight();
+}
+
+// 初始化
+document.querySelectorAll('#panel-floor tr[data-key="00"]')[0].classList.add('highlight');
+document.querySelectorAll('#orTable tr[data-key="00"]')[0].classList.add('highlight');
+document.querySelectorAll('#panel-overload tr[data-key="0"]')[0].classList.add('highlight');
+</script>
+</body>
+</html>

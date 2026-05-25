@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词云生成器 · 数据与编码</title>
+<style>
+:root{
+  --c-brown:#6d4c41;
+  --c-brown-dark:#4e342e;
+  --c-brown-light:#efebe9;
+  --c-bg:#fbf8f6;
+  --c-text:#3e2723;
+  --c-muted:#8d6e63;
+  --c-border:#d7ccc8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--c-bg);
+  color:var(--c-text);
+  min-height:100vh;
+  padding:20px;
+  line-height:1.6;
+}
+.container{max-width:1200px;margin:0 auto}
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--c-brown-dark);text-decoration:none;
+  font-size:14px;margin-bottom:16px;
+  padding:6px 14px;background:#fff;border-radius:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+  transition:all .2s;
+}
+.back-link:hover{transform:translateX(-3px)}
+header{
+  background:linear-gradient(135deg,var(--c-brown) 0%,#5d4037 100%);
+  color:#fff;padding:30px 28px;border-radius:18px;
+  margin-bottom:22px;
+  box-shadow:0 8px 24px rgba(109,76,65,0.25);
+}
+.lesson-tag{
+  display:inline-block;background:rgba(255,255,255,0.25);
+  padding:4px 12px;border-radius:12px;
+  font-size:12px;margin-bottom:8px;
+}
+header h1{font-size:26px;margin-bottom:6px}
+header p{font-size:14px;opacity:0.92}
+
+.layout{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  gap:18px;
+}
+.card{
+  background:#fff;border-radius:14px;padding:22px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.06);
+  border:1px solid var(--c-border);
+}
+.card h2{
+  font-size:16px;color:var(--c-brown-dark);
+  margin-bottom:14px;
+  padding-bottom:10px;
+  border-bottom:2px solid var(--c-brown-light);
+}
+
+.text-input{
+  width:100%;
+  min-height:200px;
+  padding:12px;
+  border:2px solid var(--c-border);
+  border-radius:10px;
+  font-size:14px;
+  font-family:inherit;
+  resize:vertical;
+  line-height:1.7;
+  background:#fffdfb;
+  color:var(--c-text);
+}
+.text-input:focus{
+  outline:none;
+  border-color:var(--c-brown);
+  background:#fff;
+}
+
+.btn{
+  padding:10px 16px;
+  border:none;border-radius:8px;
+  font-size:13px;font-weight:bold;
+  cursor:pointer;transition:all .2s;
+  font-family:inherit;
+}
+.btn-primary{
+  background:var(--c-brown);color:#fff;
+}
+.btn-primary:hover{background:var(--c-brown-dark);transform:translateY(-2px)}
+.btn-secondary{
+  background:#fff;color:var(--c-brown-dark);
+  border:2px solid var(--c-border);
+}
+.btn-secondary:hover{background:var(--c-brown-light)}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.btn-row .btn{flex:1;min-width:80px}
+
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.preset-btn{
+  padding:6px 12px;font-size:12px;
+  background:var(--c-brown-light);color:var(--c-brown-dark);
+  border:1px solid var(--c-border);border-radius:14px;
+  cursor:pointer;font-family:inherit;
+  transition:all .2s;
+}
+.preset-btn:hover{background:var(--c-brown);color:#fff}
+
+.option-row{
+  display:flex;gap:10px;align-items:center;
+  margin-bottom:10px;
+  font-size:13px;
+}
+.option-row label{
+  color:var(--c-muted);
+  min-width:80px;
+}
+.option-row select,
+.option-row input[type="number"]{
+  flex:1;
+  padding:7px 10px;
+  border:1px solid var(--c-border);
+  border-radius:6px;
+  font-size:13px;
+  font-family:inherit;
+  background:#fff;
+}
+
+.cloud-container{
+  background:#fff;
+  border:2px dashed var(--c-border);
+  border-radius:12px;
+  min-height:480px;
+  position:relative;
+  overflow:hidden;
+}
+#cloudSvg{
+  width:100%;
+  height:480px;
+  display:block;
+}
+
+.stats-row{
+  display:flex;gap:10px;margin-top:14px;
+  flex-wrap:wrap;
+}
+.stat-item{
+  flex:1;min-width:100px;
+  background:var(--c-brown-light);
+  padding:10px 14px;
+  border-radius:8px;
+  font-size:12px;
+  border:1px solid var(--c-border);
+}
+.stat-item .label{color:var(--c-muted);display:block;font-size:11px}
+.stat-item .value{
+  color:var(--c-brown-dark);
+  font-weight:bold;
+  font-size:18px;
+  margin-top:2px;
+}
+
+.freq-list{
+  max-height:200px;
+  overflow-y:auto;
+  background:var(--c-brown-light);
+  border-radius:8px;
+  padding:10px;
+  margin-top:10px;
+  font-size:12px;
+}
+.freq-item{
+  display:flex;justify-content:space-between;
+  padding:4px 6px;
+  border-bottom:1px solid rgba(0,0,0,0.05);
+}
+.freq-item:last-child{border-bottom:none}
+.freq-word{color:var(--c-brown-dark);font-weight:bold}
+.freq-count{
+  background:var(--c-brown);color:#fff;
+  padding:1px 8px;border-radius:10px;
+  font-size:11px;
+}
+
+.theory{
+  background:linear-gradient(135deg,#fff8e1 0%,#ffecb3 100%);
+  border-left:4px solid #ffa726;
+  padding:14px 18px;border-radius:8px;
+  margin-top:18px;font-size:13px;line-height:1.7;
+  color:#5d4037;
+}
+.theory h3{
+  color:#e65100;margin-bottom:6px;
+  font-size:14px;
+}
+
+@media (max-width:880px){
+  .layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header>
+    <span class="lesson-tag">第24课 · 文本数据可视化</span>
+    <h1>☁️ 词云生成器</h1>
+    <p>把一段话变成漂亮的词云！出现越多的词，字就越大！</p>
+  </header>
+
+  <div class="layout">
+    <div class="card">
+      <h2>📝 输入文本</h2>
+      
+      <textarea class="text-input" id="textInput" placeholder="请输入文字，词与词之间用空格、逗号或标点分开...&#10;&#10;例如：&#10;苹果 香蕉 苹果 葡萄 香蕉 苹果 西瓜 葡萄 苹果"></textarea>
+      
+      <div class="btn-row">
+        <button class="btn btn-primary" id="generateBtn">☁️ 生成词云</button>
+        <button class="btn btn-secondary" id="clearBtn">🗑 清空</button>
+      </div>
+      
+      <h2 style="margin-top:14px">⚙️ 显示设置</h2>
+      <div class="option-row">
+        <label>颜色方案</label>
+        <select id="colorScheme">
+          <option value="warm">暖色调</option>
+          <option value="cool">冷色调</option>
+          <option value="rainbow" selected>彩虹色</option>
+          <option value="forest">森林绿</option>
+          <option value="ocean">海洋蓝</option>
+          <option value="sunset">日落色</option>
+        </select>
+      </div>
+      <div class="option-row">
+        <label>显示数量</label>
+        <input type="number" id="topN" value="30" min="5" max="80">
+      </div>
+      <div class="option-row">
+        <label>形状</label>
+        <select id="shape">
+          <option value="rect" selected>矩形</option>
+          <option value="circle">圆形</option>
+        </select>
+      </div>
+      
+      <h2 style="margin-top:14px">📋 示例文本</h2>
+      <div class="preset-row">
+        <button class="preset-btn" data-preset="fruit">水果统计</button>
+        <button class="preset-btn" data-preset="ancient">古诗精选</button>
+        <button class="preset-btn" data-preset="hobby">兴趣爱好</button>
+        <button class="preset-btn" data-preset="weather">天气词汇</button>
+      </div>
+
+      <div class="theory">
+        <h3>💡 词云原理</h3>
+        词云的核心是<b>统计词频</b>：每个词出现了多少次。
+        出现次数越多的词，显示得就越大、越显眼。这样我们一眼就能看出文章的主要内容！
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>☁️ 词云图</h2>
+      <div class="cloud-container">
+        <svg id="cloudSvg" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="label">总词数</span>
+          <span class="value" id="totalWords">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">不同词数</span>
+          <span class="value" id="uniqueWords">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">显示数量</span>
+          <span class="value" id="displayWords">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">最高频次</span>
+          <span class="value" id="maxFreq">0</span>
+        </div>
+      </div>
+
+      <h2 style="margin-top:14px">📊 词频排行</h2>
+      <div class="freq-list" id="freqList">
+        <div style="text-align:center;color:var(--c-muted);padding:20px">输入文本并点击"生成词云"</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLOR_SCHEMES = {
+  warm:['#e53935','#fb8c00','#fdd835','#f4511e','#d81b60','#c62828','#e65100'],
+  cool:['#1e88e5','#00897b','#5e35b1','#3949ab','#039be5','#00acc1','#7cb342'],
+  rainbow:['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#5e35b1','#d81b60','#00897b','#f4511e'],
+  forest:['#2e7d32','#558b2f','#33691e','#43a047','#7cb342','#689f38','#827717'],
+  ocean:['#01579b','#0277bd','#0288d1','#039be5','#03a9f4','#00acc1','#006064'],
+  sunset:['#bf360c','#d84315','#e64a19','#f4511e','#ff5722','#ff7043','#ffab91']
+};
+
+const PRESETS = {
+  fruit:'苹果 香蕉 苹果 葡萄 香蕉 苹果 西瓜 葡萄 苹果 橙子 苹果 香蕉 草莓 苹果 葡萄 西瓜 樱桃 苹果 香蕉 葡萄 苹果 草莓 橙子 苹果 香蕉 苹果 葡萄 西瓜 苹果 樱桃 葡萄 香蕉 苹果 桃子 葡萄 苹果',
+  
+  ancient:'明月 床前 明月 思乡 故乡 思乡 明月 春天 春天 燕子 春风 杨柳 春雨 春天 桃花 春风 鸟鸣 春天 月亮 月亮 中秋 月亮 明月 月亮 故乡 月亮 团圆 山水 山水 美景 山水 田园 黄河 长江 黄河 长城 长江 黄河 落日 长河 大漠',
+  
+  hobby:'读书 读书 读书 画画 跑步 读书 唱歌 跳舞 读书 画画 篮球 足球 篮球 跑步 唱歌 读书 弹琴 画画 读书 写字 篮球 跑步 读书 看书 画画 唱歌 跳舞 读书 篮球 游泳 读书 画画 跑步 下棋 读书 看电影 画画 读书 旅行 读书 摄影 跳舞 读书',
+  
+  weather:'晴天 晴天 多云 晴天 下雨 晴天 多云 下雨 晴天 阴天 晴天 多云 晴天 下雪 晴天 多云 晴天 下雨 雷雨 晴天 多云 晴天 大风 晴天 雾 晴天 多云 晴天 下雨 阴天 晴天 多云 雷电 晴天 雪花 晴天 暴雨 晴天 多云 冰雹 晴天'
+};
+
+const textInput = document.getElementById('textInput');
+const cloudSvg = document.getElementById('cloudSvg');
+const freqList = document.getElementById('freqList');
+
+// 中文停用词（高频但意义不大的词）
+const STOPWORDS = new Set([
+  '的','了','是','在','和','与','也','都','就','还','又','把','被','给','让','使',
+  '我','你','他','她','它','我们','你们','他们','她们',
+  '这','那','这个','那个','这些','那些','这里','那里','这样','那样',
+  '一','二','三','四','五','六','七','八','九','十','一个','一些',
+  '不','没','没有','不是','不会','不能','可以','能','要',
+  'a','an','the','is','are','was','were','to','of','in','on','at','for','and','or','but'
+]);
+
+function tokenize(text){
+  if(!text || !text.trim()) return [];
+  // 分割：空格、标点、换行
+  const tokens = text.split(/[\s,，。.;；:：!！?？、""''""''()（）\[\]【】《》<>—\-—_~`@#$%^&*+=|\\/\n\r\t]+/);
+  return tokens
+    .map(t => t.trim())
+    .filter(t => t.length > 0)
+    .filter(t => !STOPWORDS.has(t.toLowerCase()))
+    .filter(t => !/^\d+$/.test(t)); // 去掉纯数字
+}
+
+function countFrequency(tokens){
+  const freq = {};
+  tokens.forEach(t => {
+    freq[t] = (freq[t] || 0) + 1;
+  });
+  return Object.entries(freq)
+    .map(([word, count]) => ({word, count}))
+    .sort((a, b) => b.count - a.count);
+}
+
+function pickColor(scheme, idx){
+  const colors = COLOR_SCHEMES[scheme] || COLOR_SCHEMES.rainbow;
+  return colors[idx % colors.length];
+}
+
+// 简单矩形不重叠布局
+function layoutWords(words, scheme, shape){
+  const W = 800, H = 480;
+  const cx = W/2, cy = H/2;
+  
+  const maxCount = words[0]?.count || 1;
+  const minCount = words[words.length-1]?.count || 1;
+  
+  // 字号映射
+  const minSize = 14;
+  const maxSize = 70;
+  
+  const placed = [];
+  const positions = [];
+  
+  words.forEach((w, i) => {
+    const ratio = maxCount === minCount ? 1 : (w.count - minCount) / (maxCount - minCount);
+    const fontSize = Math.round(minSize + ratio * (maxSize - minSize));
+    
+    // 估算文字宽高（中文字符按字号宽度）
+    const isChinese = /[\u4e00-\u9fa5]/.test(w.word);
+    const charW = isChinese ? fontSize * 1.05 : fontSize * 0.6;
+    const wordW = w.word.length * charW;
+    const wordH = fontSize * 1.1;
+    
+    // 螺旋查找空位
+    let placedThis = false;
+    let x = cx, y = cy;
+    let radius = 0;
+    let angle = Math.random() * Math.PI * 2;
+    const angleStep = 0.3;
+    const radiusStep = 4;
+    
+    for(let attempt = 0; attempt < 600; attempt++){
+      x = cx + radius * Math.cos(angle);
+      y = cy + radius * Math.sin(angle);
+      
+      const left = x - wordW/2;
+      const right = x + wordW/2;
+      const top = y - wordH/2;
+      const bottom = y + wordH/2;
+      
+      // 边界检查
+      if(left < 5 || right > W-5 || top < 5 || bottom > H-5){
+        angle += angleStep;
+        radius += radiusStep * angleStep / (Math.PI * 2);
+        continue;
+      }
+      
+      // 形状约束
+      if(shape === 'circle'){
+        const distFromCenter = Math.sqrt((x-cx)**2 + (y-cy)**2);
+        const maxR = Math.min(W, H) / 2 - 10;
+        if(distFromCenter + Math.max(wordW, wordH)/2 > maxR){
+          angle += angleStep;
+          radius += radiusStep * angleStep / (Math.PI * 2);
+          continue;
+        }
+      }
+      
+      // 重叠检查
+      const overlap = placed.some(p => {
+        return !(right + 4 < p.left || left > p.right + 4 || 
+                 bottom + 2 < p.top || top > p.bottom + 2);
+      });
+      
+      if(!overlap){
+        placed.push({left, right, top, bottom});
+        positions.push({
+          word: w.word,
+          x, y,
+          fontSize,
+          color: pickColor(scheme, i),
+          rotation: 0
+        });
+        placedThis = true;
+        break;
+      }
+      
+      angle += angleStep;
+      radius += radiusStep * angleStep / (Math.PI * 2);
+    }
+    
+    if(!placedThis){
+      // 放不下就跳过
+    }
+  });
+  
+  return positions;
+}
+
+function renderCloud(){
+  const text = textInput.value;
+  const scheme = document.getElementById('colorScheme').value;
+  const topN = parseInt(document.getElementById('topN').value) || 30;
+  const shape = document.getElementById('shape').value;
+  
+  const tokens = tokenize(text);
+  const allFreq = countFrequency(tokens);
+  const freq = allFreq.slice(0, topN);
+  
+  // 更新统计
+  document.getElementById('totalWords').textContent = tokens.length;
+  document.getElementById('uniqueWords').textContent = allFreq.length;
+  document.getElementById('maxFreq').textContent = allFreq[0]?.count || 0;
+  
+  if(freq.length === 0){
+    cloudSvg.innerHTML = '<text x="400" y="240" text-anchor="middle" fill="#999" font-size="18">请输入文本</text>';
+    document.getElementById('displayWords').textContent = 0;
+    freqList.innerHTML = '<div style="text-align:center;color:var(--c-muted);padding:20px">输入文本并点击"生成词云"</div>';
+    return;
+  }
+  
+  const positions = layoutWords(freq, scheme, shape);
+  document.getElementById('displayWords').textContent = positions.length;
+  
+  // 渲染SVG
+  let svg = '';
+  positions.forEach((p, i) => {
+    svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" 
+      font-size="${p.fontSize}" fill="${p.color}" 
+      font-family="-apple-system, PingFang SC, Microsoft YaHei, sans-serif" 
+      font-weight="bold" opacity="0">
+      ${escapeHtml(p.word)}
+      <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="${i*0.04}s" fill="freeze"/>
+    </text>`;
+  });
+  cloudSvg.innerHTML = svg;
+  
+  // 词频列表
+  freqList.innerHTML = freq.slice(0, 20).map((f, i) => 
+    `<div class="freq-item">
+      <span class="freq-word">${i+1}. ${escapeHtml(f.word)}</span>
+      <span class="freq-count">${f.count} 次</span>
+    </div>`
+  ).join('');
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('generateBtn').addEventListener('click', renderCloud);
+document.getElementById('clearBtn').addEventListener('click', () => {
+  textInput.value = '';
+  cloudSvg.innerHTML = '';
+  freqList.innerHTML = '<div style="text-align:center;color:var(--c-muted);padding:20px">输入文本并点击"生成词云"</div>';
+  document.getElementById('totalWords').textContent = 0;
+  document.getElementById('uniqueWords').textContent = 0;
+  document.getElementById('displayWords').textContent = 0;
+  document.getElementById('maxFreq').textContent = 0;
+});
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    textInput.value = PRESETS[btn.dataset.preset];
+    renderCloud();
+  });
+});
+
+['colorScheme','topN','shape'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if(textInput.value.trim()) renderCloud();
+  });
+});
+
+// 初始化
+textInput.value = PRESETS.fruit;
+renderCloud();
+</script>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能种植大棚模拟器 · 第18、19课</title>
+<style>
+  :root {
+    --primary: #16a34a;
+    --primary-dark: #15803d;
+    --water: #0ea5e9;
+    --light: #eab308;
+    --heat: #f97316;
+    --bg: #f0fdf4;
+    --card: #ffffff;
+    --text: #052e16;
+    --muted: #6b7280;
+    --border: #dcfce7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  /* 大棚可视化 */
+  .greenhouse {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .greenhouse-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .greenhouse-scene {
+    border-radius: 12px;
+    aspect-ratio: 4 / 1;
+    width: 100%;
+    max-height: 280px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--primary);
+  }
+  @media (max-width: 700px) {
+    .greenhouse-scene { aspect-ratio: 2.5 / 1; }
+  }
+  .greenhouse-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .data-panel {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #6ee7b7;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    z-index: 10;
+  }
+  .data-panel .alert { color: #fbbf24; }
+  .lamp-glow {
+    transition: opacity 0.3s, filter 0.3s;
+  }
+  .lamp-glow.on {
+    filter: drop-shadow(0 0 8px #fbbf24) drop-shadow(0 0 4px #fde047);
+  }
+  .water-drop {
+    opacity: 0;
+  }
+  .water-drop.spraying {
+    animation: drop-fall 1s infinite;
+  }
+  @keyframes drop-fall {
+    0% { opacity: 0; transform: translateY(0); }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(40px); }
+  }
+  .heater-svg {
+    transition: opacity 0.3s;
+  }
+  .heater-svg.on .heater-flame {
+    animation: flame-flicker 0.6s infinite alternate;
+  }
+  @keyframes flame-flicker {
+    from { opacity: 0.8; }
+    to { opacity: 1; transform: scaleY(1.05); }
+  }
+  .plant-group {
+    transition: opacity 0.4s, transform 0.4s;
+    transform-origin: bottom center;
+  }
+  .plant-group.thriving {
+    transform: scale(1.1);
+  }
+  .plant-group.unhealthy {
+    opacity: 0.5;
+    transform: scale(0.85) rotate(-5deg);
+  }
+  .sun-rays {
+    transition: opacity 0.4s;
+  }
+
+  .systems-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 1000px) { .systems-grid { grid-template-columns: 1fr; } }
+
+  .sub-system {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border-top: 4px solid var(--primary);
+  }
+  .sub-system.water-sys { border-top-color: var(--water); }
+  .sub-system.light-sys { border-top-color: var(--light); }
+  .sub-system.temp-sys { border-top-color: var(--heat); }
+
+  .sub-system h3 {
+    font-size: 15px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sensor-row {
+    margin-bottom: 14px;
+  }
+  .sensor-row label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .sensor-row label .value {
+    font-weight: 700;
+    color: var(--text);
+    font-family: "Courier New", monospace;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+  }
+  .water-sys input[type="range"] { background: linear-gradient(to right, #fde68a, #0ea5e9); }
+  .light-sys input[type="range"] { background: linear-gradient(to right, #1e293b, #fde047); }
+  .temp-sys input[type="range"] { background: linear-gradient(to right, #93c5fd, #f97316); }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #1f2937;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .verdict {
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    margin: 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  .verdict.idle { background: #f1f5f9; color: #64748b; }
+  .verdict.active.water { background: #e0f2fe; color: #075985; border: 1.5px solid #0ea5e9; }
+  .verdict.active.light { background: #fef9c3; color: #854d0e; border: 1.5px solid #eab308; }
+  .verdict.active.heat  { background: #ffedd5; color: #9a3412; border: 1.5px solid #f97316; }
+
+  .truth-mini {
+    font-size: 11px;
+    color: var(--muted);
+    background: #f8fafc;
+    padding: 8px;
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    margin-top: 8px;
+    border-left: 3px solid var(--primary);
+  }
+  .truth-mini .ok { color: var(--primary); font-weight: bold; }
+  .truth-mini .no { color: #94a3b8; }
+
+  .flow-mini {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    color: var(--muted);
+  }
+
+  .info-box {
+    background: #ecfdf5;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    margin-top: 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #064e3b;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第五单元 · 第18、19课</span>
+    <h1>智能种植大棚模拟器
+      <svg width="28" height="28" viewBox="0 0 28 28" style="vertical-align: middle; display: inline-block;">
+        <line x1="14" y1="24" x2="14" y2="14" stroke="#86efac" stroke-width="2"/>
+        <ellipse cx="9" cy="14" rx="6" ry="3" fill="#86efac" transform="rotate(-30 9 14)"/>
+        <ellipse cx="19" cy="11" rx="6" ry="3" fill="#bbf7d0" transform="rotate(30 19 11)"/>
+      </svg>
+    </h1>
+    <p>通过土壤湿度、光照、温度三个闭环子系统，体验智能种植大棚的工作过程</p>
+  </div>
+
+  <!-- 大棚可视化 -->
+  <div class="greenhouse">
+    <div class="greenhouse-title">
+      🏠 智能种植大棚 · 实时状态
+    </div>
+    <div class="greenhouse-scene">
+      <svg class="greenhouse-svg" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- 背景：天空到地面渐变 -->
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#87ceeb"/>
+            <stop offset="55%" stop-color="#f0fdf4"/>
+            <stop offset="80%" stop-color="#a3e635"/>
+            <stop offset="100%" stop-color="#65a30d"/>
+          </linearGradient>
+          <radialGradient id="sunGrad" cx="0.5" cy="0.5">
+            <stop offset="0%" stop-color="#fde047"/>
+            <stop offset="100%" stop-color="#facc15"/>
+          </radialGradient>
+          <linearGradient id="carGrad2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#475569"/>
+          </linearGradient>
+        </defs>
+        <rect width="800" height="200" fill="url(#bgGrad)"/>
+
+        <!-- 太阳（右上） -->
+        <g id="sunGroup" transform="translate(720, 38)">
+          <g class="sun-rays" id="sunRays">
+            <line x1="0" y1="-22" x2="0" y2="-32" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="0" y1="22" x2="0" y2="32" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="-22" y1="0" x2="-32" y2="0" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="22" y1="0" x2="32" y2="0" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="-15" y1="-15" x2="-22" y2="-22" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="15" y1="15" x2="22" y2="22" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="-15" y1="15" x2="-22" y2="22" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="15" y1="-15" x2="22" y2="-22" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+          </g>
+          <circle cx="0" cy="0" r="16" fill="url(#sunGrad)" stroke="#f59e0b" stroke-width="1"/>
+        </g>
+
+        <!-- 补光灯（左上） -->
+        <g id="lampGroup" class="lamp-glow" transform="translate(80, 30)" opacity="0.4">
+          <line x1="0" y1="-8" x2="0" y2="20" stroke="#475569" stroke-width="2.5"/>
+          <path d="M -14 -8 L 14 -8 L 10 -20 L -10 -20 Z" fill="#94a3b8" stroke="#475569" stroke-width="1.2"/>
+          <ellipse id="lampBulb" cx="0" cy="-10" rx="8" ry="5" fill="#fef3c7"/>
+          <g id="lampLight" opacity="0">
+            <line x1="-18" y1="0" x2="-28" y2="8" stroke="#fde047" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+            <line x1="0" y1="0" x2="0" y2="14" stroke="#fde047" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+            <line x1="18" y1="0" x2="28" y2="8" stroke="#fde047" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <text y="32" text-anchor="middle" font-size="9" fill="#475569">补光灯</text>
+        </g>
+
+        <!-- 喷灌器（顶部中央） -->
+        <g id="sprinklerGroup" transform="translate(400, 14)">
+          <line x1="0" y1="-4" x2="0" y2="22" stroke="#475569" stroke-width="3.5"/>
+          <circle cx="0" cy="22" r="7" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
+          <circle cx="0" cy="22" r="2.5" fill="#1e293b"/>
+          <circle cx="-3" cy="29" r="1.3" fill="#1e293b"/>
+          <circle cx="0" cy="30" r="1.3" fill="#1e293b"/>
+          <circle cx="3" cy="29" r="1.3" fill="#1e293b"/>
+          <text y="-8" text-anchor="middle" font-size="9" fill="#475569">喷灌器</text>
+          <g id="waterDrops">
+            <ellipse class="water-drop" id="drop1" cx="-6" cy="38" rx="2.2" ry="3" fill="#0ea5e9"/>
+            <ellipse class="water-drop" id="drop2" cx="0" cy="40" rx="2.2" ry="3" fill="#0ea5e9" style="animation-delay: 0.3s;"/>
+            <ellipse class="water-drop" id="drop3" cx="6" cy="38" rx="2.2" ry="3" fill="#0ea5e9" style="animation-delay: 0.6s;"/>
+          </g>
+        </g>
+
+        <!-- 暖风机（左下，地面上） -->
+        <g id="heaterGroup" class="heater-svg" transform="translate(115, 145)" opacity="0.5">
+          <rect x="-16" y="0" width="32" height="24" rx="3" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
+          <line x1="-13" y1="6" x2="13" y2="6" stroke="#7f1d1d" stroke-width="1"/>
+          <line x1="-13" y1="11" x2="13" y2="11" stroke="#7f1d1d" stroke-width="1"/>
+          <line x1="-13" y1="16" x2="13" y2="16" stroke="#7f1d1d" stroke-width="1"/>
+          <g class="heater-flame" id="heaterFlame">
+            <path d="M -7 -3 Q -9 -10 -4 -14 Q 0 -10 -2 -3 Z" fill="#fbbf24"/>
+            <path d="M 0 -5 Q -3 -14 1 -18 Q 5 -14 2 -5 Z" fill="#f97316"/>
+            <path d="M 7 -3 Q 5 -10 9 -14 Q 13 -10 11 -3 Z" fill="#fbbf24"/>
+          </g>
+          <text y="36" text-anchor="middle" font-size="9" fill="#475569">暖风机</text>
+        </g>
+
+        <!-- 植物（底部一排，居中分布） -->
+        <g id="plantGroup" class="plant-group">
+          <!-- 植物 1 -->
+          <g transform="translate(220, 180)">
+            <line x1="0" y1="0" x2="0" y2="-22" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-7" cy="-13" rx="6" ry="3" fill="#22c55e" transform="rotate(-30 -7 -13)"/>
+            <ellipse cx="7" cy="-10" rx="6" ry="3" fill="#16a34a" transform="rotate(30 7 -10)"/>
+            <ellipse cx="-5" cy="-20" rx="5" ry="2.5" fill="#22c55e" transform="rotate(-45 -5 -20)"/>
+          </g>
+          <!-- 植物 2（小树苗） -->
+          <g transform="translate(300, 180)">
+            <line x1="0" y1="0" x2="0" y2="-26" stroke="#166534" stroke-width="2.5"/>
+            <circle cx="0" cy="-26" r="9" fill="#16a34a"/>
+            <circle cx="-7" cy="-23" r="6" fill="#22c55e"/>
+            <circle cx="7" cy="-23" r="6" fill="#15803d"/>
+            <circle cx="0" cy="-32" r="5" fill="#22c55e"/>
+          </g>
+          <!-- 植物 3（带花） -->
+          <g transform="translate(390, 180)">
+            <line x1="0" y1="0" x2="0" y2="-22" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-6" cy="-14" rx="5" ry="2.5" fill="#22c55e" transform="rotate(-30 -6 -14)"/>
+            <ellipse cx="6" cy="-12" rx="5" ry="2.5" fill="#16a34a" transform="rotate(30 6 -12)"/>
+            <circle cx="0" cy="-22" r="3" fill="#f87171"/>
+            <circle cx="-2" cy="-20" r="2" fill="#fda4af"/>
+            <circle cx="2" cy="-20" r="2" fill="#fda4af"/>
+          </g>
+          <!-- 植物 4（小树苗） -->
+          <g transform="translate(480, 180)">
+            <line x1="0" y1="0" x2="0" y2="-25" stroke="#166534" stroke-width="2.5"/>
+            <circle cx="0" cy="-25" r="9" fill="#16a34a"/>
+            <circle cx="-6" cy="-22" r="6" fill="#22c55e"/>
+            <circle cx="6" cy="-22" r="6" fill="#15803d"/>
+          </g>
+          <!-- 植物 5 -->
+          <g transform="translate(570, 180)">
+            <line x1="0" y1="0" x2="0" y2="-22" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-7" cy="-11" rx="6" ry="3" fill="#22c55e" transform="rotate(-30 -7 -11)"/>
+            <ellipse cx="7" cy="-14" rx="6" ry="3" fill="#16a34a" transform="rotate(30 7 -14)"/>
+            <ellipse cx="0" cy="-22" rx="5" ry="2.5" fill="#22c55e"/>
+          </g>
+          <!-- 植物 6 -->
+          <g transform="translate(650, 180)">
+            <line x1="0" y1="0" x2="0" y2="-20" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-6" cy="-12" rx="5" ry="2.5" fill="#16a34a" transform="rotate(-30 -6 -12)"/>
+            <ellipse cx="6" cy="-9" rx="5" ry="2.5" fill="#22c55e" transform="rotate(30 6 -9)"/>
+            <ellipse cx="0" cy="-20" rx="4" ry="2" fill="#22c55e"/>
+          </g>
+        </g>
+
+        <!-- 土壤层 -->
+        <rect x="0" y="184" width="800" height="16" fill="#78350f" opacity="0.25"/>
+      </svg>
+
+      <div class="data-panel">
+        <div>湿度: <span id="dispMoisture">60</span>%</div>
+        <div>光照: <span id="dispLight">50000</span> lx</div>
+        <div>温度: <span id="dispTemp">22</span>°C</div>
+        <div style="border-top: 1px solid #334155; margin-top: 4px; padding-top: 4px;" class="alert">
+          状态: <span id="dispStatus">良好</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 三个子系统 -->
+  <div class="systems-grid">
+    <!-- 土壤湿度子系统 -->
+    <div class="sub-system water-sys">
+      <h3>💧 土壤湿度控制系统</h3>
+      <div class="flow-mini">输入：湿度 → 计算：与阈值比较 → 输出：喷灌器</div>
+      <div class="sensor-row">
+        <label>当前土壤湿度 <span class="value" id="moistureVal">60%</span></label>
+        <input type="range" id="moisture" min="0" max="100" value="60">
+      </div>
+      <div class="sensor-row">
+        <label>湿度阈值 <span class="value" id="moistureThVal">40%</span></label>
+        <input type="range" id="moistureTh" min="0" max="100" value="40">
+      </div>
+      <div class="verdict idle" id="waterVerdict">喷灌器：待机</div>
+      <div class="truth-mini" id="waterTruth">
+        湿度(60) > 阈值(40) → 真值表：1 → <span class="no">不喷水</span>
+      </div>
+    </div>
+
+    <!-- 光照子系统 -->
+    <div class="sub-system light-sys">
+      <h3>☀️ 光照控制系统</h3>
+      <div class="flow-mini">输入：光照 → 计算：与阈值比较 → 输出：补光灯</div>
+      <div class="sensor-row">
+        <label>当前光照（lx） <span class="value" id="lightVal">50000</span></label>
+        <input type="range" id="light" min="0" max="100000" value="50000" step="1000">
+      </div>
+      <div class="sensor-row">
+        <label>光照阈值（lx） <span class="value" id="lightThVal">30000</span></label>
+        <input type="range" id="lightTh" min="0" max="100000" value="30000" step="1000">
+      </div>
+      <div class="verdict idle" id="lightVerdict">补光灯：关闭</div>
+      <div class="truth-mini" id="lightTruth">
+        光照(50000) > 阈值(30000) → 真值表：0 → <span class="no">不补光</span>
+      </div>
+    </div>
+
+    <!-- 温度子系统 -->
+    <div class="sub-system temp-sys">
+      <h3>🌡️ 温度控制系统</h3>
+      <div class="flow-mini">输入：温度 → 计算：与阈值比较 → 输出：暖风机</div>
+      <div class="sensor-row">
+        <label>当前温度 <span class="value" id="tempVal">22°C</span></label>
+        <input type="range" id="temp" min="-10" max="45" value="22">
+      </div>
+      <div class="sensor-row">
+        <label>温度阈值 <span class="value" id="tempThVal">15°C</span></label>
+        <input type="range" id="tempTh" min="-10" max="45" value="15">
+      </div>
+      <div class="verdict idle" id="tempVerdict">暖风机：停止</div>
+      <div class="truth-mini" id="tempTruth">
+        温度(22) > 阈值(15) → 真值表：0 → <span class="no">不加热</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>💡 实验玩法：</strong>
+    拖动各传感器的滑块改变环境数据，观察大棚里设备状态的变化。<br><br>
+    <strong>🔬 科学原理：</strong>
+    每个子系统都是一个<b>闭环控制系统</b>。传感器把<b>连续量数据</b>（湿度%、光照lx、温度°C）和<b>阈值</b>比较，再生成<b>开关量指令</b>（1=启动，0=停止）控制输出设备。<br><br>
+    <strong>🎯 试一试：</strong>
+    把湿度调到 30%（低于阈值40%）→ 喷灌器启动；把温度调到 5°C（低于阈值15°C）→ 暖风机启动；把光照调到 10000 lx（低于阈值30000 lx）→ 补光灯打开。
+  </div>
+</div>
+
+<script>
+  const els = {
+    moisture: document.getElementById('moisture'),
+    moistureTh: document.getElementById('moistureTh'),
+    light: document.getElementById('light'),
+    lightTh: document.getElementById('lightTh'),
+    temp: document.getElementById('temp'),
+    tempTh: document.getElementById('tempTh'),
+  };
+
+  function update() {
+    const m = +els.moisture.value, mTh = +els.moistureTh.value;
+    const l = +els.light.value, lTh = +els.lightTh.value;
+    const t = +els.temp.value, tTh = +els.tempTh.value;
+
+    // 标签
+    document.getElementById('moistureVal').textContent = m + '%';
+    document.getElementById('moistureThVal').textContent = mTh + '%';
+    document.getElementById('lightVal').textContent = l;
+    document.getElementById('lightThVal').textContent = lTh;
+    document.getElementById('tempVal').textContent = t + '°C';
+    document.getElementById('tempThVal').textContent = tTh + '°C';
+
+    // 数据面板
+    document.getElementById('dispMoisture').textContent = m;
+    document.getElementById('dispLight').textContent = l;
+    document.getElementById('dispTemp').textContent = t;
+
+    // === 湿度系统 ===
+    const waterOn = m < mTh;
+    const waterVer = document.getElementById('waterVerdict');
+    if (waterOn) {
+      waterVer.className = 'verdict active water';
+      waterVer.textContent = '喷灌器：启动喷水';
+      document.getElementById('waterTruth').innerHTML = `湿度(${m}) < 阈值(${mTh}) → 真值表：1 → <span class="ok">▸ 启动喷水</span>`;
+      // 喷水动画
+      ['drop1','drop2','drop3'].forEach(id => document.getElementById(id).classList.add('spraying'));
+    } else {
+      waterVer.className = 'verdict idle';
+      waterVer.textContent = '喷灌器：待机';
+      document.getElementById('waterTruth').innerHTML = `湿度(${m}) ≥ 阈值(${mTh}) → 真值表：0 → <span class="no">不喷水</span>`;
+      ['drop1','drop2','drop3'].forEach(id => document.getElementById(id).classList.remove('spraying'));
+    }
+
+    // === 光照系统 ===
+    const lightOn = l < lTh;
+    const lightVer = document.getElementById('lightVerdict');
+    const lampGroup = document.getElementById('lampGroup');
+    const lampLight = document.getElementById('lampLight');
+    const lampBulb = document.getElementById('lampBulb');
+    if (lightOn) {
+      lightVer.className = 'verdict active light';
+      lightVer.textContent = '补光灯：打开';
+      document.getElementById('lightTruth').innerHTML = `光照(${l}) < 阈值(${lTh}) → 真值表：1 → <span class="ok">▸ 开补光灯</span>`;
+      lampGroup.classList.add('on');
+      lampGroup.setAttribute('opacity', '1');
+      lampLight.setAttribute('opacity', '1');
+      lampBulb.setAttribute('fill', '#fde047');
+    } else {
+      lightVer.className = 'verdict idle';
+      lightVer.textContent = '补光灯：关闭';
+      document.getElementById('lightTruth').innerHTML = `光照(${l}) ≥ 阈值(${lTh}) → 真值表：0 → <span class="no">不补光</span>`;
+      lampGroup.classList.remove('on');
+      lampGroup.setAttribute('opacity', '0.4');
+      lampLight.setAttribute('opacity', '0');
+      lampBulb.setAttribute('fill', '#fef3c7');
+    }
+    // 太阳亮度根据光照变化
+    const sunOpacity = Math.max(0.3, l / 100000);
+    document.getElementById('sunRays').setAttribute('opacity', sunOpacity);
+
+    // === 温度系统 ===
+    const heatOn = t < tTh;
+    const tempVer = document.getElementById('tempVerdict');
+    const heaterGroup = document.getElementById('heaterGroup');
+    const heaterFlame = document.getElementById('heaterFlame');
+    if (heatOn) {
+      tempVer.className = 'verdict active heat';
+      tempVer.textContent = '暖风机：启动';
+      document.getElementById('tempTruth').innerHTML = `温度(${t}) < 阈值(${tTh}) → 真值表：1 → <span class="ok">▸ 启动加热</span>`;
+      heaterGroup.classList.add('on');
+      heaterGroup.setAttribute('opacity', '1');
+      heaterFlame.setAttribute('opacity', '1');
+    } else {
+      tempVer.className = 'verdict idle';
+      tempVer.textContent = '暖风机：停止';
+      document.getElementById('tempTruth').innerHTML = `温度(${t}) ≥ 阈值(${tTh}) → 真值表：0 → <span class="no">不加热</span>`;
+      heaterGroup.classList.remove('on');
+      heaterGroup.setAttribute('opacity', '0.5');
+      heaterFlame.setAttribute('opacity', '0');
+    }
+
+    // === 植物状态判定 ===
+    const plantGroup = document.getElementById('plantGroup');
+    const moistureGood = m >= 30 && m <= 80;
+    const lightGood = l >= 20000;
+    const tempGood = t >= 10 && t <= 35;
+    const goodCount = [moistureGood, lightGood, tempGood].filter(Boolean).length;
+    plantGroup.classList.remove('unhealthy', 'thriving');
+    let status = '良好';
+    if (goodCount === 3) {
+      plantGroup.classList.add('thriving');
+      status = '茁壮成长';
+    } else if (goodCount <= 1) {
+      plantGroup.classList.add('unhealthy');
+      status = '生长不良 ⚠';
+    } else {
+      status = '正常';
+    }
+    document.getElementById('dispStatus').textContent = status;
+  }
+
+  Object.values(els).forEach(el => el.addEventListener('input', update));
+  update();
+</script>
+</body>
+</html>

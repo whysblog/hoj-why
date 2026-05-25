@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第23课 · 医疗设施新功能 — 智慧医院</title>
+<style>
+  :root {
+    --bg: #faf5ff;
+    --bg-2: #f3e8ff;
+    --ink: #1e1b4b;
+    --ink-soft: #5b5076;
+    --primary: #7c3aed;
+    --accent: #ec4899;
+    --green: #10b981;
+    --red: #dc2626;
+    --line: #ddd0f5;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(124,58,237,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 病房模拟 */
+  .ward-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .ward { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .ward .bed-area {
+    background: linear-gradient(135deg, #f3e8ff, #ddd0f5);
+    border-radius: 12px; padding: 20px;
+    position: relative;
+  }
+  .ward .bed-area svg { width: 100%; height: 260px; }
+  .monitor-area {
+    background: #0f0a23; color: #6ee7b7;
+    border-radius: 8px; padding: 16px;
+    font-family: "JetBrains Mono",monospace;
+  }
+  .monitor-area h3 { color: #a78bfa; font-size: 13px; margin-bottom: 12px; letter-spacing: 2px; font-family: "PingFang SC",sans-serif; }
+  .vital-row {
+    display: grid; grid-template-columns: 1fr auto; align-items: center;
+    padding: 8px 12px; background: rgba(255,255,255,.04); border-radius: 4px;
+    margin-bottom: 6px; font-size: 12px;
+  }
+  .vital-row .lbl { color: #c4b5fd; }
+  .vital-row .v { font-weight: 700; font-size: 14px; }
+  .vital-row .v.ok { color: #6ee7b7; }
+  .vital-row .v.alert { color: #fca5a5; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.4; } }
+
+  .alert-banner {
+    margin-top: 14px; padding: 12px; border-radius: 6px; font-size: 13px; text-align: center;
+  }
+  .alert-banner.ok { background: rgba(16,185,129,.15); color: #047857; }
+  .alert-banner.alert { background: rgba(220,38,38,.15); color: var(--red); font-weight: 700; }
+
+  .scene-row { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .scene-btn {
+    padding: 8px 14px; background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-family: inherit; color: var(--ink);
+  }
+  .scene-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* 应用列表 */
+  .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .app-card {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+  }
+  .app-card .ic { font-size: 28px; margin-bottom: 6px; }
+  .app-card h4 { font-size: 14px; margin-bottom: 4px; color: var(--primary); }
+  .app-card p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  /* 远程会诊 */
+  .telemedicine {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .tm-flow {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 10px;
+    align-items: center; margin-top: 14px;
+  }
+  .tm-node {
+    background: var(--bg-2); padding: 18px; border-radius: 10px; text-align: center;
+  }
+  .tm-node .ic { font-size: 40px; }
+  .tm-node h4 { font-size: 13px; margin: 6px 0 4px; color: var(--primary); }
+  .tm-node p { font-size: 11px; color: var(--ink-soft); line-height: 1.6; }
+  .tm-arrow { font-size: 18px; color: var(--primary); font-weight: 700; text-align: center; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .ward { grid-template-columns: 1fr; }
+    .tm-flow { grid-template-columns: 1fr; }
+    .tm-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 23 课</span>医疗设施新功能</h1>
+  <p class="lead">物联网正在让医院变得更"聪明"。从<strong>病房 24 小时监护</strong>到<strong>千里之外的远程会诊</strong>，从<strong>药品智能管理</strong>到<strong>AI 影像诊断</strong>，IoT 让医疗资源更精准地服务每一位患者。</p>
+</header>
+
+<main>
+
+  <!-- 智慧病房监护 -->
+  <section class="section">
+    <div class="section-title">一、智慧病房 24 小时监护</div>
+    <div class="ward-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">现代化的 ICU 重症监护病房，每个病床都连接<strong>心电、血压、血氧、呼吸监护仪</strong>，数据实时上传中心护士站。一旦异常立即报警：</p>
+      <div class="ward">
+        <div class="bed-area">
+          <svg viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg">
+            <!-- 病床 -->
+            <rect x="40" y="120" width="240" height="100" fill="#fff" stroke="#7c3aed" stroke-width="2" rx="6"/>
+            <rect x="40" y="100" width="50" height="60" fill="#fff" stroke="#7c3aed" stroke-width="2" rx="3"/>
+            <!-- 病人 -->
+            <ellipse cx="200" cy="155" rx="80" ry="22" fill="#fef3c7" stroke="#a37315" stroke-width="1.5"/>
+            <circle cx="80" cy="140" r="18" fill="#fed7aa" stroke="#a37315" stroke-width="1.5"/>
+            <!-- 各种监测线 -->
+            <line x1="80" y1="120" x2="80" y2="60" stroke="#7c3aed" stroke-width="1.5"/>
+            <line x1="80" y1="60" x2="280" y2="60" stroke="#7c3aed" stroke-width="1.5"/>
+            <line x1="280" y1="60" x2="280" y2="40" stroke="#7c3aed" stroke-width="1.5"/>
+            <!-- 监护仪 -->
+            <rect x="220" y="10" width="80" height="40" fill="#0f0a23" stroke="#a855f7" stroke-width="2" rx="3"/>
+            <text x="260" y="30" font-size="9" fill="#ec4899" text-anchor="middle" font-family="monospace">HR 78</text>
+            <text x="260" y="42" font-size="9" fill="#6ee7b7" text-anchor="middle" font-family="monospace">SpO2 97</text>
+            <!-- 输液 -->
+            <rect x="14" y="20" width="20" height="40" fill="#a78bfa" stroke="#7c3aed" stroke-width="1.5" rx="3"/>
+            <line x1="24" y1="60" x2="24" y2="130" stroke="#a78bfa" stroke-width="1"/>
+            <text x="24" y="14" font-size="8" fill="#7c3aed" text-anchor="middle">智能输液</text>
+            <!-- 床位号 -->
+            <text x="160" y="240" font-size="11" fill="#7c3aed" text-anchor="middle">ICU 病房 - 床位 03</text>
+          </svg>
+        </div>
+        <div>
+          <div class="monitor-area">
+            <h3>📡 中心护士站监护屏</h3>
+            <div class="vital-row"><span class="lbl">心率 (HR)</span><span class="v ok" id="vHr">78 bpm</span></div>
+            <div class="vital-row"><span class="lbl">血氧 (SpO₂)</span><span class="v ok" id="vSpo2">97 %</span></div>
+            <div class="vital-row"><span class="lbl">血压 (NIBP)</span><span class="v ok" id="vBp">118/76</span></div>
+            <div class="vital-row"><span class="lbl">呼吸 (RR)</span><span class="v ok" id="vRr">16 次/分</span></div>
+            <div class="vital-row"><span class="lbl">体温</span><span class="v ok" id="vTemp">36.8 ℃</span></div>
+            <div class="vital-row"><span class="lbl">输液速率</span><span class="v ok" id="vDrip">60 滴/分</span></div>
+            <div class="vital-row"><span class="lbl">输液余量</span><span class="v ok" id="vBag">72 %</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-row">
+        <button class="scene-btn active" id="b_normal" onclick="setWard('normal')">✓ 病情平稳</button>
+        <button class="scene-btn" id="b_arrhythmia" onclick="setWard('arrhythmia')">⚠ 心律异常</button>
+        <button class="scene-btn" id="b_hypoxia" onclick="setWard('hypoxia')">⚠ 低血氧</button>
+        <button class="scene-btn" id="b_lowbag" onclick="setWard('lowbag')">⚠ 输液即将用完</button>
+        <button class="scene-btn" id="b_emergency" onclick="setWard('emergency')">🚨 突发病情</button>
+      </div>
+      <div class="alert-banner ok" id="alertBanner">✓ 所有生命体征平稳，护士正常巡视即可。</div>
+    </div>
+  </section>
+
+  <!-- 远程会诊 -->
+  <section class="section">
+    <div class="section-title">二、远程会诊：让边远地区也能看大专家</div>
+    <div class="telemedicine">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;">借助物联网和高速网络，<strong>边远地区医院的患者可以远程接受大城市三甲医院专家的会诊</strong>。患者数据（X 光、CT、心电图）实时同步传送，专家通过视频远程指导诊疗。</p>
+      <div class="tm-flow">
+        <div class="tm-node">
+          <div class="ic">🏥</div>
+          <h4>县医院</h4>
+          <p>患者就诊 + 采集影像/化验数据</p>
+        </div>
+        <div class="tm-arrow">→</div>
+        <div class="tm-node">
+          <div class="ic">☁</div>
+          <h4>医疗云平台</h4>
+          <p>加密传输患者数据，预约专家时间</p>
+        </div>
+        <div class="tm-arrow">→</div>
+        <div class="tm-node">
+          <div class="ic">👨‍⚕</div>
+          <h4>三甲医院专家</h4>
+          <p>查看数据 + 视频会诊 + 给出方案</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 其他应用 -->
+  <section class="section">
+    <div class="section-title">三、物联网在医疗领域的其他应用</div>
+    <div class="apps-grid">
+      <div class="app-card"><div class="ic">📍</div><h4>资产定位</h4><p>RFID 标签贴在轮椅、急救设备上，护士能立刻找到。再不会"找不到血压计"。</p></div>
+      <div class="app-card"><div class="ic">💊</div><h4>智能药柜</h4><p>电子锁+扫码取药，自动登记。麻醉药品的取出记录全可追溯。</p></div>
+      <div class="app-card"><div class="ic">🤖</div><h4>送药机器人</h4><p>夜间病房之间自动配送药品和样本，减少护士奔波。</p></div>
+      <div class="app-card"><div class="ic">🧪</div><h4>样本物流</h4><p>血样、组织标本采集后贴 RFID，从科室到检验科全程跟踪。</p></div>
+      <div class="app-card"><div class="ic">🚑</div><h4>智能救护车</h4><p>车上设备实时把心电、血压传到目的医院，医生提前准备抢救。</p></div>
+      <div class="app-card"><div class="ic">📷</div><h4>AI 影像辅助</h4><p>云端 AI 模型分析 X 光/CT，标出可疑病灶供医生参考。</p></div>
+      <div class="app-card"><div class="ic">🛏</div><h4>跌倒检测</h4><p>病床下传感器或可穿戴设备检测跌倒，护士站秒级报警。</p></div>
+      <div class="app-card"><div class="ic">🔬</div><h4>慢病随访</h4><p>糖尿病、高血压患者居家测量，数据上传医生评估。</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 23 课配套交互工具</footer>
+
+<script>
+var wardScenes = {
+  normal:     { hr:['78 bpm','ok'],     spo2:['97 %','ok'],    bp:['118/76','ok'], rr:['16 次/分','ok'],  temp:['36.8 ℃','ok'], drip:['60 滴/分','ok'], bag:['72 %','ok'],     msg:'✓ 所有生命体征平稳，护士正常巡视即可。', cls:'ok' },
+  arrhythmia: { hr:['142 bpm','alert'], spo2:['96 %','ok'],    bp:['145/95','ok'], rr:['22 次/分','ok'],  temp:['36.9 ℃','ok'], drip:['60 滴/分','ok'], bag:['70 %','ok'],     msg:'⚠ 心律异常！心率突升至 142 bpm。系统已通知值班医生立即查看。', cls:'alert' },
+  hypoxia:    { hr:['98 bpm','ok'],     spo2:['85 %','alert'], bp:['125/82','ok'], rr:['24 次/分','ok'],  temp:['36.7 ℃','ok'], drip:['60 滴/分','ok'], bag:['68 %','ok'],     msg:'⚠ 血氧饱和度仅 85%，远低于正常 95%。已自动启动氧气供给。', cls:'alert' },
+  lowbag:     { hr:['78 bpm','ok'],     spo2:['97 %','ok'],    bp:['118/76','ok'], rr:['16 次/分','ok'],  temp:['36.8 ℃','ok'], drip:['60 滴/分','ok'], bag:['8 %','alert'],   msg:'⚠ 输液余量仅 8%，5 分钟后用完。已通知护士准备换液。', cls:'alert' },
+  emergency:  { hr:['168 bpm','alert'], spo2:['78 %','alert'], bp:['78/45','alert'],rr:['32 次/分','alert'],temp:['39.6 ℃','alert'],drip:['暂停','ok'],   bag:['50 %','ok'],     msg:'🚨 紧急！多项生命体征严重异常，疑似休克。系统已呼叫急救小组！', cls:'alert' }
+};
+
+function setWard(name) {
+  var keys = ['normal','arrhythmia','hypoxia','lowbag','emergency'];
+  for (var i = 0; i < keys.length; i++) {
+    document.getElementById('b_' + keys[i]).className = 'scene-btn' + (keys[i] === name ? ' active' : '');
+  }
+  var s = wardScenes[name];
+  setW('vHr', s.hr); setW('vSpo2', s.spo2); setW('vBp', s.bp); setW('vRr', s.rr);
+  setW('vTemp', s.temp); setW('vDrip', s.drip); setW('vBag', s.bag);
+  var b = document.getElementById('alertBanner');
+  b.className = 'alert-banner ' + s.cls;
+  b.textContent = s.msg;
+}
+function setW(id, pair) {
+  var el = document.getElementById(id);
+  el.textContent = pair[0];
+  el.className = 'v ' + pair[1];
+}
+
+window.setWard = setWard;
+</script>
+</body>
+</html>

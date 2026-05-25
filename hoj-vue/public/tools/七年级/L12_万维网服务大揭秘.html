@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第12课 · 万维网服务大揭秘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第3单元 · 第12课</span>
+    <span class="title">万维网服务大揭秘</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>万维网服务<br>大揭秘</h1>
+<p class="subtitle">第三单元 · 第12课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>URL · 工作模式</strong></span>
+<span>💡 关键词：<strong>WWW · 浏览器</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🌐</span><div class="card-title">认识 WWW</div><div class="card-desc">理解万维网的核心组成：HTML、HTTP、URL。</div></div><div class="card"><span class="card-icon">🔍</span><div class="card-title">解析 URL</div><div class="card-desc">能拆解一个 URL 的各个部分。</div></div><div class="card"><span class="card-icon">⚡</span><div class="card-title">理解流程</div><div class="card-desc">明白从输入网址到看到网页的全过程。</div></div></div></section>
+<section class="slide"><h2>WWW = World Wide Web</h2>
+<p><strong>万维网</strong>(WWW) 由蒂姆·伯纳斯-李 1989-1991 年发明，是建立在互联网之上的<strong>信息服务系统</strong>。</p>
+<div class="highlight">⚠️ <strong>互联网 ≠ 万维网。</strong> 互联网是底层"<strong>路</strong>"，万维网是路上的"<strong>一种服务</strong>"。微信、邮件、游戏也跑在互联网上，但它们不属于万维网。</div>
+<h3>WWW 的三大基石</h3>
+<div class="cards"><div class="card"><span class="card-icon">🏷️</span><div class="card-title">HTML</div><div class="card-desc">超文本标记语言，规定网页的内容和结构。</div></div><div class="card"><span class="card-icon">🔌</span><div class="card-title">HTTP</div><div class="card-desc">超文本传输协议，规定浏览器和服务器如何对话。</div></div><div class="card"><span class="card-icon">🔗</span><div class="card-title">URL</div><div class="card-desc">统一资源定位符，给互联网上每份资源一个唯一地址。</div></div></div></section>
+<section class="slide"><h2>URL 解剖</h2>
+<p>URL (Uniform Resource Locator) 就是网址。来看一个真实的 URL：</p>
+<div class="url-anatomy">
+<span class="scheme">https</span>://<span class="host">www.example.com</span>:<span class="port">443</span><span class="path">/news/2024/article</span>?<span class="query">id=42&amp;lang=zh</span>
+</div>
+<table class="tbl">
+<tr><th>部分</th><th>含义</th><th>例子</th></tr>
+<tr><td><span style="color:#ff6b81">协议</span></td><td>用什么"语言"交流</td><td>http、https、ftp</td></tr>
+<tr><td><span style="color:#4ed1b8">主机名</span></td><td>访问哪台服务器（域名）</td><td>www.example.com</td></tr>
+<tr><td><span style="color:#a8e063">端口</span></td><td>服务器上的哪个"门"</td><td>80(HTTP) / 443(HTTPS)</td></tr>
+<tr><td><span style="color:#ffb347">路径</span></td><td>该服务器上的哪份资源</td><td>/news/2024/article</td></tr>
+<tr><td><span style="color:#c397ff">查询参数</span></td><td>附加的请求条件</td><td>?id=42&amp;lang=zh</td></tr>
+</table></section>
+<section class="slide"><h2>访问网页全过程</h2>
+<p>当你在地址栏输入 <code style="color:var(--accent)">https://www.baidu.com</code> 按下回车，背后发生了什么？</p>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">Step 1 · DNS 查询</div><div class="tl-title">把域名变成 IP</div><div class="tl-desc">浏览器问 DNS 服务器："www.baidu.com 的 IP 是什么？" → 得到如 220.181.38.148。</div></div>
+<div class="tl-item"><div class="tl-year">Step 2 · TCP 连接</div><div class="tl-title">三次握手建立通信</div><div class="tl-desc">浏览器和服务器进行 TCP 三次握手（HTTPS 还要 TLS 握手）。</div></div>
+<div class="tl-item"><div class="tl-year">Step 3 · 发送 HTTP 请求</div><div class="tl-title">浏览器："请给我这个网页"</div><div class="tl-desc">发送一个 HTTP GET 请求，包含 URL、Header、Cookie 等。</div></div>
+<div class="tl-item"><div class="tl-year">Step 4 · 服务器响应</div><div class="tl-title">服务器返回 HTML</div><div class="tl-desc">服务器返回状态码（200 OK）+ HTML 文档 + 资源链接。</div></div>
+<div class="tl-item"><div class="tl-year">Step 5 · 浏览器渲染</div><div class="tl-title">解析并展示页面</div><div class="tl-desc">浏览器解析 HTML/CSS/JS，下载图片，最终把网页画到屏幕上。</div></div>
+</div></section>
+<section class="slide"><h2>HTML / CSS / JS 三剑客</h2><div class="cards"><div class="card"><span class="card-icon">📄</span><div class="card-title">HTML · 骨架</div><div class="card-desc">规定网页"<strong>有什么</strong>"——标题、段落、图片、链接。类比：人的骨骼。</div></div><div class="card"><span class="card-icon">🎨</span><div class="card-title">CSS · 皮肤</div><div class="card-desc">规定网页"<strong>长什么样</strong>"——颜色、字体、布局。类比：穿什么衣服。</div></div><div class="card"><span class="card-icon">⚡</span><div class="card-title">JS · 行为</div><div class="card-desc">规定网页"<strong>能干什么</strong>"——点击、动画、表单。类比：动作和反应。</div></div></div><div class="highlight">🛠 工具集里"<strong>HTML实时编辑器</strong>""<strong>CSS样式调试器</strong>""<strong>Markdown预览器</strong>"就是用这三种技术做的，可以亲手体验。</div></section>
+<section class="slide"><h2>常见 HTTP 状态码</h2>
+<table class="tbl">
+<tr><th>状态码</th><th>含义</th><th>常见场景</th></tr>
+<tr><td style="color:var(--accent)">200 OK</td><td>请求成功</td><td>网页正常打开</td></tr>
+<tr><td style="color:var(--accent)">301</td><td>永久重定向</td><td>网址变更</td></tr>
+<tr><td style="color:var(--accent2)">302</td><td>临时重定向</td><td>需要登录跳转</td></tr>
+<tr><td style="color:var(--warn)">403 Forbidden</td><td>禁止访问</td><td>无权限</td></tr>
+<tr><td style="color:var(--warn)">404 Not Found</td><td>找不到资源</td><td>网页删除/网址错误</td></tr>
+<tr><td style="color:var(--warn)">500</td><td>服务器内部错误</td><td>后台代码出 bug</td></tr>
+<tr><td style="color:var(--warn)">503</td><td>服务不可用</td><td>服务器维护/过载</td></tr>
+</table>
+<div class="highlight">💡 <strong>记忆窍门：</strong>2xx 成功、3xx 跳转、4xx 客户端错误、5xx 服务器错误。下次看到 404 你就知道"我访问的资源不存在"。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 下列<strong>不属于</strong>万维网三大基石的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">HTML</div>
+<div class="quiz-opt" data-correct="false">HTTP</div>
+<div class="quiz-opt" data-correct="false">URL</div>
+<div class="quiz-opt" data-correct="true">TCP</div></div>
+<div class="quiz-feedback">✅ 万维网三大基石是 HTML、HTTP、URL。TCP 是传输层协议，属于互联网基础，不是 WWW 特有。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 在 URL <code>https://www.bilibili.com:443/video/BV1xx</code> 中，<code>443</code> 表示？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">协议版本</div>
+<div class="quiz-opt" data-correct="true">端口号</div>
+<div class="quiz-opt" data-correct="false">IP地址</div>
+<div class="quiz-opt" data-correct="false">文件大小</div></div>
+<div class="quiz-feedback">✅ 冒号后的数字是端口号。443 是 HTTPS 的默认端口。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 看到 "404" 状态码，最可能的原因是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">服务器爆炸</div>
+<div class="quiz-opt" data-correct="true">请求的资源不存在</div>
+<div class="quiz-opt" data-correct="false">账号被封</div>
+<div class="quiz-opt" data-correct="false">网速太慢</div></div>
+<div class="quiz-feedback">✅ 404 Not Found = 找不到该资源，通常是网址错误或资源已被删除。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>互联网 ≠ 万维网</strong>：互联网是底层，WWW 是一种服务</li>
+<li><strong>WWW 三基石</strong>：HTML（内容）+ HTTP（协议）+ URL（地址）</li>
+<li><strong>URL 五要素</strong>：协议、主机、端口、路径、查询参数</li>
+<li><strong>访问流程</strong>：DNS → TCP → HTTP 请求 → 服务器响应 → 浏览器渲染</li>
+<li><strong>状态码</strong>：2xx 成功、3xx 跳转、4xx 客户端错误、5xx 服务器错误</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>打开任意网站，按 F12 打开开发者工具的"网络"标签，刷新页面，观察实际的请求和状态码。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "什么是 WWW", "URL 解剖", "访问全过程", "三剑客", "HTTP 状态码", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

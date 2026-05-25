@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第24课 · 农业生产新模式 — 智慧农业</title>
+<style>
+  :root {
+    --bg: #faf5ff;
+    --bg-2: #f3e8ff;
+    --ink: #1e1b4b;
+    --ink-soft: #5b5076;
+    --primary: #7c3aed;
+    --accent: #ec4899;
+    --green: #10b981;
+    --warn: #f59e0b;
+    --line: #ddd0f5;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(124,58,237,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 大棚模拟 */
+  .gh-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .gh-svg-wrap { background: linear-gradient(180deg, #dbeafe 0%, #d1fae5 70%, #fef3c7 100%); border-radius: 12px; padding: 16px; }
+  .gh-svg { width: 100%; height: 320px; }
+  .gh-data {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px;
+  }
+  .gh-metric {
+    background: var(--bg-2); padding: 12px; border-radius: 8px; text-align: center;
+    border-top: 3px solid var(--primary);
+  }
+  .gh-metric .ic { font-size: 24px; margin-bottom: 2px; }
+  .gh-metric .lbl { font-size: 10px; color: var(--ink-soft); letter-spacing: 1px; }
+  .gh-metric .v { font-size: 20px; font-weight: 700; color: var(--primary); font-family: "JetBrains Mono",monospace; margin-top: 4px; }
+  .gh-metric .v .u { font-size: 10px; }
+  .gh-actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .gh-btn {
+    padding: 8px 14px; background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-family: inherit; color: var(--ink);
+  }
+  .gh-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* 应用 */
+  .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .app-card {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-top: 4px solid var(--green);
+  }
+  .app-card .ic { font-size: 28px; margin-bottom: 6px; }
+  .app-card h4 { font-size: 14px; margin-bottom: 4px; color: var(--primary); }
+  .app-card p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  /* 收益对比 */
+  .compare {
+    background: var(--card); padding: 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .compare-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .compare-table th, .compare-table td {
+    padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .compare-table th { background: var(--bg-2); color: var(--primary); font-size: 12px; letter-spacing: 1px; }
+  .compare-table td.good { color: var(--green); font-weight: 700; }
+  .compare-table td.bad  { color: #94a3b8; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .gh-data { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 24 课</span>农业生产新模式</h1>
+  <p class="lead">从"靠天吃饭"到"精准农业"，物联网正在改变千年的耕作方式。<strong>传感器分钟级感知作物状态、AI 决定何时浇水施肥、无人机执行精准喷洒</strong>——智慧农业让每一滴水、每一粒肥料都用在刀刃上。</p>
+</header>
+
+<main>
+
+  <!-- 智能温室模拟 -->
+  <section class="section">
+    <div class="section-title">一、智能温室大棚模拟器</div>
+    <div class="gh-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">下方是一个种植番茄的智能温室。温室内部署多种传感器和执行设备，系统会根据天气、植物状态自动调节环境。点击场景按钮观察响应：</p>
+      <div class="gh-svg-wrap">
+        <svg class="gh-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+          <!-- 天空 -->
+          <g id="weatherGroup">
+            <circle id="sun" cx="120" cy="50" r="25" fill="#fbbf24"/>
+            <text x="120" y="56" font-size="22" text-anchor="middle">☀</text>
+            <g id="clouds" opacity="0">
+              <ellipse cx="200" cy="50" rx="40" ry="14" fill="#fff"/>
+              <ellipse cx="350" cy="40" rx="50" ry="18" fill="#fff"/>
+              <ellipse cx="500" cy="55" rx="35" ry="12" fill="#fff"/>
+            </g>
+            <g id="rain" opacity="0">
+              <line x1="180" y1="80" x2="170" y2="120" stroke="#06b6d4" stroke-width="2"/>
+              <line x1="250" y1="80" x2="240" y2="120" stroke="#06b6d4" stroke-width="2"/>
+              <line x1="320" y1="75" x2="310" y2="115" stroke="#06b6d4" stroke-width="2"/>
+              <line x1="400" y1="80" x2="390" y2="120" stroke="#06b6d4" stroke-width="2"/>
+              <line x1="470" y1="75" x2="460" y2="115" stroke="#06b6d4" stroke-width="2"/>
+              <line x1="540" y1="80" x2="530" y2="120" stroke="#06b6d4" stroke-width="2"/>
+            </g>
+          </g>
+          <!-- 温室结构 -->
+          <path d="M 40 280 L 40 180 Q 40 120 400 120 Q 760 120 760 180 L 760 280 Z" fill="rgba(255,255,255,.4)" stroke="#7c3aed" stroke-width="3"/>
+          <path d="M 40 180 Q 400 120 760 180" fill="none" stroke="#a855f7" stroke-width="2"/>
+          <!-- 植物 -->
+          <g id="plants">
+            <g transform="translate(110 230)"><rect x="-10" y="0" width="20" height="50" fill="#92400e"/><circle cx="0" cy="-5" r="20" fill="#10b981"/><circle cx="0" cy="-15" r="6" fill="#dc2626"/></g>
+            <g transform="translate(220 230)"><rect x="-10" y="0" width="20" height="50" fill="#92400e"/><circle cx="0" cy="-5" r="20" fill="#10b981"/><circle cx="0" cy="-15" r="6" fill="#dc2626"/></g>
+            <g transform="translate(330 230)"><rect x="-10" y="0" width="20" height="50" fill="#92400e"/><circle cx="0" cy="-5" r="20" fill="#10b981"/><circle cx="0" cy="-15" r="6" fill="#dc2626"/></g>
+            <g transform="translate(440 230)"><rect x="-10" y="0" width="20" height="50" fill="#92400e"/><circle cx="0" cy="-5" r="20" fill="#10b981"/><circle cx="0" cy="-15" r="6" fill="#dc2626"/></g>
+            <g transform="translate(550 230)"><rect x="-10" y="0" width="20" height="50" fill="#92400e"/><circle cx="0" cy="-5" r="20" fill="#10b981"/><circle cx="0" cy="-15" r="6" fill="#dc2626"/></g>
+            <g transform="translate(660 230)"><rect x="-10" y="0" width="20" height="50" fill="#92400e"/><circle cx="0" cy="-5" r="20" fill="#10b981"/><circle cx="0" cy="-15" r="6" fill="#dc2626"/></g>
+          </g>
+          <!-- 设备 -->
+          <!-- 风机 -->
+          <g transform="translate(60 145)">
+            <circle id="fan" cx="0" cy="0" r="18" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+            <text x="0" y="5" font-size="14" text-anchor="middle">💨</text>
+            <text x="0" y="32" font-size="9" fill="#7c3aed" text-anchor="middle">通风</text>
+          </g>
+          <!-- 喷淋 -->
+          <g transform="translate(400 132)">
+            <rect x="-10" y="0" width="20" height="8" fill="#06b6d4"/>
+            <g id="sprinkler" opacity="0">
+              <line x1="0" y1="10" x2="-15" y2="40" stroke="#06b6d4" stroke-width="1.5"/>
+              <line x1="0" y1="10" x2="15" y2="40" stroke="#06b6d4" stroke-width="1.5"/>
+              <line x1="0" y1="10" x2="0" y2="45" stroke="#06b6d4" stroke-width="1.5"/>
+            </g>
+            <text x="0" y="-5" font-size="9" fill="#06b6d4" text-anchor="middle">喷淋</text>
+          </g>
+          <!-- 补光灯 -->
+          <g transform="translate(620 145)">
+            <rect id="lamp" x="-15" y="0" width="30" height="10" fill="#fbbf24" stroke="#a37315" stroke-width="1.5" rx="2"/>
+            <text x="0" y="-3" font-size="9" fill="#92400e" text-anchor="middle">补光</text>
+          </g>
+          <!-- 传感器 -->
+          <circle cx="180" cy="280" r="4" fill="#7c3aed"/>
+          <circle cx="380" cy="280" r="4" fill="#7c3aed"/>
+          <circle cx="580" cy="280" r="4" fill="#7c3aed"/>
+          <text x="380" y="305" font-size="10" fill="#5b5076" text-anchor="middle" font-style="italic">土壤湿度传感器</text>
+        </svg>
+      </div>
+      <div class="gh-data">
+        <div class="gh-metric">
+          <div class="ic">🌡</div>
+          <div class="lbl">温度</div>
+          <div class="v"><span id="vT">25</span><span class="u">℃</span></div>
+        </div>
+        <div class="gh-metric">
+          <div class="ic">💧</div>
+          <div class="lbl">空气湿度</div>
+          <div class="v"><span id="vH">60</span><span class="u">%</span></div>
+        </div>
+        <div class="gh-metric">
+          <div class="ic">🌱</div>
+          <div class="lbl">土壤湿度</div>
+          <div class="v"><span id="vS">2400</span><span class="u">/4095</span></div>
+        </div>
+        <div class="gh-metric">
+          <div class="ic">☀</div>
+          <div class="lbl">光照</div>
+          <div class="v"><span id="vL">1800</span><span class="u">lux</span></div>
+        </div>
+      </div>
+      <div class="gh-actions">
+        <button class="gh-btn active" id="b_sun" onclick="setGhScene('sun')">☀ 晴朗白天</button>
+        <button class="gh-btn" id="b_hot" onclick="setGhScene('hot')">🔥 高温干旱</button>
+        <button class="gh-btn" id="b_rain" onclick="setGhScene('rain')">🌧 阴雨天</button>
+        <button class="gh-btn" id="b_night" onclick="setGhScene('night')">🌙 夜间</button>
+      </div>
+      <div class="gh-metric" style="margin-top:14px;border-top-color:var(--green);background:rgba(16,185,129,.08);text-align:left;padding:16px;">
+        <strong style="color:var(--green);font-size:13px;">🤖 系统决策：</strong>
+        <p id="ghDecision" style="font-size:13px;color:var(--ink);line-height:1.7;margin-top:6px;">✓ 当前环境适宜，所有执行设备处于待机状态。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 智慧农业应用 -->
+  <section class="section">
+    <div class="section-title">二、智慧农业的典型应用</div>
+    <div class="apps-grid">
+      <div class="app-card"><div class="ic">🚿</div><h4>精准灌溉</h4><p>土壤湿度传感器分区监测，按需滴灌。比传统漫灌节水 50%-70%。</p></div>
+      <div class="app-card"><div class="ic">🚁</div><h4>无人机植保</h4><p>固定路线低空喷洒农药/化肥，效率比人工高 30 倍，且喷洒更均匀。</p></div>
+      <div class="app-card"><div class="ic">📡</div><h4>卫星遥感</h4><p>通过卫星拍摄农田图像分析作物长势、识别病虫害区域。</p></div>
+      <div class="app-card"><div class="ic">🐄</div><h4>畜牧 RFID</h4><p>每头牛佩戴 RFID 耳标，追踪进食量、运动量、健康状态。</p></div>
+      <div class="app-card"><div class="ic">🐝</div><h4>智能蜂箱</h4><p>监测蜂箱温度、重量、蜂群活跃度，提示养蜂人何时取蜜或干预。</p></div>
+      <div class="app-card"><div class="ic">🚜</div><h4>无人驾驶农机</h4><p>北斗导航+IoT，无人收割机、播种机按预设路线自动作业。</p></div>
+      <div class="app-card"><div class="ic">🌾</div><h4>粮仓监测</h4><p>仓库内温湿度、CO₂、虫情传感器，避免粮食霉变、虫害。</p></div>
+      <div class="app-card"><div class="ic">🐟</div><h4>智能渔业</h4><p>水产养殖池监测水质（溶氧、pH、氨氮），自动投饵、增氧。</p></div>
+    </div>
+  </section>
+
+  <!-- 收益对比 -->
+  <section class="section">
+    <div class="section-title">三、传统 vs 智慧农业对比</div>
+    <div class="compare">
+      <table class="compare-table">
+        <thead>
+          <tr><th>指标</th><th>传统农业</th><th>智慧农业</th><th>提升</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>水资源利用率</td><td class="bad">大水漫灌 ~30%</td><td class="good">精准滴灌 ~85%</td><td>↑ 50%+</td></tr>
+          <tr><td>化肥使用量</td><td class="bad">凭经验，常过量</td><td class="good">按需施肥，减 30%</td><td>↓ 30%</td></tr>
+          <tr><td>农药使用</td><td class="bad">普喷，污染大</td><td class="good">病虫害区精准喷洒</td><td>↓ 40%</td></tr>
+          <tr><td>人力需求</td><td class="bad">10 人/百亩</td><td class="good">2-3 人/百亩</td><td>↓ 70%</td></tr>
+          <tr><td>产量预测</td><td class="bad">大致估算</td><td class="good">AI 模型精准预测</td><td>误差从 ±20% 到 ±3%</td></tr>
+          <tr><td>食品溯源</td><td class="bad">几乎不可能</td><td class="good">从田到餐桌全程可追溯</td><td>✓ 实现</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 24 课配套交互工具</footer>
+
+<script>
+var ghScenes = {
+  sun:   { T:25, H:60, S:2400, L:1800, weather:'sun',   sprinkler:0, fan:0, lamp:0, dec:'✓ 当前环境适宜，所有执行设备处于待机状态。' },
+  hot:   { T:38, H:35, S:1600, L:3500, weather:'sun',   sprinkler:1, fan:1, lamp:0, dec:'⚠ 温度 38℃ 过高、土壤湿度低！系统已：① 启动喷淋降温补水 ② 开启通风扇散热。' },
+  rain:  { T:18, H:88, S:3600, L:200,  weather:'rain',  sprinkler:0, fan:1, lamp:1, dec:'🌧 阴雨天光照不足，土壤湿度饱和！系统已：① 启动补光灯 ② 开启通风扇降湿（避免霉病）。' },
+  night: { T:16, H:72, S:2800, L:0,    weather:'night', sprinkler:0, fan:0, lamp:0, dec:'🌙 夜间环境正常，番茄进入呼吸代谢期，无需干预。' }
+};
+
+function setGhScene(name) {
+  var keys = ['sun','hot','rain','night'];
+  for (var i = 0; i < keys.length; i++) {
+    document.getElementById('b_' + keys[i]).className = 'gh-btn' + (keys[i] === name ? ' active' : '');
+  }
+  var s = ghScenes[name];
+  document.getElementById('vT').textContent = s.T;
+  document.getElementById('vH').textContent = s.H;
+  document.getElementById('vS').textContent = s.S;
+  document.getElementById('vL').textContent = s.L;
+  // weather
+  document.getElementById('sun').setAttribute('opacity', s.weather === 'sun' || s.weather === 'hot' ? 1 : (s.weather === 'night' ? 0 : 0.3));
+  document.getElementById('clouds').setAttribute('opacity', s.weather === 'rain' ? 1 : 0);
+  document.getElementById('rain').setAttribute('opacity', s.weather === 'rain' ? 1 : 0);
+  // devices
+  document.getElementById('sprinkler').setAttribute('opacity', s.sprinkler ? 1 : 0);
+  document.getElementById('fan').setAttribute('stroke', s.fan ? '#10b981' : '#7c3aed');
+  document.getElementById('fan').setAttribute('stroke-width', s.fan ? 3 : 2);
+  document.getElementById('lamp').setAttribute('fill', s.lamp ? '#fbbf24' : '#94a3b8');
+  document.getElementById('lamp').setAttribute('stroke', s.lamp ? '#f59e0b' : '#a37315');
+  document.getElementById('ghDecision').textContent = s.dec;
+}
+
+window.setGhScene = setGhScene;
+</script>
+</body>
+</html>

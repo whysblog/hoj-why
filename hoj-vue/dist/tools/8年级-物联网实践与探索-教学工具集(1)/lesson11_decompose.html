@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第11课 · 物联功能细分解 — 智能门锁功能拆解</title>
+<style>
+  :root {
+    --bg: #f0fdf4;
+    --bg-2: #dcfce7;
+    --ink: #052e1a;
+    --ink-soft: #4a6c5e;
+    --primary: #047857;
+    --primary-2: #10b981;
+    --accent: #0d9488;
+    --warn: #f59e0b;
+    --line: #c8d8ce;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(4,120,87,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image: radial-gradient(circle at 80% 0%, rgba(16,185,129,.06), transparent 50%);
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--warn); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 智能门锁中心图 */
+  .lock-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .lock-svg { width: 100%; max-height: 380px; }
+
+  /* 功能列表 */
+  .funcs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .func {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); border-left: 4px solid var(--primary);
+    box-shadow: var(--shadow); cursor: pointer; transition: all .2s;
+  }
+  .func:hover { transform: translateY(-3px); border-left-color: var(--warn); }
+  .func .ic { font-size: 32px; margin-bottom: 8px; }
+  .func h3 { font-size: 15px; margin-bottom: 6px; color: var(--primary); }
+  .func p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .func .tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .func .tag {
+    padding: 2px 8px; background: var(--bg-2); border-radius: 4px;
+    font-size: 10px; color: var(--ink);
+  }
+
+  /* I/P/O 拆解 */
+  .ipo { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .ipo-table {
+    width: 100%; border-collapse: collapse; margin-top: 14px;
+  }
+  .ipo-table th, .ipo-table td {
+    padding: 12px 14px; text-align: left; font-size: 13px;
+    border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.7;
+  }
+  .ipo-table th {
+    background: var(--bg-2); color: var(--primary); font-size: 12px; letter-spacing: 1px;
+  }
+  .ipo-table td:first-child { font-weight: 700; color: var(--primary); width: 22%; }
+  .ipo-table .tag {
+    display: inline-block; padding: 2px 6px; background: var(--bg-2); border-radius: 3px;
+    font-size: 11px; color: var(--ink); margin: 2px 4px 2px 0;
+  }
+  .ipo-row:hover { background: rgba(16,185,129,.05); cursor: pointer; }
+  .ipo-row.active { background: rgba(16,185,129,.1); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 11 课</span>物联功能细分解</h1>
+  <p class="lead">在设计物联网产品前，需要把<strong>"大功能"分解为"小功能"</strong>，再实现每个小功能。本课以<strong>智能门锁</strong>为例，演示功能分解的方法，并展示如何把每个功能映射到"输入-处理-输出"结构。</p>
+</header>
+
+<main>
+
+  <!-- 一、智能门锁的功能集 -->
+  <section class="section">
+    <div class="section-title">一、智能门锁的功能集合</div>
+    <div class="lock-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px;">智能门锁不是一个单一功能的设备，而是<strong>多种开锁方式 + 状态反馈 + 联网通知</strong>的组合。下图展示了它的主要功能模块：</p>
+      <svg class="lock-svg" viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- 中心：门锁 -->
+        <g transform="translate(330 130)">
+          <rect x="0" y="0" width="140" height="180" rx="10" fill="#fff" stroke="#047857" stroke-width="3"/>
+          <circle cx="70" cy="55" r="22" fill="#0d9488"/>
+          <text x="70" y="60" font-size="20" text-anchor="middle">🔐</text>
+          <rect x="50" y="100" width="40" height="60" rx="3" fill="#0d9488"/>
+          <circle cx="70" cy="130" r="5" fill="#fff"/>
+          <text x="70" y="200" font-size="14" text-anchor="middle" fill="#047857" font-weight="700">智能门锁</text>
+        </g>
+        <!-- 周围 6 个功能（输入 4 + 输出 2）-->
+        <!-- 顶部：RFID -->
+        <g transform="translate(180 30)">
+          <rect x="0" y="0" width="120" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="60" y="35" font-size="13" text-anchor="middle" font-weight="700" fill="#92400e">🏷 刷卡开锁</text>
+        </g>
+        <line x1="300" y1="60" x2="345" y2="155" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- 顶右：人脸 -->
+        <g transform="translate(500 30)">
+          <rect x="0" y="0" width="120" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="60" y="35" font-size="13" text-anchor="middle" font-weight="700" fill="#92400e">👤 人脸开锁</text>
+        </g>
+        <line x1="500" y1="60" x2="455" y2="155" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- 左：密码 -->
+        <g transform="translate(40 130)">
+          <rect x="0" y="0" width="120" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="60" y="35" font-size="13" text-anchor="middle" font-weight="700" fill="#92400e">⌨ 密码开锁</text>
+        </g>
+        <line x1="160" y1="160" x2="330" y2="200" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- 右：远程 -->
+        <g transform="translate(640 130)">
+          <rect x="0" y="0" width="120" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="60" y="35" font-size="13" text-anchor="middle" font-weight="700" fill="#92400e">📱 远程开锁</text>
+        </g>
+        <line x1="640" y1="160" x2="470" y2="200" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- 底部：门铃通知 -->
+        <g transform="translate(180 320)">
+          <rect x="0" y="0" width="120" height="50" rx="8" fill="#dcfce7" stroke="#10b981" stroke-width="2"/>
+          <text x="60" y="30" font-size="13" text-anchor="middle" font-weight="700" fill="#047857">🔔 门铃通知</text>
+        </g>
+        <line x1="300" y1="330" x2="345" y2="295" stroke="#10b981" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- 底右：状态记录 -->
+        <g transform="translate(500 320)">
+          <rect x="0" y="0" width="120" height="50" rx="8" fill="#dcfce7" stroke="#10b981" stroke-width="2"/>
+          <text x="60" y="30" font-size="13" text-anchor="middle" font-weight="700" fill="#047857">📊 开锁记录</text>
+        </g>
+        <line x1="500" y1="330" x2="455" y2="295" stroke="#10b981" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- 图例 -->
+        <g transform="translate(40 350)">
+          <rect x="0" y="0" width="14" height="14" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="20" y="11" font-size="11" fill="#4a6c5e">输入功能</text>
+          <rect x="100" y="0" width="14" height="14" fill="#dcfce7" stroke="#10b981"/>
+          <text x="120" y="11" font-size="11" fill="#4a6c5e">输出功能</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 二、单个功能拆解 -->
+  <section class="section">
+    <div class="section-title">二、单个功能的"输入-处理-输出"拆解</div>
+    <div class="ipo">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">每个具体功能都可以按"输入 → 处理 → 输出"三段式来分析。点击表格中的行，看高亮：</p>
+      <table class="ipo-table">
+        <thead>
+          <tr>
+            <th>子功能</th><th>① 输入</th><th>② 处理</th><th>③ 输出</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="ipo-row" onclick="toggleRow(this)">
+            <td>🏷 刷卡开锁</td>
+            <td>RFID 读卡器读取卡号</td>
+            <td>查询白名单是否存在该 ID</td>
+            <td>舵机打开门锁 + LED 显示绿色</td>
+          </tr>
+          <tr class="ipo-row" onclick="toggleRow(this)">
+            <td>⌨ 密码开锁</td>
+            <td>键盘输入 6 位密码</td>
+            <td>与已设密码比对</td>
+            <td>舵机打开 / 蜂鸣器报警</td>
+          </tr>
+          <tr class="ipo-row" onclick="toggleRow(this)">
+            <td>👤 人脸开锁</td>
+            <td>摄像头采集面部图像</td>
+            <td>调用人脸识别 API 与已注册脸比对</td>
+            <td>舵机开锁 + 显示问候语</td>
+          </tr>
+          <tr class="ipo-row" onclick="toggleRow(this)">
+            <td>📱 远程开锁</td>
+            <td>云端收到手机 APP 指令</td>
+            <td>验证用户身份与权限</td>
+            <td>下发指令到门锁打开</td>
+          </tr>
+          <tr class="ipo-row" onclick="toggleRow(this)">
+            <td>🔔 门铃通知</td>
+            <td>客人按门铃按键</td>
+            <td>主控板触发上报</td>
+            <td>推送通知到屋主手机</td>
+          </tr>
+          <tr class="ipo-row" onclick="toggleRow(this)">
+            <td>📊 开锁记录</td>
+            <td>每次开锁的卡号/方式/时间</td>
+            <td>组装数据并上传云端</td>
+            <td>云端日志页面可查询</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 三、分解步骤 -->
+  <section class="section">
+    <div class="section-title">三、功能分解的一般步骤</div>
+    <div class="funcs-grid">
+      <div class="func">
+        <div class="ic">🎯</div>
+        <h3>① 明确目标</h3>
+        <p>把要做的产品总目标用一句话描述清楚。例如"做一把支持多种方式开锁的智能门锁"。</p>
+      </div>
+      <div class="func">
+        <div class="ic">📦</div>
+        <h3>② 列出功能集合</h3>
+        <p>头脑风暴这个产品<strong>应该具备哪些功能</strong>。可以从"用户使用场景"出发逐一列出。</p>
+        <div class="tags">
+          <span class="tag">刷卡</span><span class="tag">指纹</span><span class="tag">密码</span><span class="tag">远程</span><span class="tag">通知</span>
+        </div>
+      </div>
+      <div class="func">
+        <div class="ic">🔍</div>
+        <h3>③ 单功能细化</h3>
+        <p>把每个功能再分解为<strong>输入、处理、输出</strong>三个环节，确认每个环节需要什么硬件和算法。</p>
+      </div>
+      <div class="func">
+        <div class="ic">📋</div>
+        <h3>④ 列出硬件清单</h3>
+        <p>根据分解出的输入/输出，整理出<strong>需要采购的传感器和执行器</strong>。例如：RFID 读卡器 ×1、舵机 ×1、OLED 屏幕 ×1...</p>
+      </div>
+      <div class="func">
+        <div class="ic">📝</div>
+        <h3>⑤ 写出程序流程</h3>
+        <p>用<strong>流程图或伪代码</strong>把每个子功能的执行步骤画出来，作为编程参考。</p>
+      </div>
+      <div class="func">
+        <div class="ic">🔧</div>
+        <h3>⑥ 分而治之实现</h3>
+        <p>按<strong>由易到难</strong>顺序逐个实现子功能。每完成一个，调试通过后再做下一个。最后整合。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 11 课配套交互工具</footer>
+
+<script>
+function toggleRow(row) {
+  var rows = document.querySelectorAll('.ipo-row');
+  for (var i = 0; i < rows.length; i++) rows[i].className = 'ipo-row';
+  row.className = 'ipo-row active';
+}
+window.toggleRow = toggleRow;
+</script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>过程与控制 · 教学辅助工具集</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #4338ca;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 24px;
+    line-height: 1.6;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+    color: white;
+    padding: 40px 36px;
+    border-radius: 20px;
+    margin-bottom: 32px;
+    box-shadow: 0 12px 32px rgba(79, 70, 229, 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: "";
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
+    border-radius: 50%;
+  }
+  .header .meta {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+  }
+  .header h1 { font-size: 32px; margin-bottom: 8px; letter-spacing: 1px; }
+  .header p { opacity: 0.95; font-size: 15px; max-width: 720px; line-height: 1.7; }
+
+  .intro-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 800px) { .intro-grid { grid-template-columns: repeat(2, 1fr); } }
+  .intro-card {
+    background: white; padding: 18px; border-radius: 12px;
+    border: 1px solid var(--border); text-align: center;
+  }
+  .intro-card .num { font-size: 28px; font-weight: 700; color: var(--primary); line-height: 1; }
+  .intro-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .section-title {
+    font-size: 18px; margin: 28px 0 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: ""; width: 5px; height: 22px; background: var(--primary); border-radius: 3px;
+  }
+  .section-title .subtitle {
+    font-size: 13px; color: var(--muted); font-weight: normal; margin-left: auto;
+  }
+
+  .tools-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
+  }
+  @media (max-width: 800px) { .tools-grid { grid-template-columns: 1fr; } }
+
+  .tool-card {
+    background: white; border-radius: 16px; padding: 22px;
+    border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    transition: all 0.25s; cursor: pointer; display: block;
+    text-decoration: none; color: inherit; position: relative; overflow: hidden;
+  }
+  .tool-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.12);
+    border-color: var(--primary);
+  }
+  .tool-card .accent-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .tool-card.t1 .accent-bar { background: linear-gradient(90deg, #0891b2, #06b6d4); }
+  .tool-card.t2 .accent-bar { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+  .tool-card.t3 .accent-bar { background: linear-gradient(90deg, #059669, #10b981); }
+  .tool-card.t4 .accent-bar { background: linear-gradient(90deg, #16a34a, #84cc16); }
+  .tool-card.t5 .accent-bar { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+  .tool-card.t6 .accent-bar { background: linear-gradient(90deg, #db2777, #ec4899); }
+  .tool-card.t7 .accent-bar { background: linear-gradient(90deg, #ea580c, #f59e0b); }
+  .tool-card.t8 .accent-bar { background: linear-gradient(90deg, #0d9488, #14b8a6); }
+  .tool-card.t9 .accent-bar { background: linear-gradient(90deg, #4f46e5, #6366f1); }
+  .tool-card.t10 .accent-bar { background: linear-gradient(90deg, #65a30d, #84cc16); }
+  .tool-card.t11 .accent-bar { background: linear-gradient(90deg, #dc2626, #ef4444); }
+
+  .tool-card .tool-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+  }
+  .tool-card .tool-icon {
+    font-size: 32px; width: 50px; height: 50px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .tool-card.t1 .tool-icon { background: #ecfeff; }
+  .tool-card.t2 .tool-icon { background: #f5f3ff; }
+  .tool-card.t3 .tool-icon { background: #ecfdf5; }
+  .tool-card.t4 .tool-icon { background: #f0fdf4; }
+  .tool-card.t5 .tool-icon { background: #eff6ff; }
+  .tool-card.t6 .tool-icon { background: #fdf2f8; }
+  .tool-card.t7 .tool-icon { background: #fff7ed; }
+  .tool-card.t8 .tool-icon { background: #f0fdfa; }
+  .tool-card.t9 .tool-icon { background: #eef2ff; }
+  .tool-card.t10 .tool-icon { background: #f7fee7; }
+  .tool-card.t11 .tool-icon { background: #fef2f2; }
+
+  .tool-card h2 { font-size: 16px; margin-bottom: 3px; }
+  .tool-card .tool-meta { font-size: 12px; color: var(--muted); }
+  .tool-card .desc {
+    font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 12px;
+  }
+  .tool-card .topics { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tool-card .topic {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: #f1f5f9; color: var(--text);
+  }
+  .tool-card.t1 .topic { background: #ecfeff; color: #0e7490; }
+  .tool-card.t2 .topic { background: #f5f3ff; color: #6d28d9; }
+  .tool-card.t3 .topic { background: #ecfdf5; color: #047857; }
+  .tool-card.t4 .topic { background: #f0fdf4; color: #15803d; }
+  .tool-card.t5 .topic { background: #eff6ff; color: #1d4ed8; }
+  .tool-card.t6 .topic { background: #fdf2f8; color: #be185d; }
+  .tool-card.t7 .topic { background: #fff7ed; color: #c2410c; }
+  .tool-card.t8 .topic { background: #f0fdfa; color: #0f766e; }
+  .tool-card.t9 .topic { background: #eef2ff; color: #4338ca; }
+  .tool-card.t10 .topic { background: #f7fee7; color: #4d7c0f; }
+  .tool-card.t11 .topic { background: #fef2f2; color: #b91c1c; }
+
+  .tool-card .badge-row {
+    display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 999px;
+    font-weight: 600; letter-spacing: 0.5px;
+  }
+  .badge.interactive { background: #dbeafe; color: #1e40af; }
+  .badge.ppt-replace { background: #fce7f3; color: #be185d; }
+  .badge.full-lesson { background: #dcfce7; color: #166534; }
+
+  .tool-card .open-btn {
+    margin-top: 14px; padding: 7px 14px; background: var(--primary);
+    color: white; border-radius: 8px; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;
+  }
+  .tool-card:hover .open-btn { background: var(--primary-dark); }
+
+  .footer-info {
+    background: white; border-radius: 14px; padding: 24px;
+    border: 1px solid var(--border); font-size: 13px; color: var(--muted);
+    line-height: 1.8; margin-top: 28px;
+  }
+  .footer-info h3 { color: var(--text); font-size: 15px; margin-bottom: 10px; }
+  .footer-info ul { padding-left: 20px; }
+  .footer-info li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="meta">六年级 · 信息科技教学指南配套</span>
+    <h1>过程与控制 · 教学辅助工具集</h1>
+    <p>本工具集严格基于义务教育信息科技教学指南"过程与控制"模块开发，<strong>完整覆盖 8 个单元 30 课</strong>。
+       工具分为两类：① 综合课件型（含完整教学环节，可代替 PPT）；② 交互演示型（聚焦核心概念实验）。</p>
+  </div>
+
+  <div class="intro-grid">
+    <div class="intro-card"><div class="num">8</div><div class="lbl">单元</div></div>
+    <div class="intro-card"><div class="num">30</div><div class="lbl">课时</div></div>
+    <div class="intro-card"><div class="num">11</div><div class="lbl">教学工具</div></div>
+    <div class="intro-card"><div class="num">100%</div><div class="lbl">课时覆盖</div></div>
+  </div>
+
+  <h2 class="section-title">
+    🎯 综合课件型工具
+    <span class="subtitle">含完整教学环节，可作 PPT 替代</span>
+  </h2>
+
+  <div class="tools-grid">
+    <a href="07_初识过程与控制.html" class="tool-card t7">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🎒</div>
+        <div>
+          <h2>⑦ 初识过程与控制</h2>
+          <div class="tool-meta">第一单元 · 第1-4课 · 4课时</div>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge ppt-replace">PPT 替代</span>
+        <span class="badge full-lesson">完整4课</span>
+      </div>
+      <p class="desc">从身边设备出发，依次学习"设备控制处处在""一分为二开与关""我是小小控制员""输入输出与计算"。每课含目标、互动、检测。</p>
+      <div class="topics">
+        <span class="topic">控制系统概念</span>
+        <span class="topic">开关量</span>
+        <span class="topic">角色扮演</span>
+        <span class="topic">三环节</span>
+      </div>
+      <div class="open-btn">打开课件 →</div>
+    </a>
+
+    <a href="08_从人工到自动化.html" class="tool-card t8">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🤖</div>
+        <div>
+          <h2>⑧ 从人工到自动化</h2>
+          <div class="tool-meta">第三单元 · 第9课 · 单课</div>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge ppt-replace">PPT 替代</span>
+        <span class="badge interactive">含对比演示</span>
+      </div>
+      <p class="desc">通过浇花、报时、开门三个场景的"人工 vs 自动"对比演示，理解自动化的优势。附洗衣的进化史。</p>
+      <div class="topics">
+        <span class="topic">人工控制</span>
+        <span class="topic">自动控制</span>
+        <span class="topic">对比演示</span>
+        <span class="topic">发展历程</span>
+      </div>
+      <div class="open-btn">打开课件 →</div>
+    </a>
+
+    <a href="09_控制系统的描述.html" class="tool-card t9">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🧩</div>
+        <div>
+          <h2>⑨ 控制系统的描述</h2>
+          <div class="tool-meta">第四单元 · 第13-15课 · 3课时</div>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge ppt-replace">PPT 替代</span>
+        <span class="badge full-lesson">完整3课</span>
+      </div>
+      <p class="desc">控制系统五大特点、把复杂系统（手机/汽车/电梯）分解为子系统、用模块积木搭建"智能家居"——综合培养系统观。</p>
+      <div class="topics">
+        <span class="topic">系统特点</span>
+        <span class="topic">系统分解</span>
+        <span class="topic">模块化</span>
+        <span class="topic">拖拽搭建</span>
+      </div>
+      <div class="open-btn">打开课件 →</div>
+    </a>
+
+    <a href="10_智能种植初探秘.html" class="tool-card t10">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🌾</div>
+        <div>
+          <h2>⑩ 智能种植初探秘</h2>
+          <div class="tool-meta">第五单元 · 第16-17课 · 2课时</div>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge ppt-replace">PPT 替代</span>
+        <span class="badge full-lesson">完整2课</span>
+      </div>
+      <p class="desc">认识智能大棚的"智能"在哪里，并为番茄、黄瓜、生菜等不同作物设计专属的种植控制方案（含合理性自动评估）。</p>
+      <div class="topics">
+        <span class="topic">大棚分解</span>
+        <span class="topic">智能化</span>
+        <span class="topic">方案设计</span>
+        <span class="topic">作物配置</span>
+      </div>
+      <div class="open-btn">打开课件 →</div>
+    </a>
+
+    <a href="11_自主可控与安全.html" class="tool-card t11">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🛡️</div>
+        <div>
+          <h2>⑪ 自主可控与安全</h2>
+          <div class="tool-meta">第八单元 · 第28-30课 · 3课时</div>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge ppt-replace">PPT 替代</span>
+        <span class="badge full-lesson">完整3课</span>
+      </div>
+      <p class="desc">认识安全标识、了解多重保障设计、学习核心技术与数据的自主可控——结合北斗、高铁、国产芯片等案例，培养信息社会责任意识。</p>
+      <div class="topics">
+        <span class="topic">安全标识</span>
+        <span class="topic">故障预防</span>
+        <span class="topic">自主可控</span>
+        <span class="topic">家国情怀</span>
+      </div>
+      <div class="open-btn">打开课件 →</div>
+    </a>
+  </div>
+
+  <h2 class="section-title">
+    🔬 交互演示型工具
+    <span class="subtitle">聚焦核心概念实验，配合教材使用</span>
+  </h2>
+
+  <div class="tools-grid">
+    <a href="01_阈值与连续量监测器.html" class="tool-card t1">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">📊</div>
+        <div>
+          <h2>① 阈值与连续量监测器</h2>
+          <div class="tool-meta">第二单元 · 第5课</div>
+        </div>
+      </div>
+      <div class="badge-row"><span class="badge interactive">交互演示</span></div>
+      <p class="desc">通过噪声、温度、水位三种场景，观察连续量的实时变化，理解阈值的超标判定逻辑。</p>
+      <div class="topics">
+        <span class="topic">连续量</span><span class="topic">阈值</span><span class="topic">实时波形</span>
+      </div>
+      <div class="open-btn">打开工具 →</div>
+    </a>
+
+    <a href="02_逻辑运算实验室.html" class="tool-card t2">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🔀</div>
+        <div>
+          <h2>② 逻辑运算实验室</h2>
+          <div class="tool-meta">第二单元 · 第6、7、8课</div>
+        </div>
+      </div>
+      <div class="badge-row"><span class="badge interactive">交互演示</span></div>
+      <p class="desc">非、与、或三种逻辑运算的真值表与运算规则实时演示，配合教材原案例。</p>
+      <div class="topics">
+        <span class="topic">非运算</span><span class="topic">与运算</span><span class="topic">或运算</span>
+      </div>
+      <div class="open-btn">打开工具 →</div>
+    </a>
+
+    <a href="03_开环与闭环控制对比实验.html" class="tool-card t3">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🔁</div>
+        <div>
+          <h2>③ 开环 vs 闭环控制对比</h2>
+          <div class="tool-meta">第三单元 · 第10、11、12课</div>
+        </div>
+      </div>
+      <div class="badge-row"><span class="badge interactive">交互演示</span></div>
+      <p class="desc">同时模拟两台空调控制系统：一台开环、一台闭环，可添加干扰，直观看到反馈的优化作用。</p>
+      <div class="topics">
+        <span class="topic">开环</span><span class="topic">闭环</span><span class="topic">反馈</span>
+      </div>
+      <div class="open-btn">打开工具 →</div>
+    </a>
+
+    <a href="04_智能种植大棚模拟器.html" class="tool-card t4">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🌱</div>
+        <div>
+          <h2>④ 智能种植大棚模拟器</h2>
+          <div class="tool-meta">第五单元 · 第18、19课</div>
+        </div>
+      </div>
+      <div class="badge-row"><span class="badge interactive">交互演示</span></div>
+      <p class="desc">三个闭环子系统（土壤湿度、光照、温度）联动工作，植物状态随环境实时反馈。</p>
+      <div class="topics">
+        <span class="topic">闭环</span><span class="topic">土壤湿度</span><span class="topic">光照温度</span>
+      </div>
+      <div class="open-btn">打开工具 →</div>
+    </a>
+
+    <a href="05_电梯控制系统模拟器.html" class="tool-card t5">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🛗</div>
+        <div>
+          <h2>⑤ 电梯控制系统模拟器</h2>
+          <div class="tool-meta">第六单元 · 第20-23课</div>
+        </div>
+      </div>
+      <div class="badge-row"><span class="badge interactive">交互演示</span></div>
+      <p class="desc">完整呈现电梯：呼叫系统、刷卡+楼层（与）、开关门（或）、超载警报（非+连续量）。</p>
+      <div class="topics">
+        <span class="topic">逻辑运算</span><span class="topic">子系统</span><span class="topic">超载检测</span>
+      </div>
+      <div class="open-btn">打开工具 →</div>
+    </a>
+
+    <a href="06_汽车控制系统模拟器.html" class="tool-card t6">
+      <div class="accent-bar"></div>
+      <div class="tool-header">
+        <div class="tool-icon">🚗</div>
+        <div>
+          <h2>⑥ 汽车控制系统模拟器</h2>
+          <div class="tool-meta">第七单元 · 第24-27课</div>
+        </div>
+      </div>
+      <div class="badge-row"><span class="badge interactive">交互演示</span></div>
+      <p class="desc">四个汽车子系统：自动熄灭转向灯、安全带未系提醒、倒车防撞警报、定速巡航闭环控制。</p>
+      <div class="topics">
+        <span class="topic">转向灯</span><span class="topic">安全带</span><span class="topic">定速巡航</span>
+      </div>
+      <div class="open-btn">打开工具 →</div>
+    </a>
+  </div>
+
+  <div class="footer-info">
+    <h3>📖 使用建议</h3>
+    <ul>
+      <li><b>课前准备</b>：教师先打开本"首页"做整体导览，再点击进入具体课时的工具。</li>
+      <li><b>综合课件型工具（⑦-⑪）</b>：可直接作为 PPT 使用——按"上一页/下一页"按钮逐张推进，每页含一个独立教学环节。课时间通过顶部标签切换。</li>
+      <li><b>交互演示型工具（①-⑥）</b>：单一交互工具，重点在动手操作。配合教材进行知识讲解，让学生通过滑块、点击体会原理。</li>
+      <li><b>课堂检测</b>：每个综合课件最后一页都有 2-3 题课堂检测，可作为巩固或随堂练习。</li>
+      <li><b>离线运行</b>：所有工具都是单 HTML 文件，无需联网，双击即开，方便课堂使用。</li>
+    </ul>
+    <h3 style="margin-top: 18px;">🎯 课时覆盖一览</h3>
+    <ul>
+      <li><b>第一单元（第1-4课）</b>：工具⑦</li>
+      <li><b>第二单元（第5-8课）</b>：工具①、②</li>
+      <li><b>第三单元（第9-12课）</b>：工具⑧、③</li>
+      <li><b>第四单元（第13-15课）</b>：工具⑨</li>
+      <li><b>第五单元（第16-19课）</b>：工具⑩、④</li>
+      <li><b>第六单元（第20-23课）</b>：工具⑤</li>
+      <li><b>第七单元（第24-27课）</b>：工具⑥</li>
+      <li><b>第八单元（第28-30课）</b>：工具⑪</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

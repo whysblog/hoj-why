@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据与编码 · 四年级信息科技教学工具集</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#f5f7fa 0%,#e8eef3 100%);
+  color:#263238;
+  min-height:100vh;
+  padding:24px 20px 40px;
+  line-height:1.6;
+}
+.container{max-width:1200px;margin:0 auto}
+
+header.main-header{
+  background:linear-gradient(135deg,#1e88e5 0%,#5e35b1 50%,#e53935 100%);
+  color:#fff;
+  padding:38px 32px;
+  border-radius:20px;
+  margin-bottom:28px;
+  box-shadow:0 12px 32px rgba(94,53,177,0.25);
+  position:relative;
+  overflow:hidden;
+}
+header.main-header::before{
+  content:"";
+  position:absolute;
+  top:-50px;right:-50px;
+  width:200px;height:200px;
+  background:rgba(255,255,255,0.1);
+  border-radius:50%;
+}
+header.main-header::after{
+  content:"";
+  position:absolute;
+  bottom:-30px;left:30%;
+  width:120px;height:120px;
+  background:rgba(255,255,255,0.08);
+  border-radius:50%;
+}
+.header-content{position:relative;z-index:1}
+header.main-header h1{
+  font-size:32px;
+  margin-bottom:8px;
+  font-weight:bold;
+}
+header.main-header p{
+  font-size:15px;
+  opacity:0.95;
+  margin-bottom:14px;
+}
+.header-stats{
+  display:flex;gap:20px;flex-wrap:wrap;
+  margin-top:14px;
+}
+.stat-pill{
+  background:rgba(255,255,255,0.22);
+  padding:6px 16px;
+  border-radius:20px;
+  font-size:13px;
+  backdrop-filter:blur(8px);
+}
+.stat-pill b{font-size:16px;margin-right:4px}
+
+.unit-section{
+  margin-bottom:28px;
+  background:#fff;
+  border-radius:18px;
+  padding:24px 26px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}
+.unit-header{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:18px;
+  padding-bottom:14px;
+  border-bottom:2px dashed #e0e0e0;
+}
+.unit-num{
+  width:48px;height:48px;
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:bold;
+  color:#fff;
+  flex-shrink:0;
+}
+.unit-title h2{
+  font-size:20px;
+  color:#263238;
+  margin-bottom:2px;
+}
+.unit-title p{
+  font-size:13px;
+  color:#90a4ae;
+}
+.unit-1 .unit-num{background:linear-gradient(135deg,#00897b,#26a69a)}
+.unit-1 .unit-title h2{color:#00695c}
+.unit-2 .unit-num{background:linear-gradient(135deg,#fb8c00,#ffa726)}
+.unit-2 .unit-title h2{color:#e65100}
+.unit-3 .unit-num{background:linear-gradient(135deg,#5e35b1,#7e57c2)}
+.unit-3 .unit-title h2{color:#4527a0}
+.unit-4 .unit-num{background:linear-gradient(135deg,#7b1fa2,#9c27b0)}
+.unit-4 .unit-title h2{color:#6a1b9a}
+.unit-5 .unit-num{background:linear-gradient(135deg,#e53935,#ef5350)}
+.unit-5 .unit-title h2{color:#c62828}
+.unit-6 .unit-num{background:linear-gradient(135deg,#ec407a,#f06292)}
+.unit-6 .unit-title h2{color:#ad1457}
+
+.lessons-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:14px;
+}
+.lesson-card{
+  display:block;
+  text-decoration:none;
+  background:#fafafa;
+  border-radius:12px;
+  padding:14px 16px;
+  border:2px solid #f0f0f0;
+  transition:all .2s;
+  color:#263238;
+  position:relative;
+  overflow:hidden;
+}
+.lesson-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 18px rgba(0,0,0,0.1);
+}
+.lesson-card .badge{
+  display:inline-block;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:8px;
+  margin-bottom:6px;
+  font-weight:bold;
+}
+.lesson-card .badge.tool{
+  background:#ffecb3;color:#e65100;
+}
+.lesson-card .badge.page{
+  background:#e1f5fe;color:#0277bd;
+}
+.lesson-card .lesson-num{
+  font-size:11px;
+  color:#90a4ae;
+  margin-bottom:2px;
+}
+.lesson-card h3{
+  font-size:15px;
+  margin-bottom:6px;
+  font-weight:bold;
+}
+.lesson-card .desc{
+  font-size:12px;
+  color:#607d8b;
+  line-height:1.5;
+}
+.lesson-card .icon{
+  position:absolute;
+  top:12px;right:14px;
+  font-size:22px;
+  opacity:0.8;
+}
+
+.unit-1 .lesson-card:hover{border-color:#26a69a;background:#e0f2f1}
+.unit-2 .lesson-card:hover{border-color:#ffa726;background:#fff8e1}
+.unit-3 .lesson-card:hover{border-color:#7e57c2;background:#ede7f6}
+.unit-4 .lesson-card:hover{border-color:#9c27b0;background:#f3e5f5}
+.unit-5 .lesson-card:hover{border-color:#ef5350;background:#ffebee}
+.unit-6 .lesson-card:hover{border-color:#f06292;background:#fce4ec}
+
+.footer-note{
+  background:#fff;
+  border-radius:14px;
+  padding:18px 22px;
+  margin-top:20px;
+  font-size:13px;
+  color:#546e7a;
+  border-left:5px solid #5e35b1;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+  line-height:1.7;
+}
+.footer-note h4{
+  color:#4527a0;
+  margin-bottom:6px;
+  font-size:14px;
+}
+.footer-note .legend{
+  display:flex;gap:14px;flex-wrap:wrap;
+  margin-top:8px;
+}
+.legend-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;
+}
+.legend-tag .badge{
+  display:inline-block;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+@media (max-width:720px){
+  header.main-header h1{font-size:24px}
+  .lessons-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .lesson-card{padding:12px}
+  .lesson-card h3{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="main-header">
+    <div class="header-content">
+      <h1>📚 数据与编码</h1>
+      <p>四年级信息科技 · 全册教学工具与课程页面 · 共 30 课</p>
+      <div class="header-stats">
+        <div class="stat-pill"><b>6</b>大单元</div>
+        <div class="stat-pill"><b>30</b>课</div>
+        <div class="stat-pill"><b>8</b>互动工具</div>
+        <div class="stat-pill"><b>19</b>课程页面</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 第一单元：奇妙的数据世界 -->
+  <section class="unit-section unit-1">
+    <div class="unit-header">
+      <div class="unit-num">1</div>
+      <div class="unit-title">
+        <h2>奇妙的数据世界</h2>
+        <p>认识数据 · 获取数据 · 记录数据 · 数据价值</p>
+      </div>
+    </div>
+    <div class="lessons-grid">
+      <a href="lesson_01.html" class="lesson-card">
+        <div class="icon">💎</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 1 课</div>
+        <h3>数据宝藏在身边</h3>
+        <div class="desc">认识各种各样的数据</div>
+      </a>
+      <a href="lesson_02.html" class="lesson-card">
+        <div class="icon">🔍</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 2 课</div>
+        <h3>获取数据有方法</h3>
+        <div class="desc">学会用多种方式获取数据</div>
+      </a>
+      <a href="lesson_03.html" class="lesson-card">
+        <div class="icon">🛡️</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 3 课</div>
+        <h3>寻找可靠数据源</h3>
+        <div class="desc">分辨权威可信的数据来源</div>
+      </a>
+      <a href="lesson_04.html" class="lesson-card">
+        <div class="icon">📝</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 4 课</div>
+        <h3>记录数据讲诀窍</h3>
+        <div class="desc">不同场景下的数据记录方式</div>
+      </a>
+      <a href="lesson_05.html" class="lesson-card">
+        <div class="icon">✨</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 5 课</div>
+        <h3>数据价值巧发现</h3>
+        <div class="desc">发现数据背后的重大价值</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第二单元：用编码描绘世界 -->
+  <section class="unit-section unit-2">
+    <div class="unit-header">
+      <div class="unit-num">2</div>
+      <div class="unit-title">
+        <h2>用编码描绘世界</h2>
+        <p>编码历史 · 生活编码 · 二维码 · 校验码</p>
+      </div>
+    </div>
+    <div class="lessons-grid">
+      <a href="lesson_06.html" class="lesson-card">
+        <div class="icon">📜</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 6 课</div>
+        <h3>古往今来话编码</h3>
+        <div class="desc">从结绳记事到二进制编码</div>
+      </a>
+      <a href="tool_codes.html" class="lesson-card">
+        <div class="icon">🆔</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 7-8 课</div>
+        <h3>生活中的编码</h3>
+        <div class="desc">邮编 · 条码 · 身份证 · 车牌</div>
+      </a>
+      <a href="lesson_09.html" class="lesson-card">
+        <div class="icon">📱</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 9 课</div>
+        <h3>二维码伴我生活</h3>
+        <div class="desc">认识二维码的结构与原理</div>
+      </a>
+      <a href="tool_checksum.html" class="lesson-card">
+        <div class="icon">✓</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 10 课</div>
+        <h3>数据错误及时验</h3>
+        <div class="desc">身份证 / ISBN 校验码计算</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第三单元：有趣的编码应用 -->
+  <section class="unit-section unit-3">
+    <div class="unit-header">
+      <div class="unit-num">3</div>
+      <div class="unit-title">
+        <h2>有趣的编码应用</h2>
+        <p>摩斯密码 · 黑白图像 · 颜色编码 · 动作编码 · 自定编码</p>
+      </div>
+    </div>
+    <div class="lessons-grid">
+      <a href="tool_morse.html" class="lesson-card">
+        <div class="icon">📡</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 11 课</div>
+        <h3>嘀嘀嗒嗒的秘密</h3>
+        <div class="desc">摩斯密码编码与音频播放</div>
+      </a>
+      <a href="tool_pixel.html" class="lesson-card">
+        <div class="icon">⬛</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 12 课</div>
+        <h3>二值的黑白图像</h3>
+        <div class="desc">用 0 和 1 表示黑白图像</div>
+      </a>
+      <a href="tool_rgb.html" class="lesson-card">
+        <div class="icon">🎨</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 13 课</div>
+        <h3>多彩的数字世界</h3>
+        <div class="desc">RGB 颜色编码原理</div>
+      </a>
+      <a href="tool_pushbox.html" class="lesson-card">
+        <div class="icon">🎮</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 14 课</div>
+        <h3>编码也能动起来</h3>
+        <div class="desc">动作编码推箱子游戏</div>
+      </a>
+      <a href="lesson_15.html" class="lesson-card">
+        <div class="icon">📏</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 15 课</div>
+        <h3>自定编码讲规则</h3>
+        <div class="desc">设计自己的编码规则</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第四单元：数据管理与安全 -->
+  <section class="unit-section unit-4">
+    <div class="unit-header">
+      <div class="unit-num">4</div>
+      <div class="unit-title">
+        <h2>数据管理与安全</h2>
+        <p>数据管理 · 查找筛选 · 排序计算 · 数据安全</p>
+      </div>
+    </div>
+    <div class="lessons-grid">
+      <a href="lesson_16.html" class="lesson-card">
+        <div class="icon">🗂️</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 16 课</div>
+        <h3>数据管理与编码</h3>
+        <div class="desc">用编码管理大量数据</div>
+      </a>
+      <a href="lesson_17.html" class="lesson-card">
+        <div class="icon">🔎</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 17 课</div>
+        <h3>查找筛选讲效率</h3>
+        <div class="desc">高效查找与筛选数据</div>
+      </a>
+      <a href="lesson_18.html" class="lesson-card">
+        <div class="icon">📊</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 18 课</div>
+        <h3>排序计算有方法</h3>
+        <div class="desc">数据排序与计算技巧</div>
+      </a>
+      <a href="lesson_19.html" class="lesson-card">
+        <div class="icon">🔐</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 19 课</div>
+        <h3>数据安全意识强</h3>
+        <div class="desc">认识身边的数据安全风险</div>
+      </a>
+      <a href="lesson_20.html" class="lesson-card">
+        <div class="icon">🛡️</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 20 课</div>
+        <h3>保护数据小妙招</h3>
+        <div class="desc">保护数据的实用方法</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第五单元：数据表达我做主 -->
+  <section class="unit-section unit-5">
+    <div class="unit-header">
+      <div class="unit-num">5</div>
+      <div class="unit-title">
+        <h2>数据表达我做主</h2>
+        <p>图表 · 词云 · 知识图谱 · 用数据说话</p>
+      </div>
+    </div>
+    <div class="lessons-grid">
+      <a href="tool_chart.html" class="lesson-card">
+        <div class="icon">📊</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 21-23 课</div>
+        <h3>数据图表生成</h3>
+        <div class="desc">柱 · 饼 · 折 · 雷达四合一</div>
+      </a>
+      <a href="tool_wordcloud.html" class="lesson-card">
+        <div class="icon">☁️</div>
+        <span class="badge tool">互动工具</span>
+        <div class="lesson-num">第 24 课</div>
+        <h3>抽取文本汇词云</h3>
+        <div class="desc">词频统计与词云生成</div>
+      </a>
+      <a href="lesson_25.html" class="lesson-card">
+        <div class="icon">🕸️</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 25 课</div>
+        <h3>知识图谱来帮忙</h3>
+        <div class="desc">用图谱组织知识关系</div>
+      </a>
+      <a href="lesson_26.html" class="lesson-card">
+        <div class="icon">💬</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 26 课</div>
+        <h3>用数据支撑观点</h3>
+        <div class="desc">让数据为观点说话</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第六单元：人工智能耀未来 -->
+  <section class="unit-section unit-6">
+    <div class="unit-header">
+      <div class="unit-num">6</div>
+      <div class="unit-title">
+        <h2>人工智能耀未来</h2>
+        <p>智能生活 · 大数据 · 生成式 AI · 智能挑战</p>
+      </div>
+    </div>
+    <div class="lessons-grid">
+      <a href="lesson_27.html" class="lesson-card">
+        <div class="icon">💡</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 27 课</div>
+        <h3>数据点亮新生活</h3>
+        <div class="desc">数据让生活更智能</div>
+      </a>
+      <a href="lesson_28.html" class="lesson-card">
+        <div class="icon">🤖</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 28 课</div>
+        <h3>大数据助力智能</h3>
+        <div class="desc">大数据与人工智能</div>
+      </a>
+      <a href="lesson_29.html" class="lesson-card">
+        <div class="icon">✨</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 29 课</div>
+        <h3>生成式人工智能</h3>
+        <div class="desc">认识生成式 AI 工具</div>
+      </a>
+      <a href="lesson_30.html" class="lesson-card">
+        <div class="icon">⚖️</div>
+        <span class="badge page">课程页</span>
+        <div class="lesson-num">第 30 课</div>
+        <h3>应对智能新挑战</h3>
+        <div class="desc">理性面对 AI 时代</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="footer-note">
+    <h4>📖 使用说明</h4>
+    本资源集包含 <b>30 课</b>完整教学内容，可代替 PPT 用于课堂演示。
+    所有页面均在浏览器本地运行，无需联网；内容按教学指南逐课设计，包含导入、知识、案例、互动、小结等环节。
+    <div class="legend">
+      <span class="legend-tag"><span class="badge tool" style="background:#ffecb3;color:#e65100">互动工具</span> 可操作的小工具，适合学生动手实践</span>
+      <span class="legend-tag"><span class="badge page" style="background:#e1f5fe;color:#0277bd">课程页</span> 完整的课件页面，可代替 PPT 讲授</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

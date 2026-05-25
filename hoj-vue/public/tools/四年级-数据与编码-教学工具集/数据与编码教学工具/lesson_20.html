@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第20课 保护数据小妙招 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#7b1fa2;
+  --theme-dark:#6a1b9a;
+  --theme-light:#f3e5f5;
+  --bg:#faf5fc;
+}
+.tip-card{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:10px 0;
+  border-left:5px solid var(--theme);
+}
+.tip-card .tip-head{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:8px;
+}
+.tip-card .tip-num{
+  background:var(--theme);color:#fff;
+  width:32px;height:32px;
+  border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:14px;
+}
+.tip-card h4{
+  color:var(--theme-dark);
+  font-size:16px;margin:0;
+}
+.tip-card p{
+  font-size:14px;color:#37474f;
+  margin-bottom:6px;
+}
+.tip-card .example{
+  background:var(--theme-light);
+  padding:8px 12px;
+  border-radius:6px;
+  font-size:13px;
+  color:var(--theme-dark);
+  margin-top:6px;
+}
+.password-tester{
+  background:#fff;border-radius:12px;
+  padding:18px;margin:14px 0;
+}
+.password-tester input{
+  width:100%;
+  padding:12px 16px;
+  border:2px solid #e0e0e0;
+  border-radius:8px;
+  font-size:16px;
+  font-family:"Courier New",monospace;
+}
+.password-tester input:focus{outline:none;border-color:var(--theme)}
+.strength-meter{
+  margin-top:14px;
+  background:#f0f0f0;
+  border-radius:10px;
+  overflow:hidden;
+  height:14px;
+}
+.strength-bar{
+  height:100%;
+  transition:width 0.3s, background 0.3s;
+  border-radius:10px;
+}
+.strength-info{
+  display:flex;justify-content:space-between;
+  margin-top:8px;font-size:13px;
+}
+.checklist{
+  background:#fafafa;border-radius:8px;
+  padding:12px;margin-top:10px;
+}
+.check-line{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;color:#607d8b;
+  margin:4px 0;
+}
+.check-line .check-icon{
+  width:18px;height:18px;
+  border-radius:50%;
+  background:#e0e0e0;
+  color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;
+}
+.check-line.pass .check-icon{background:#43a047}
+.check-line.pass{color:#2e7d32}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第四单元 · 第20课</span>
+    <h1>🛡️ 保护数据小妙招</h1>
+    <p>掌握保护个人数据的实用方法，做安全上网小达人</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">🔐 五大妙招</button>
+    <button class="nav-btn" data-slide="2">🔑 密码秘籍</button>
+    <button class="nav-btn" data-slide="3">🎮 设密码挑战</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      上节课我们认识了数据安全的<b>风险</b>，那有没有办法<b>预防</b>呢？
+      <br><br>
+      就像戴口罩防病毒、走斑马线防车祸——保护数据也有<b>具体方法</b>！
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>掌握保护数据的<b>五大妙招</b></li>
+      <li>知道<b>如何设计强密码</b></li>
+      <li>养成日常数据保护的好习惯</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>保护数据五大妙招</h2>
+
+    <div class="tip-card">
+      <div class="tip-head">
+        <span class="tip-num">1</span>
+        <h4>🔑 设置强密码</h4>
+      </div>
+      <p>密码是保护账号的<b>第一道门</b>。"123456"、"abc"这种密码 1 秒就被破解！</p>
+      <div class="example">
+        ❌ 弱密码：123456、abc123、生日
+        <br>✅ 强密码：mY!cat2025（大小写+数字+符号）
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-head">
+        <span class="tip-num">2</span>
+        <h4>💾 重要数据要备份</h4>
+      </div>
+      <p>把重要的照片、作业、视频<b>多存几份</b>。一个坏了，还有其他的。</p>
+      <div class="example">
+        💡 例：作业存在电脑、再存到 U 盘，可以双保险
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-head">
+        <span class="tip-num">3</span>
+        <h4>🔒 公共场所要小心</h4>
+      </div>
+      <p>公共 Wi-Fi、网吧的电脑可能有<b>陷阱</b>。不要登录重要账号、不要输密码。</p>
+      <div class="example">
+        🚫 在咖啡馆 Wi-Fi 登录妈妈的支付宝？非常危险！
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-head">
+        <span class="tip-num">4</span>
+        <h4>🛡️ 安装杀毒软件</h4>
+      </div>
+      <p>给电脑、手机装上<b>杀毒软件</b>，它会自动拦截病毒。定期"杀毒"是个好习惯。</p>
+      <div class="example">
+        💡 国产杀毒软件：360 安全卫士、腾讯电脑管家、火绒等
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-head">
+        <span class="tip-num">5</span>
+        <h4>🗑️ 旧设备小心处理</h4>
+      </div>
+      <p>旧手机、旧电脑要送人或扔掉前，<b>一定要清空数据</b>，否则信息会泄露！</p>
+      <div class="example">
+        💡 还有：快递盒子上的<b>姓名地址电话</b>，要撕掉或涂掉再扔
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>密码的"四个秘籍"</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📏</span>
+        <h4>足够长</h4>
+        <p>至少 <b>8 位</b>，越长越安全</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🎨</span>
+        <h4>多种类</h4>
+        <p>大小写字母+数字+符号</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🚫</span>
+        <h4>不简单</h4>
+        <p>不要用生日、姓名、连续数字</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔄</span>
+        <h4>不通用</h4>
+        <p>不同账号用不同密码</p>
+      </div>
+    </div>
+
+    <h3>💡 怎么记住强密码？</h3>
+    <div class="info-box">
+      用"<b>口诀法</b>"——把一句你熟悉的话变成密码！
+      <br><br>
+      例如：「<b>我家有只猫叫小花2025</b>」
+      <br>→ 取首字母+加点变化：<b>Wjyzm-jxh!2025</b>
+      <br>
+      这样既安全，又好记！
+    </div>
+
+    <div class="info-box warn">
+      <h4>⚠️ 千万不要的事情</h4>
+      <ul style="margin-top:4px">
+        <li>❌ 把密码<b>写在纸上贴电脑边</b></li>
+        <li>❌ 告诉<b>任何其他人</b>（包括好朋友）</li>
+        <li>❌ 所有账号用<b>同一个密码</b></li>
+        <li>❌ 用<b>123456</b>、<b>password</b> 这种"密码"</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>挑战：设个强密码</h2>
+
+    <p>试着输入一个密码，看看它的<b>强度</b>有多高 ↓</p>
+
+    <div class="password-tester">
+      <input type="text" id="pwdInput" placeholder="在这里输入密码…">
+      
+      <div class="strength-meter">
+        <div class="strength-bar" id="strengthBar" style="width:0%;background:#bdbdbd"></div>
+      </div>
+      <div class="strength-info">
+        <span style="color:#90a4ae">强度：</span>
+        <span id="strengthLabel" style="color:#90a4ae;font-weight:bold">空</span>
+      </div>
+
+      <div class="checklist" id="checkList">
+        <div class="check-line" data-key="len">
+          <span class="check-icon">✓</span> 至少 8 个字符
+        </div>
+        <div class="check-line" data-key="lower">
+          <span class="check-icon">✓</span> 包含小写字母 (a-z)
+        </div>
+        <div class="check-line" data-key="upper">
+          <span class="check-icon">✓</span> 包含大写字母 (A-Z)
+        </div>
+        <div class="check-line" data-key="digit">
+          <span class="check-icon">✓</span> 包含数字 (0-9)
+        </div>
+        <div class="check-line" data-key="symbol">
+          <span class="check-icon">✓</span> 包含符号 (! @ # $ ...)
+        </div>
+        <div class="check-line" data-key="nosimple">
+          <span class="check-icon">✓</span> 不是简单密码（如 123456）
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 试试这些密码</h4>
+      <ul style="margin-top:4px">
+        <li>123456 → 强度？</li>
+        <li>password → 强度？</li>
+        <li>mY!cat2025 → 强度？</li>
+        <li>I@m4nGreat#Stu → 强度？</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🔑</span>
+        <h4>强密码</h4>
+        <p>长+复杂+不简单</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💾</span>
+        <h4>多备份</h4>
+        <p>重要数据存多份</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🛡️</span>
+        <h4>装杀毒</h4>
+        <p>定期扫描</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🗑️</span>
+        <h4>会清理</h4>
+        <p>旧设备彻底清空</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      在家长帮助下：
+      <ul style="margin-top:4px">
+        <li>检查你常用的账号密码，看是否够强</li>
+        <li>给爸爸妈妈介绍你今天学的<b>密码秘籍</b></li>
+        <li>看看家里有没有<b>旧手机</b>，问问爸妈是怎么处理的</li>
+      </ul>
+    </div>
+
+    <h3>🔮 下个单元预告</h3>
+    <div class="info-box tip">
+      第四单元到这里结束！接下来我们要进入<b>第五单元</b>：
+      <br>
+      数据这么宝贵，怎么<b>表达和展示</b>给别人看？
+      除了我们学过的图表和词云，还有<b>知识图谱</b>等更厉害的方法！🎉
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const SIMPLE = ['123456','password','111111','abc123','qwerty','admin','12345678','000000','iloveyou','abcdef','000','111'];
+const pwdInput = document.getElementById('pwdInput');
+const bar = document.getElementById('strengthBar');
+const label = document.getElementById('strengthLabel');
+
+function testPwd(){
+  const p = pwdInput.value;
+  const checks = {
+    len: p.length >= 8,
+    lower: /[a-z]/.test(p),
+    upper: /[A-Z]/.test(p),
+    digit: /[0-9]/.test(p),
+    symbol: /[^a-zA-Z0-9]/.test(p),
+    nosimple: p.length > 0 && !SIMPLE.includes(p.toLowerCase())
+  };
+  
+  Object.entries(checks).forEach(([k,v])=>{
+    const line = document.querySelector(`[data-key="${k}"]`);
+    line.classList.toggle('pass', v);
+  });
+  
+  const score = Object.values(checks).filter(Boolean).length;
+  const percent = (score/6)*100;
+  bar.style.width = percent + '%';
+  
+  if(p.length === 0){
+    bar.style.background = '#bdbdbd';
+    label.textContent = '空';
+    label.style.color = '#90a4ae';
+  } else if(score <= 2){
+    bar.style.background = '#ef5350';
+    label.textContent = '🚨 太弱';
+    label.style.color = '#c62828';
+  } else if(score <= 4){
+    bar.style.background = '#ffa726';
+    label.textContent = '⚠️ 一般';
+    label.style.color = '#e65100';
+  } else if(score <= 5){
+    bar.style.background = '#66bb6a';
+    label.textContent = '✓ 较强';
+    label.style.color = '#2e7d32';
+  } else {
+    bar.style.background = '#43a047';
+    label.textContent = '🏆 超强!';
+    label.style.color = '#1b5e20';
+  }
+}
+pwdInput.addEventListener('input', testPwd);
+testPwd();
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

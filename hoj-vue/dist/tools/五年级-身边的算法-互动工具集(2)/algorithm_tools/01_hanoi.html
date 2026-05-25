@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉诺塔游戏 - 第3课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.tower-area {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 320px;
+  background: linear-gradient(to bottom, #FAFBFC 0%, #E8EDF3 100%);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  border: 2px solid var(--border);
+}
+.tower {
+  width: 30%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 8px;
+}
+.tower:hover { background: rgba(74,144,226,0.08); }
+.tower.selected { background: rgba(255,140,66,0.15); }
+.tower-base {
+  position: absolute;
+  bottom: 8px;
+  width: 90%;
+  height: 8px;
+  background: #5A6B7C;
+  border-radius: 4px;
+}
+.tower-pole {
+  position: absolute;
+  bottom: 12px;
+  width: 6px;
+  height: 90%;
+  background: #5A6B7C;
+  border-radius: 3px;
+}
+.tower-label {
+  position: absolute;
+  bottom: -28px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  width: 100%;
+  text-align: center;
+}
+.disk {
+  height: 26px;
+  border-radius: 13px;
+  margin-bottom: 2px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  transition: transform 0.3s;
+}
+.disk.moving { animation: lift 0.4s ease; }
+@keyframes lift {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-30px); }
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 14px;
+  margin-top: 36px;
+}
+.stat-card {
+  background: white;
+  padding: 14px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.stat-card .num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.stat-card .label {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🗼 汉诺塔游戏</h1>
+    <div class="subtitle">体验有趣的益智游戏，发现其中的算法规律</div>
+    <span class="lesson-tag">第3课 · 游戏体验寻规律</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>游戏规则：</strong>把所有圆环从柱1移动到柱3。①每次只能移动一个圆环；②在移动过程中可以借助柱2，但小圆环必须始终在大圆环的上面。
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>圆环数量：</label>
+        <select id="diskCount">
+          <option value="3" selected>3 个</option>
+          <option value="4">4 个</option>
+          <option value="5">5 个</option>
+          <option value="6">6 个</option>
+        </select>
+      </div>
+      <button onclick="resetGame()">🔄 重新开始</button>
+      <button class="btn-success" onclick="autoSolve()">▶ 自动演示</button>
+      <button class="btn-secondary" onclick="stopAuto()">⏸ 停止</button>
+    </div>
+
+    <div class="tower-area">
+      <div class="tower" data-tower="0" onclick="selectTower(0)">
+        <div class="tower-pole"></div>
+        <div class="tower-base"></div>
+        <div class="tower-label">柱 1</div>
+      </div>
+      <div class="tower" data-tower="1" onclick="selectTower(1)">
+        <div class="tower-pole"></div>
+        <div class="tower-base"></div>
+        <div class="tower-label">柱 2</div>
+      </div>
+      <div class="tower" data-tower="2" onclick="selectTower(2)">
+        <div class="tower-pole"></div>
+        <div class="tower-base"></div>
+        <div class="tower-label">柱 3</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="moveCount">0</div><div class="label">已移动次数</div></div>
+      <div class="stat-card"><div class="num" id="minMoves">7</div><div class="label">最少移动次数</div></div>
+      <div class="stat-card"><div class="num" id="status">进行中</div><div class="label">游戏状态</div></div>
+    </div>
+
+    <div class="steps" id="steps"><div class="step">点击柱子选择圆环，再点击另一根柱子放置。</div></div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>规律发现：</strong>移动 n 个圆环最少需要 <strong>2<sup>n</sup>-1</strong> 次。3环需要7次，4环需要15次，10环就需要1023次！</p>
+      <p><strong>解题思路（递归思想）：</strong>把"移动 n 个圆环"这个大问题，分解为三个步骤：</p>
+      <ul>
+        <li>第1步：把上面 n-1 个圆环先移动到中间柱</li>
+        <li>第2步：把最大的圆环移动到目标柱</li>
+        <li>第3步：再把 n-1 个圆环从中间柱移动到目标柱</li>
+      </ul>
+      <p>这种"把大问题分解为小问题"的思想，是计算机算法中非常重要的方法。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const colors = ['#E94B3C','#FF8C42','#FFC107','#50C878','#4A90E2','#9B59B6','#E91E63'];
+let towers = [[],[],[]];
+let selectedTower = -1;
+let moves = 0;
+let autoTimer = null;
+let isAutoSolving = false;
+
+function init() {
+  const n = parseInt(document.getElementById('diskCount').value);
+  towers = [[],[],[]];
+  for (let i = n; i >= 1; i--) towers[0].push(i);
+  selectedTower = -1;
+  moves = 0;
+  document.getElementById('moveCount').textContent = '0';
+  document.getElementById('minMoves').textContent = Math.pow(2,n) - 1;
+  document.getElementById('status').textContent = '进行中';
+  document.getElementById('steps').innerHTML = '<div class="step">游戏开始！点击柱子选择圆环。</div>';
+  render();
+}
+
+function render() {
+  document.querySelectorAll('.tower').forEach((t, idx) => {
+    t.querySelectorAll('.disk').forEach(d => d.remove());
+    t.classList.toggle('selected', idx === selectedTower);
+    const totalH = t.clientHeight - 30;
+    const maxDisks = parseInt(document.getElementById('diskCount').value);
+    towers[idx].forEach((size, i) => {
+      const disk = document.createElement('div');
+      disk.className = 'disk';
+      const widthPercent = 30 + (size / maxDisks) * 55;
+      disk.style.width = widthPercent + '%';
+      disk.style.background = colors[size-1] || '#888';
+      disk.textContent = size;
+      t.appendChild(disk);
+    });
+  });
+}
+
+function selectTower(idx) {
+  if (isAutoSolving) return;
+  if (selectedTower === -1) {
+    if (towers[idx].length === 0) {
+      log('柱 ' + (idx+1) + ' 是空的，请选择有圆环的柱子。', false);
+      return;
+    }
+    selectedTower = idx;
+  } else {
+    if (selectedTower === idx) {
+      selectedTower = -1;
+    } else {
+      tryMove(selectedTower, idx);
+      selectedTower = -1;
+    }
+  }
+  render();
+}
+
+function tryMove(from, to) {
+  const top = towers[from][towers[from].length-1];
+  const dest = towers[to][towers[to].length-1];
+  if (dest && top > dest) {
+    log(`❌ 不能把 ${top} 号圆环放在 ${dest} 号上面（小环必须在大环上面）。`, false);
+    return false;
+  }
+  towers[from].pop();
+  towers[to].push(top);
+  moves++;
+  document.getElementById('moveCount').textContent = moves;
+  log(`第 ${moves} 步：把 ${top} 号圆环从 柱${from+1} 移到 柱${to+1}`, true);
+  checkWin();
+  return true;
+}
+
+function log(msg, ok) {
+  const stepDiv = document.getElementById('steps');
+  const div = document.createElement('div');
+  div.className = 'step' + (ok ? ' highlight' : '');
+  div.textContent = msg;
+  stepDiv.insertBefore(div, stepDiv.firstChild);
+}
+
+function checkWin() {
+  const n = parseInt(document.getElementById('diskCount').value);
+  if (towers[2].length === n) {
+    document.getElementById('status').textContent = '🎉 完成！';
+    const minMoves = Math.pow(2,n)-1;
+    log(`🎉 恭喜完成！你用了 ${moves} 步，最少需要 ${minMoves} 步。`, true);
+  }
+}
+
+function resetGame() { stopAuto(); init(); }
+
+function autoSolve() {
+  if (isAutoSolving) return;
+  resetGame();
+  isAutoSolving = true;
+  const n = parseInt(document.getElementById('diskCount').value);
+  const movesList = [];
+  hanoi(n, 0, 2, 1, movesList);
+  let i = 0;
+  autoTimer = setInterval(() => {
+    if (i >= movesList.length) { stopAuto(); return; }
+    const [from, to] = movesList[i++];
+    tryMove(from, to);
+    render();
+  }, 600);
+}
+
+function hanoi(n, from, to, via, list) {
+  if (n === 0) return;
+  hanoi(n-1, from, via, to, list);
+  list.push([from, to]);
+  hanoi(n-1, via, to, from, list);
+}
+
+function stopAuto() {
+  if (autoTimer) clearInterval(autoTimer);
+  autoTimer = null;
+  isAutoSolving = false;
+}
+
+document.getElementById('diskCount').addEventListener('change', resetGame);
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PageRank模拟器 - 第27课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.web-graph {
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  border-radius: 14px;
+  padding: 24px;
+  position: relative;
+  min-height: 380px;
+}
+.web-svg {
+  width: 100%;
+  height: 360px;
+  display: block;
+}
+.web-node {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.web-node circle {
+  transition: all 0.3s;
+}
+.web-node.highlight circle {
+  filter: drop-shadow(0 0 12px gold);
+}
+
+.rank-table {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  margin-top: 14px;
+}
+.rank-table h4 {
+  color: var(--primary-dark);
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.rank-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.rank-table th {
+  background: #F0F4F8;
+  color: var(--primary-dark);
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border);
+}
+.rank-table td {
+  padding: 8px 10px;
+  border-bottom: 1px dashed var(--border);
+}
+.rank-table tr.rank-1 td:first-child { color: #FFD700; font-weight: 700; }
+.rank-table tr.rank-2 td:first-child { color: #C0C0C0; font-weight: 700; }
+.rank-table tr.rank-3 td:first-child { color: #CD7F32; font-weight: 700; }
+.rank-bar {
+  display: inline-block;
+  height: 14px;
+  background: linear-gradient(to right, var(--primary), var(--primary-dark));
+  border-radius: 7px;
+  vertical-align: middle;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.search-mock {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.search-bar {
+  background: #F0F4F8;
+  border-radius: 24px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  border: 1.5px solid transparent;
+}
+.search-bar:focus-within { border-color: var(--primary); }
+.search-bar input {
+  border: none;
+  background: transparent;
+  flex: 1;
+  font-size: 15px;
+  outline: none;
+}
+.search-result {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.search-result:hover { background: #F0F7FF; }
+.search-result h5 {
+  color: #1A0DAB;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.search-result .url { color: #006621; font-size: 12px; }
+.search-result .desc { color: var(--text); font-size: 13px; margin-top: 4px; }
+.search-result .pagerank-tag {
+  display: inline-block;
+  background: var(--primary);
+  color: white;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.visitor-sim {
+  background: linear-gradient(135deg, #FFF9E6, #FFF4D4);
+  border-radius: 14px;
+  padding: 18px;
+  margin-top: 14px;
+}
+.visitor-counts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+}
+.vc-box {
+  background: white;
+  border: 2px solid var(--primary);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.vc-box .pg-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+.vc-box .count {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--secondary);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+  transition: all 0.3s;
+}
+.vc-box .count.change { animation: countFlash 0.5s ease; }
+@keyframes countFlash {
+  0% { transform: scale(1.3); color: var(--accent); }
+  100% { transform: scale(1); }
+}
+.iter-info {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+  margin: 10px 0;
+}
+.iter-info strong { color: var(--primary-dark); font-size: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔍 网页排名(PageRank)模拟器</h1>
+    <div class="subtitle">搜索引擎背后的"投票"算法</div>
+    <span class="lesson-tag">第27课 · 网页排名有策略</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>了解<strong>搜索引擎</strong>中的<strong>网页排名算法</strong></li>
+            <li>理解"被链接次数"和网页重要性的关系</li>
+            <li>初步认识 <strong>PageRank</strong> 算法</li>
+            <li>知道<strong>规范使用网络</strong>的意义</li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>🤔 想一想:</strong>你在搜索引擎搜"恐龙",为什么有些网页排在前面、有些排在后面?
+        </div>
+      </div>
+
+      <div class="slide" data-title="情境引入">
+        <div class="slide-title"><span class="num">2</span>情境:同学卡片游戏</div>
+        <div class="scenario-box">
+          <span class="label">🎴 班级游戏</span>
+          <p style="margin-top:8px;">老师选 4 个同学:A、B、C、D,每人发一张卡。</p>
+          <p style="margin-top:6px;"><strong>规则:</strong>在自己卡上写出其他 3 个同学中,你<strong>知道联系方式</strong>的同学卡号。</p>
+          <p style="margin-top:8px;">假设结果如下:</p>
+          <div style="background:white; padding:12px; border-radius:8px; margin-top:8px; font-family:monospace; font-size:14px;">
+            <strong>A 卡:</strong>写着 "C, D" — A 知道 C 和 D 的联系方式<br>
+            <strong>B 卡:</strong>写着 "A, C, D"<br>
+            <strong>C 卡:</strong>写着 "B"<br>
+            <strong>D 卡:</strong>写着 "A, B, C"
+          </div>
+          <p style="margin-top:8px;">把卡片想成<strong>"网页"</strong>,联系方式想成<strong>"链接"</strong>。<br>
+            <strong>问题:</strong>谁的联系方式被记下来最多?(谁最"受欢迎"?)</p>
+        </div>
+      </div>
+
+      <div class="slide" data-title="简单算法">
+        <div class="slide-title"><span class="num">3</span>简单算法:数被链接次数</div>
+        <div class="slide-subtitle">点击网页节点查看它的"被链接情况"</div>
+        <div class="web-graph">
+          <svg class="web-svg" viewBox="0 0 600 360">
+            <!-- 箭头定义 -->
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#4A90E2"/>
+              </marker>
+              <marker id="arrowH" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#E94B3C"/>
+              </marker>
+            </defs>
+            <!-- 链接边:稍微偏移以表示方向 -->
+            <g id="edges"></g>
+            <!-- 节点 -->
+            <g class="web-node" data-page="A" onclick="highlightPage('A')">
+              <circle cx="160" cy="100" r="36" fill="#4A90E2" stroke="white" stroke-width="3"/>
+              <text x="160" y="108" text-anchor="middle" fill="white" font-size="28" font-weight="700">A</text>
+            </g>
+            <g class="web-node" data-page="B" onclick="highlightPage('B')">
+              <circle cx="440" cy="100" r="36" fill="#50C878" stroke="white" stroke-width="3"/>
+              <text x="440" y="108" text-anchor="middle" fill="white" font-size="28" font-weight="700">B</text>
+            </g>
+            <g class="web-node" data-page="C" onclick="highlightPage('C')">
+              <circle cx="160" cy="280" r="36" fill="#FF8C42" stroke="white" stroke-width="3"/>
+              <text x="160" y="288" text-anchor="middle" fill="white" font-size="28" font-weight="700">C</text>
+            </g>
+            <g class="web-node" data-page="D" onclick="highlightPage('D')">
+              <circle cx="440" cy="280" r="36" fill="#9C27B0" stroke="white" stroke-width="3"/>
+              <text x="440" y="288" text-anchor="middle" fill="white" font-size="28" font-weight="700">D</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rank-table" style="margin-top:14px;">
+          <h4>📊 网页排名表(按被链接次数)</h4>
+          <table>
+            <thead>
+              <tr><th>名次</th><th>网页</th><th>被链接次数</th><th>被谁链接</th><th>可视化</th></tr>
+            </thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="slide" data-title="搜索引擎">
+        <div class="slide-title"><span class="num">4</span>🔎 搜索引擎中的排名</div>
+        <div class="slide-subtitle">输入关键词后,搜索引擎按"票数"显示结果</div>
+        <div class="search-mock">
+          <div class="search-bar">
+            <span style="font-size:18px;">🔍</span>
+            <input type="text" placeholder="试着输入关键词..." value="科学知识" readonly>
+            <button onclick="" style="padding:4px 12px; font-size:13px;">搜索</button>
+          </div>
+          <div id="searchResults"></div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>💡 排名的逻辑:</strong>"<strong>被链接次数</strong>"越多 = 越多其他网页认可它 = 排名越靠前。这就是<strong>"票数民主"</strong>的思想!
+        </div>
+      </div>
+
+      <div class="slide" data-title="PageRank 模拟">
+        <div class="slide-title"><span class="num">5</span>⚙️ PageRank 算法模拟</div>
+        <div class="slide-subtitle">100 个访问者随机游走,看最后在哪个网页"扎堆"</div>
+        <div class="visitor-sim">
+          <div class="iter-info">
+            迭代次数: <strong id="iterNum">0</strong> / 共 100 个访问者
+          </div>
+          <div class="visitor-counts" id="visitorCounts"></div>
+          <div style="text-align:center; margin-top:14px;">
+            <button class="btn-success" onclick="runPageRank()" id="prBtn">▶ 开始模拟</button>
+            <button class="btn-secondary" onclick="resetPageRank()">🔄 重置</button>
+            <button class="btn-secondary" onclick="stepPageRank()">⤓ 单步</button>
+          </div>
+          <div id="prResult" style="margin-top:14px; text-align:center; font-weight:600; min-height:30px;"></div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>📘 PageRank 的核心思想:</strong>
+          <ul style="margin-top:6px; padding-left:20px; font-size:13.5px;">
+            <li>初始把访问者<strong>平均分配</strong>到各网页</li>
+            <li>每个访问者按当前页的链接<strong>随机跳转</strong>到下一页</li>
+            <li>多次迭代后,有的网页会<strong>"沉淀"</strong>更多访问者 → 排名更高</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>简单的排名算法:数<strong>被链接次数</strong></li>
+            <li><strong>PageRank</strong>算法:用"投票"和"随机游走"判断网页重要性</li>
+            <li>搜索引擎给出的排名,背后藏着精巧的算法</li>
+            <li>实际中还会考虑:<strong>链接强度</strong>、<strong>链接来源质量</strong>等多种因素</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后思考</h3>
+          <p>1. 为什么有的网页会想方设法让别的网页链接到自己?(提示:排名)</p>
+          <p>2. 使用搜索引擎要<strong>规范</strong>:不传播虚假信息,保护好个人隐私!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+// ============ 网页链接关系 ============
+const LINKS = {
+  A: ['C', 'D'],
+  B: ['A', 'C', 'D'],
+  C: ['B'],
+  D: ['A', 'B', 'C']
+};
+
+const PAGES = ['A', 'B', 'C', 'D'];
+const POSITIONS = {
+  A: { x: 160, y: 100 },
+  B: { x: 440, y: 100 },
+  C: { x: 160, y: 280 },
+  D: { x: 440, y: 280 }
+};
+
+// 计算被链接次数
+function computeInbound() {
+  const counts = { A: [], B: [], C: [], D: [] };
+  for (const from in LINKS) {
+    for (const to of LINKS[from]) {
+      counts[to].push(from);
+    }
+  }
+  return counts;
+}
+
+// 渲染链接边
+function renderEdges(highlight) {
+  const edges = [];
+  for (const from in LINKS) {
+    for (const to of LINKS[from]) {
+      const p1 = POSITIONS[from];
+      const p2 = POSITIONS[to];
+      // 计算单位向量,避免线穿过圆心
+      const dx = p2.x - p1.x, dy = p2.y - p1.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const ux = dx/dist, uy = dy/dist;
+      const r = 36;
+      // 偏移一点点避免双向链接重叠
+      const off = 6;
+      const perpX = -uy * off, perpY = ux * off;
+      const x1 = p1.x + ux * r + perpX;
+      const y1 = p1.y + uy * r + perpY;
+      const x2 = p2.x - ux * r + perpX;
+      const y2 = p2.y - uy * r + perpY;
+      const isHigh = highlight && to === highlight;
+      edges.push(
+        '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
+        '" stroke="' + (isHigh ? '#E94B3C' : '#4A90E2') + '" stroke-width="' + (isHigh ? 3 : 2) +
+        '" marker-end="url(#' + (isHigh ? 'arrowH' : 'arrow') + ')" />'
+      );
+    }
+  }
+  document.getElementById('edges').innerHTML = edges.join('');
+}
+
+function highlightPage(p) {
+  document.querySelectorAll('.web-node').forEach(n => n.classList.remove('highlight'));
+  document.querySelector('.web-node[data-page="' + p + '"]').classList.add('highlight');
+  renderEdges(p);
+}
+
+function renderRankTable() {
+  const inbound = computeInbound();
+  const sorted = PAGES.map(p => ({ page: p, count: inbound[p].length, from: inbound[p] }))
+    .sort((a, b) => b.count - a.count);
+  const maxCount = sorted[0].count;
+  document.getElementById('rankBody').innerHTML = sorted.map((s, i) =>
+    '<tr class="rank-' + (i+1) + '">' +
+    '<td>🏅 第 ' + (i+1) + ' 名</td>' +
+    '<td><strong>' + s.page + ' 网页</strong></td>' +
+    '<td><strong style="color:var(--primary-dark); font-size:18px;">' + s.count + '</strong> 次</td>' +
+    '<td>' + (s.from.length ? s.from.join(', ') : '无') + '</td>' +
+    '<td><span class="rank-bar" style="width:' + (s.count/maxCount*120) + 'px;"></span></td>' +
+    '</tr>'
+  ).join('');
+}
+
+function renderSearchResults() {
+  const inbound = computeInbound();
+  const sorted = PAGES.map(p => ({ page: p, count: inbound[p].length }))
+    .sort((a, b) => b.count - a.count);
+  const titles = {
+    A: { title: 'A 网页 — 综合科学知识门户', desc: '汇总各学科的入门科普文章,涵盖物理、化学、生物等。被多个权威网页推荐,内容质量较高。' },
+    B: { title: 'B 网页 — 趣味科普视频站', desc: '通过短视频讲解各种科学现象,内容生动有趣。是 A 和 D 网页的重要参考来源。' },
+    C: { title: 'C 网页 — 青少年科学问答', desc: '专门为小学生设计的科学问答平台,回答日常生活中的科学疑问。被 A、B、D 一致推荐。' },
+    D: { title: 'D 网页 — 实验室在线课堂', desc: '提供动手实验教程和材料清单,适合家庭小实验。是 B 网页的常用参考。' }
+  };
+  document.getElementById('searchResults').innerHTML = sorted.map((s, i) =>
+    '<div class="search-result">' +
+    '<h5>' + titles[s.page].title + '<span class="pagerank-tag">被链接 ' + s.count + ' 次</span></h5>' +
+    '<div class="url">https://example.com/page-' + s.page.toLowerCase() + '/</div>' +
+    '<div class="desc">' + titles[s.page].desc + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+renderEdges();
+renderRankTable();
+renderSearchResults();
+
+// ============ PageRank 模拟 ============
+let visitors = { A: 25, B: 25, C: 25, D: 25 };
+let iter = 0;
+let prTimer = null;
+
+function renderVisitors() {
+  document.getElementById('visitorCounts').innerHTML = PAGES.map(p =>
+    '<div class="vc-box">' +
+    '<div class="pg-name">' + p + ' 网页</div>' +
+    '<div class="count" data-page="' + p + '">' + visitors[p] + '</div>' +
+    '</div>'
+  ).join('');
+  document.getElementById('iterNum').textContent = iter;
+}
+
+function stepPageRank() {
+  // 每个网页的访问者,按其链接均分到目标网页
+  const next = { A: 0, B: 0, C: 0, D: 0 };
+  for (const p of PAGES) {
+    const targets = LINKS[p];
+    if (targets.length === 0) {
+      // 没有出链 → 留在原页
+      next[p] += visitors[p];
+    } else {
+      // 均匀分给所有目标
+      const each = visitors[p] / targets.length;
+      for (const t of targets) {
+        next[t] += each;
+      }
+    }
+  }
+  // 保留整数(四舍五入)
+  visitors = {};
+  let total = 0;
+  for (const p of PAGES) {
+    visitors[p] = Math.round(next[p]);
+    total += visitors[p];
+  }
+  // 修正总数(四舍五入引起的误差)
+  if (total !== 100) {
+    const sorted = PAGES.sort((a, b) => visitors[b] - visitors[a]);
+    visitors[sorted[0]] += (100 - total);
+  }
+  iter++;
+  renderVisitors();
+  PAGES.forEach(p => {
+    const el = document.querySelector('.count[data-page="' + p + '"]');
+    el.classList.remove('change');
+    void el.offsetWidth;
+    el.classList.add('change');
+  });
+}
+
+function runPageRank() {
+  resetPageRank();
+  document.getElementById('prBtn').disabled = true;
+  let maxIter = 8;
+  prTimer = setInterval(() => {
+    stepPageRank();
+    if (iter >= maxIter) {
+      clearInterval(prTimer);
+      document.getElementById('prBtn').disabled = false;
+      const sorted = PAGES.map(p => ({ p, v: visitors[p] })).sort((a, b) => b.v - a.v);
+      document.getElementById('prResult').innerHTML =
+        '✅ 模拟完成! 最终排名:<br><strong>' +
+        sorted.map((s, i) => '第' + (i+1) + '名 ' + s.p + '(' + s.v + ')').join(' &nbsp;|&nbsp; ') +
+        '</strong>';
+    }
+  }, 900);
+}
+
+function resetPageRank() {
+  if (prTimer) clearInterval(prTimer);
+  prTimer = null;
+  visitors = { A: 25, B: 25, C: 25, D: 25 };
+  iter = 0;
+  renderVisitors();
+  document.getElementById('prResult').textContent = '';
+  document.getElementById('prBtn').disabled = false;
+}
+
+renderVisitors();
+</script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>三年级信息科技教学辅助工具集</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.6; }
+.header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 60px 24px 40px; text-align: center; }
+.header h1 { font-size: 32px; margin-bottom: 10px; }
+.header .subtitle { font-size: 16px; opacity: .92; margin-bottom: 8px; }
+.header .meta { font-size: 13px; opacity: .8; }
+.header .stats { display: flex; gap: 20px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.15); padding: 12px 22px; border-radius: 30px; }
+.stat .num { font-size: 24px; font-weight: 700; }
+.stat .label { font-size: 12px; opacity: .9; }
+.container { max-width: 1280px; margin: 0 auto; padding: 32px 20px 60px; }
+.intro-box { background: white; border-radius: 14px; padding: 22px 28px; margin-bottom: 32px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+.intro-box h2 { color: #1e3a8a; font-size: 18px; margin-bottom: 10px; }
+.intro-box p { color: #475569; font-size: 14px; line-height: 1.7; }
+.intro-box ul { margin-top: 8px; padding-left: 20px; color: #475569; font-size: 13px; line-height: 1.9; }
+
+.unit { margin-bottom: 32px; }
+.unit-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid; }
+.unit-header h2 { font-size: 20px; font-weight: 700; }
+.unit-badge { font-size: 12px; padding: 4px 12px; border-radius: 16px; font-weight: 600; color: white; }
+.unit1 { border-color: #3b82f6; } .unit1 h2 { color: #1e40af; } .unit1 .unit-badge { background: #3b82f6; }
+.unit2 { border-color: #f59e0b; } .unit2 h2 { color: #b45309; } .unit2 .unit-badge { background: #f59e0b; }
+.unit3 { border-color: #8b5cf6; } .unit3 h2 { color: #6d28d9; } .unit3 .unit-badge { background: #8b5cf6; }
+.unit4 { border-color: #ec4899; } .unit4 h2 { color: #be185d; } .unit4 .unit-badge { background: #ec4899; }
+.unit5 { border-color: #7c3aed; } .unit5 h2 { color: #5b21b6; } .unit5 .unit-badge { background: #7c3aed; }
+.unit6 { border-color: #06b6d4; } .unit6 h2 { color: #0e7490; } .unit6 .unit-badge { background: #06b6d4; }
+.unit7 { border-color: #14b8a6; } .unit7 h2 { color: #0f766e; } .unit7 .unit-badge { background: #14b8a6; }
+.unit8 { border-color: #ef4444; } .unit8 h2 { color: #b91c1c; } .unit8 .unit-badge { background: #ef4444; }
+
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.tool-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.05); transition: all .25s; text-decoration: none; color: inherit; border-top: 4px solid; display: flex; flex-direction: column; }
+.tool-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,.1); }
+.tool-card.u1 { border-color: #3b82f6; }
+.tool-card.u2 { border-color: #f59e0b; }
+.tool-card.u3 { border-color: #8b5cf6; }
+.tool-card.u4 { border-color: #ec4899; }
+.tool-card.u5 { border-color: #7c3aed; }
+.tool-card.u6 { border-color: #06b6d4; }
+.tool-card.u7 { border-color: #14b8a6; }
+.tool-card.u8 { border-color: #ef4444; }
+.tool-card .lesson-num { font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 600; letter-spacing: .5px; }
+.tool-card .tool-title { font-weight: 600; color: #1e293b; font-size: 16px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.tool-card .tool-icon { font-size: 22px; }
+.tool-card .tool-desc { color: #64748b; font-size: 13px; flex: 1; }
+.tool-card .open-hint { margin-top: 10px; color: #3b82f6; font-size: 12px; }
+.tool-card.u2 .open-hint { color: #f59e0b; }
+.tool-card.u3 .open-hint { color: #8b5cf6; }
+.tool-card.u4 .open-hint { color: #ec4899; }
+.tool-card.u5 .open-hint { color: #7c3aed; }
+.tool-card.u6 .open-hint { color: #06b6d4; }
+.tool-card.u7 .open-hint { color: #14b8a6; }
+.tool-card.u8 .open-hint { color: #ef4444; }
+
+.footer { background: white; padding: 30px 24px; text-align: center; color: #94a3b8; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 40px; }
+.footer p { margin: 4px 0; }
+@media (max-width: 600px) {
+  .header h1 { font-size: 24px; }
+  .header { padding: 40px 20px 30px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📚 三年级信息科技教学辅助工具集</h1>
+  <div class="subtitle">在线学习与生活 · 30 个互动课件</div>
+  <div class="meta">基于义务教育信息科技课程教学指南</div>
+  <div class="stats">
+    <div class="stat"><div class="num">30</div><div class="label">课时工具</div></div>
+    <div class="stat"><div class="num">8</div><div class="label">教学单元</div></div>
+    <div class="stat"><div class="num">100%</div><div class="label">可代替 PPT</div></div>
+    <div class="stat"><div class="num">📱💻</div><div class="label">手机电脑均可</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="intro-box">
+    <h2>📖 使用说明</h2>
+    <p>本工具集涵盖三年级《在线学习与生活》全册 30 个课时，每个工具采用 <b>PPT 课件式结构</b>（侧边栏导航 + 多页幻灯片 + 翻页按钮 + 键盘箭头快捷键），可以直接代替 PPT 用于课堂演示，也可作为学生自主学习的互动工具。</p>
+    <ul>
+      <li>🖥️ <b>使用方法</b>：点击下方任意卡片打开对应课时工具，支持点击导航或键盘 ← → 翻页</li>
+      <li>📱 <b>响应式设计</b>：电脑、平板、手机均可正常使用，自动适配屏幕大小</li>
+      <li>💾 <b>离线可用</b>：所有工具单文件 HTML，下载到本地无需联网即可运行</li>
+      <li>🎨 <b>配色规则</b>：按教学单元分配主题色，便于识别和归类</li>
+    </ul>
+  </div>
+
+  <div class="unit unit1">
+    <div class="unit-header">
+      <h2>📡 第一单元：开启信息生活</h2>
+      <span class="unit-badge">3 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u1" href="11_第1课_寻找信息科技.html">
+        <div class="lesson-num">第 1 课</div>
+        <div class="tool-title"><span class="tool-icon">📡</span>寻找信息科技</div>
+        <div class="tool-desc">小华一天时间轴、数字设备分类，认识身边的信息科技</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u1" href="12_第2课_使用数字设备.html">
+        <div class="lesson-num">第 2 课</div>
+        <div class="tool-title"><span class="tool-icon">💻</span>使用数字设备</div>
+        <div class="tool-desc">硬件软件拖拽分类、平板护眼模式、规范使用判断</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u1" href="01_第3课_人机交互体验器.html">
+        <div class="lesson-num">第 3 课</div>
+        <div class="tool-title"><span class="tool-icon">👆</span>体验人机交互</div>
+        <div class="tool-desc">键盘鼠标触摸语音多种交互方式实测体验</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit2">
+    <div class="unit-header">
+      <h2>📷 第二单元：记录美好时光</h2>
+      <span class="unit-badge">4 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u2" href="13_第4课_图片记录瞬间.html">
+        <div class="lesson-num">第 4 课</div>
+        <div class="tool-title"><span class="tool-icon">📷</span>图片记录瞬间</div>
+        <div class="tool-desc">构图技巧、横拍竖拍、拍照口诀、文明拍照</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u2" href="02_第5课_图片美化处理实验台.html">
+        <div class="lesson-num">第 5 课</div>
+        <div class="tool-title"><span class="tool-icon">🎨</span>美化处理图片</div>
+        <div class="tool-desc">实时滤镜、裁剪、调色，在线实验图片美化</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u2" href="14_第6课_视频记录片段.html">
+        <div class="lesson-num">第 6 课</div>
+        <div class="tool-title"><span class="tool-icon">🎬</span>视频记录片段</div>
+        <div class="tool-desc">录制模拟、镜头景别、青少年模式</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u2" href="15_第7课_音频记录声音.html">
+        <div class="lesson-num">第 7 课</div>
+        <div class="tool-title"><span class="tool-icon">🎙️</span>音频记录声音</div>
+        <div class="tool-desc">真实浏览器录音、波形可视化、音频处理</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit3">
+    <div class="unit-header">
+      <h2>🌐 第三单元：畅游网络世界</h2>
+      <span class="unit-badge">4 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u3" href="16_第8课_浏览网络资源.html">
+        <div class="lesson-num">第 8 课</div>
+        <div class="tool-title"><span class="tool-icon">🌐</span>浏览网络资源</div>
+        <div class="tool-desc">模拟浏览器、超链接跳转、收藏夹管理</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u3" href="03_第9课_智能搜索关键词训练器.html">
+        <div class="lesson-num">第 9 课</div>
+        <div class="tool-title"><span class="tool-icon">🔍</span>在线搜索资源</div>
+        <div class="tool-desc">关键词训练、模拟搜索结果、提取技巧</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u3" href="17_第10课_保存信息资源.html">
+        <div class="lesson-num">第 10 课</div>
+        <div class="tool-title"><span class="tool-icon">💾</span>保存信息资源</div>
+        <div class="tool-desc">右键菜单模拟、保存图片文字、合法使用</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u3" href="04_第11课_文件分类整理工具.html">
+        <div class="lesson-num">第 11 课</div>
+        <div class="tool-title"><span class="tool-icon">🗂️</span>整理信息资源</div>
+        <div class="tool-desc">文件夹分类拖拽、命名规范、整理实践</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit4">
+    <div class="unit-header">
+      <h2>🎨 第四单元：创作数字作品</h2>
+      <span class="unit-badge">4 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u4" href="18_第12课_认识数字作品.html">
+        <div class="lesson-num">第 12 课</div>
+        <div class="tool-title"><span class="tool-icon">🎨</span>认识数字作品</div>
+        <div class="tool-desc">作品类型展示、特点分析、创作流程图</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u4" href="19_第13课_制作数字相册.html">
+        <div class="lesson-num">第 13 课</div>
+        <div class="tool-title"><span class="tool-icon">📷</span>制作数字相册</div>
+        <div class="tool-desc">相册制作器、模板选择、照片+文字+自动播放</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u4" href="07_第14课_数字小报布局设计器.html">
+        <div class="lesson-num">第 14 课</div>
+        <div class="tool-title"><span class="tool-icon">📰</span>制作数字小报</div>
+        <div class="tool-desc">拖拽式版面设计、布局模板</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u4" href="20_第15课_展示数字作品.html">
+        <div class="lesson-num">第 15 课</div>
+        <div class="tool-title"><span class="tool-icon">🌟</span>展示数字作品</div>
+        <div class="tool-desc">分享方式、展示技巧、星级评价表</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit5">
+    <div class="unit-header">
+      <h2>💬 第五单元：在线分享交流</h2>
+      <span class="unit-badge">4 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u5" href="21_第16课_畅享在线交流.html">
+        <div class="lesson-num">第 16 课</div>
+        <div class="tool-title"><span class="tool-icon">💬</span>畅享在线交流</div>
+        <div class="tool-desc">家庭群聊模拟、礼仪情景、交流工具对比</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u5" href="22_第17课_参与网络社交.html">
+        <div class="lesson-num">第 17 课</div>
+        <div class="tool-title"><span class="tool-icon">🌐</span>参与网络社交</div>
+        <div class="tool-desc">案例分类游戏、正能量 vs 警惕、网络小公民</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u5" href="23_第18课_在线行为规范.html">
+        <div class="lesson-num">第 18 课</div>
+        <div class="tool-title"><span class="tool-icon">📜</span>在线行为规范</div>
+        <div class="tool-desc">时间规划、隐私自查、转发判断练习</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u5" href="09_第19课_数字身份小课堂.html">
+        <div class="lesson-num">第 19 课</div>
+        <div class="tool-title"><span class="tool-icon">🆔</span>认识数字身份</div>
+        <div class="tool-desc">账号注册、身份保护、用户名密码</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit6">
+    <div class="unit-header">
+      <h2>🎓 第六单元：在线学习探究</h2>
+      <span class="unit-badge">3 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u6" href="24_第20课_体验在线学习.html">
+        <div class="lesson-num">第 20 课</div>
+        <div class="tool-title"><span class="tool-icon">🎓</span>体验在线学习</div>
+        <div class="tool-desc">六大学科资源、兴趣爱好推荐</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u6" href="25_第21课_分享学习资源.html">
+        <div class="lesson-num">第 21 课</div>
+        <div class="tool-title"><span class="tool-icon">📤</span>分享学习资源</div>
+        <div class="tool-desc">在线协作表单、资源推荐汇总</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u6" href="26_第22课_探讨在线学习.html">
+        <div class="lesson-num">第 22 课</div>
+        <div class="tool-title"><span class="tool-icon">📅</span>探讨在线学习</div>
+        <div class="tool-desc">周计划表、学习习惯自查、效率方法</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit7">
+    <div class="unit-header">
+      <h2>🤝 第七单元：合作解决问题</h2>
+      <span class="unit-badge">4 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u7" href="08_第23课_思维导图问题分解器.html">
+        <div class="lesson-num">第 23 课</div>
+        <div class="tool-title"><span class="tool-icon">🌳</span>分解描述问题</div>
+        <div class="tool-desc">思维导图、问题分解、画图工具</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u7" href="27_第24课_分组分派任务.html">
+        <div class="lesson-num">第 24 课</div>
+        <div class="tool-title"><span class="tool-icon">👥</span>分组分派任务</div>
+        <div class="tool-desc">随机分组器、任务分派表、协作小贴士</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u7" href="28_第25课_合作制作作品.html">
+        <div class="lesson-num">第 25 课</div>
+        <div class="tool-title"><span class="tool-icon">🛠️</span>合作制作作品</div>
+        <div class="tool-desc">软件对比表、选择助手、素材清单</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u7" href="29_第26课_完善评价作品.html">
+        <div class="lesson-num">第 26 课</div>
+        <div class="tool-title"><span class="tool-icon">✏️</span>完善评价作品</div>
+        <div class="tool-desc">检查清单、改进对比、在线投票</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="unit unit8">
+    <div class="unit-header">
+      <h2>🛡️ 第八单元：守护在线安全</h2>
+      <span class="unit-badge">4 课时</span>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card u8" href="30_第27课_感悟在线社会.html">
+        <div class="lesson-num">第 27 课</div>
+        <div class="tool-title"><span class="tool-icon">🌏</span>感悟在线社会</div>
+        <div class="tool-desc">支付方式对比、生活方式变化、挑战与思考</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u8" href="10_第28课_AI图像识别体验台.html">
+        <div class="lesson-num">第 28 课</div>
+        <div class="tool-title"><span class="tool-icon">🤖</span>初识人工智能</div>
+        <div class="tool-desc">AI 图像识别体验、神经网络可视化</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u8" href="05_第29课_密码强度分析器.html">
+        <div class="lesson-num">第 29 课</div>
+        <div class="tool-title"><span class="tool-icon">🔐</span>了解自主可控</div>
+        <div class="tool-desc">密码强度分析、安全意识、国产软件介绍</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+      <a class="tool-card u8" href="06_第30课_在线安全情景模拟器.html">
+        <div class="lesson-num">第 30 课</div>
+        <div class="tool-title"><span class="tool-icon">🛡️</span>在线安全防范</div>
+        <div class="tool-desc">情景模拟、诈骗识别、安全演练</div>
+        <div class="open-hint">点击打开 →</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>📚 三年级《在线学习与生活》教学辅助工具集</p>
+  <p>基于义务教育信息科技课程教学指南 · 共 30 个 PPT 课件式互动工具</p>
+  <p style="margin-top:10px;font-size:11px;">⌨️ 在每个工具中使用左右方向键可快速翻页</p>
+</div>
+</body>
+</html>

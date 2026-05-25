@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汽车控制系统模拟器 · 第24-27课</title>
+<style>
+  :root {
+    --primary: #db2777;
+    --primary-dark: #be185d;
+    --bg: #fdf2f8;
+    --card: #ffffff;
+    --text: #500724;
+    --muted: #6b7280;
+    --border: #fce7f3;
+    --ok: #16a34a;
+    --warn: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(219, 39, 119, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .scenario-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .scenario-tabs button {
+    padding: 10px 16px;
+    border: 1.5px solid var(--border);
+    background: white;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .scenario-tabs button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .scenario-tabs button:hover:not(.active) { background: #fdf2f8; }
+
+  .panel {
+    display: none;
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--border);
+  }
+  .panel.active { display: block; }
+
+  .panel h2 { font-size: 18px; margin-bottom: 6px; color: var(--primary-dark); }
+  .panel .desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    line-height: 1.7;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+  /* 转向灯场景 */
+  .car-top {
+    width: 100%;
+    height: 260px;
+    background: linear-gradient(180deg, #fda4af 0%, #f43f5e 100%);
+    border-radius: 14px;
+    position: relative;
+    margin: 0 auto;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .car-body-svg {
+    height: 230px;
+    width: auto;
+  }
+  .signal-light {
+    transition: all 0.25s;
+  }
+  .signal-light.on {
+    fill: #facc15;
+    filter: drop-shadow(0 0 8px #facc15);
+    animation: blink 0.5s infinite alternate;
+  }
+  @keyframes blink {
+    from { opacity: 1; }
+    to { opacity: 0.3; }
+  }
+
+  .steering {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .steering svg {
+    width: 140px;
+    height: 140px;
+    transition: transform 0.3s;
+  }
+  .steering-label {
+    font-family: "Courier New", monospace;
+    font-size: 16px;
+    margin-top: 8px;
+    font-weight: 600;
+  }
+
+  /* 安全带场景 */
+  .seat-vis {
+    background: linear-gradient(180deg, #fef3c7, #fde68a);
+    border-radius: 14px;
+    padding: 30px 20px;
+    text-align: center;
+    border: 2px solid var(--border);
+    min-height: 280px;
+    position: relative;
+  }
+  .seat-svg-wrap {
+    display: inline-block;
+    position: relative;
+    width: 140px;
+    height: 160px;
+  }
+  .seat-svg {
+    width: 100%;
+    height: 100%;
+  }
+  .seat-belt-line {
+    transition: opacity 0.3s, stroke 0.3s;
+  }
+  .person-shape {
+    transition: opacity 0.3s;
+  }
+  .dashboard-light {
+    margin-top: 24px;
+    padding: 14px;
+    background: #1e293b;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-family: "Courier New", monospace;
+    font-size: 18px;
+    font-weight: 700;
+    transition: all 0.3s;
+  }
+  .dashboard-light.alert {
+    color: #fbbf24;
+    animation: dashAlert 0.5s infinite alternate;
+  }
+  @keyframes dashAlert {
+    from { background: #1e293b; }
+    to { background: #7f1d1d; }
+  }
+
+  /* 倒车场景 */
+  .parking-vis {
+    background: linear-gradient(180deg, #cffafe, #a5f3fc);
+    border-radius: 14px;
+    padding: 16px;
+    border: 2px solid var(--border);
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+  }
+  .parking-svg {
+    width: 100%;
+    height: 200px;
+    display: block;
+  }
+
+  /* 定速巡航 */
+  .cruise-vis {
+    background: linear-gradient(180deg, #dbeafe, #93c5fd);
+    border-radius: 14px;
+    padding: 20px;
+    border: 2px solid var(--border);
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+  }
+  .speedometer {
+    width: 200px;
+    height: 200px;
+    margin: 10px auto;
+    position: relative;
+  }
+
+  /* 通用控件 */
+  .control-row { margin-bottom: 14px; }
+  .control-row label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .control-row label .value {
+    font-weight: 700;
+    color: var(--text);
+    font-family: "Courier New", monospace;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #fbcfe8;
+    border-radius: 3px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn.primary { background: var(--primary); color: white; }
+  .btn.primary:hover { background: var(--primary-dark); }
+  .btn.secondary { background: white; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn.danger { background: #ef4444; color: white; }
+  .btn.success { background: #16a34a; color: white; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+  .status-box {
+    padding: 14px;
+    border-radius: 8px;
+    background: #f9fafb;
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    border-left: 4px solid var(--muted);
+  }
+  .status-box.ok { background: #dcfce7; border-color: var(--ok); color: #166534; }
+  .status-box.warn { background: #fee2e2; border-color: var(--warn); color: #991b1b; }
+  .status-box.info { background: #dbeafe; border-color: #2563eb; color: #1e3a8a; }
+
+  .flow-mini {
+    background: #fdf2f8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--primary-dark);
+    margin-bottom: 14px;
+    border-left: 3px solid var(--primary);
+  }
+
+  .frequency-bar {
+    display: flex;
+    gap: 4px;
+    height: 30px;
+    margin: 14px 0;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 6px;
+  }
+  .frequency-bar .bip {
+    flex: 1;
+    background: #cbd5e1;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .frequency-bar .bip.on { background: var(--warn); }
+
+  .speed-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .speed-info-grid .info-card {
+    background: #f8fafc;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .speed-info-grid .info-card .lbl { font-size: 11px; color: var(--muted); }
+  .speed-info-grid .info-card .vl {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第七单元 · 第24-27课</span>
+    <h1>汽车控制系统模拟器 🚗</h1>
+    <p>体验汽车中的四个控制子系统：转向灯、安全带、倒车防撞、定速巡航</p>
+  </div>
+
+  <div class="scenario-tabs">
+    <button class="active" data-tab="signal">第24课 · 自动熄灭转向灯</button>
+    <button data-tab="belt">第25课 · 安全带未系提醒</button>
+    <button data-tab="parking">第26课 · 倒车防撞警报</button>
+    <button data-tab="cruise">第27课 · 定速巡航</button>
+  </div>
+
+  <!-- ======= 第24课：自动熄灭转向灯 ======= -->
+  <div class="panel active" id="panel-signal">
+    <h2>自动熄灭转向灯系统</h2>
+    <p class="desc">驾驶员转动方向盘超过 <b>30°</b> 时，转向灯亮起；完成转弯<b>回转方向盘</b>时，转向灯自动熄灭。如果方向盘转动角度<b>不足30°</b>（如变换车道），需要手动关闭。</p>
+
+    <div class="flow-mini">
+      📊 工作流程：方向盘角度 → 与阈值30°比较 → 判断是否回转 → 控制转向灯
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="car-top">
+          <svg class="car-body-svg" viewBox="0 0 120 220" xmlns="http://www.w3.org/2000/svg">
+            <!-- 车身 -->
+            <rect x="10" y="20" width="100" height="180" rx="14" fill="url(#bodyGrad)" stroke="#0f172a" stroke-width="2"/>
+            <defs>
+              <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1e293b"/>
+                <stop offset="100%" stop-color="#475569"/>
+              </linearGradient>
+            </defs>
+            <!-- 车顶/挡风玻璃 -->
+            <rect x="22" y="50" width="76" height="50" rx="6" fill="#0f172a" opacity="0.5"/>
+            <rect x="22" y="120" width="76" height="50" rx="6" fill="#0f172a" opacity="0.5"/>
+            <!-- 车头方向指示 -->
+            <text x="60" y="32" text-anchor="middle" fill="#cbd5e1" font-size="10" font-family="sans-serif">车头</text>
+            <!-- 4 个转向灯 -->
+            <circle class="signal-light" id="sig-fl" cx="20" cy="28" r="6" fill="#475569"/>
+            <circle class="signal-light" id="sig-fr" cx="100" cy="28" r="6" fill="#475569"/>
+            <circle class="signal-light" id="sig-rl" cx="20" cy="192" r="6" fill="#475569"/>
+            <circle class="signal-light" id="sig-rr" cx="100" cy="192" r="6" fill="#475569"/>
+          </svg>
+        </div>
+        <div class="steering">
+          <svg id="wheelSvg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" stroke-width="6"/>
+            <circle cx="50" cy="50" r="10" fill="#475569"/>
+            <line x1="50" y1="8" x2="50" y2="20" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+            <line x1="50" y1="50" x2="50" y2="92" stroke="#1e293b" stroke-width="4"/>
+            <line x1="8" y1="50" x2="42" y2="50" stroke="#1e293b" stroke-width="4"/>
+            <line x1="58" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="4"/>
+          </svg>
+          <div class="steering-label">方向盘角度：<span id="angleDisp">0°</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="control-row">
+          <label>方向盘转动角度 <span class="value" id="angleVal">0°</span></label>
+          <input type="range" id="angle" min="-90" max="90" value="0">
+        </div>
+        <div class="control-row">
+          <label>判断阈值（默认30°） <span class="value" id="thrVal">30°</span></label>
+          <input type="range" id="angleThr" min="10" max="60" value="30">
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="signalAction('left')">← 左转</button>
+          <button class="btn primary" onclick="signalAction('right')">右转 →</button>
+          <button class="btn secondary" onclick="signalAction('back')">回正方向盘</button>
+        </div>
+
+        <div class="status-box info" id="signalStatus">
+          状态：转向灯熄灭。请操控方向盘观察变化。
+        </div>
+
+        <div style="margin-top: 14px; font-size: 12px; color: var(--muted);">
+          <b>算法流程：</b><br>
+          if 角度 &gt; 阈值 then 灯亮<br>
+          if 灯亮 且 回转方向盘 then 自动熄灭
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= 第25课：安全带 ======= -->
+  <div class="panel" id="panel-belt">
+    <h2>安全带未系提醒系统</h2>
+    <p class="desc">通过座椅压力传感器检测<b>是否有人</b>，通过微动开关检测<b>安全带是否系好</b>。如果<b>有人但未系安全带</b>，仪表盘警示灯闪烁，发出语音提醒。</p>
+
+    <div class="flow-mini">
+      📊 工作流程：座椅传感器 + 安全带传感器 → 与运算 → 警报输出
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="seat-vis">
+          <div style="font-size:14px; font-weight:600; margin-bottom:14px;">驾驶座</div>
+          <div class="seat-svg-wrap">
+            <svg class="seat-svg" viewBox="0 0 140 160" xmlns="http://www.w3.org/2000/svg">
+              <!-- 座椅靠背 -->
+              <rect x="35" y="20" width="70" height="80" rx="10" fill="#7c2d12" stroke="#451a03" stroke-width="2"/>
+              <!-- 座椅坐垫 -->
+              <rect x="25" y="95" width="90" height="40" rx="8" fill="#9a3412" stroke="#451a03" stroke-width="2"/>
+              <!-- 座椅缝线 -->
+              <line x1="50" y1="35" x2="50" y2="95" stroke="#451a03" stroke-width="1" stroke-dasharray="3 3"/>
+              <line x1="90" y1="35" x2="90" y2="95" stroke="#451a03" stroke-width="1" stroke-dasharray="3 3"/>
+              <!-- 人形 -->
+              <g class="person-shape" id="personShape" style="opacity: 0;">
+                <!-- 头 -->
+                <circle cx="70" cy="36" r="14" fill="#fcd34d" stroke="#92400e" stroke-width="1.5"/>
+                <!-- 身体 -->
+                <rect x="52" y="48" width="36" height="60" rx="8" fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+              </g>
+              <!-- 安全带 -->
+              <line class="seat-belt-line" id="beltLine" x1="46" y1="50" x2="92" y2="100"
+                    stroke="#0f172a" stroke-width="4" stroke-linecap="round" style="opacity: 0;"/>
+              <line class="seat-belt-line" id="beltLine2" x1="92" y1="100" x2="46" y2="100"
+                    stroke="#0f172a" stroke-width="4" stroke-linecap="round" style="opacity: 0;"/>
+            </svg>
+          </div>
+
+          <div class="dashboard-light" id="dashLight">
+            ✓ 系统正常
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="padding: 14px; background: #f8fafc; border-radius: 8px; text-align: center; border: 1.5px solid var(--border);" id="personCard">
+            <div style="font-size: 12px; color: var(--muted);">输入 A</div>
+            <div style="font-weight: 600; margin: 4px 0;">座椅有人</div>
+            <button class="btn primary" onclick="toggleBelt('person')" id="personBtn">否（A=0）</button>
+          </div>
+          <div style="padding: 14px; background: #f8fafc; border-radius: 8px; text-align: center; border: 1.5px solid var(--border);" id="beltCard">
+            <div style="font-size: 12px; color: var(--muted);">输入 B</div>
+            <div style="font-weight: 600; margin: 4px 0;">安全带系好</div>
+            <button class="btn primary" onclick="toggleBelt('belt')" id="beltBtn">否（B=0）</button>
+          </div>
+        </div>
+
+        <div class="status-box" id="beltStatus" style="margin-top: 18px;">
+          状态：未启动
+        </div>
+
+        <table style="width:100%; border-collapse: collapse; margin-top:14px; font-size: 12px;">
+          <thead>
+            <tr style="background:#fdf2f8;">
+              <th style="padding:8px; border-bottom:1px solid var(--border);">A 有人</th>
+              <th style="padding:8px; border-bottom:1px solid var(--border);">B 系带</th>
+              <th style="padding:8px; border-bottom:1px solid var(--border);">输出 警报</th>
+            </tr>
+          </thead>
+          <tbody id="beltTable">
+            <tr data-key="00"><td style="padding:6px; border-bottom:1px solid var(--border);">0</td><td style="padding:6px; border-bottom:1px solid var(--border);">0</td><td style="padding:6px; border-bottom:1px solid var(--border);">不警报</td></tr>
+            <tr data-key="01"><td style="padding:6px; border-bottom:1px solid var(--border);">0</td><td style="padding:6px; border-bottom:1px solid var(--border);">1</td><td style="padding:6px; border-bottom:1px solid var(--border);">不警报</td></tr>
+            <tr data-key="10"><td style="padding:6px; border-bottom:1px solid var(--border); color:#b91c1c; font-weight:bold;">1</td><td style="padding:6px; border-bottom:1px solid var(--border); color:#b91c1c; font-weight:bold;">0</td><td style="padding:6px; border-bottom:1px solid var(--border); color:#b91c1c; font-weight:bold;">⚠ 警报！</td></tr>
+            <tr data-key="11"><td style="padding:6px; border-bottom:1px solid var(--border);">1</td><td style="padding:6px; border-bottom:1px solid var(--border);">1</td><td style="padding:6px; border-bottom:1px solid var(--border);">不警报</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= 第26课：倒车 ======= -->
+  <div class="panel" id="panel-parking">
+    <h2>倒车防撞警报系统</h2>
+    <p class="desc">超声波传感器检测车与障碍物的距离。距离越近，警报频率越高，提示驾驶员越紧迫。</p>
+
+    <div class="flow-mini">
+      📊 距离计算规则（基于教材第113页）：1.5-1m → 1声/2秒 ；1-0.6m → 1声/1秒 ；0.6-0.3m → 1声/0.5秒
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="parking-vis">
+          <svg class="parking-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+            <!-- 地面线 -->
+            <line x1="0" y1="160" x2="500" y2="160" stroke="#475569" stroke-width="2" stroke-dasharray="6 4"/>
+            <!-- 倒车方向箭头 -->
+            <g opacity="0.4">
+              <line x1="100" y1="180" x2="380" y2="180" stroke="#475569" stroke-width="1.5"/>
+              <polygon points="380,180 372,176 372,184" fill="#475569"/>
+              <text x="240" y="195" text-anchor="middle" fill="#475569" font-size="11">倒车方向</text>
+            </g>
+            <!-- 障碍物（墙） -->
+            <g id="obstacle">
+              <pattern id="obstaclePattern" patternUnits="userSpaceOnUse" width="12" height="12" patternTransform="rotate(45)">
+                <rect width="6" height="12" fill="#facc15"/>
+                <rect x="6" width="6" height="12" fill="#1e293b"/>
+              </pattern>
+              <rect x="450" y="80" width="20" height="80" fill="url(#obstaclePattern)" stroke="#92400e" stroke-width="2"/>
+              <text x="460" y="74" text-anchor="middle" font-size="11" fill="#92400e" font-weight="700">障碍</text>
+            </g>
+            <!-- 汽车（俯视，倒车方向 →） -->
+            <g id="carGroup" transform="translate(60, 100)">
+              <!-- 车身 -->
+              <rect x="0" y="0" width="100" height="60" rx="8" fill="url(#carGrad)" stroke="#7f1d1d" stroke-width="2"/>
+              <defs>
+                <linearGradient id="carGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ef4444"/>
+                  <stop offset="100%" stop-color="#b91c1c"/>
+                </linearGradient>
+              </defs>
+              <!-- 后挡风玻璃 -->
+              <rect x="68" y="8" width="24" height="44" rx="3" fill="#0f172a" opacity="0.5"/>
+              <!-- 前挡风玻璃 -->
+              <rect x="8" y="8" width="24" height="44" rx="3" fill="#0f172a" opacity="0.5"/>
+              <!-- 车轮 -->
+              <rect x="12" y="-4" width="14" height="8" rx="2" fill="#0f172a"/>
+              <rect x="74" y="-4" width="14" height="8" rx="2" fill="#0f172a"/>
+              <rect x="12" y="56" width="14" height="8" rx="2" fill="#0f172a"/>
+              <rect x="74" y="56" width="14" height="8" rx="2" fill="#0f172a"/>
+              <!-- 倒车指示灯 -->
+              <circle cx="95" cy="15" r="3" fill="#fef9c3"/>
+              <circle cx="95" cy="45" r="3" fill="#fef9c3"/>
+              <!-- 方向指示 -->
+              <text x="50" y="35" text-anchor="middle" fill="white" font-size="10" font-weight="700">车尾→</text>
+            </g>
+            <!-- 距离线 -->
+            <g id="distanceGroup">
+              <line id="distLine" x1="160" y1="130" x2="450" y2="130"
+                    stroke="#dc2626" stroke-width="2" stroke-dasharray="4 3"/>
+              <text id="distText" x="305" y="124" text-anchor="middle" fill="#b91c1c" font-size="13" font-weight="700" font-family="Courier New, monospace">
+                1.5 m
+              </text>
+            </g>
+          </svg>
+
+          <div class="frequency-bar" id="freqBar" style="max-width:280px; margin: 0 auto;">
+            <div class="bip"></div>
+            <div class="bip"></div>
+            <div class="bip"></div>
+            <div class="bip"></div>
+            <div class="bip"></div>
+            <div class="bip"></div>
+            <div class="bip"></div>
+            <div class="bip"></div>
+          </div>
+          <div id="beepStatus" style="font-size: 12px; color: #475569; text-align: center;">无警报</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="control-row">
+          <label>车与障碍物距离 <span class="value" id="distVal">1.5 m</span></label>
+          <input type="range" id="distance" min="0.1" max="3" value="1.5" step="0.1">
+        </div>
+
+        <div class="status-box" id="parkStatus">
+          安全距离，未触发警报
+        </div>
+
+        <div style="margin-top: 14px;">
+          <table style="width:100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background:#fdf2f8;">
+                <th style="padding:6px; border-bottom:1px solid var(--border);">距离区间</th>
+                <th style="padding:6px; border-bottom:1px solid var(--border);">警报频率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="zone-safe"><td style="padding:5px; border-bottom:1px solid var(--border);">&gt; 1.5 m</td><td style="padding:5px; border-bottom:1px solid var(--border);">无警报</td></tr>
+              <tr id="zone-1"><td style="padding:5px; border-bottom:1px solid var(--border);">1.5 - 1.0 m</td><td style="padding:5px; border-bottom:1px solid var(--border);">1声 / 2 秒</td></tr>
+              <tr id="zone-2"><td style="padding:5px; border-bottom:1px solid var(--border);">1.0 - 0.6 m</td><td style="padding:5px; border-bottom:1px solid var(--border);">1声 / 1 秒</td></tr>
+              <tr id="zone-3"><td style="padding:5px; border-bottom:1px solid var(--border);">0.6 - 0.3 m</td><td style="padding:5px; border-bottom:1px solid var(--border);">1声 / 0.5 秒</td></tr>
+              <tr id="zone-4"><td style="padding:5px; border-bottom:1px solid var(--border); color:#b91c1c;">&lt; 0.3 m</td><td style="padding:5px; border-bottom:1px solid var(--border); color:#b91c1c; font-weight:bold;">急促长鸣</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= 第27课：定速巡航 ======= -->
+  <div class="panel" id="panel-cruise">
+    <h2>定速巡航控制系统</h2>
+    <p class="desc">设定目标车速后，系统持续检测当前车速，如果<b>低于阈值</b>就加速，<b>高于阈值</b>就减速。这是一个典型的<b>闭环控制系统</b>。</p>
+
+    <div class="flow-mini">
+      📊 闭环结构：设定车速（阈值）→ 比较当前车速 → 调整 → 反馈检测 → 持续调整…
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="cruise-vis">
+          <div class="speedometer">
+            <svg viewBox="0 0 200 200" style="width:100%; height:100%;">
+              <!-- 仪表外环 -->
+              <circle cx="100" cy="100" r="92" fill="white" stroke="#1e293b" stroke-width="3"/>
+              <!-- 刻度 -->
+              <g id="ticks"></g>
+              <!-- 阈值标记弧 -->
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#16a34a" stroke-width="3" stroke-dasharray="4 6" id="targetArc" style="opacity:0.6;"/>
+              <!-- 指针 -->
+              <line x1="100" y1="100" x2="100" y2="30" stroke="#dc2626" stroke-width="3" stroke-linecap="round" id="needle" transform="rotate(-135 100 100)"/>
+              <circle cx="100" cy="100" r="8" fill="#1e293b"/>
+              <!-- 中心数字 -->
+              <text x="100" y="155" text-anchor="middle" font-size="22" font-weight="700" fill="#1e293b" id="speedText">0</text>
+              <text x="100" y="172" text-anchor="middle" font-size="11" fill="#6b7280">km/h</text>
+            </svg>
+          </div>
+          <div style="text-align: center; font-size: 13px; color: #1e3a8a;">
+            <b>目标车速：</b><span id="targetSpeedDisp">80</span> km/h
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="control-row">
+          <label>设定的车速（阈值） <span class="value" id="targetVal">80 km/h</span></label>
+          <input type="range" id="targetSpeed" min="40" max="120" value="80" step="5">
+        </div>
+
+        <div class="speed-info-grid">
+          <div class="info-card">
+            <div class="lbl">当前车速</div>
+            <div class="vl" id="curSpeed">0</div>
+          </div>
+          <div class="info-card">
+            <div class="lbl">差值</div>
+            <div class="vl" id="diff">-80</div>
+          </div>
+        </div>
+
+        <div class="status-box info" id="cruiseStatus" style="margin-top: 14px;">
+          系统未启动
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button class="btn success" id="startCruise" onclick="startCruise()">▶ 启动定速巡航</button>
+          <button class="btn danger" onclick="stopCruise()">■ 关闭</button>
+          <button class="btn secondary" onclick="addDisturb()">🌪 模拟上坡（速度下降）</button>
+        </div>
+
+        <div style="margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.7;">
+          <b>算法（持续循环执行）：</b><br>
+          1. 检测当前车速<br>
+          2. 与阈值比较<br>
+          3. if 当前 &lt; 阈值 then 加速<br>
+          4. if 当前 &gt; 阈值 then 减速
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 标签切换 ===
+document.querySelectorAll('.scenario-tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.scenario-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ============ 第24课：转向灯 ============
+const angleSlider = document.getElementById('angle');
+const angleThr = document.getElementById('angleThr');
+const wheelSvg = document.getElementById('wheelSvg');
+let signalState = { active: false, side: null, angle: 0 };
+
+function updateWheel() {
+  const a = +angleSlider.value;
+  signalState.angle = a;
+  document.getElementById('angleVal').textContent = a + '°';
+  document.getElementById('angleDisp').textContent = a + '°';
+  document.getElementById('thrVal').textContent = angleThr.value + '°';
+  wheelSvg.style.transform = `rotate(${a * 2}deg)`;
+
+  const thr = +angleThr.value;
+  const status = document.getElementById('signalStatus');
+
+  // 重置所有灯
+  ['sig-fl','sig-rl','sig-fr','sig-rr'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('on');
+    el.setAttribute('fill', '#475569');
+  });
+
+  if (signalState.active) {
+    // 开启转向灯后
+    const lightSig = signalState.side;
+    if (lightSig === 'left') {
+      ['sig-fl','sig-rl'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.add('on');
+        el.setAttribute('fill', '#facc15');
+      });
+    } else {
+      ['sig-fr','sig-rr'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.add('on');
+        el.setAttribute('fill', '#facc15');
+      });
+    }
+
+    if (Math.abs(a) > thr) {
+      status.className = 'status-box ok';
+      status.innerHTML = `角度 ${a}° > 阈值 ${thr}° → ${signalState.side === 'left' ? '左' : '右'}转向灯持续闪烁<br>提示：回正方向盘以触发自动熄灭`;
+      signalState.lastBig = true;
+    } else if (Math.abs(a) <= 5 && signalState.lastBig) {
+      // 之前曾大于阈值，现在回正了 → 自动熄灭
+      signalState.active = false;
+      signalState.lastBig = false;
+      ['sig-fl','sig-rl','sig-fr','sig-rr'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('on');
+        el.setAttribute('fill', '#475569');
+      });
+      status.className = 'status-box info';
+      status.innerHTML = `✓ 检测到方向盘回转，转向灯<b>自动熄灭</b>`;
+    } else {
+      status.className = 'status-box info';
+      status.innerHTML = `角度 ${a}° ≤ 阈值 ${thr}° → 灯仍亮（变换车道场景，需手动关闭）`;
+    }
+  }
+}
+angleSlider.addEventListener('input', updateWheel);
+angleThr.addEventListener('input', updateWheel);
+
+function signalAction(action) {
+  if (action === 'left') { signalState.active = true; signalState.side = 'left'; signalState.lastBig = false; }
+  if (action === 'right') { signalState.active = true; signalState.side = 'right'; signalState.lastBig = false; }
+  if (action === 'back') { angleSlider.value = 0; }
+  updateWheel();
+}
+updateWheel();
+
+// ============ 第25课：安全带 ============
+const beltState = { person: 0, belt: 0 };
+function toggleBelt(type) {
+  beltState[type] = 1 - beltState[type];
+  if (type === 'person') {
+    const btn = document.getElementById('personBtn');
+    btn.textContent = beltState.person ? '是（A=1）' : '否（A=0）';
+    btn.classList.toggle('success', beltState.person === 1);
+    document.getElementById('personShape').style.opacity = beltState.person ? '1' : '0';
+  } else {
+    const btn = document.getElementById('beltBtn');
+    btn.textContent = beltState.belt ? '是（B=1）' : '否（B=0）';
+    btn.classList.toggle('success', beltState.belt === 1);
+    document.getElementById('beltLine').style.opacity = beltState.belt ? '1' : '0';
+    document.getElementById('beltLine2').style.opacity = beltState.belt ? '1' : '0';
+  }
+  updateBelt();
+}
+function updateBelt() {
+  const A = beltState.person, B = beltState.belt;
+  const dash = document.getElementById('dashLight');
+  const status = document.getElementById('beltStatus');
+  // 只在有人但未系带时报警
+  if (A === 1 && B === 0) {
+    dash.classList.add('alert');
+    dash.textContent = '⚠ 请系好安全带！';
+    status.className = 'status-box warn';
+    status.innerHTML = `A=1（有人）∧ B=0（未系带）→ <b>触发警报</b>`;
+  } else {
+    dash.classList.remove('alert');
+    if (A === 1 && B === 1) {
+      dash.textContent = '✓ 安全行驶';
+      status.className = 'status-box ok';
+      status.innerHTML = `A=1（有人）∧ B=1（已系带）→ 不警报`;
+    } else if (A === 0) {
+      dash.textContent = '· 座椅无人';
+      status.className = 'status-box info';
+      status.innerHTML = `A=0（无人）→ 不警报`;
+    }
+  }
+  document.querySelectorAll('#beltTable tr').forEach(r => r.style.background = '');
+  const row = document.querySelector(`#beltTable tr[data-key="${A}${B}"]`);
+  if (row) row.style.background = '#fef3c7';
+}
+updateBelt();
+
+// ============ 第26课：倒车 ============
+const distSlider = document.getElementById('distance');
+let beepTimer = null;
+let beepIndex = 0;
+
+function updateDistance() {
+  const d = +distSlider.value;
+  document.getElementById('distVal').textContent = d.toFixed(1) + ' m';
+
+  // SVG 坐标系：车初始 x=60, 障碍 x=450 (墙左边)
+  // 距离 3m 对应车在最左 (x=60)，距离 0m 对应车贴近障碍
+  // 车长 100，所以车右边到障碍距离 = 450 - (carX + 100)
+  // 距离 d (m) 映射: carX = 450 - 100 - d * (350/3)
+  // 当 d=3 → carX = 60 (initial位置)
+  // 当 d=0 → carX = 350
+  const carX = 60 + (3 - d) * (290 / 3);
+  document.getElementById('carGroup').setAttribute('transform', `translate(${carX}, 100)`);
+
+  // 距离线：从车尾(carX+100)到障碍(450)
+  const distLine = document.getElementById('distLine');
+  distLine.setAttribute('x1', carX + 100);
+  distLine.setAttribute('x2', 450);
+
+  // 距离文字：放在距离线中点上方
+  const midX = (carX + 100 + 450) / 2;
+  const distText = document.getElementById('distText');
+  distText.setAttribute('x', midX);
+  distText.textContent = d.toFixed(1) + ' m';
+
+  // 高亮所在区域
+  ['zone-safe','zone-1','zone-2','zone-3','zone-4'].forEach(id => document.getElementById(id).style.background = '');
+  let interval = 0; let zoneId = 'zone-safe'; let zoneText = '安全距离，未触发警报';
+  let cls = 'info';
+  if (d > 1.5) { interval = 0; zoneId = 'zone-safe'; zoneText = '✓ 安全距离，未触发警报'; cls = 'ok'; }
+  else if (d > 1.0) { interval = 2000; zoneId = 'zone-1'; zoneText = '⚠ 1.5-1.0 m → 1声/2秒'; cls = 'info'; }
+  else if (d > 0.6) { interval = 1000; zoneId = 'zone-2'; zoneText = '⚠ 1.0-0.6 m → 1声/1秒'; cls = 'info'; }
+  else if (d > 0.3) { interval = 500; zoneId = 'zone-3'; zoneText = '⚠ 0.6-0.3 m → 1声/0.5秒'; cls = 'warn'; }
+  else { interval = 200; zoneId = 'zone-4'; zoneText = '🚨 < 0.3 m → 急促长鸣！'; cls = 'warn'; }
+
+  document.getElementById(zoneId).style.background = '#fef3c7';
+  const status = document.getElementById('parkStatus');
+  status.className = 'status-box ' + cls;
+  status.textContent = zoneText;
+  document.getElementById('beepStatus').textContent = interval > 0 ? `频率：${interval}ms` : '无警报';
+
+  // 距离线颜色
+  if (d <= 0.6) {
+    distLine.setAttribute('stroke', '#dc2626');
+    distText.setAttribute('fill', '#7f1d1d');
+  } else if (d <= 1.0) {
+    distLine.setAttribute('stroke', '#f97316');
+    distText.setAttribute('fill', '#9a3412');
+  } else {
+    distLine.setAttribute('stroke', '#475569');
+    distText.setAttribute('fill', '#475569');
+  }
+
+  // 重置警报
+  if (beepTimer) clearInterval(beepTimer);
+  document.querySelectorAll('#freqBar .bip').forEach(b => b.classList.remove('on'));
+  if (interval > 0) {
+    beepIndex = 0;
+    beepTimer = setInterval(() => {
+      const bips = document.querySelectorAll('#freqBar .bip');
+      bips.forEach(b => b.classList.remove('on'));
+      bips[beepIndex % bips.length].classList.add('on');
+      beepIndex++;
+    }, interval);
+  }
+}
+distSlider.addEventListener('input', updateDistance);
+updateDistance();
+
+// ============ 第27课：定速巡航 ============
+const targetSlider = document.getElementById('targetSpeed');
+let cruiseActive = false;
+let curSpd = 0;
+let cruiseTimer = null;
+
+function buildSpeedometer() {
+  const ticks = document.getElementById('ticks');
+  ticks.innerHTML = '';
+  for (let i = 0; i <= 12; i++) {
+    const angle = -135 + i * (270 / 12);
+    const speed = i * 20;
+    const x1 = 100 + Math.cos(angle * Math.PI / 180) * 88;
+    const y1 = 100 + Math.sin(angle * Math.PI / 180) * 88;
+    const x2 = 100 + Math.cos(angle * Math.PI / 180) * 80;
+    const y2 = 100 + Math.sin(angle * Math.PI / 180) * 80;
+    const tx = 100 + Math.cos(angle * Math.PI / 180) * 70;
+    const ty = 100 + Math.sin(angle * Math.PI / 180) * 70;
+    ticks.innerHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1e293b" stroke-width="2"/>
+      <text x="${tx}" y="${ty + 4}" text-anchor="middle" font-size="10" fill="#475569">${speed}</text>`;
+  }
+}
+buildSpeedometer();
+
+function speedToAngle(s) {
+  return -135 + (s / 240) * 270;
+}
+
+function updateCruise() {
+  const tgt = +targetSlider.value;
+  document.getElementById('targetVal').textContent = tgt + ' km/h';
+  document.getElementById('targetSpeedDisp').textContent = tgt;
+
+  // 仪表盘指针
+  document.getElementById('needle').setAttribute('transform', `rotate(${speedToAngle(curSpd)} 100 100)`);
+  document.getElementById('speedText').textContent = curSpd.toFixed(0);
+  document.getElementById('curSpeed').textContent = curSpd.toFixed(0);
+  document.getElementById('diff').textContent = (curSpd - tgt).toFixed(0);
+
+  // 阈值弧
+  const startA = speedToAngle(tgt - 3);
+  const endA = speedToAngle(tgt + 3);
+  // 简化处理：用 stroke-dasharray 显示一段弧
+  const arc = document.getElementById('targetArc');
+  // 让 dashoffset 和 dasharray 控制显示的弧段
+  const r = 80;
+  const circ = 2 * Math.PI * r;
+  const startRatio = (startA + 135) / 360;
+  const arcLength = ((endA - startA) / 360) * circ;
+  arc.setAttribute('stroke-dasharray', `${arcLength} ${circ}`);
+  arc.setAttribute('stroke-dashoffset', `${-circ * startRatio + circ * 0.125}`);
+  arc.setAttribute('transform', 'rotate(-90 100 100)');
+
+  const status = document.getElementById('cruiseStatus');
+  if (!cruiseActive) {
+    status.className = 'status-box info';
+    status.textContent = '系统未启动 · 请点击启动按钮';
+    return;
+  }
+  if (curSpd < tgt - 1) {
+    status.className = 'status-box info';
+    status.innerHTML = `当前 ${curSpd.toFixed(0)} < 阈值 ${tgt} → <b>系统加速</b>`;
+  } else if (curSpd > tgt + 1) {
+    status.className = 'status-box info';
+    status.innerHTML = `当前 ${curSpd.toFixed(0)} > 阈值 ${tgt} → <b>系统减速</b>`;
+  } else {
+    status.className = 'status-box ok';
+    status.innerHTML = `✓ 车速稳定保持在 ${tgt} km/h（闭环控制起作用）`;
+  }
+}
+
+function startCruise() {
+  if (cruiseActive) return;
+  cruiseActive = true;
+  if (cruiseTimer) clearInterval(cruiseTimer);
+  cruiseTimer = setInterval(() => {
+    const tgt = +targetSlider.value;
+    if (curSpd < tgt - 0.5) curSpd += Math.min(2, tgt - curSpd);
+    else if (curSpd > tgt + 0.5) curSpd -= Math.min(2, curSpd - tgt);
+    updateCruise();
+  }, 200);
+}
+function stopCruise() {
+  cruiseActive = false;
+  if (cruiseTimer) { clearInterval(cruiseTimer); cruiseTimer = null; }
+  updateCruise();
+}
+function addDisturb() {
+  curSpd = Math.max(0, curSpd - 15);
+  updateCruise();
+}
+targetSlider.addEventListener('input', updateCruise);
+updateCruise();
+</script>
+</body>
+</html>

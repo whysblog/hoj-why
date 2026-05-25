@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第15课 · 面容钥匙显智能 — 人脸识别开锁原理</title>
+<style>
+  :root {
+    --bg: #f0fdf4;
+    --bg-2: #dcfce7;
+    --ink: #052e1a;
+    --ink-soft: #4a6c5e;
+    --primary: #047857;
+    --primary-2: #10b981;
+    --warn: #f59e0b;
+    --red: #dc2626;
+    --blue: #2563eb;
+    --line: #c8d8ce;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(4,120,87,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--warn); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 识别流程 */
+  .pipeline-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .pipeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; align-items: center; margin: 14px 0; }
+  .pl-step {
+    background: var(--bg-2); padding: 14px 10px; border-radius: 8px;
+    text-align: center; border: 2px solid transparent; transition: all .3s;
+  }
+  .pl-step.active { border-color: var(--warn); background: #fef3c7; transform: scale(1.03); }
+  .pl-step.done { background: var(--primary-2); color: #fff; border-color: var(--primary); }
+  .pl-step .ic { font-size: 26px; display: block; margin-bottom: 4px; }
+  .pl-step h4 { font-size: 12px; margin-bottom: 2px; }
+  .pl-step p { font-size: 10px; line-height: 1.5; opacity: 0.85; }
+
+  /* Simulator */
+  .face-sim {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  .camera-view {
+    background: #0f1c14; border-radius: 12px; padding: 16px;
+    position: relative; min-height: 360px; overflow: hidden;
+  }
+  .camera-view svg { width: 100%; height: 360px; display: block; }
+  .scan-line {
+    position: absolute; left: 16px; right: 16px; top: 16px;
+    height: 3px; background: linear-gradient(90deg, transparent, #10b981, transparent);
+    box-shadow: 0 0 10px #10b981;
+    transition: top .1s linear; pointer-events: none;
+  }
+  .controls-side {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .face-card {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+    display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .15s;
+    border: 2px solid transparent;
+  }
+  .face-card:hover { transform: translateX(4px); border-color: var(--primary); }
+  .face-card.processing { border-color: var(--warn); }
+  .face-card .face-ic { font-size: 36px; }
+  .face-card .info h4 { font-size: 14px; margin-bottom: 2px; }
+  .face-card .info p { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+  .face-card.unknown { background: rgba(220,38,38,.05); }
+
+  .result-box {
+    margin-top: 12px; padding: 14px; border-radius: 8px; min-height: 60px;
+    text-align: center; transition: all .3s;
+    background: var(--bg-2);
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .result-box.success { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; }
+  .result-box.fail    { background: linear-gradient(135deg, var(--red), #f87171); color: #fff; }
+  .result-box strong { display: block; font-size: 16px; margin-bottom: 4px; }
+
+  /* Concepts */
+  .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .concept {
+    background: var(--card); padding: 22px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .concept h3 { font-size: 16px; margin-bottom: 10px; color: var(--primary); }
+  .concept p { font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+  .concept .keypoints {
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line);
+  }
+  .concept .keypoints li { font-size: 12px; margin: 4px 0; line-height: 1.6; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .pipeline { grid-template-columns: 1fr 1fr; }
+    .face-sim { grid-template-columns: 1fr; }
+    .concept-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 15 课</span>面容钥匙显智能</h1>
+  <p class="lead">人脸识别已经成为最便捷的开锁方式。本课带你拆解人脸识别开锁的五步流程：<strong>采集 → 检测 → 特征 → 比对 → 决策</strong>，并通过模拟器体验整个识别过程。</p>
+</header>
+
+<main>
+
+  <!-- 流程 -->
+  <section class="section">
+    <div class="section-title">一、人脸识别开锁的 5 步流程</div>
+    <div class="pipeline-card">
+      <div class="pipeline">
+        <div class="pl-step" id="pl1"><span class="ic">📷</span><h4>① 图像采集</h4><p>摄像头拍摄人脸</p></div>
+        <div class="pl-step" id="pl2"><span class="ic">🔍</span><h4>② 人脸检测</h4><p>找到人脸位置</p></div>
+        <div class="pl-step" id="pl3"><span class="ic">🧮</span><h4>③ 特征提取</h4><p>转为特征向量</p></div>
+        <div class="pl-step" id="pl4"><span class="ic">⚖</span><h4>④ 特征比对</h4><p>与数据库匹配</p></div>
+        <div class="pl-step" id="pl5"><span class="ic">🚪</span><h4>⑤ 决策开锁</h4><p>相似度阈值判断</p></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:12px;">
+        <strong>关键概念 — 相似度阈值：</strong>系统会计算输入人脸特征与数据库每一个已注册脸的<strong>相似度（0~1 之间的浮点数）</strong>。如果最高相似度超过预设的阈值（如 0.85），就认为"匹配成功"，开门；否则拒绝。
+      </p>
+    </div>
+  </section>
+
+  <!-- 模拟器 -->
+  <section class="section">
+    <div class="section-title">二、人脸识别模拟器</div>
+    <div class="face-sim">
+      <div class="camera-view">
+        <svg viewBox="0 0 400 360" xmlns="http://www.w3.org/2000/svg">
+          <!-- 灰色背景表示摄像头视野 -->
+          <rect x="0" y="0" width="400" height="360" fill="#1f2937"/>
+          <!-- 人脸图标（默认） -->
+          <g id="faceArea" transform="translate(140 80)">
+            <circle id="faceCircle" cx="60" cy="80" r="70" fill="#a78bfa" opacity="0.9"/>
+            <!-- 五官 -->
+            <circle cx="40" cy="65" r="5" fill="#0f1c14"/>
+            <circle cx="80" cy="65" r="5" fill="#0f1c14"/>
+            <ellipse cx="60" cy="95" rx="6" ry="4" fill="#0f1c14"/>
+            <path d="M 45 110 Q 60 120 75 110" stroke="#0f1c14" stroke-width="2" fill="none"/>
+            <!-- 检测框 -->
+            <rect id="detectBox" x="-10" y="0" width="140" height="160" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" opacity="0"/>
+            <!-- 特征点 -->
+            <g id="featurePoints" opacity="0">
+              <circle cx="40" cy="65" r="2" fill="#fbbf24"/>
+              <circle cx="80" cy="65" r="2" fill="#fbbf24"/>
+              <circle cx="60" cy="95" r="2" fill="#fbbf24"/>
+              <circle cx="40" cy="115" r="2" fill="#fbbf24"/>
+              <circle cx="80" cy="115" r="2" fill="#fbbf24"/>
+              <circle cx="25" cy="80" r="2" fill="#fbbf24"/>
+              <circle cx="95" cy="80" r="2" fill="#fbbf24"/>
+              <circle cx="60" cy="50" r="2" fill="#fbbf24"/>
+              <line x1="40" y1="65" x2="80" y2="65" stroke="#fbbf24" stroke-width="0.7"/>
+              <line x1="40" y1="65" x2="60" y2="95" stroke="#fbbf24" stroke-width="0.7"/>
+              <line x1="80" y1="65" x2="60" y2="95" stroke="#fbbf24" stroke-width="0.7"/>
+              <line x1="40" y1="65" x2="60" y2="50" stroke="#fbbf24" stroke-width="0.7"/>
+              <line x1="80" y1="65" x2="60" y2="50" stroke="#fbbf24" stroke-width="0.7"/>
+              <line x1="25" y1="80" x2="95" y2="80" stroke="#fbbf24" stroke-width="0.7"/>
+            </g>
+          </g>
+          <!-- 顶部状态条 -->
+          <rect x="0" y="0" width="400" height="22" fill="#0f172a"/>
+          <text id="cameraStatus" x="200" y="14" font-size="11" fill="#84d2a3" text-anchor="middle" font-family="monospace">摄像头：待机中</text>
+          <!-- 底部相似度 -->
+          <rect x="0" y="338" width="400" height="22" fill="#0f172a"/>
+          <text id="cameraSimRatio" x="200" y="352" font-size="11" fill="#84d2a3" text-anchor="middle" font-family="monospace">相似度：—</text>
+        </svg>
+        <div class="scan-line" id="scanLine" style="opacity:0;"></div>
+      </div>
+
+      <div class="controls-side">
+        <p style="font-size:12px;color:var(--ink-soft);line-height:1.7;">点击下方任一人脸照片，模拟"将这张脸对准摄像头"：</p>
+        <div class="face-card" id="face1" onclick="recognize(0)">
+          <div class="face-ic">🧑</div>
+          <div class="info">
+            <h4>小智 (已注册)</h4>
+            <p>家庭成员 · 数据库相似度可达 0.96</p>
+          </div>
+        </div>
+        <div class="face-card" id="face2" onclick="recognize(1)">
+          <div class="face-ic">👩</div>
+          <div class="info">
+            <h4>妈妈 (已注册)</h4>
+            <p>家庭成员 · 数据库相似度可达 0.94</p>
+          </div>
+        </div>
+        <div class="face-card" id="face3" onclick="recognize(2)">
+          <div class="face-ic">👨</div>
+          <div class="info">
+            <h4>爸爸 (已注册)</h4>
+            <p>家庭成员 · 数据库相似度可达 0.95</p>
+          </div>
+        </div>
+        <div class="face-card unknown" id="face4" onclick="recognize(3)">
+          <div class="face-ic">🧓</div>
+          <div class="info">
+            <h4>陌生人 (未注册)</h4>
+            <p>不在数据库 · 最高相似度仅 0.42</p>
+          </div>
+        </div>
+        <div class="face-card unknown" id="face5" onclick="recognize(4)">
+          <div class="face-ic">📷</div>
+          <div class="info">
+            <h4>小智的照片 (活体检测)</h4>
+            <p>2D 照片 · 活体检测会拒绝</p>
+          </div>
+        </div>
+        <div class="result-box" id="result">点击上方任一人脸，开始识别...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 关键技术 -->
+  <section class="section">
+    <div class="section-title">三、关键技术与挑战</div>
+    <div class="concept-grid">
+      <div class="concept">
+        <h3>🧠 特征向量（Embedding）</h3>
+        <p>训练好的深度学习模型会把每张人脸转换为一个固定长度的<strong>数字向量</strong>（如 128 或 512 维）。同一个人不同角度/光照下的脸，向量距离很近；不同人则距离远。</p>
+        <ul class="keypoints">
+          <li>每张人脸 → 一串数字（"指纹"）</li>
+          <li>相似度 = 1 - 向量间距离</li>
+          <li>注册：保存向量到数据库</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <h3>👁 活体检测</h3>
+        <p>仅凭 2D 摄像头容易被照片或视频欺骗。为防止这种攻击，会增加<strong>活体检测</strong>：</p>
+        <ul class="keypoints">
+          <li><strong>红外活体：</strong>红外摄像头看体温/3D 深度</li>
+          <li><strong>动作活体：</strong>要求用户眨眼、转头</li>
+          <li><strong>纹理活体：</strong>区分屏幕反光和皮肤</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <h3>⚖ 相似度 vs 阈值</h3>
+        <p>阈值设置是<strong>安全与便利的平衡</strong>。阈值越高越安全但可能识别失败；越低越好用但可能误识别。</p>
+        <ul class="keypoints">
+          <li>家用门锁：阈值约 0.85</li>
+          <li>银行支付：阈值约 0.95+</li>
+          <li>评估指标：FAR（误识率）和 FRR（拒识率）</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <h3>🔒 隐私保护</h3>
+        <p>人脸数据涉及强隐私，必须妥善保护：</p>
+        <ul class="keypoints">
+          <li>原始图像<strong>不上传云端</strong>，本地特征化</li>
+          <li>特征向量<strong>加密存储</strong>，不可还原</li>
+          <li>注销账户时<strong>彻底删除</strong>所有特征</li>
+          <li>遵守《个人信息保护法》</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 15 课配套交互工具</footer>
+
+<script>
+var faces = [
+  { color: '#a78bfa', name: '小智', sim: 0.96, registered: true, isPhoto: false },
+  { color: '#f472b6', name: '妈妈', sim: 0.94, registered: true, isPhoto: false },
+  { color: '#fbbf24', name: '爸爸', sim: 0.95, registered: true, isPhoto: false },
+  { color: '#94a3b8', name: '陌生人', sim: 0.42, registered: false, isPhoto: false },
+  { color: '#a78bfa', name: '小智的照片', sim: 0.92, registered: true, isPhoto: true }
+];
+var THRESHOLD = 0.85;
+var busy = false;
+var stepTimer = null;
+var scanTimer = null;
+
+function setStep(n, state) {
+  for (var i = 1; i <= 5; i++) {
+    var el = document.getElementById('pl' + i);
+    if (i < n) el.className = 'pl-step done';
+    else if (i === n) el.className = 'pl-step ' + state;
+    else el.className = 'pl-step';
+  }
+}
+
+function recognize(idx) {
+  if (busy) return;
+  busy = true;
+  var f = faces[idx];
+  document.getElementById('faceCircle').setAttribute('fill', f.color);
+  // Clear all card highlights
+  for (var i = 1; i <= 5; i++) document.getElementById('face'+i).className = document.getElementById('face'+i).className.replace(' processing', '');
+  document.getElementById('face' + (idx+1)).className += ' processing';
+  document.getElementById('result').className = 'result-box';
+  document.getElementById('result').innerHTML = '⏳ 识别中...';
+  document.getElementById('detectBox').setAttribute('opacity', 0);
+  document.getElementById('featurePoints').setAttribute('opacity', 0);
+
+  // Step 1: 采集
+  setStep(1, 'active');
+  document.getElementById('cameraStatus').textContent = '摄像头：图像采集中...';
+  document.getElementById('cameraSimRatio').textContent = '相似度：—';
+  // Scan line animation
+  var sl = document.getElementById('scanLine');
+  sl.style.top = '20px';
+  sl.style.opacity = '1';
+  var pos = 20;
+  scanTimer = setInterval(function () {
+    pos += 6;
+    if (pos > 340) pos = 20;
+    sl.style.top = pos + 'px';
+  }, 50);
+
+  stepTimer = setTimeout(function () {
+    // Step 2: 检测
+    setStep(2, 'active');
+    document.getElementById('cameraStatus').textContent = '检测人脸位置...';
+    document.getElementById('detectBox').setAttribute('opacity', 1);
+
+    stepTimer = setTimeout(function () {
+      // Step 3: 特征提取
+      setStep(3, 'active');
+      document.getElementById('cameraStatus').textContent = '提取特征向量...';
+      document.getElementById('featurePoints').setAttribute('opacity', 1);
+
+      stepTimer = setTimeout(function () {
+        // Step 4: 比对
+        setStep(4, 'active');
+        document.getElementById('cameraStatus').textContent = '与数据库比对...';
+        // Show similarity
+        document.getElementById('cameraSimRatio').textContent = '相似度：' + f.sim.toFixed(2) + ' / 阈值：' + THRESHOLD;
+
+        stepTimer = setTimeout(function () {
+          // Step 5: 决策
+          setStep(5, 'active');
+          // 活体检测先发力
+          if (f.isPhoto) {
+            // 活体检测拒绝
+            sl.style.opacity = '0';
+            clearInterval(scanTimer); scanTimer = null;
+            document.getElementById('cameraStatus').textContent = '⚠ 活体检测：失败';
+            document.getElementById('result').className = 'result-box fail';
+            document.getElementById('result').innerHTML = '<strong>✗ 拒绝开锁</strong>活体检测识别为照片，存在欺骗风险';
+            setStep(5, 'done');  // 走完了流程，但结果是拒绝
+            // mark last step in red somehow
+            document.getElementById('pl5').style.background = '#dc2626';
+            document.getElementById('pl5').style.borderColor = '#dc2626';
+            done();
+            return;
+          }
+
+          stepTimer = setTimeout(function () {
+            sl.style.opacity = '0';
+            clearInterval(scanTimer); scanTimer = null;
+            if (f.sim >= THRESHOLD && f.registered) {
+              setStep(5, 'done');
+              document.getElementById('cameraStatus').textContent = '✓ 识别通过';
+              document.getElementById('result').className = 'result-box success';
+              document.getElementById('result').innerHTML = '<strong>✓ 欢迎 ' + f.name + ' 回家！</strong>相似度 ' + f.sim.toFixed(2) + ' ≥ ' + THRESHOLD + '，自动开锁。';
+            } else {
+              document.getElementById('cameraStatus').textContent = '✗ 识别失败';
+              document.getElementById('result').className = 'result-box fail';
+              document.getElementById('result').innerHTML = '<strong>✗ 拒绝开锁</strong>' + 
+                (!f.registered ? '该人脸不在数据库（未注册）' : '相似度 ' + f.sim.toFixed(2) + ' &lt; ' + THRESHOLD);
+              document.getElementById('pl5').style.background = '#dc2626';
+              document.getElementById('pl5').style.borderColor = '#dc2626';
+              document.getElementById('pl5').style.color = '#fff';
+            }
+            done();
+          }, 900);
+        }, 900);
+      }, 900);
+    }, 900);
+  }, 900);
+}
+
+function done() {
+  setTimeout(function () {
+    // Reset for next try
+    for (var i = 1; i <= 5; i++) {
+      var el = document.getElementById('pl' + i);
+      el.style.background = '';
+      el.style.borderColor = '';
+      el.style.color = '';
+    }
+    for (var j = 1; j <= 5; j++) document.getElementById('face'+j).className = document.getElementById('face'+j).className.replace(' processing', '');
+    busy = false;
+  }, 100);
+}
+
+window.recognize = recognize;
+</script>
+</body>
+</html>

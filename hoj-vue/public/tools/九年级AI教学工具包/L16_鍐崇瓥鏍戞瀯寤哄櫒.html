@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第16课 · 决策树构建与推理器</title>
+<style>
+  :root {
+    --bg: #0f1729;
+    --panel: #1a2440;
+    --panel-2: #243054;
+    --ink: #e6ecf5;
+    --muted: #8b9bbf;
+    --accent: #fbbf24;
+    --accent-2: #60a5fa;
+    --good: #34d399;
+    --warn: #f87171;
+    --line: #2d3a5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f1729 0%, #141e3a 100%);
+    color: var(--ink); min-height: 100vh; line-height: 1.6;
+  }
+  header {
+    padding: 24px 36px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .title { display: flex; align-items: baseline; gap: 14px; }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .tag {
+    font-size: 12px; padding: 3px 10px;
+    background: var(--accent); color: #0f1729;
+    border-radius: 999px; font-weight: 600;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main {
+    padding: 24px 36px 40px; max-width: 1500px; margin: 0 auto;
+    display: grid; grid-template-columns: 1.1fr 1.5fr; gap: 20px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px;
+  }
+  .panel h2 {
+    margin: 0 0 14px; font-size: 15px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+  
+  button {
+    background: var(--accent); color: #0f1729; border: none; border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(251,191,36,0.3); }
+  button.secondary {
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+  }
+  button.secondary:hover { background: var(--panel-2); box-shadow: none; }
+
+  /* 数据表 */
+  .data-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .data-table th, .data-table td {
+    padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: center;
+  }
+  .data-table th {
+    background: var(--panel-2); color: var(--accent);
+    font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .data-table td.adopted-yes { color: var(--good); font-weight: 600; }
+  .data-table td.adopted-no { color: var(--warn); font-weight: 600; }
+  
+  .data-wrap {
+    background: #0f1729; border: 1px solid var(--line);
+    border-radius: 8px; overflow: hidden;
+    max-height: 320px; overflow-y: auto;
+  }
+
+  /* 特征区分度 */
+  .feat-bar {
+    display: grid; grid-template-columns: 70px 1fr 60px;
+    gap: 10px; align-items: center; margin: 6px 0; font-size: 13px;
+  }
+  .feat-bar .name { font-weight: 600; }
+  .feat-bar .bar-bg {
+    height: 22px; background: var(--panel-2); border-radius: 4px;
+    overflow: hidden; position: relative;
+  }
+  .feat-bar .bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    transition: width 0.4s;
+  }
+  .feat-bar .pct {
+    text-align: right; font-family: monospace; color: var(--muted);
+  }
+  .feat-bar.best .name { color: var(--good); }
+  .feat-bar.best .bar-fill {
+    background: linear-gradient(90deg, var(--good), var(--accent));
+  }
+
+  /* 决策树SVG */
+  .tree-wrap {
+    background: #0f1729; border: 1px solid var(--line);
+    border-radius: 8px; overflow: auto;
+    padding: 10px;
+    min-height: 400px;
+  }
+  .tree-wrap svg { display: block; min-width: 100%; }
+
+  /* 推理输入 */
+  .infer-form {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px 14px; margin: 12px 0;
+  }
+  .infer-form label {
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 12px; color: var(--muted);
+  }
+  .infer-form select {
+    background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px; font-size: 13px; font-family: inherit;
+  }
+
+  .infer-result {
+    background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(96,165,250,0.08));
+    border: 1px solid var(--accent);
+    border-radius: 10px; padding: 16px;
+    margin-top: 14px;
+  }
+  .infer-result .verdict {
+    font-size: 22px; font-weight: 700; text-align: center;
+    margin-bottom: 8px;
+  }
+  .infer-result .verdict.yes { color: var(--good); }
+  .infer-result .verdict.no { color: var(--warn); }
+  .infer-result .path {
+    font-size: 12.5px; color: var(--muted); text-align: center;
+    line-height: 1.8;
+  }
+  .infer-result .path .step {
+    background: var(--panel-2); padding: 2px 8px;
+    border-radius: 4px; margin: 0 2px; color: var(--ink);
+  }
+
+  .help {
+    color: var(--muted); font-size: 12.5px;
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent-2);
+    padding: 10px 14px; border-radius: 6px;
+    margin: 12px 0;
+  }
+
+  /* 树节点 */
+  .node-rect.feature {
+    fill: var(--panel-2); stroke: var(--accent); stroke-width: 2;
+  }
+  .node-rect.leaf-yes {
+    fill: rgba(52,211,153,0.2); stroke: var(--good); stroke-width: 2;
+  }
+  .node-rect.leaf-no {
+    fill: rgba(248,113,113,0.2); stroke: var(--warn); stroke-width: 2;
+  }
+  .node-rect.path-active {
+    stroke-width: 4; filter: drop-shadow(0 0 8px var(--accent));
+  }
+
+  @media (max-width: 880px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>决策树构建与推理器</h1>
+    <span class="tag">第 16 课</span>
+  </div>
+  <div class="subtitle">基于猫狗领养数据 · 自动选择最优特征构建决策树 · 用决策树预测新样本</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>① 训练数据(教材表 16.1)</h2>
+    <div class="data-wrap">
+      <table class="data-table" id="dataTable"></table>
+    </div>
+
+    <h2 style="margin-top: 22px;">② 各特征的区分度</h2>
+    <div style="font-size: 12.5px; color: var(--muted); margin-bottom: 8px;">
+      使用基尼不纯度衡量。区分度 = 1 - 加权基尼,数值越大说明该特征划分后越"纯"。
+    </div>
+    <div id="featBars"></div>
+    <div class="help">
+      💡 <b>区分度计算原理:</b> 假设按某特征划分,若划分后每个组内全是"是"或全是"否",则区分度=100%(最纯);若每个组都是 50/50 混杂,则区分度低。算法每次都选区分度最高的特征作为决策节点。
+    </div>
+
+    <h2 style="margin-top: 22px;">③ 用决策树推理(教材活动 3)</h2>
+    <div style="font-size:12.5px; color: var(--muted); margin-bottom: 4px;">
+      输入猫/狗特征,看决策树会预测它是否被领养:
+    </div>
+    <div class="infer-form" id="inferForm"></div>
+    <button onclick="doInfer()" style="width:100%;">🔍 推理预测</button>
+    <div id="inferResult"></div>
+  </section>
+
+  <section class="panel">
+    <h2>自动构建的决策树</h2>
+    <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">
+      算法过程:① 计算每个特征的区分度;② 选最大区分度作为节点;③ 按特征值分组;④ 在每个分组内重复 ①-③。
+    </div>
+    <div class="tree-wrap" id="treeWrap"></div>
+    <div style="display:flex; gap: 14px; font-size:12px; color:var(--muted); margin-top: 8px; justify-content:center;">
+      <span><span style="display:inline-block; width:14px; height:14px; background:var(--panel-2); border:2px solid var(--accent); vertical-align:middle; margin-right:4px;"></span>判断节点</span>
+      <span><span style="display:inline-block; width:14px; height:14px; background:rgba(52,211,153,0.2); border:2px solid var(--good); vertical-align:middle; margin-right:4px;"></span>领养=是</span>
+      <span><span style="display:inline-block; width:14px; height:14px; background:rgba(248,113,113,0.2); border:2px solid var(--warn); vertical-align:middle; margin-right:4px;"></span>领养=否</span>
+    </div>
+  </section>
+</main>
+
+<script>
+  // 教材表 16.1
+  const DATA = [
+    {编号:1, 品种:'狗', 年龄:'幼年', 体型:'大', 毛发:'长', 性格:'好', 领养:'是'},
+    {编号:2, 品种:'猫', 年龄:'成年', 体型:'小', 毛发:'短', 性格:'一般', 领养:'否'},
+    {编号:3, 品种:'猫', 年龄:'幼年', 体型:'中', 毛发:'长', 性格:'好', 领养:'是'},
+    {编号:4, 品种:'狗', 年龄:'成年', 体型:'大', 毛发:'长', 性格:'差', 领养:'否'},
+    {编号:5, 品种:'狗', 年龄:'幼年', 体型:'中', 毛发:'中', 性格:'好', 领养:'是'},
+    {编号:6, 品种:'猫', 年龄:'成年', 体型:'中', 毛发:'长', 性格:'好', 领养:'否'},
+    {编号:7, 品种:'狗', 年龄:'幼年', 体型:'小', 毛发:'短', 性格:'一般', 领养:'是'},
+    {编号:8, 品种:'狗', 年龄:'成年', 体型:'大', 毛发:'短', 性格:'好', 领养:'是'},
+  ];
+  const FEATURES = ['品种', '年龄', '体型', '毛发', '性格'];
+  const TARGET = '领养';
+
+  // 计算基尼不纯度
+  function gini(rows) {
+    if (rows.length === 0) return 0;
+    const counts = {};
+    for (const r of rows) counts[r[TARGET]] = (counts[r[TARGET]] || 0) + 1;
+    let g = 1;
+    for (const c in counts) {
+      const p = counts[c] / rows.length;
+      g -= p * p;
+    }
+    return g;
+  }
+
+  // 计算用某特征划分后的"加权基尼" = 区分度的反面
+  function weightedGini(rows, feat) {
+    const groups = {};
+    for (const r of rows) {
+      const v = r[feat];
+      if (!groups[v]) groups[v] = [];
+      groups[v].push(r);
+    }
+    let wg = 0;
+    for (const v in groups) {
+      wg += groups[v].length / rows.length * gini(groups[v]);
+    }
+    return wg;
+  }
+
+  // 区分度 = 父基尼 - 加权基尼 (信息增益类似概念)
+  function discrimination(rows, feat) {
+    return gini(rows) - weightedGini(rows, feat);
+  }
+
+  // 构建决策树
+  function buildTree(rows, availableFeats, depth = 0) {
+    // 基本情况
+    if (rows.length === 0) return {leaf: true, label: '?', count: 0};
+    
+    const counts = {};
+    for (const r of rows) counts[r[TARGET]] = (counts[r[TARGET]] || 0) + 1;
+    const labels = Object.keys(counts);
+    
+    // 全部相同
+    if (labels.length === 1) {
+      return {leaf: true, label: labels[0], count: rows.length};
+    }
+    
+    // 没有特征可用
+    if (availableFeats.length === 0 || depth > 5) {
+      const major = labels.sort((a,b) => counts[b] - counts[a])[0];
+      return {leaf: true, label: major, count: rows.length, mixed: true};
+    }
+    
+    // 选最佳特征
+    let bestFeat = null, bestGain = -1;
+    for (const f of availableFeats) {
+      const g = discrimination(rows, f);
+      if (g > bestGain) { bestGain = g; bestFeat = f; }
+    }
+    
+    // 如果增益为0,做叶节点
+    if (bestGain <= 0) {
+      const major = labels.sort((a,b) => counts[b] - counts[a])[0];
+      return {leaf: true, label: major, count: rows.length, mixed: true};
+    }
+    
+    // 划分
+    const groups = {};
+    for (const r of rows) {
+      const v = r[bestFeat];
+      if (!groups[v]) groups[v] = [];
+      groups[v].push(r);
+    }
+    
+    const node = {
+      leaf: false,
+      feat: bestFeat,
+      gain: bestGain,
+      total: rows.length,
+      counts,
+      branches: {}
+    };
+    
+    const newFeats = availableFeats.filter(f => f !== bestFeat);
+    for (const v in groups) {
+      node.branches[v] = buildTree(groups[v], newFeats, depth + 1);
+    }
+    
+    return node;
+  }
+
+  let TREE = buildTree(DATA, FEATURES);
+
+  // 渲染数据表
+  function renderTable() {
+    const t = document.getElementById('dataTable');
+    let html = '<thead><tr><th>编号</th>';
+    FEATURES.forEach(f => html += `<th>${f}</th>`);
+    html += '<th>领养</th></tr></thead><tbody>';
+    DATA.forEach(r => {
+      html += '<tr>';
+      html += `<td>${r.编号}</td>`;
+      FEATURES.forEach(f => html += `<td>${r[f]}</td>`);
+      const cls = r.领养 === '是' ? 'adopted-yes' : 'adopted-no';
+      html += `<td class="${cls}">${r.领养}</td>`;
+      html += '</tr>';
+    });
+    html += '</tbody>';
+    t.innerHTML = html;
+  }
+
+  // 渲染区分度条
+  function renderFeatBars() {
+    const wrap = document.getElementById('featBars');
+    const gains = FEATURES.map(f => ({f, g: discrimination(DATA, f)}));
+    const maxG = Math.max(...gains.map(x => x.g));
+    gains.sort((a,b) => b.g - a.g);
+    
+    wrap.innerHTML = gains.map((x, i) => {
+      const pct = maxG > 0 ? (x.g / maxG) * 100 : 0;
+      const isBest = i === 0;
+      return `<div class="feat-bar ${isBest ? 'best' : ''}">
+        <span class="name">${x.f}${isBest ? ' ⭐' : ''}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="pct">${x.g.toFixed(3)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // 渲染决策树
+  function renderTree(highlightPath) {
+    const W = 1100, H = 540;
+    
+    // 计算所有节点位置
+    function layout(node, depth = 0, leftBound = 0, rightBound = 1) {
+      const x = (leftBound + rightBound) / 2;
+      const y = depth;
+      node._x = x; node._y = y;
+      if (node.leaf) {
+        node._width = 1;
+        return 1;
+      }
+      const branches = Object.entries(node.branches);
+      const childWidths = branches.map(([_, child]) => 
+        layout(child, depth + 1, 0, 1)
+      );
+      let totalW = 0;
+      for (const w of childWidths) totalW += w;
+      // 重新分配水平位置
+      let cur = leftBound;
+      branches.forEach(([key, child], i) => {
+        const w = childWidths[i] / totalW * (rightBound - leftBound);
+        layout(child, depth + 1, cur, cur + w);
+        cur += w;
+      });
+      node._width = totalW;
+      node._x = (leftBound + rightBound) / 2;
+      return totalW;
+    }
+    
+    layout(TREE, 0, 0.05, 0.95);
+    
+    // 计算最大深度
+    function maxDepth(node) {
+      if (node.leaf) return node._y;
+      let m = node._y;
+      for (const k in node.branches) m = Math.max(m, maxDepth(node.branches[k]));
+      return m;
+    }
+    const maxD = maxDepth(TREE);
+    const yStep = (H - 80) / (maxD + 1);
+    
+    // 收集节点和边
+    const nodes = [], edges = [];
+    function collect(node, parent = null, edgeLabel = null) {
+      const px = node._x * W;
+      const py = 40 + node._y * yStep;
+      nodes.push({node, x: px, y: py});
+      if (parent) {
+        edges.push({from: parent, to: {x: px, y: py}, label: edgeLabel});
+      }
+      if (!node.leaf) {
+        for (const k in node.branches) {
+          collect(node.branches[k], {x: px, y: py}, k);
+        }
+      }
+    }
+    collect(TREE);
+    
+    // 渲染
+    let svgH = (maxD + 1) * yStep + 80;
+    let html = `<svg viewBox="0 0 ${W} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="height: ${svgH}px;">`;
+    
+    // 边
+    edges.forEach(e => {
+      const midY = (e.from.y + e.to.y) / 2;
+      const path = `M ${e.from.x} ${e.from.y + 20} L ${e.from.x} ${midY} L ${e.to.x} ${midY} L ${e.to.x} ${e.to.y - 20}`;
+      const isPath = highlightPath && highlightPath.edges && highlightPath.edges.some(p => 
+        Math.abs(p.from.x - e.from.x) < 1 && Math.abs(p.from.y - e.from.y) < 1 &&
+        Math.abs(p.to.x - e.to.x) < 1 && Math.abs(p.to.y - e.to.y) < 1
+      );
+      html += `<path d="${path}" stroke="${isPath ? 'var(--accent)' : 'var(--line)'}" stroke-width="${isPath ? 3 : 1.5}" fill="none"/>`;
+      // 边标签
+      const lblX = (e.from.x + e.to.x) / 2;
+      const lblY = midY - 5;
+      html += `<rect x="${lblX - 18}" y="${lblY - 12}" width="36" height="18" fill="#0f1729" rx="4"/>`;
+      html += `<text x="${lblX}" y="${lblY}" fill="${isPath ? 'var(--accent)' : 'var(--muted)'}" font-size="12" text-anchor="middle">${e.label}</text>`;
+    });
+    
+    // 节点
+    nodes.forEach(({node, x, y}) => {
+      const isOnPath = highlightPath && highlightPath.nodes && highlightPath.nodes.includes(node);
+      let cls, label;
+      if (node.leaf) {
+        cls = node.label === '是' ? 'leaf-yes' : 'leaf-no';
+        label = `领养: ${node.label}`;
+      } else {
+        cls = 'feature';
+        label = node.feat + ' ?';
+      }
+      const w = 110, h = 40;
+      html += `<rect x="${x - w/2}" y="${y - h/2}" width="${w}" height="${h}" rx="8" class="node-rect ${cls} ${isOnPath ? 'path-active' : ''}"/>`;
+      html += `<text x="${x}" y="${y + 4}" fill="var(--ink)" font-size="14" font-weight="600" text-anchor="middle">${label}</text>`;
+      
+      if (!node.leaf) {
+        html += `<text x="${x}" y="${y + 22}" fill="var(--muted)" font-size="10" text-anchor="middle">[${Object.entries(node.counts).map(([k,v])=>k+':'+v).join(', ')}]</text>`;
+      } else {
+        html += `<text x="${x}" y="${y + 22}" fill="var(--muted)" font-size="10" text-anchor="middle">${node.count} 条${node.mixed ? '(混杂多数派)' : ''}</text>`;
+      }
+    });
+    
+    html += '</svg>';
+    document.getElementById('treeWrap').innerHTML = html;
+  }
+
+  // 推理表单
+  function renderInferForm() {
+    const wrap = document.getElementById('inferForm');
+    const featValues = {};
+    FEATURES.forEach(f => {
+      featValues[f] = [...new Set(DATA.map(r => r[f]))];
+    });
+    wrap.innerHTML = FEATURES.map(f => `
+      <label>${f}
+        <select id="inp-${f}">
+          ${featValues[f].map(v => `<option value="${v}">${v}</option>`).join('')}
+        </select>
+      </label>
+    `).join('');
+  }
+
+  function doInfer() {
+    const sample = {};
+    FEATURES.forEach(f => sample[f] = document.getElementById('inp-' + f).value);
+    
+    // 沿决策树走
+    const path = [];
+    const pathNodes = [];
+    const pathEdges = [];
+    let node = TREE;
+    pathNodes.push(node);
+    let prev = null;
+    while (!node.leaf) {
+      const v = sample[node.feat];
+      path.push(`${node.feat}=${v}`);
+      const child = node.branches[v];
+      if (!child) {
+        // 没有这个分支
+        const result = {
+          label: '?',
+          path: [...path, '⚠ 数据中无此组合'],
+          mixed: false
+        };
+        showInferResult(sample, result);
+        return;
+      }
+      // 记录边
+      const fromX = node._x, fromY = 40 + node._y * ((540 - 80) / 4);  // 简化
+      pathEdges.push({from: {x: node._x * 1100, y: 40 + node._y * ((540 - 80) / 4)}, to: {x: child._x * 1100, y: 40 + child._y * ((540 - 80) / 4)}});
+      node = child;
+      pathNodes.push(node);
+    }
+    
+    showInferResult(sample, {
+      label: node.label,
+      path: path,
+      mixed: node.mixed
+    });
+    
+    // 重新渲染并高亮路径 - 需要正确传递节点
+    renderTree({nodes: pathNodes, edges: pathEdges});
+  }
+
+  function showInferResult(sample, result) {
+    const wrap = document.getElementById('inferResult');
+    const cls = result.label === '是' ? 'yes' : (result.label === '否' ? 'no' : '');
+    const icon = result.label === '是' ? '✓' : (result.label === '否' ? '✗' : '?');
+    const desc = FEATURES.map(f => `${f}: <b>${sample[f]}</b>`).join(' · ');
+    
+    wrap.innerHTML = `
+      <div class="infer-result">
+        <div class="verdict ${cls}">${icon} 预测结果: 领养 = <b>${result.label}</b>${result.mixed ? ' (该叶节点为混杂多数派)' : ''}</div>
+        <div style="font-size:12px; color:var(--muted); text-align:center; margin-bottom:6px;">输入特征:</div>
+        <div style="font-size:13px; text-align:center; margin-bottom: 10px;">${desc}</div>
+        <div class="path">推理路径: ${result.path.map(p => `<span class="step">${p}</span>`).join(' → ')} → <b style="color:var(--accent);">${result.label}</b></div>
+      </div>
+    `;
+  }
+
+  renderTable();
+  renderFeatBars();
+  renderTree();
+  renderInferForm();
+</script>
+
+</body>
+</html>

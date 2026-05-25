@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>展示数字作品 — 第15课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#fdf2f8;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#be185d,#ec4899);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#be185d;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#ec4899;color:white;border-color:#be185d}
+.intro{background:linear-gradient(135deg,#fce7f3,#fbcfe8);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#be185d;margin-bottom:8px;font-size:20px}.intro p{color:#831843;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+
+.share-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.share-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:all .2s;cursor:pointer}
+.share-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.share-card .icon{font-size:42px}
+.share-card h4{color:#be185d;margin:8px 0 4px;font-size:14px}
+.share-card p{color:#831843;font-size:12px;line-height:1.5}
+
+/* 评价表 */
+.eval-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.eval-table table{width:100%;border-collapse:collapse}
+.eval-table th{background:#fce7f3;color:#be185d;padding:12px;text-align:left;font-weight:600;font-size:13px}
+.eval-table td{padding:14px 12px;border-top:1px solid #fce7f3;font-size:13px;color:#475569}
+.eval-table td.dim{font-weight:600;color:#1e293b;width:30%}
+.stars{display:flex;gap:4px}
+.star{font-size:24px;cursor:pointer;color:#cbd5e1;transition:color .15s}
+.star.active{color:#f59e0b}
+.star:hover{color:#fbbf24}
+.eval-summary{margin-top:14px;padding:14px 18px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:10px;text-align:center}
+.eval-summary .score{font-size:32px;font-weight:700;color:#b45309}
+
+.method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.method{background:white;padding:16px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.method h4{color:#be185d;font-size:14px;margin-bottom:6px}
+.method .pros{font-size:12px;color:#15803d;line-height:1.5;margin-top:6px}
+.method .cons{font-size:12px;color:#b91c1c;line-height:1.5;margin-top:2px}
+
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.tip-card{background:white;padding:14px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);text-align:center}
+.tip-card .icon{font-size:32px}.tip-card h4{color:#be185d;margin:6px 0 4px;font-size:13px}.tip-card p{color:#475569;font-size:11px;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🌟 展示数字作品</h1>
+    <div class="lesson">第 15 课 · 第四单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>为什么要展示</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>展示分享方式</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>展示小技巧</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>作品评价表</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🌟 为什么要展示作品</h2>
+      <div class="lead">辛苦做出来的作品，要勇敢展示给大家看</div>
+      <div class="intro">
+        <h3>💡 展示的意义</h3>
+        <p>展示作品不是炫耀，而是<b>分享、交流、提高</b>。同学看了能学习，自己讲解能加深理解，听别人的建议能改进作品。</p>
+      </div>
+      <div class="tips-grid">
+        <div class="tip-card"><div class="icon">🤝</div><h4>分享美好</h4><p>把好作品分享给更多人</p></div>
+        <div class="tip-card"><div class="icon">💬</div><h4>得到反馈</h4><p>听听别人的建议</p></div>
+        <div class="tip-card"><div class="icon">📈</div><h4>持续改进</h4><p>知道哪里需要提高</p></div>
+        <div class="tip-card"><div class="icon">😊</div><h4>建立自信</h4><p>勇敢面对、自信表达</p></div>
+        <div class="tip-card"><div class="icon">👀</div><h4>学习他人</h4><p>欣赏别人的优点</p></div>
+        <div class="tip-card"><div class="icon">🌟</div><h4>留下记忆</h4><p>作品是成长的痕迹</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📤 展示分享的方式</h2>
+      <div class="lead">不同场合可以选择不同的分享方式</div>
+      <div class="method-grid">
+        <div class="method">
+          <h4>👥 当面展示</h4>
+          <p style="font-size:12px;color:#475569;line-height:1.6;">在教室、班会、家庭聚会上当面演示，边说边给大家看。</p>
+          <p class="pros">✓ 互动好、可即时解答</p>
+          <p class="cons">✗ 受时间地点限制</p>
+        </div>
+        <div class="method">
+          <h4>📁 文件分享</h4>
+          <p style="font-size:12px;color:#475569;line-height:1.6;">通过 U 盘、网盘、电子邮件发送作品文件给别人。</p>
+          <p class="pros">✓ 完整保留作品</p>
+          <p class="cons">✗ 看到的人有限</p>
+        </div>
+        <div class="method">
+          <h4>💬 班级群分享</h4>
+          <p style="font-size:12px;color:#475569;line-height:1.6;">在班级 QQ 群、微信群中发布作品，大家点赞、评论。</p>
+          <p class="pros">✓ 同学都能看到</p>
+          <p class="cons">✗ 需要老师监督管理</p>
+        </div>
+        <div class="method">
+          <h4>🌐 上传校园网</h4>
+          <p style="font-size:12px;color:#475569;line-height:1.6;">把作品上传到学校的教育平台或校园网。</p>
+          <p class="pros">✓ 长期保存、可投票</p>
+          <p class="cons">✗ 需要老师协助</p>
+        </div>
+        <div class="method">
+          <h4>📺 教室展示墙</h4>
+          <p style="font-size:12px;color:#475569;line-height:1.6;">把作品打印出来贴在班级"作品墙"上。</p>
+          <p class="pros">✓ 来访者都能看见</p>
+          <p class="cons">✗ 视频音频不适用</p>
+        </div>
+        <div class="method">
+          <h4>👨‍👩‍👧 家庭分享</h4>
+          <p style="font-size:12px;color:#475569;line-height:1.6;">给爸爸妈妈、爷爷奶奶展示自己的作品。</p>
+          <p class="pros">✓ 增进亲情、得到鼓励</p>
+          <p class="cons">✗ 范围较小</p>
+        </div>
+      </div>
+      <div class="know">
+        <h3>⚠️ 网络分享要小心</h3>
+        <p>在公开网络分享作品时：① 不要透露<b>个人隐私</b>（姓名、家庭住址、电话）；② 不要发布<b>不文明</b>的内容；③ 使用<b>原创素材</b>，避免侵权；④ 听从老师和家长的建议。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎤 展示小技巧</h2>
+      <div class="lead">怎样展示得更精彩？记住这些技巧</div>
+      <div class="share-grid">
+        <div class="share-card"><div class="icon">🎯</div><h4>1. 介绍主题</h4><p>开场说清楚作品的主题</p></div>
+        <div class="share-card"><div class="icon">💡</div><h4>2. 创作灵感</h4><p>讲讲为什么要做这个作品</p></div>
+        <div class="share-card"><div class="icon">🔧</div><h4>3. 使用工具</h4><p>用了哪些软件和素材</p></div>
+        <div class="share-card"><div class="icon">⭐</div><h4>4. 亮点展示</h4><p>突出最满意的部分</p></div>
+        <div class="share-card"><div class="icon">🤔</div><h4>5. 遇到的问题</h4><p>分享解决问题的过程</p></div>
+        <div class="share-card"><div class="icon">🙏</div><h4>6. 致谢答疑</h4><p>感谢观看，回答提问</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 表达小贴士</h3>
+        <p>① <b>站姿大方</b>：抬头挺胸，面带微笑；<br>② <b>声音洪亮</b>：让最后一排也能听见；<br>③ <b>语速适中</b>：不要太快，给观众时间消化；<br>④ <b>眼神交流</b>：看着观众的眼睛；<br>⑤ <b>用手势</b>：配合内容做适当的手势。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📊 数字作品评价表</h2>
+      <div class="lead">用评价表给同学的作品打分，体验"小评委"</div>
+      <div class="eval-table">
+        <table>
+          <thead><tr><th>评价维度</th><th>说明</th><th>评分</th></tr></thead>
+          <tbody id="evalTbody"></tbody>
+        </table>
+      </div>
+      <div class="eval-summary">
+        <div style="font-size:13px;color:#92400e;margin-bottom:4px;">综合评分</div>
+        <div class="score" id="totalScore">0</div>
+        <div style="font-size:13px;color:#78350f;margin-top:4px;" id="evalComment">请点击星星给作品打分</div>
+      </div>
+      <div class="know">
+        <h3>💬 评价的原则</h3>
+        <p>① <b>客观真诚</b>：实事求是地评价；<br>② <b>具体明确</b>：说出"哪里好""哪里可以更好"；<br>③ <b>友善建设</b>：用鼓励的语气，不要打击别人；<br>④ <b>多元化</b>：每个人有不同的视角，评价不必完全一致。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课重点</div>
+      <div class="tips-grid">
+        <div class="tip-card" style="border-top:4px solid #ec4899;"><div class="icon">🌟</div><h4>勇敢展示</h4><p>不要害羞，大胆分享</p></div>
+        <div class="tip-card" style="border-top:4px solid #ec4899;"><div class="icon">📤</div><h4>多种方式</h4><p>当面、网络、群组都可以</p></div>
+        <div class="tip-card" style="border-top:4px solid #ec4899;"><div class="icon">🎤</div><h4>表达清晰</h4><p>讲清主题、亮点、过程</p></div>
+        <div class="tip-card" style="border-top:4px solid #ec4899;"><div class="icon">📊</div><h4>互相评价</h4><p>给同学建设性意见</p></div>
+      </div>
+      <div class="know">
+        <h3>🎯 课后实践</h3>
+        <p>在下次的小组活动中，请把你做的数字作品（小报、相册或绘画）分享给至少 3 位同学，听听他们的真实评价，记录下来，作为下次改进的参考。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const evalDims = [
+  { dim: '主题鲜明', desc: '作品有清晰的中心思想' },
+  { dim: '内容充实', desc: '信息量足、表达完整' },
+  { dim: '版面美观', desc: '排版、配色协调' },
+  { dim: '创意独特', desc: '有自己的想法、不雷同' },
+  { dim: '使用工具', desc: '熟练运用数字工具' },
+  { dim: '展示表达', desc: '介绍清楚、台风大方' },
+];
+
+const evalScores = evalDims.map(() => 0);
+
+function renderEvalTable() {
+  document.getElementById('evalTbody').innerHTML = evalDims.map((e, i) => `
+    <tr>
+      <td class="dim">${e.dim}</td>
+      <td>${e.desc}</td>
+      <td>
+        <div class="stars" data-idx="${i}">
+          ${[1,2,3,4,5].map(n => `<span class="star ${n<=evalScores[i]?'active':''}" onclick="setStar(${i},${n})">★</span>`).join('')}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function setStar(i, n) {
+  evalScores[i] = n;
+  renderEvalTable();
+  updateTotal();
+}
+
+function updateTotal() {
+  const total = evalScores.reduce((s, v) => s + v, 0);
+  const max = evalScores.length * 5;
+  const avg = (total / max * 100).toFixed(0);
+  document.getElementById('totalScore').textContent = avg + ' 分';
+  let comment;
+  if (total === 0) comment = '请点击星星给作品打分';
+  else if (avg >= 90) comment = '🏆 太棒了！这是一件非常优秀的作品！';
+  else if (avg >= 75) comment = '👍 不错！作品已经很有水平了';
+  else if (avg >= 60) comment = '😊 有进步空间，加油修改！';
+  else comment = '💪 还需要继续努力，期待下次的精彩作品';
+  document.getElementById('evalComment').textContent = comment;
+}
+
+renderEvalTable();
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT') p();
+});
+</script>
+</body>
+</html>

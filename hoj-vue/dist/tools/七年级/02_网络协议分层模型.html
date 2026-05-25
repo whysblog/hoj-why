@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>网络协议分层模型 · 第5课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;--panel:#1a2340;--panel2:#222d50;
+  --line:#2d3a63;--text:#e6eaf5;--muted:#8a96b8;
+  --accent:#4ed1b8;--accent2:#ffb347;--shadow:0 8px 30px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 30% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:24px}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.lesson-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.02);}
+.subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+
+.modeswitch{display:flex;gap:6px;margin:14px 0 18px}
+.modeswitch button{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:8px 16px;border-radius:8px;font-family:inherit;cursor:pointer;
+  font-size:14px;
+}
+.modeswitch button.on{background:linear-gradient(135deg,var(--accent),#3ab8a0);color:#0a1226;border-color:transparent;font-weight:700}
+
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);
+}
+.card h2{font-size:15px;margin:0 0 12px;color:var(--accent)}
+
+.tower{display:flex;flex-direction:column;gap:8px;position:relative}
+.tower h3{font-size:13px;color:var(--muted);margin:0 0 4px;text-align:center;font-weight:500}
+
+.layer{
+  position:relative;padding:14px 14px 14px 60px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:#0c1426;
+  transition:all .25s;
+}
+.layer:hover{border-color:var(--accent);transform:translateX(2px)}
+.layer.selected{border-color:var(--accent);background:linear-gradient(90deg,rgba(78,209,184,.12),transparent);box-shadow:0 0 0 2px rgba(78,209,184,.2)}
+.layer .num{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),#3ab8a0);color:#0a1226;
+  font-size:14px;
+}
+.layer .name{font-size:15px;font-weight:700}
+.layer .protocols{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);margin-top:3px}
+.layer .desc{font-size:12px;color:var(--muted);margin-top:3px}
+
+.flow-arrow{
+  text-align:center;color:var(--muted);font-size:18px;line-height:1;
+  margin:-3px 0;
+}
+
+/* Encapsulation visualization */
+.encap-stage{
+  background:#0a1226;border:1px solid var(--line);border-radius:10px;
+  padding:18px;min-height:340px;
+  background-image:linear-gradient(rgba(78,209,184,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(78,209,184,.04) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.encap-step{margin-bottom:12px;font-size:12px;color:var(--muted)}
+.encap-step .lbl{display:inline-block;font-weight:700;color:var(--accent);margin-right:8px;font-family:'JetBrains Mono',monospace;}
+.packet-vis{
+  display:flex;border-radius:6px;overflow:hidden;
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  margin-top:6px;border:1px solid var(--line);
+  transition:all .3s;
+}
+.packet-vis .seg{padding:8px 10px;color:#fff;font-weight:700;text-align:center}
+.h-app{background:#7e57c2}
+.h-tcp{background:#5b9cff}
+.h-ip{background:#4ed1b8;color:#0a1226 !important}
+.h-link{background:#ffb347;color:#1a1208 !important}
+.body-data{background:rgba(255,255,255,.06);color:var(--text) !important;flex:1}
+
+.detail-box{
+  margin-top:14px;padding:14px;background:rgba(78,209,184,.06);
+  border-left:3px solid var(--accent);border-radius:6px;font-size:13px;line-height:1.7;
+}
+.detail-box h4{margin:0 0 8px;color:var(--accent);font-size:14px}
+.detail-box .field-list{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin-top:8px}
+.detail-box .field-list b{color:var(--accent2);font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12px}
+.detail-box .field-list span{color:var(--text);font-size:12px}
+
+.eg-quote{
+  margin-top:10px;padding:10px;background:#0c1426;border-radius:6px;
+  font-size:12px;color:var(--muted);font-style:italic;border:1px dashed var(--line);
+}
+
+.compare{
+  margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:14px;
+}
+.compare-col h3{font-size:13px;color:var(--muted);text-align:center;margin:0 0 8px}
+.note{
+  font-size:12px;color:var(--muted);margin-top:14px;padding:10px;
+  background:rgba(255,179,71,.06);border-left:3px solid var(--accent2);border-radius:6px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>网络协议分层交互模型</h1>
+      <div class="subtitle">分层设计的智慧——每层只关注自己的事</div>
+    </div>
+    <span class="lesson-tag">第二单元 · 第5课《网络协议分层设》</span>
+  </header>
+
+  <div class="modeswitch">
+    <button id="mTcp" class="on">TCP/IP 四层模型</button>
+    <button id="mOsi">OSI 七层参考模型</button>
+    <button id="mCmp">两种模型对比</button>
+  </div>
+
+  <div class="layout" id="mainLayout">
+    <section class="card">
+      <h2>协议层次塔（点击查看详情）</h2>
+      <div class="tower" id="tower"></div>
+    </section>
+
+    <section class="card">
+      <h2>层次详解 & 数据封装</h2>
+      <div class="encap-stage">
+        <p style="font-size:13px;color:var(--muted);margin-top:0">数据从应用层向下传输时，每经过一层都会加上"头部"信息——这就是<b style="color:var(--accent2)">封装</b>过程。</p>
+        <div id="encapDemo"></div>
+      </div>
+      <div class="detail-box" id="detail">
+        <h4>👈 请点击左侧任一层级查看详细信息</h4>
+        <p style="margin:0;color:var(--muted);font-size:12px">每一层都有特定的功能、协议和数据结构。</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="card" id="cmpView" style="display:none;margin-top:18px">
+    <h2>TCP/IP 四层 vs OSI 七层</h2>
+    <div class="compare" id="cmpGrid"></div>
+    <div class="note">
+      📌 <b>OSI 模型</b>由国际标准化组织提出，层次完整、严格，主要用于教学与分析；<br>
+      📌 <b>TCP/IP 模型</b>是实际互联网采用的工程模型，更简洁实用。两者都体现了"分层解决问题"的思想。
+    </div>
+  </div>
+</div>
+
+<script>
+const tcpLayers = [
+  {n:4,name:'应用层',proto:'HTTP, HTTPS, FTP, SMTP, DNS',desc:'为用户提供网络应用服务',
+    detail:'应用层直接面向用户，提供各种网络应用。例如浏览器使用 HTTP 协议获取网页，邮件客户端使用 SMTP 协议发送邮件。',
+    fields:[['协议数据','网页 HTML、邮件正文、文件内容等']],
+    eg:'浏览器请求 GET /index.html HTTP/1.1'},
+  {n:3,name:'传输层',proto:'TCP, UDP',desc:'提供端到端的可靠传输',
+    detail:'传输层负责把数据传到正确的程序（端口）。TCP 协议提供可靠传输（保证不丢包、不乱序），UDP 协议追求速度（不保证可靠性）。',
+    fields:[['源端口','发送方应用程序的端口号'],['目的端口','接收方应用程序的端口号'],['序号','保证数据顺序'],['校验和','检测错误']],
+    eg:'TCP 头部：源端口 59478 → 目的端口 80（HTTP）'},
+  {n:2,name:'网络层',proto:'IP, ICMP',desc:'选择路径、跨网传输',
+    detail:'网络层负责把数据包从源主机送到目的主机，跨越多个不同的网络。核心是 IP 协议，使用 IP 地址作为标识。',
+    fields:[['源 IP 地址','发送方设备的 IP'],['目的 IP 地址','接收方设备的 IP'],['TTL','生存时间，防止数据包无限循环'],['版本','IPv4 或 IPv6']],
+    eg:'IP 头部：源地址 10.50.16.181 → 目的地址 202.205.188.165'},
+  {n:1,name:'网络接口层',proto:'以太网, Wi-Fi, PPP',desc:'相邻设备间的物理传输',
+    detail:'网络接口层（也称数据链路层 + 物理层）负责相邻节点之间的数据传输，处理物理介质上的比特流。',
+    fields:[['MAC 地址','网卡硬件地址'],['物理媒介','双绞线、光纤、无线电波']],
+    eg:'通过网线/Wi-Fi 把 0/1 比特流真正发送出去'}
+];
+
+const osiLayers = [
+  {n:7,name:'应用层',proto:'HTTP, FTP, SMTP, DNS',desc:'用户应用接口',
+    detail:'OSI 第 7 层，与 TCP/IP 应用层对应。直接服务于用户应用程序。',
+    fields:[['数据','应用层报文']]},
+  {n:6,name:'表示层',proto:'JPEG, MP3, SSL',desc:'数据格式转换、加密、压缩',
+    detail:'统一数据格式，处理加密解密、压缩解压缩、字符编码转换等。',
+    fields:[['示例','HTTPS 中的 SSL/TLS 加密']]},
+  {n:5,name:'会话层',proto:'NetBIOS, RPC',desc:'建立、管理通信会话',
+    detail:'负责建立、维护和终止两台主机之间的通信会话。',
+    fields:[['示例','维持登录状态、管理多个连接']]},
+  {n:4,name:'传输层',proto:'TCP, UDP',desc:'端到端的可靠/不可靠传输',
+    detail:'与 TCP/IP 传输层对应。',
+    fields:[['端口号','区分应用程序']]},
+  {n:3,name:'网络层',proto:'IP, ICMP',desc:'路由选择、跨网传输',
+    detail:'与 TCP/IP 网络层对应。',
+    fields:[['IP 地址','设备的逻辑地址']]},
+  {n:2,name:'数据链路层',proto:'以太网, PPP',desc:'相邻节点的可靠传输、差错控制',
+    detail:'把比特组合成帧，负责相邻节点间的可靠传输。',
+    fields:[['MAC 地址','物理硬件地址']]},
+  {n:1,name:'物理层',proto:'电缆、光纤、无线',desc:'传输 0/1 比特流',
+    detail:'最底层，处理物理介质上的电信号、光信号、无线电波。',
+    fields:[['传输单位','比特 (bit)']]}
+];
+
+const tower = document.getElementById('tower');
+const detail = document.getElementById('detail');
+const encapDemo = document.getElementById('encapDemo');
+const mainLayout = document.getElementById('mainLayout');
+const cmpView = document.getElementById('cmpView');
+const cmpGrid = document.getElementById('cmpGrid');
+
+let curMode = 'tcp';
+let curLayers = tcpLayers;
+
+function renderTower(){
+  tower.innerHTML = `<h3>${curMode==='tcp'?'TCP/IP 四层模型':'OSI 七层模型'}（自上而下）</h3>`;
+  curLayers.forEach((L,i)=>{
+    const div = document.createElement('div');
+    div.className='layer';
+    div.dataset.idx=i;
+    div.innerHTML = `
+      <div class="num">${L.n}</div>
+      <div class="name">${L.name}</div>
+      <div class="protocols">${L.proto}</div>
+      <div class="desc">${L.desc}</div>`;
+    div.onclick = ()=>selectLayer(i);
+    tower.appendChild(div);
+    if(i<curLayers.length-1){
+      const a = document.createElement('div');
+      a.className='flow-arrow';a.textContent='▼';
+      tower.appendChild(a);
+    }
+  });
+  selectLayer(0);
+}
+
+function selectLayer(idx){
+  document.querySelectorAll('.layer').forEach(l=>l.classList.remove('selected'));
+  document.querySelectorAll('.layer')[idx].classList.add('selected');
+  const L = curLayers[idx];
+  // detail
+  let html = `<h4>${L.name}（第 ${L.n} 层）</h4>
+    <div style="font-size:13px;color:var(--text);line-height:1.7">${L.detail}</div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">代表协议：<b style="color:var(--accent2);font-family:'JetBrains Mono',monospace">${L.proto}</b></div>`;
+  if(L.fields){
+    html += `<div class="field-list">`;
+    L.fields.forEach(f=>html+=`<b>${f[0]}</b><span>${f[1]}</span>`);
+    html+=`</div>`;
+  }
+  if(L.eg) html+=`<div class="eg-quote">📍 实例：${L.eg}</div>`;
+  detail.innerHTML = html;
+  // encapsulation visualization (TCP/IP only)
+  if(curMode==='tcp') renderEncap(idx);
+  else encapDemo.innerHTML = '<p style="color:var(--muted);font-size:13px">OSI 模型中数据封装原理与 TCP/IP 类似，请切换到 TCP/IP 模型查看封装可视化。</p>';
+}
+
+function renderEncap(highlightIdx){
+  // build packet from app down to link
+  const segs = [];
+  // application data
+  const data = '原始数据 (HTML)';
+  // start with bottom-up addition
+  segs.push({c:'h-app',t:'应用数据', layer:0});
+  // After encap by transport: TCP|appdata
+  // After encap by network: IP|TCP|appdata
+  // After encap by link: ETH|IP|TCP|appdata|TRL
+  encapDemo.innerHTML = `
+    <div class="encap-step"><span class="lbl">第4层 → 应用层</span>形成应用数据</div>
+    <div class="packet-vis" id="pv0">
+      <div class="seg body-data">应用数据（如 HTTP 报文）</div>
+    </div>
+    <div class="encap-step" style="margin-top:14px"><span class="lbl">第3层 → 传输层</span>添加 TCP 头部（含端口号）</div>
+    <div class="packet-vis" id="pv1">
+      <div class="seg h-tcp">TCP头</div>
+      <div class="seg body-data">应用数据</div>
+    </div>
+    <div class="encap-step" style="margin-top:14px"><span class="lbl">第2层 → 网络层</span>添加 IP 头部（含 IP 地址）</div>
+    <div class="packet-vis" id="pv2">
+      <div class="seg h-ip">IP头</div>
+      <div class="seg h-tcp">TCP头</div>
+      <div class="seg body-data">应用数据</div>
+    </div>
+    <div class="encap-step" style="margin-top:14px"><span class="lbl">第1层 → 网络接口层</span>添加帧头/帧尾，转为比特流</div>
+    <div class="packet-vis" id="pv3">
+      <div class="seg h-link">帧头</div>
+      <div class="seg h-ip">IP头</div>
+      <div class="seg h-tcp">TCP头</div>
+      <div class="seg body-data">应用数据</div>
+      <div class="seg h-link">帧尾</div>
+    </div>`;
+  // highlight active layer's row
+  const idxToRow = {0:'pv0',1:'pv1',2:'pv2',3:'pv3'};
+  const target = document.getElementById(idxToRow[highlightIdx]);
+  if(target) target.style.boxShadow = '0 0 0 2px var(--accent)';
+}
+
+function renderCompare(){
+  // build a side-by-side mapping
+  const tcpToOsi = {
+    '应用层':['应用层','表示层','会话层'],
+    '传输层':['传输层'],
+    '网络层':['网络层'],
+    '网络接口层':['数据链路层','物理层']
+  };
+  cmpGrid.innerHTML = '';
+  // Left: TCP/IP
+  let leftHTML = '<div class="compare-col"><h3>TCP/IP 四层</h3><div class="tower">';
+  tcpLayers.forEach((L,i)=>{
+    leftHTML += `<div class="layer" style="cursor:default">
+      <div class="num">${L.n}</div>
+      <div class="name">${L.name}</div>
+      <div class="protocols">${L.proto}</div>
+    </div>`;
+    if(i<tcpLayers.length-1) leftHTML += '<div class="flow-arrow">▼</div>';
+  });
+  leftHTML += '</div></div>';
+
+  let rightHTML = '<div class="compare-col"><h3>OSI 七层</h3><div class="tower">';
+  osiLayers.forEach((L,i)=>{
+    rightHTML += `<div class="layer" style="cursor:default;padding:10px 10px 10px 50px">
+      <div class="num" style="width:28px;height:28px;font-size:12px;left:10px">${L.n}</div>
+      <div class="name" style="font-size:14px">${L.name}</div>
+      <div class="protocols">${L.proto}</div>
+    </div>`;
+    if(i<osiLayers.length-1) rightHTML += '<div class="flow-arrow">▼</div>';
+  });
+  rightHTML += '</div></div>';
+
+  cmpGrid.innerHTML = leftHTML + rightHTML;
+}
+
+document.getElementById('mTcp').onclick = ()=>{
+  setMode('tcp');
+};
+document.getElementById('mOsi').onclick = ()=>{
+  setMode('osi');
+};
+document.getElementById('mCmp').onclick = ()=>{
+  setMode('cmp');
+};
+function setMode(m){
+  document.querySelectorAll('.modeswitch button').forEach(b=>b.classList.remove('on'));
+  if(m==='tcp'){document.getElementById('mTcp').classList.add('on');curLayers=tcpLayers;curMode='tcp';mainLayout.style.display='grid';cmpView.style.display='none';renderTower();}
+  if(m==='osi'){document.getElementById('mOsi').classList.add('on');curLayers=osiLayers;curMode='osi';mainLayout.style.display='grid';cmpView.style.display='none';renderTower();}
+  if(m==='cmp'){document.getElementById('mCmp').classList.add('on');mainLayout.style.display='none';cmpView.style.display='block';renderCompare();}
+}
+
+renderTower();
+</script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第15课 · 互联网实验齐发现</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第3单元 · 第15课</span>
+    <span class="title">互联网实验齐发现</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>互联网实验<br>齐发现</h1>
+<p class="subtitle">第三单元 · 第15课</p>
+<div class="meta"><span>📅 课时：<strong>1-2 学时</strong></span>
+<span>🎯 重点：<strong>命令行实验</strong></span>
+<span>💡 关键词：<strong>ping · tracert</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">💻</span><div class="card-title">认识命令行</div><div class="card-desc">了解什么是命令行(CLI)及其用途。</div></div><div class="card"><span class="card-icon">🛠</span><div class="card-title">掌握三大命令</div><div class="card-desc">学会用 ping、tracert、ipconfig 排查网络。</div></div><div class="card"><span class="card-icon">🔍</span><div class="card-title">观察分析</div><div class="card-desc">通过实验观察数据包传输路径和延迟。</div></div></div></section>
+<section class="slide"><h2>什么是命令行？</h2>
+<p><strong>命令行 (Command Line Interface, CLI)</strong> 是一种<strong>用文字指令</strong>操作电脑的方式，比图形界面更高效、更精确。</p>
+<div class="compare-row">
+<div class="compare-col"><h3>🖱 图形界面 (GUI)</h3>
+<ul><li>用鼠标点击图标</li><li>直观、好上手</li><li>适合一般用户</li><li>查看 IP：点 4 层菜单</li></ul></div>
+<div class="compare-col good"><h3>⌨️ 命令行 (CLI)</h3>
+<ul><li>用键盘输入命令</li><li>快速、精确、可批量</li><li>适合开发者、运维</li><li>查看 IP：<code>ipconfig</code> 一行</li></ul></div>
+</div>
+<h3>怎么打开命令行？</h3>
+<ul>
+<li><strong>Windows：</strong>键盘 <span class="kbd">Win</span> + <span class="kbd">R</span> → 输入 <code>cmd</code> → 回车</li>
+<li><strong>macOS：</strong>启动台 → 其他 → "终端"</li>
+<li><strong>Linux：</strong>快捷键 <span class="kbd">Ctrl</span>+<span class="kbd">Alt</span>+<span class="kbd">T</span></li>
+</ul></section>
+<section class="slide"><h2>实验 ① ipconfig — 查看本机配置</h2>
+<p>查看自己设备的 IP 地址、子网掩码、网关、DNS。</p>
+<h3>命令</h3>
+<div class="code-block">ipconfig          <span style="color:var(--muted)"># Windows 简洁版</span>
+ipconfig /all     <span style="color:var(--muted)"># 详细信息</span>
+ifconfig          <span style="color:var(--muted)"># macOS / Linux</span></div>
+<h3>典型输出</h3>
+<div class="code-block">以太网适配器 以太网:
+   IPv4 地址 . . . . . . . . . . . : 192.168.1.100
+   子网掩码  . . . . . . . . . . . : 255.255.255.0
+   默认网关. . . . . . . . . . . . : 192.168.1.1
+   DNS 服务器 . . . . . . . . . . . : 192.168.1.1
+                                       114.114.114.114</div>
+<div class="highlight">📝 <strong>课堂动手 1：</strong>在自己电脑上运行 <code>ipconfig</code>，写下：IP、子网掩码、默认网关、DNS 四个参数。和同桌对比。</div></section>
+<section class="slide"><h2>实验 ② ping — 测试连通性</h2>
+<p><strong>ping</strong> 命令向目标主机发送数据包，根据是否收到回复，判断网络是否通畅。</p>
+<h3>命令</h3>
+<div class="code-block">ping www.baidu.com           <span style="color:var(--muted)"># 默认发4个包(Win) 或一直发(Linux)</span>
+ping -t www.baidu.com        <span style="color:var(--muted)"># Win 持续发送，Ctrl+C 停止</span>
+ping -c 4 www.baidu.com      <span style="color:var(--muted)"># Linux/Mac 发4个包</span></div>
+<h3>典型输出</h3>
+<div class="code-block">正在 Ping www.baidu.com [220.181.38.148] 具有 32 字节的数据:
+来自 220.181.38.148 的回复: 字节=32 时间=12ms TTL=53
+来自 220.181.38.148 的回复: 字节=32 时间=11ms TTL=53
+...
+    数据包: 已发送 = 4, 已接收 = 4, 丢失 = 0 (0% 丢失)
+    往返行程的估计时间(以毫秒为单位): 最短=11ms 最长=13ms 平均=11ms</div>
+<div class="highlight">📊 <strong>怎么看？</strong> 重点关注：① 是否能 ping 通；② <strong>时间 (RTT)</strong>，越小延迟越低；③ <strong>丢失</strong> 比例，越高网络越差。</div></section>
+<section class="slide"><h2>实验 ③ tracert — 追踪路由路径</h2>
+<p><strong>tracert</strong> (Windows) / <strong>traceroute</strong> (Mac/Linux) 显示数据包<strong>每一跳经过的路由器</strong>。</p>
+<h3>命令</h3>
+<div class="code-block">tracert www.baidu.com         <span style="color:var(--muted)"># Windows</span>
+traceroute www.baidu.com      <span style="color:var(--muted)"># Mac / Linux</span></div>
+<h3>典型输出</h3>
+<div class="code-block">通过最多 30 个跃点跟踪到 www.baidu.com [220.181.38.148] 的路由:
+
+  1     1 ms     1 ms     1 ms   192.168.1.1
+  2     5 ms     4 ms     5 ms   100.64.0.1
+  3    12 ms    11 ms    12 ms   110.184.32.1   <span style="color:var(--muted)"># 进入运营商</span>
+  4    14 ms    13 ms    14 ms   202.97.34.142  <span style="color:var(--muted)"># 骨干网</span>
+  5    18 ms    17 ms    18 ms   202.97.33.221
+  6    20 ms    19 ms    20 ms   220.181.16.1   <span style="color:var(--muted)"># 接近目标</span>
+  7    21 ms    20 ms    21 ms   220.181.38.148 <span style="color:var(--muted)"># 到达！</span>
+
+跟踪完成。</div>
+<div class="highlight">🌍 数据包从家庭路由器(192.168.1.1) → 运营商接入网 → 骨干网 → 百度服务器，全程 7 跳左右就到达了。</div></section>
+<section class="slide"><h2>更多有用的命令</h2>
+<table class="tbl">
+<tr><th>命令</th><th>作用</th><th>示例</th></tr>
+<tr><td><code>nslookup</code></td><td>查询域名对应的 IP（DNS 解析）</td><td><code>nslookup www.bilibili.com</code></td></tr>
+<tr><td><code>netstat -an</code></td><td>查看当前所有网络连接</td><td><code>netstat -an</code></td></tr>
+<tr><td><code>arp -a</code></td><td>查看本机 ARP 缓存（MAC ↔ IP 对应表）</td><td><code>arp -a</code></td></tr>
+<tr><td><code>route print</code></td><td>查看路由表</td><td><code>route print</code></td></tr>
+<tr><td><code>telnet IP 端口</code></td><td>测试某个端口是否开放</td><td><code>telnet www.baidu.com 80</code></td></tr>
+</table>
+<div class="highlight">🛠 <strong>网络故障排查口诀：</strong>
+<br>① 看本机：<code>ipconfig</code> → 是否有 IP？
+<br>② 通网关：<code>ping 网关 IP</code> → 内网通吗？
+<br>③ 查 DNS：<code>nslookup baidu.com</code> → 能解析吗？
+<br>④ 通外网：<code>ping 8.8.8.8</code> → 出口通吗？
+<br>⑤ 追路径：<code>tracert baidu.com</code> → 哪一跳卡住了？</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 测试本机和 www.baidu.com 是否网络连通，应该用哪个命令？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">ipconfig</div>
+<div class="quiz-opt" data-correct="true">ping</div>
+<div class="quiz-opt" data-correct="false">tracert</div>
+<div class="quiz-opt" data-correct="false">netstat</div></div>
+<div class="quiz-feedback">✅ ping 命令通过发送 ICMP 数据包测试目标是否可达。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 想知道数据包经过了哪些路由器才到达目标，应该用？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">ping</div>
+<div class="quiz-opt" data-correct="false">ipconfig</div>
+<div class="quiz-opt" data-correct="true">tracert</div>
+<div class="quiz-opt" data-correct="false">arp</div></div>
+<div class="quiz-feedback">✅ tracert（Windows）/ traceroute（Mac/Linux）能显示每一跳路由器的 IP 和延迟。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ ping 输出中的 "时间=12ms" 表示？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">数据包大小</div>
+<div class="quiz-opt" data-correct="true">往返时延 RTT</div>
+<div class="quiz-opt" data-correct="false">网速</div>
+<div class="quiz-opt" data-correct="false">错误次数</div></div>
+<div class="quiz-feedback">✅ 这个时间是 Round-Trip Time（往返时延），从发出到收到回复的时间，越小说明网络越快。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>命令行</strong>：用文字指令操作电脑，比鼠标更高效</li>
+<li><strong>ipconfig</strong>：查看本机 IP、网关、DNS</li>
+<li><strong>ping</strong>：测试网络连通性 + 延迟</li>
+<li><strong>tracert</strong>：追踪数据包经过的每一跳路由</li>
+<li><strong>排查口诀</strong>：本机→网关→DNS→外网→路径</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>在家用 tracert 跟踪到三个不同网站（如 baidu.com, taobao.com, github.com）的路径。比较跳数和总延迟，记录到表格。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "命令行 CLI", "ipconfig", "ping", "tracert", "更多命令", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

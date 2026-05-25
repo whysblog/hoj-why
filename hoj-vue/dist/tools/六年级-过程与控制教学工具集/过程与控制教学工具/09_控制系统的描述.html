@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>控制系统的描述 · 第13-15课综合课件</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #4338ca;
+    --bg: #eef2ff;
+    --card: #ffffff;
+    --text: #1e1b4b;
+    --muted: #64748b;
+    --border: #c7d2fe;
+    --ok: #16a34a;
+    --warn: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .lesson-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .lesson-nav button {
+    flex: 1;
+    padding: 10px 14px;
+    background: white;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .lesson-nav button:hover { background: #eef2ff; }
+  .lesson-nav button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .lesson-nav button .lesson-num { display: block; font-size: 11px; opacity: 0.7; margin-bottom: 2px; }
+
+  .lesson { display: none; }
+  .lesson.active { display: block; }
+
+  .slide-nav {
+    display: flex; gap: 6px; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap;
+  }
+  .slide-dot {
+    width: 32px; height: 32px; border-radius: 50%; background: white; border: 2px solid var(--border); cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--muted); transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; font-family: inherit;
+  }
+  .slide-dot.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.1); }
+  .slide-dot.done { background: var(--ok); border-color: var(--ok); color: white; }
+  .slide-arrow {
+    background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+    cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s;
+  }
+  .slide-arrow:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+  .slide-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .slide {
+    display: none; background: white; border-radius: 16px; padding: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border);
+    min-height: 480px; animation: slideIn 0.3s ease-out;
+  }
+  .slide.active { display: block; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide-type {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px;
+    background: #eef2ff; color: var(--primary-dark); margin-bottom: 10px; font-weight: 600;
+  }
+  .slide h2 { font-size: 22px; margin-bottom: 14px; }
+  .slide h2::before {
+    content: ""; display: inline-block; width: 5px; height: 22px; background: var(--primary);
+    border-radius: 3px; margin-right: 10px; vertical-align: middle;
+  }
+  .slide h3 { font-size: 17px; margin: 18px 0 10px; color: var(--primary-dark); }
+  .slide p { font-size: 15px; margin-bottom: 12px; }
+  .slide ul { padding-left: 22px; margin-bottom: 16px; }
+  .slide li { font-size: 15px; margin-bottom: 8px; }
+
+  .goals-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0;
+  }
+  .goal-card { padding: 18px; background: #eef2ff; border-radius: 12px; border-left: 4px solid var(--primary); }
+  .goal-card .num { color: var(--primary); font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+  .goal-card .text { font-size: 14px; line-height: 1.6; }
+
+  .info-card {
+    background: #eef2ff; border-left: 4px solid var(--primary); padding: 14px 18px;
+    border-radius: 8px; margin: 16px 0;
+  }
+  .info-card .title { font-weight: 700; color: var(--primary-dark); margin-bottom: 6px; }
+  .info-card .body { font-size: 14px; }
+
+  /* === 第13课：特点雷达 === */
+  .feature-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .feature-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    transition: all 0.25s;
+  }
+  .feature-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+  }
+  .feature-card .icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 10px;
+    background: #eef2ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .feature-card .name { font-weight: 700; margin-bottom: 4px; color: var(--primary-dark); }
+  .feature-card .desc { font-size: 13px; color: var(--muted); }
+
+  /* === 第14课：系统分解 === */
+  .decomp-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .decomp-tab {
+    padding: 8px 14px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .decomp-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .decomp-display {
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    min-height: 280px;
+  }
+  .decomp-svg { width: 100%; height: auto; }
+
+  .subsystem-info {
+    background: white;
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 14px;
+    display: none;
+  }
+  .subsystem-info.show { display: block; }
+  .subsystem-info strong { color: var(--primary-dark); }
+
+  .clickable-block {
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .clickable-block:hover { filter: brightness(1.1); }
+  .clickable-block.selected {
+    filter: drop-shadow(0 0 6px var(--primary));
+  }
+
+  /* === 第15课：模块拖拽 === */
+  .module-builder {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+  }
+  .module-pool {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: white;
+    border-radius: 8px;
+    border: 1.5px dashed var(--border);
+    min-height: 80px;
+  }
+  .module-pool .label {
+    width: 100%;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .module-tile {
+    padding: 10px 14px;
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+    user-select: none;
+    font-family: inherit;
+  }
+  .module-tile:hover {
+    background: var(--primary);
+    color: white;
+  }
+  .module-tile.placed { opacity: 0.3; pointer-events: none; }
+
+  .build-area {
+    background: white;
+    border-radius: 8px;
+    padding: 14px;
+    border: 1.5px dashed var(--border);
+    min-height: 80px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .build-area .label { width: 100%; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .build-area .empty-hint { color: var(--muted); font-size: 13px; }
+
+  .placed-tile {
+    padding: 10px 14px;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .placed-tile button {
+    background: rgba(255,255,255,0.3);
+    border: none;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  .build-result {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f3f4f6;
+    color: var(--muted);
+  }
+  .build-result.success { background: #dcfce7; color: #166534; border-left: 4px solid var(--ok); }
+  .build-result.partial { background: #fef3c7; color: #854d0e; border-left: 4px solid #f59e0b; }
+
+  /* === 测验 === */
+  .quiz {
+    background: #fef3c7;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 16px 0;
+    border: 1.5px solid #fcd34d;
+  }
+  .quiz-question { font-weight: 700; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    background: white; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 10px 16px; cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 14px; transition: all 0.2s;
+  }
+  .quiz-option:hover { background: #eef2ff; }
+  .quiz-option.correct { background: #dcfce7; border-color: var(--ok); color: #166534; font-weight: 600; }
+  .quiz-option.wrong { background: #fee2e2; border-color: var(--warn); color: #991b1b; }
+  .quiz-feedback {
+    margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #dcfce7; color: #166534; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第四单元 · 3课时综合课件</span>
+    <h1>控制系统的描述</h1>
+    <p>认识控制系统的特点、学习把复杂系统分解为子系统、体会模块化的优势</p>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="active" data-lesson="13"><span class="lesson-num">第13课</span>控制系统有特点</button>
+    <button data-lesson="14"><span class="lesson-num">第14课</span>复杂系统可分解</button>
+    <button data-lesson="15"><span class="lesson-num">第15课</span>模块组装很灵活</button>
+  </div>
+
+  <!-- =============== 第13课：控制系统有特点 =============== -->
+  <div class="lesson active" id="lesson-13">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(13)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <button class="slide-arrow" onclick="nextSlide(13)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">了解控制系统的主要特点</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">初步形成"系统观"，认识到事物可看作系统</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">能用系统观分析身边的事物</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">前几节课我们认识了很多控制系统：教室设备、空调、洗衣机……虽然功能各不相同，但它们都有<strong>共同的特点</strong>。这节课就让我们一起找一找！</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🔍 系统观察</span>
+      <h2>控制系统的五大特点</h2>
+      <p>无论是简单的台灯还是复杂的飞机自动驾驶系统，所有控制系统都具备下面这些共同的特点：</p>
+
+      <div class="feature-cards">
+        <div class="feature-card">
+          <div class="icon">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="4" y="14" width="24" height="6" rx="1" fill="#4f46e5"/>
+              <rect x="4" y="6" width="24" height="6" rx="1" fill="#a5b4fc"/>
+              <rect x="4" y="22" width="24" height="6" rx="1" fill="#c7d2fe"/>
+            </svg>
+          </div>
+          <div class="name">有组成部分</div>
+          <div class="desc">由若干元件、模块组成，每一部分都有特定作用</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <circle cx="8" cy="8" r="4" fill="#4f46e5"/>
+              <circle cx="24" cy="8" r="4" fill="#4f46e5"/>
+              <circle cx="16" cy="24" r="4" fill="#4f46e5"/>
+              <line x1="8" y1="8" x2="24" y2="8" stroke="#4f46e5" stroke-width="2"/>
+              <line x1="8" y1="8" x2="16" y2="24" stroke="#4f46e5" stroke-width="2"/>
+              <line x1="24" y1="8" x2="16" y2="24" stroke="#4f46e5" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="name">部分相互联系</div>
+          <div class="desc">各部分通过信号、能量或数据相互联系，缺一不可</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <path d="M 6 16 L 14 24 L 26 8" stroke="#4f46e5" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="name">有明确目标</div>
+          <div class="desc">每个系统都为完成某个目标而工作（如制冷、报时）</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="2" y="12" width="6" height="8" rx="1" fill="#4f46e5"/>
+              <path d="M 8 14 L 14 14 L 14 12 L 20 16 L 14 20 L 14 18 L 8 18 Z" fill="#4f46e5"/>
+              <rect x="20" y="8" width="10" height="16" rx="1" fill="#a5b4fc"/>
+            </svg>
+          </div>
+          <div class="name">遵循"输入-计算-输出"</div>
+          <div class="desc">所有控制系统都按这个模式工作</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="6" y="6" width="20" height="20" rx="2" fill="none" stroke="#4f46e5" stroke-width="2"/>
+              <rect x="10" y="10" width="5" height="5" fill="#a5b4fc"/>
+              <rect x="17" y="10" width="5" height="5" fill="#a5b4fc"/>
+              <rect x="10" y="17" width="5" height="5" fill="#a5b4fc"/>
+              <rect x="17" y="17" width="5" height="5" fill="#a5b4fc"/>
+            </svg>
+          </div>
+          <div class="name">边界清晰</div>
+          <div class="desc">系统有明确的"内"和"外"，与外界交换信息</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">📌 用空调来对照看看</div>
+        <div class="body">
+          🔹 <strong>组成部分</strong>：温度传感器、压缩机、风扇、控制板……<br>
+          🔹 <strong>相互联系</strong>：传感器把温度数据传给控制板，控制板再决定压缩机是否工作<br>
+          🔹 <strong>明确目标</strong>：把室温维持在设定值<br>
+          🔹 <strong>输入-计算-输出</strong>：温度数据(输入) → 比较(计算) → 控制压缩机(输出)<br>
+          🔹 <strong>边界清晰</strong>：空调是"系统内"，房间是"系统外"
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 关于控制系统的特点，下面说法<u>错误</u>的是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q13_1')">A. 都由若干部分组成</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q13_1')">B. 各部分相互联系</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q13_1')">C. 不同的控制系统毫无共同点</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q13_1')">D. 都遵循"输入-计算-输出"模式</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q13_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. <strong>开放思考：</strong>请你以一台电视机为例，按这五个特点描述一下它。</div>
+        <p style="font-size:13px; color:var(--muted); margin-top: 8px;">
+          参考：组成部分（屏幕、扬声器、电路板、遥控器）、各部分通过电信号联系、目标是显示画面和声音、按"遥控器输入→处理→显示和发声"模式工作、电视机本身是系统、外面的环境是外部。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============== 第14课：复杂系统可分解 =============== -->
+  <div class="lesson" id="lesson-14">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(14)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <button class="slide-arrow" onclick="nextSlide(14)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">了解复杂系统可以分解成多个子系统</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">理解"大问题分解为小问题"的思想方法</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">尝试自己分解一个复杂系统</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">一个电梯有上千个零件，一辆汽车有上万个零件——这么复杂的系统，工程师是怎么设计的呢？秘诀就是<strong>分解</strong>：把大系统切成几个小系统，每个小系统又分成更小的部分。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🎯 互动分解</span>
+      <h2>点击各部分，看看它们分别完成什么功能</h2>
+
+      <div class="decomp-tabs">
+        <button class="decomp-tab active" onclick="switchDecomp('phone', this)">智能手机</button>
+        <button class="decomp-tab" onclick="switchDecomp('car', this)">汽车</button>
+        <button class="decomp-tab" onclick="switchDecomp('elevator', this)">电梯</button>
+      </div>
+
+      <div class="decomp-display">
+        <div id="decomp-content"></div>
+        <div class="subsystem-info" id="subInfo"></div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">💡 这就是"分解"</div>
+        <div class="body">把一个大问题（如"造一部手机"）分解为小问题（"通信模块怎么做？""屏幕模块怎么做？"），每个小问题由专门的团队解决——这就是工程师设计复杂系统的方法。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 把复杂系统分解为子系统的<u>主要好处</u>是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q14_1')">A. 让系统看起来更复杂</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q14_1')">B. 让每个子系统的设计、调试和维护都更容易</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q14_1')">C. 减少系统的成本</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q14_1')">D. 让系统运行得更快</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q14_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 一辆汽车可以分解为下列哪些子系统？（多选思考）</div>
+        <p style="font-size:13px; color:var(--muted);">
+          ☑ 动力系统（发动机/电机）<br>
+          ☑ 制动系统（刹车）<br>
+          ☑ 转向系统（方向盘、轮胎）<br>
+          ☑ 灯光系统（车灯、转向灯）<br>
+          ☑ 空调系统、音响系统、安全气囊系统……<br>
+          可以看到，一辆汽车其实是<strong>十几个子系统的组合</strong>！
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============== 第15课：模块组装很灵活 =============== -->
+  <div class="lesson" id="lesson-15">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(15)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <button class="slide-arrow" onclick="nextSlide(15)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">了解控制系统中的"模块"概念</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">体会"模块化设计"的灵活和高效</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">尝试用模块组装一个简单的控制系统</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入 · 像搭积木一样</div>
+        <div class="body">如果把"功能"做成一个个独立的"积木块"，需要什么功能就拿什么积木——这就是<strong>模块化设计</strong>。手机里的"摄像头模块"、"电池模块"、"屏幕模块"，正是这样设计的。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🛠 互动 · 搭建你的智能家居控制系统</span>
+      <h2>从模块库中选取需要的功能模块</h2>
+      <p>下面是一些常见的功能模块。点击你想用的模块，把它们加到"我的系统"区域，看看你能搭出什么功能。</p>
+
+      <div class="module-builder">
+        <div class="module-pool">
+          <div class="label">📦 可用模块库（点击添加到下方）</div>
+          <button class="module-tile" data-module="temp">🌡️ 温度传感器</button>
+          <button class="module-tile" data-module="light">💡 光照传感器</button>
+          <button class="module-tile" data-module="motion">👁 人体感应</button>
+          <button class="module-tile" data-module="cpu">⚙️ 控制器</button>
+          <button class="module-tile" data-module="bulb">💡 灯光</button>
+          <button class="module-tile" data-module="ac">❄️ 空调</button>
+          <button class="module-tile" data-module="alarm">🔔 报警器</button>
+          <button class="module-tile" data-module="curtain">🪟 窗帘电机</button>
+          <button class="module-tile" data-module="wifi">📶 无线模块</button>
+        </div>
+
+        <div class="build-area" id="buildArea">
+          <div class="label">🎯 我的系统（已选模块）</div>
+          <span class="empty-hint">还没添加任何模块……</span>
+        </div>
+
+        <div class="build-result" id="buildResult">
+          💡 试试看：搭出"自动开灯系统"需要哪些模块？或者"温度报警器"？
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">💡 模块化的优势</div>
+        <div class="body">
+          ✓ <strong>灵活</strong>：可以根据需要自由组合不同功能<br>
+          ✓ <strong>高效</strong>：单个模块设计好后可以重复使用<br>
+          ✓ <strong>易维护</strong>：哪个模块出故障就换哪个<br>
+          ✓ <strong>易升级</strong>：想要新功能只需添加新模块
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. "模块化设计"的<u>主要优势</u>是？</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q15_1')">A. 让系统更便宜</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q15_1')">B. 灵活组合，易于维护和升级</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q15_1')">C. 让系统看起来更整齐</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q15_1')">D. 减少功能数量</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q15_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 下列哪个例子最能体现"模块化"思想？</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q15_2')">A. 一支铅笔只能写字，不能擦字</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q15_2')">B. 乐高积木可以拼成各种各样的造型</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q15_2')">C. 一本书有固定的页数</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q15_2')">D. 一根筷子只能配对使用</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q15_2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 课时切换 ===
+document.querySelectorAll('.lesson-nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lesson-nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('lesson-' + btn.dataset.lesson).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// === 幻灯片导航 ===
+function showSlide(lesson, index) {
+  const lessonEl = document.getElementById('lesson-' + lesson);
+  const slides = lessonEl.querySelectorAll('.slide');
+  const dots = lessonEl.querySelectorAll('.slide-dot');
+  slides.forEach(s => s.classList.remove('active'));
+  dots.forEach((d, i) => {
+    d.classList.remove('active');
+    if (i < index) d.classList.add('done'); else d.classList.remove('done');
+  });
+  slides[index].classList.add('active');
+  dots[index].classList.add('active');
+}
+function getCurrentSlideIndex(lesson) {
+  const slides = Array.from(document.getElementById('lesson-' + lesson).querySelectorAll('.slide'));
+  return slides.findIndex(s => s.classList.contains('active'));
+}
+function nextSlide(lesson) {
+  const idx = getCurrentSlideIndex(lesson);
+  const total = document.getElementById('lesson-' + lesson).querySelectorAll('.slide').length;
+  if (idx < total - 1) showSlide(lesson, idx + 1);
+}
+function prevSlide(lesson) {
+  const idx = getCurrentSlideIndex(lesson);
+  if (idx > 0) showSlide(lesson, idx - 1);
+}
+document.querySelectorAll('.slide-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    const lesson = d.closest('.lesson').id.split('-')[1];
+    showSlide(lesson, +d.dataset.i);
+  });
+});
+
+// === 第14课：分解系统 ===
+const decompData = {
+  phone: {
+    title: '智能手机的子系统',
+    svg: `<svg viewBox="0 0 600 280" class="decomp-svg">
+      <!-- 手机外框 -->
+      <rect x="220" y="20" width="160" height="240" rx="20" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+      <rect x="232" y="40" width="136" height="200" fill="#475569"/>
+      <!-- 各子系统标签 -->
+      <g class="clickable-block" data-key="phone-screen" onclick="selectSub('phone-screen', this)">
+        <rect x="232" y="40" width="136" height="200" fill="rgba(79,70,229,0.15)" stroke="#4f46e5" stroke-width="2" stroke-dasharray="3 2"/>
+        <text x="300" y="80" text-anchor="middle" font-size="13" fill="white" font-weight="700">屏幕模块</text>
+      </g>
+      <!-- 引出箭头到外部子系统介绍 -->
+      <g class="clickable-block" data-key="phone-screen2" onclick="selectSub('phone-screen', this)">
+        <rect x="20" y="35" width="120" height="40" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="80" y="58" text-anchor="middle" font-size="13" fill="#4338ca">📱 显示子系统</text>
+        <line x1="140" y1="55" x2="230" y2="55" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="phone-camera" onclick="selectSub('phone-camera', this)">
+        <rect x="20" y="90" width="120" height="40" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="80" y="113" text-anchor="middle" font-size="13" fill="#4338ca">📷 摄像子系统</text>
+        <line x1="140" y1="110" x2="240" y2="110" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="phone-audio" onclick="selectSub('phone-audio', this)">
+        <rect x="20" y="145" width="120" height="40" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="80" y="168" text-anchor="middle" font-size="13" fill="#4338ca">🔊 音频子系统</text>
+        <line x1="140" y1="165" x2="240" y2="165" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="phone-comm" onclick="selectSub('phone-comm', this)">
+        <rect x="460" y="35" width="120" height="40" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="520" y="58" text-anchor="middle" font-size="13" fill="#4338ca">📶 通信子系统</text>
+        <line x1="460" y1="55" x2="370" y2="55" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="phone-power" onclick="selectSub('phone-power', this)">
+        <rect x="460" y="90" width="120" height="40" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="520" y="113" text-anchor="middle" font-size="13" fill="#4338ca">🔋 电源子系统</text>
+        <line x1="460" y1="110" x2="360" y2="110" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="phone-cpu" onclick="selectSub('phone-cpu', this)">
+        <rect x="460" y="145" width="120" height="40" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="520" y="168" text-anchor="middle" font-size="13" fill="#4338ca">⚙️ 计算子系统</text>
+        <line x1="460" y1="165" x2="370" y2="165" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <text x="300" y="265" text-anchor="middle" font-size="12" fill="var(--muted)">👆 点击各子系统查看说明</text>
+    </svg>`
+  },
+  car: {
+    title: '汽车的子系统',
+    svg: `<svg viewBox="0 0 600 280" class="decomp-svg">
+      <!-- 汽车轮廓 -->
+      <path d="M 180 180 Q 180 130 230 130 L 270 100 L 400 100 L 420 130 L 470 130 Q 480 130 480 150 L 480 200 L 180 200 Z"
+            fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+      <circle cx="240" cy="200" r="20" fill="#1e293b"/>
+      <circle cx="240" cy="200" r="10" fill="#475569"/>
+      <circle cx="420" cy="200" r="20" fill="#1e293b"/>
+      <circle cx="420" cy="200" r="10" fill="#475569"/>
+      <!-- 子系统 -->
+      <g class="clickable-block" data-key="car-engine" onclick="selectSub('car-engine', this)">
+        <rect x="20" y="40" width="120" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="80" y="62" text-anchor="middle" font-size="12" fill="#4338ca">⚙️ 动力子系统</text>
+        <line x1="140" y1="58" x2="240" y2="115" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="car-brake" onclick="selectSub('car-brake', this)">
+        <rect x="20" y="90" width="120" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="80" y="112" text-anchor="middle" font-size="12" fill="#4338ca">🛑 制动子系统</text>
+        <line x1="140" y1="108" x2="240" y2="180" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="car-steer" onclick="selectSub('car-steer', this)">
+        <rect x="20" y="140" width="120" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="80" y="162" text-anchor="middle" font-size="12" fill="#4338ca">🎯 转向子系统</text>
+        <line x1="140" y1="158" x2="300" y2="135" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="car-light" onclick="selectSub('car-light', this)">
+        <rect x="460" y="40" width="120" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="520" y="62" text-anchor="middle" font-size="12" fill="#4338ca">💡 灯光子系统</text>
+        <line x1="460" y1="58" x2="400" y2="115" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="car-ac" onclick="selectSub('car-ac', this)">
+        <rect x="460" y="90" width="120" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="520" y="112" text-anchor="middle" font-size="12" fill="#4338ca">❄️ 空调子系统</text>
+        <line x1="460" y1="108" x2="350" y2="160" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="car-safety" onclick="selectSub('car-safety', this)">
+        <rect x="460" y="140" width="120" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="520" y="162" text-anchor="middle" font-size="12" fill="#4338ca">🛡️ 安全子系统</text>
+        <line x1="460" y1="158" x2="380" y2="160" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <text x="300" y="265" text-anchor="middle" font-size="12" fill="var(--muted)">👆 点击各子系统查看说明</text>
+    </svg>`
+  },
+  elevator: {
+    title: '电梯的子系统',
+    svg: `<svg viewBox="0 0 600 280" class="decomp-svg">
+      <!-- 电梯井 -->
+      <rect x="240" y="30" width="120" height="220" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+      <rect x="260" y="80" width="80" height="100" fill="#cbd5e1" stroke="#475569" stroke-width="1.5"/>
+      <line x1="300" y1="80" x2="300" y2="180" stroke="#475569" stroke-width="1.5"/>
+      <text x="300" y="60" text-anchor="middle" font-size="13" fill="#1e3a8a" font-weight="700">5F</text>
+      <!-- 按钮面板 -->
+      <rect x="370" y="100" width="20" height="60" rx="2" fill="#1e293b"/>
+      <circle cx="380" cy="115" r="4" fill="#fde047"/>
+      <circle cx="380" cy="130" r="4" fill="#94a3b8"/>
+      <circle cx="380" cy="145" r="4" fill="#94a3b8"/>
+      <!-- 子系统 -->
+      <g class="clickable-block" data-key="elev-call" onclick="selectSub('elev-call', this)">
+        <rect x="20" y="35" width="130" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="85" y="57" text-anchor="middle" font-size="12" fill="#4338ca">📞 呼叫子系统</text>
+        <line x1="150" y1="55" x2="245" y2="60" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="elev-drive" onclick="selectSub('elev-drive', this)">
+        <rect x="20" y="90" width="130" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="85" y="112" text-anchor="middle" font-size="12" fill="#4338ca">⚙️ 驱动子系统</text>
+        <line x1="150" y1="108" x2="245" y2="130" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="elev-door" onclick="selectSub('elev-door', this)">
+        <rect x="20" y="145" width="130" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="85" y="167" text-anchor="middle" font-size="12" fill="#4338ca">🚪 门控子系统</text>
+        <line x1="150" y1="163" x2="260" y2="180" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="elev-floor" onclick="selectSub('elev-floor', this)">
+        <rect x="450" y="35" width="130" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="515" y="57" text-anchor="middle" font-size="12" fill="#4338ca">🏢 楼层选择</text>
+        <line x1="450" y1="55" x2="395" y2="125" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="elev-safety" onclick="selectSub('elev-safety', this)">
+        <rect x="450" y="90" width="130" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="515" y="112" text-anchor="middle" font-size="12" fill="#4338ca">⚠️ 安全子系统</text>
+        <line x1="450" y1="108" x2="360" y2="180" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <g class="clickable-block" data-key="elev-display" onclick="selectSub('elev-display', this)">
+        <rect x="450" y="145" width="130" height="36" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+        <text x="515" y="167" text-anchor="middle" font-size="12" fill="#4338ca">📊 显示子系统</text>
+        <line x1="450" y1="163" x2="360" y2="60" stroke="#4f46e5" stroke-dasharray="3 2" stroke-width="1.5"/>
+      </g>
+      <text x="300" y="265" text-anchor="middle" font-size="12" fill="var(--muted)">👆 点击各子系统查看说明</text>
+    </svg>`
+  }
+};
+
+const subInfos = {
+  'phone-screen': { title: '📱 显示子系统', body: '由屏幕、显示芯片、触摸传感器组成。负责把图像信息显示出来，把用户的触摸操作转化为电信号。' },
+  'phone-camera': { title: '📷 摄像子系统', body: '由镜头、感光元件、图像处理芯片组成。负责把光信号转换为数字图像。' },
+  'phone-audio': { title: '🔊 音频子系统', body: '由扬声器、麦克风、音频芯片组成。负责声音的播放和收集。' },
+  'phone-comm': { title: '📶 通信子系统', body: '由天线、5G/Wi-Fi/蓝牙模块组成。负责手机与外界的无线通信。' },
+  'phone-power': { title: '🔋 电源子系统', body: '由电池、充电电路、电源管理芯片组成。为手机所有部件提供电力。' },
+  'phone-cpu': { title: '⚙️ 计算子系统', body: '由 CPU、内存、存储构成。是手机的"大脑"，处理所有数据和指令。' },
+  'car-engine': { title: '⚙️ 动力子系统', body: '由发动机（或电机）、变速箱、油箱（电池）组成。提供汽车行驶的动力。' },
+  'car-brake': { title: '🛑 制动子系统', body: '由刹车踏板、刹车盘、ABS 防抱死系统组成。让汽车安全停下来。' },
+  'car-steer': { title: '🎯 转向子系统', body: '由方向盘、转向器、轮胎组成。控制汽车的行驶方向。' },
+  'car-light': { title: '💡 灯光子系统', body: '由车头灯、刹车灯、转向灯组成。让车辆在不同情况下被看见。' },
+  'car-ac': { title: '❄️ 空调子系统', body: '由压缩机、出风口、温控器组成。调节车内温度和空气。' },
+  'car-safety': { title: '🛡️ 安全子系统', body: '由安全带、安全气囊、防撞传感器组成。在事故发生时保护乘员。' },
+  'elev-call': { title: '📞 呼叫子系统', body: '由各楼层的呼叫按钮（上行/下行）和指示灯组成。让人能呼叫电梯。' },
+  'elev-drive': { title: '⚙️ 驱动子系统', body: '由电机、钢丝绳、配重组成。负责让轿厢上升和下降。' },
+  'elev-door': { title: '🚪 门控子系统', body: '由门电机、开关门按钮、防夹传感器组成。控制电梯门的开关。' },
+  'elev-floor': { title: '🏢 楼层选择子系统', body: '由轿厢内的楼层按钮和刷卡器组成。让乘客选择目的楼层。' },
+  'elev-safety': { title: '⚠️ 安全子系统', body: '由超载传感器、紧急停止按钮、应急照明组成。保障乘客安全。' },
+  'elev-display': { title: '📊 显示子系统', body: '由楼层显示屏、方向指示灯组成。让乘客知道电梯当前位置和方向。' }
+};
+
+function switchDecomp(key, btn) {
+  document.querySelectorAll('.decomp-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('decomp-content').innerHTML = decompData[key].svg;
+  document.getElementById('subInfo').classList.remove('show');
+}
+function selectSub(key, el) {
+  document.querySelectorAll('.clickable-block').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.clickable-block[data-key="' + key + '"]').forEach(b => b.classList.add('selected'));
+  // Also handle paired key (e.g., phone-screen and phone-screen2)
+  document.querySelectorAll('.clickable-block').forEach(b => {
+    if (b.dataset.key && b.dataset.key.startsWith(key)) b.classList.add('selected');
+  });
+  const info = subInfos[key];
+  if (info) {
+    const box = document.getElementById('subInfo');
+    box.innerHTML = `<strong>${info.title}</strong>：${info.body}`;
+    box.classList.add('show');
+  }
+}
+// 初始化
+switchDecomp('phone', document.querySelector('.decomp-tab'));
+
+// === 第15课：模块拖拽 ===
+let placedModules = [];
+const moduleInfo = {
+  temp: '🌡️ 温度传感器',
+  light: '💡 光照传感器',
+  motion: '👁 人体感应',
+  cpu: '⚙️ 控制器',
+  bulb: '💡 灯光',
+  ac: '❄️ 空调',
+  alarm: '🔔 报警器',
+  curtain: '🪟 窗帘电机',
+  wifi: '📶 无线模块'
+};
+
+document.querySelectorAll('.module-tile').forEach(tile => {
+  tile.addEventListener('click', () => {
+    const m = tile.dataset.module;
+    if (placedModules.includes(m)) return;
+    placedModules.push(m);
+    tile.classList.add('placed');
+    renderBuild();
+    analyzeBuild();
+  });
+});
+
+function renderBuild() {
+  const area = document.getElementById('buildArea');
+  if (placedModules.length === 0) {
+    area.innerHTML = '<div class="label">🎯 我的系统（已选模块）</div><span class="empty-hint">还没添加任何模块……</span>';
+    return;
+  }
+  area.innerHTML = '<div class="label">🎯 我的系统（已选模块）</div>' +
+    placedModules.map(m => `<div class="placed-tile">${moduleInfo[m]} <button onclick="removeModule('${m}')">×</button></div>`).join('');
+}
+function removeModule(m) {
+  placedModules = placedModules.filter(x => x !== m);
+  document.querySelector('.module-tile[data-module="' + m + '"]').classList.remove('placed');
+  renderBuild();
+  analyzeBuild();
+}
+
+function analyzeBuild() {
+  const result = document.getElementById('buildResult');
+  const set = new Set(placedModules);
+  if (placedModules.length === 0) {
+    result.className = 'build-result';
+    result.innerHTML = '💡 试试看：搭出"自动开灯系统"需要哪些模块？或者"温度报警器"？';
+    return;
+  }
+  // 检测搭配
+  const combos = [
+    { need: ['motion', 'cpu', 'bulb'], name: '人体感应自动开灯系统', desc: '当有人经过时自动开灯——很常见！' },
+    { need: ['light', 'cpu', 'curtain'], name: '自动窗帘系统', desc: '光照过强时自动拉上窗帘。' },
+    { need: ['temp', 'cpu', 'ac'], name: '智能空调系统', desc: '根据温度自动启停空调。' },
+    { need: ['temp', 'cpu', 'alarm'], name: '温度报警器', desc: '温度过高时发出警报。' },
+    { need: ['motion', 'cpu', 'alarm'], name: '入侵报警器', desc: '检测到人进入时报警。' },
+    { need: ['light', 'cpu', 'bulb'], name: '自动调光系统', desc: '环境光不足时自动开灯。' },
+    { need: ['temp', 'cpu', 'ac', 'wifi'], name: '远程智能空调', desc: '可以通过手机远程控制的空调！' }
+  ];
+  const matched = combos.filter(c => c.need.every(n => set.has(n)));
+  if (matched.length > 0) {
+    result.className = 'build-result success';
+    result.innerHTML = matched.map(c => `✓ <strong>${c.name}</strong>：${c.desc}`).join('<br>');
+  } else if (set.has('cpu')) {
+    result.className = 'build-result partial';
+    result.innerHTML = '⚠ 你已经有了控制器，但还需要一个输入模块（传感器）和一个输出模块（执行器）才能组成完整的控制系统。';
+  } else {
+    result.className = 'build-result partial';
+    result.innerHTML = '⚠ 一个完整的控制系统需要：<strong>传感器（输入）+ 控制器（计算）+ 执行器（输出）</strong>。试着把这三类都选上吧！';
+  }
+}
+
+// === 测验 ===
+const explanations = {
+  q13_1: '✓ 虽然不同控制系统功能各异，但它们都具备"组成部分、相互联系、有明确目标、按输入-计算-输出工作、边界清晰"这些共同点。',
+  q14_1: '✓ 把大问题切成小问题，每个子系统都能由专门的团队独立设计、调试和维护，这是工程上的"分而治之"思想。',
+  q15_1: '✓ 模块化让系统像积木一样可以灵活组装、单独替换、自由扩展，是现代工业产品的核心设计理念。',
+  q15_2: '✓ 乐高积木通过有限的几种基本块可以拼出无数造型，这正是模块化思想的最好体现。'
+};
+function answer(btn, isCorrect, qid) {
+  const options = btn.parentElement.querySelectorAll('.quiz-option');
+  options.forEach(o => o.disabled = true);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'quiz-feedback show correct';
+    fb.innerHTML = '<strong>回答正确！</strong> ' + (explanations[qid] || '');
+  } else {
+    btn.classList.add('wrong');
+    options.forEach(o => {
+      if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+    });
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'quiz-feedback show wrong';
+    fb.innerHTML = '<strong>再想想~</strong> ' + (explanations[qid] || '');
+  }
+}
+</script>
+</body>
+</html>

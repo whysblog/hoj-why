@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第2课 · 互联网应用新特征</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第1单元 · 第2课</span>
+    <span class="title">互联网应用新特征</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>互联网应用<br>新特征</h1>
+<p class="subtitle">第一单元 · 探寻互联网新世界 · 第2课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>互联网5大特征</strong></span>
+<span>💡 关键词：<strong>连通 · 即时 · 共享</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🔍</span><div class="card-title">认识特征</div><div class="card-desc">归纳互联网应用的5个核心特征。</div></div><div class="card"><span class="card-icon">📱</span><div class="card-title">关联应用</div><div class="card-desc">能用生活中的例子说明每个特征。</div></div><div class="card"><span class="card-icon">⚖️</span><div class="card-title">辩证看待</div><div class="card-desc">认识互联网应用带来的便利和挑战。</div></div></div><div class="highlight" style="margin-top:24px;">💭 <strong>课前导入：</strong>对比"传统买票"和"网上买票"，互联网让事情发生了什么变化？</div></section>
+<section class="slide"><h2>特征 ①  连通性</h2>
+<p>互联网把<strong>世界上不同地点、不同设备、不同人</strong>连接在一起，打破地理边界。</p>
+<div class="cards">
+<div class="card"><span class="card-icon">🌍</span><div class="card-title">空间连通</div><div class="card-desc">从北京到纽约，发一条消息只要几秒钟。</div></div>
+<div class="card"><span class="card-icon">📡</span><div class="card-title">设备连通</div><div class="card-desc">手机、电脑、电视、空调、汽车都能上网。</div></div>
+<div class="card"><span class="card-icon">👥</span><div class="card-title">人与人连通</div><div class="card-desc">微信全球用户超 13 亿，地球村真正实现。</div></div>
+</div>
+<div class="highlight">📌 <strong>关键词：</strong>万物互联 (IoT)、零距离沟通、全球一张网。</div></section>
+<section class="slide"><h2>特征 ②  即时性</h2>
+<p>互联网传递信息的速度接近<strong>光速</strong>，几乎可以做到"零延迟"。</p>
+<div class="stats">
+<div class="stat"><div class="stat-num">~50ms</div><div class="stat-label">国内网络延迟</div></div>
+<div class="stat"><div class="stat-num">~200ms</div><div class="stat-label">跨大洲延迟</div></div>
+<div class="stat"><div class="stat-num">0s</div><div class="stat-label">微信发送感知</div></div>
+</div>
+<h3>常见应用场景</h3>
+<ul>
+<li><strong>即时通讯：</strong>微信、QQ、钉钉，对话像面对面一样自然</li>
+<li><strong>实时直播：</strong>抖音、B站，主播说话观众立即听到</li>
+<li><strong>在线游戏：</strong>王者荣耀、英雄联盟，毫秒级响应</li>
+<li><strong>金融交易：</strong>股票交易、移动支付，瞬时完成</li>
+</ul></section>
+<section class="slide"><h2>特征 ③  共享性</h2>
+<p>一份信息，可以<strong>同时</strong>被无数人访问和使用。</p>
+<div class="compare-row">
+<div class="compare-col bad"><h3>📕 传统方式</h3><ul><li>一本书同一时间只能一人看</li><li>复印传递成本高</li><li>地理位置限制访问</li><li>信息更新困难</li></ul></div>
+<div class="compare-col good"><h3>🌐 互联网方式</h3><ul><li>百度百科同时被千万人查阅</li><li>视频可以无限次播放</li><li>云盘文件随时随地访问</li><li>实时更新，人人都能看到最新版</li></ul></div>
+</div>
+<div class="highlight">🎓 <strong>典型代表：</strong>维基百科、知乎、GitHub、各种开源项目——知识共享改变了世界。</div></section>
+<section class="slide"><h2>特征 ④  交互性</h2>
+<p>互联网不是单向传递（如电视、广播），而是<strong>双向、多向</strong>的互动。</p>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">Web 1.0 · 1990s</div><div class="tl-title">只能"看"</div><div class="tl-desc">门户网站如新浪、搜狐，用户只能浏览，不能参与。类似看报纸。</div></div>
+<div class="tl-item"><div class="tl-year">Web 2.0 · 2005-</div><div class="tl-title">可以"写"</div><div class="tl-desc">博客、微博、B站，用户开始发表内容、评论、点赞。</div></div>
+<div class="tl-item"><div class="tl-year">Web 3.0 + AI</div><div class="tl-title">可以"对话"</div><div class="tl-desc">智能助手、ChatGPT、文心一言，用户与 AI 自然语言对话。</div></div>
+</div></section>
+<section class="slide"><h2>特征 ⑤  规模化</h2>
+<p>互联网应用具备"<strong>边际成本递减</strong>"的特点——服务越多人，单人成本越低。</p>
+<div class="cards">
+<div class="card"><span class="card-icon">🎬</span><div class="card-title">视频平台</div><div class="card-desc">爱奇艺一部剧拍好后，1人看和1000万人看，制作成本不变。</div></div>
+<div class="card"><span class="card-icon">📚</span><div class="card-title">在线教育</div><div class="card-desc">一节名师课视频，可以服务全国数百万学生。</div></div>
+<div class="card"><span class="card-icon">🛒</span><div class="card-title">电商平台</div><div class="card-desc">"双十一"24小时成交额上千亿，传统商场无法想象。</div></div>
+<div class="card"><span class="card-icon">💬</span><div class="card-title">社交应用</div><div class="card-desc">微信日活超10亿，靠几万员工服务，规模效应巨大。</div></div>
+</div>
+<div class="highlight">📊 <strong>"长尾效应"：</strong>互联网让小众需求也能被满足——你喜欢的冷门动漫、罕见技能教学，都能在网上找到同好。</div></section>
+<section class="slide"><h2>特征带来的双面影响</h2>
+<div class="compare-row">
+<div class="compare-col good"><h3>✅ 带来便利</h3>
+<ul><li>买票、购物、办事更方便</li><li>学习资源唾手可得</li><li>远程办公、远程协作成为可能</li><li>降低创业门槛，机会更多</li><li>偏远地区也能接触优质资源</li></ul></div>
+<div class="compare-col bad"><h3>⚠️ 带来挑战</h3>
+<ul><li>个人隐私容易被收集</li><li>虚假信息传播速度也很快</li><li>网络成瘾、过度依赖问题</li><li>信息茧房、"算法投喂"</li><li>数字鸿沟（年长者跟不上）</li></ul></div>
+</div>
+<div class="highlight">💡 <strong>启示：</strong>互联网是一把双刃剑，关键看我们<strong>如何使用</strong>。学会合理利用、负责任使用，是数字公民的基本素养。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 下列哪种应用最能体现互联网的"即时性"特征？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">图书馆借书</div>
+<div class="quiz-opt" data-correct="true">视频会议</div>
+<div class="quiz-opt" data-correct="false">录像带寄送</div>
+<div class="quiz-opt" data-correct="false">信件邮寄</div></div>
+<div class="quiz-feedback">✅ 视频会议要求实时音视频传输，几乎"零延迟"，是即时性的典型应用。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 维基百科一篇文章能同时被全世界数百万人阅读，主要体现了互联网的什么特征？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">连通性</div>
+<div class="quiz-opt" data-correct="false">交互性</div>
+<div class="quiz-opt" data-correct="true">共享性</div>
+<div class="quiz-opt" data-correct="false">规模化</div></div>
+<div class="quiz-feedback">✅ 一份信息同时被多人访问，是典型的"共享性"特征。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 关于互联网应用，下列说法<strong>不正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">它让信息传播更快</div>
+<div class="quiz-opt" data-correct="true">它一定带来更好的生活</div>
+<div class="quiz-opt" data-correct="false">它需要负责任地使用</div>
+<div class="quiz-opt" data-correct="false">它具有规模化效应</div></div>
+<div class="quiz-feedback">✅ 互联网是双刃剑，使用不当（如沉迷、被骗、隐私泄露）也会带来负面影响。技术本身中性，关键在使用方式。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2>
+<table class="tbl">
+<tr><th>特征</th><th>含义</th><th>典型例子</th></tr>
+<tr><td><strong>连通性</strong></td><td>打破时空，连接万物</td><td>微信、IoT、5G</td></tr>
+<tr><td><strong>即时性</strong></td><td>信息接近光速传递</td><td>直播、即时通讯</td></tr>
+<tr><td><strong>共享性</strong></td><td>一份信息无限分享</td><td>百度百科、B站视频</td></tr>
+<tr><td><strong>交互性</strong></td><td>双向甚至多向互动</td><td>评论、AI对话</td></tr>
+<tr><td><strong>规模化</strong></td><td>边际成本递减</td><td>电商、在线教育</td></tr>
+</table>
+<div class="highlight" style="margin-top:18px; text-align:center;">💭 <strong>课后任务：</strong>选择一个你最常用的 APP，写出它体现了哪 2-3 个特征，举具体例子。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面 · 互联网应用新特征", "学习目标", "特征① 连通性", "特征② 即时性", "特征③ 共享性", "特征④ 交互性", "特征⑤ 规模化", "双面影响", "📝 课堂小测", "🎓 课堂总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

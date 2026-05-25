@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第29课 生成式人工智能 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#ec407a;
+  --theme-dark:#ad1457;
+  --theme-light:#fce4ec;
+  --bg:#fff5f8;
+}
+.ai-type-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin:14px 0;
+}
+.ai-type{
+  background:#fff;border-radius:12px;
+  padding:16px;
+  border-left:5px solid var(--theme);
+}
+.ai-type.classic{
+  border-left-color:#1e88e5;
+}
+.ai-type.gen{
+  border-left-color:#ec407a;
+}
+.ai-type h4{
+  font-size:16px;
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.ai-type.classic h4{color:#1565c0}
+.ai-type.gen h4{color:var(--theme-dark)}
+.ai-type ul{
+  font-size:13px;color:#37474f;
+  padding-left:20px;margin-bottom:0;
+}
+.ai-type ul li{margin-bottom:4px}
+.chat-mock{
+  background:#fff;border-radius:14px;
+  padding:14px;margin:14px 0;
+  max-width:520px;
+  margin-left:auto;margin-right:auto;
+  border:2px solid var(--theme-light);
+}
+.chat-msg{
+  display:flex;gap:8px;margin:8px 0;
+  align-items:flex-start;
+}
+.chat-msg.user{justify-content:flex-end}
+.chat-msg .avatar{
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+.chat-msg.user .avatar{background:#bbdefb;order:2}
+.chat-msg.ai .avatar{background:var(--theme-light)}
+.chat-msg .bubble{
+  background:#f5f5f5;
+  border-radius:14px;
+  padding:8px 12px;
+  font-size:13px;
+  max-width:380px;
+  line-height:1.5;
+}
+.chat-msg.user .bubble{background:#bbdefb;color:#0d47a1}
+.chat-msg.ai .bubble{background:var(--theme-light);color:var(--theme-dark)}
+.app-card{
+  background:#fff;border-radius:10px;
+  padding:14px;margin:10px 0;
+  display:flex;gap:12px;
+  border:2px solid var(--theme-light);
+}
+.app-card .a-icon{
+  font-size:32px;flex-shrink:0;
+  background:var(--theme-light);
+  width:54px;height:54px;
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+}
+.app-card h4{
+  color:var(--theme-dark);font-size:15px;
+  margin-bottom:4px;
+}
+.app-card p{font-size:13px;color:#37474f;margin:0}
+.app-card .platforms{
+  display:inline-block;
+  background:#f5f5f5;
+  padding:2px 8px;
+  border-radius:6px;
+  font-size:11px;
+  color:#90a4ae;
+  margin-top:4px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第六单元 · 第29课</span>
+    <h1>✨ 生成式人工智能</h1>
+    <p>认识能"创造内容"的 AI——文心一言、通义千问、DeepSeek 们</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">🆚 两种 AI</button>
+    <button class="nav-btn" data-slide="2">💬 怎么用</button>
+    <button class="nav-btn" data-slide="3">🛠️ 国产工具</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      你和电脑说："<b>给我写一首关于春天的小诗</b>"。
+      <br><br>
+      上一秒电脑还是一片空白，下一秒它就<b>"创作"</b>出一首之前从来没有的诗——
+      <br>
+      <i>"春风轻拂柳枝长，万紫千红入眼旁。蝴蝶翩跹花丛舞，孩童欢笑乐安康。"</i>
+      <br><br>
+      这就是<b>生成式人工智能</b>的本领！
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>知道<b>生成式 AI</b> 和<b>传统 AI</b> 的区别</li>
+      <li>学会用 AI 工具帮自己学习和创作</li>
+      <li>了解几款主要的<b>国产 AI 工具</b></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>两种不同的 AI</h2>
+
+    <div class="ai-type-grid">
+      <div class="ai-type classic">
+        <h4>🤖 传统 AI（识别型）</h4>
+        <p style="font-size:13px;color:#37474f;margin-bottom:6px">能"<b>认识</b>"东西，但不能"创造"</p>
+        <ul>
+          <li>📷 识别图片里有什么</li>
+          <li>🗣️ 听懂语音变成文字</li>
+          <li>🚗 看到行人会刹车</li>
+          <li>🌐 翻译一句话</li>
+        </ul>
+      </div>
+      <div class="ai-type gen">
+        <h4>✨ 生成式 AI（创造型）</h4>
+        <p style="font-size:13px;color:#37474f;margin-bottom:6px">能"<b>创造</b>"全新的内容</p>
+        <ul>
+          <li>📝 写作文、写诗、写代码</li>
+          <li>🎨 画画（按你的描述生成图片）</li>
+          <li>🎵 作曲（生成音乐）</li>
+          <li>🎬 生成视频</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 简单理解</h4>
+      <ul style="margin-top:4px">
+        <li>👀 <b>传统 AI</b>：像"<b>判断题选手</b>"——这是猫吗？是！</li>
+        <li>🎨 <b>生成式 AI</b>：像"<b>创作型作家</b>"——给我画一只在月亮上的猫！</li>
+      </ul>
+    </div>
+
+    <h3>🌟 生成式 AI 厉害在哪里？</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🧠</span>
+        <h4>会思考</h4>
+        <p>能理解你的复杂问题</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💬</span>
+        <h4>会对话</h4>
+        <p>能像人一样和你聊天</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📚</span>
+        <h4>知识多</h4>
+        <p>读过海量的书和文章</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🎨</span>
+        <h4>会创作</h4>
+        <p>文字、图片、音乐都能做</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>怎么和 AI 聊天</h2>
+
+    <p>使用生成式 AI 就像和一个<b>"无所不知的朋友"</b>聊天 ↓</p>
+
+    <div class="chat-mock">
+      <div class="chat-msg user">
+        <div class="bubble">帮我写一首关于"秋天"的小诗，五言四句</div>
+        <div class="avatar">👦</div>
+      </div>
+      <div class="chat-msg ai">
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          好的！这是一首给你的小诗：<br><br>
+          <i>秋风扫落叶，</i><br>
+          <i>大雁向南飞。</i><br>
+          <i>稻香金满地，</i><br>
+          <i>果熟挂满枝。</i>
+        </div>
+      </div>
+      <div class="chat-msg user">
+        <div class="bubble">能再短一点，三言四句吗？</div>
+        <div class="avatar">👦</div>
+      </div>
+      <div class="chat-msg ai">
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          没问题！<br><br>
+          <i>秋风起，</i><br>
+          <i>落叶黄。</i><br>
+          <i>稻飘香，</i><br>
+          <i>果儿尝。</i>
+        </div>
+      </div>
+    </div>
+
+    <h3>💡 提问的小技巧</h3>
+    <div class="info-box success">
+      要让 AI 给你想要的答案，关键是<b>把问题说清楚</b>：
+      <ol style="margin-top:4px">
+        <li>📌 <b>说明角色</b>："假如你是一位老师，请..."</li>
+        <li>🎯 <b>明确要求</b>："写一首五言绝句"（不要只说"写一首诗"）</li>
+        <li>📋 <b>给出例子</b>：参考某种风格</li>
+        <li>🔁 <b>多轮对话</b>：不满意可以让它<b>改一改</b></li>
+      </ol>
+    </div>
+
+    <h3>🎯 AI 能帮你做什么</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📚</span>
+        <h4>学习帮手</h4>
+        <p>解释难懂的概念、辅导功课</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">✏️</span>
+        <h4>写作助手</h4>
+        <p>给作文提建议、修改文字</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💡</span>
+        <h4>解决问题</h4>
+        <p>回答各种你想知道的问题</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🎨</span>
+        <h4>创意伙伴</h4>
+        <p>头脑风暴、给灵感</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>国产 AI 工具</h2>
+
+    <p>我们国家也有许多优秀的<b>生成式 AI 工具</b>，让我们为<b>中国 AI</b> 加油！🇨🇳</p>
+
+    <div class="app-card">
+      <span class="a-icon">📖</span>
+      <div>
+        <h4>文心一言</h4>
+        <p>百度公司出品，能聊天、写作、画图、做表格。</p>
+        <span class="platforms">网页 / APP</span>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <span class="a-icon">☁️</span>
+      <div>
+        <h4>通义千问</h4>
+        <p>阿里巴巴出品，理解中文非常好，文字处理强。</p>
+        <span class="platforms">网页 / APP</span>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <span class="a-icon">🔮</span>
+      <div>
+        <h4>DeepSeek</h4>
+        <p>国产开源大模型，免费易用，编程和推理能力强。</p>
+        <span class="platforms">网页 / APP</span>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <span class="a-icon">💫</span>
+      <div>
+        <h4>豆包</h4>
+        <p>字节跳动出品，活泼有趣，适合小朋友使用。</p>
+        <span class="platforms">网页 / APP</span>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <span class="a-icon">🎨</span>
+      <div>
+        <h4>即梦 / 文心一格</h4>
+        <p>专门的 AI 绘画工具，输入文字就能生成精美图片。</p>
+        <span class="platforms">网页 / APP</span>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      <h4>⚠️ 使用 AI 的注意事项</h4>
+      <ul style="margin-top:4px">
+        <li>👨‍👩‍👧 <b>有家长陪同</b>使用，注册要用家长账号</li>
+        <li>📝 用 AI <b>辅助学习</b>，不要直接抄作业</li>
+        <li>🤔 AI 也会出错，要<b>核实信息</b></li>
+        <li>🔒 不要透露<b>个人隐私</b>给 AI</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🤖</span>
+        <h4>传统 AI</h4>
+        <p>识别、判断、分类</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">✨</span>
+        <h4>生成式 AI</h4>
+        <p>创造文字、图片、音乐</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💬</span>
+        <h4>怎么用</h4>
+        <p>说清楚、给细节、多轮聊</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🇨🇳</span>
+        <h4>国产工具</h4>
+        <p>文心、通义、DeepSeek、豆包</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      在家长帮助下：
+      <ul style="margin-top:4px">
+        <li>选一款国产 AI 工具（文心一言/豆包等）</li>
+        <li>请 AI <b>解释一个你不懂的字</b>，或<b>讲一个有趣的故事</b></li>
+        <li>看看 AI 回答得好不好，自己想一想：它说的对吗？</li>
+      </ul>
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      AI 这么厉害，是不是也带来了<b>新挑战</b>？比如：AI 写的作业算不算自己的？
+      AI 会"<b>胡说</b>"吗？
+      <br>
+      下节课《应对智能新挑战》，最后一课，重要！⚖️
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

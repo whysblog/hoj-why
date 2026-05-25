@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>身边的算法 · 互动工具集</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.hero {
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 50%, #6B5BD8 100%);
+  color: white;
+  padding: 50px 32px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -10%;
+  width: 80%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: float 8s ease-in-out infinite;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -50%; right: -10%;
+  width: 80%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  animation: float 10s ease-in-out infinite reverse;
+}
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+.hero h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+.hero .subtitle {
+  font-size: 16px;
+  opacity: 0.95;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+}
+.hero .meta {
+  font-size: 13px;
+  opacity: 0.8;
+  position: relative;
+  z-index: 1;
+}
+
+.intro-section {
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  padding: 22px 32px;
+  border-bottom: 1px solid #D6E8FA;
+  font-size: 14px;
+  color: #34495E;
+  line-height: 1.7;
+}
+.intro-section strong { color: var(--primary-dark); }
+
+.tools-section { padding: 32px; }
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, #D6E8FA, transparent);
+  border-radius: 2px;
+  margin-left: 6px;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.tool-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--primary);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.25s;
+}
+.tool-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(74,144,226,0.15);
+}
+.tool-card:hover::before { transform: scaleY(1); }
+
+.tool-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.tool-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.tool-meta {
+  flex: 1;
+  min-width: 0;
+}
+.tool-lesson {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tool-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.tool-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  flex: 1;
+}
+.tool-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tool-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #F0F7FF;
+  color: var(--primary-dark);
+  font-weight: 500;
+}
+
+/* 主题色变体 */
+.tool-icon.c1 { background: linear-gradient(135deg, #FFE4D4, #FFC8A2); color: #D56114; }
+.tool-icon.c2 { background: linear-gradient(135deg, #D4EFDA, #A2DDB2); color: #2A7A41; }
+.tool-icon.c3 { background: linear-gradient(135deg, #D4E3FF, #A2C2FF); color: #2654A8; }
+.tool-icon.c4 { background: linear-gradient(135deg, #FFE5D4, #FFCCAA); color: #C75A1F; }
+.tool-icon.c5 { background: linear-gradient(135deg, #FFD4D4, #FFA8A8); color: #B62E2E; }
+.tool-icon.c6 { background: linear-gradient(135deg, #E5D4FF, #C8AAFF); color: #5E2DAA; }
+.tool-icon.c7 { background: linear-gradient(135deg, #FFEED4, #FFDA9F); color: #B57A14; }
+.tool-icon.c8 { background: linear-gradient(135deg, #D4F0F8, #A2DCEF); color: #1A6E8A; }
+
+.footer {
+  text-align: center;
+  padding: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-light);
+  background: #FAFBFC;
+}
+.footer a { color: var(--primary); text-decoration: none; }
+
+@media (max-width: 600px) {
+  .hero { padding: 36px 20px 28px; }
+  .hero h1 { font-size: 26px; }
+  .tools-section { padding: 22px 20px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>🧩 身边的算法</h1>
+    <div class="subtitle">12 个交互式工具,帮助小朋友直观理解算法之美</div>
+    <div class="meta">五年级信息科技 · 教学指南配套</div>
+  </div>
+
+  <div class="intro-section">
+    <strong>📖 关于这套工具:</strong>
+    本工具集为五年级《身边的算法》<strong>全 30 课</strong>每一课都配备了互动 HTML 工具,
+    把抽象的算法变成"看得见、摸得着"的小实验。点击下方任一卡片即可进入对应工具,每个工具都包含
+    <strong>学习目标、情境引入、概念讲解、互动演示、课堂总结</strong>五个部分,可作为 PPT 课件直接使用,
+    也支持课后自主探究。<br>
+    <small style="color:var(--text-light);">⌨ 在工具内可用键盘 ← → 翻页,按 ⛶ 全屏适合投屏教学</small>
+  </div>
+
+  <div class="tools-section">
+    <div class="section-title">🌱 第一单元 · 无处不在的算法</div>
+    <div class="tools-grid">
+      <a href="13_life_algorithm.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c1">🧭</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 1 课</div>
+            <div class="tool-name">生活算法发现器</div>
+          </div>
+        </div>
+        <div class="tool-desc">从西红柿炒鸡蛋、图书馆借书等身边小事,发现算法就藏在日常之中。包含拖动排序游戏。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">算法入门</span></div>
+      </a>
+      <a href="14_io_explorer.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c2">🔄</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 2 课</div>
+            <div class="tool-name">输入-处理-输出体验馆</div>
+          </div>
+        </div>
+        <div class="tool-desc">认识算法的"三步走"基本流程,通过两数相加和 24 点游戏体会输入处理输出。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">IPO 流程</span></div>
+      </a>
+      <a href="01_hanoi.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c3">🗼</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 3 课</div>
+            <div class="tool-name">汉诺塔游戏</div>
+          </div>
+        </div>
+        <div class="tool-desc">用经典的"搬金片"游戏,体会"分治"思想 — 把大问题拆成小问题,递归求解。</div>
+        <div class="tool-tags"><span class="tool-tag">递归</span><span class="tool-tag">分治</span></div>
+      </a>
+      <a href="15_app_atlas.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c4">🌐</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 4 课</div>
+            <div class="tool-name">算法应用全景图</div>
+          </div>
+        </div>
+        <div class="tool-desc">8 大领域的算法应用展示:医疗、交通、艺术、翻译…配情境识别挑战游戏。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">应用</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">📐 第二单元 · 算法结构与描述</div>
+    <div class="tools-grid">
+      <a href="16_sequence_flow.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c1">📐</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 5 课</div>
+            <div class="tool-name">顺序结构流程图</div>
+          </div>
+        </div>
+        <div class="tool-desc">认识流程图的 4 种基本图框,通过温度转换演示顺序结构的执行过程。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">顺序结构</span></div>
+      </a>
+      <a href="17_branch_sim.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c5">🔀</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 6 课</div>
+            <div class="tool-name">分支判断模拟器</div>
+          </div>
+        </div>
+        <div class="tool-desc">"如果……就……" — 拖动身高滑块,看公园购票算法如何走不同分支。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">分支结构</span></div>
+      </a>
+      <a href="18_loop_demo.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c2">🔁</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 7 课</div>
+            <div class="tool-name">循环结构演示器</div>
+          </div>
+        </div>
+        <div class="tool-desc">红绿灯过马路 + 热水壶 100°C 自动断电,生动演示循环结构的执行。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">循环结构</span></div>
+      </a>
+      <a href="19_python_verify.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c3">🐍</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 8 课</div>
+            <div class="tool-name">Python 算法验证器</div>
+          </div>
+        </div>
+        <div class="tool-desc">浏览器内模拟 Python 运行,逐行执行 3 个程序,实时显示变量值的变化。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">编程入门</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">🔐 第三单元 · 用算法解决问题</div>
+    <div class="tools-grid">
+      <a href="02_caesar.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c5">🔐</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 9 课</div>
+            <div class="tool-name">凯撒密码</div>
+          </div>
+        </div>
+        <div class="tool-desc">古罗马军事密码,通过字母表平移加密。亲手加密一句悄悄话,再解密回来。</div>
+        <div class="tool-tags"><span class="tool-tag">加密</span><span class="tool-tag">字符变换</span></div>
+      </a>
+      <a href="03_binary_search.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c3">🎯</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 10 课</div>
+            <div class="tool-name">二分法猜数</div>
+          </div>
+        </div>
+        <div class="tool-desc">想一个 1~100 的数,看看计算机如何用 7 次以内一定能猜中 — 这就是"二分查找"。</div>
+        <div class="tool-tags"><span class="tool-tag">查找</span><span class="tool-tag">折半</span></div>
+      </a>
+      <a href="04_leap_year.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c2">📅</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 11–12 课</div>
+            <div class="tool-name">闰年判断器</div>
+          </div>
+        </div>
+        <div class="tool-desc">闰年的规则其实是"多分支"判断,逐条检查能整除 4、100、400 三个条件。</div>
+        <div class="tool-tags"><span class="tool-tag">多分支</span><span class="tool-tag">逻辑</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">⚡ 第四单元 · 发挥算法的优势</div>
+    <div class="tools-grid">
+      <a href="20_counting.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c4">🔢</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 13 课</div>
+            <div class="tool-name">计算机数数演示器</div>
+          </div>
+        </div>
+        <div class="tool-desc">用 while 循环让计算机数数(全部/奇/偶/倍数/逢七必过),并与人工对比速度。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">while 循环</span></div>
+      </a>
+      <a href="21_efficiency.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c4">⚡</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 14 课</div>
+            <div class="tool-name">算法效率对决</div>
+          </div>
+        </div>
+        <div class="tool-desc">高斯巧算 1+2+…+n!对比逐个累加 vs 公式法,实时测量步骤数与耗时差异。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">效率分析</span></div>
+      </a>
+      <a href="05_password.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c5">🛡️</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 15 课</div>
+            <div class="tool-name">密码破解时间</div>
+          </div>
+        </div>
+        <div class="tool-desc">为什么密码越长越安全?看看不同长度、不同字符集的密码会被破解多久。</div>
+        <div class="tool-tags"><span class="tool-tag">枚举</span><span class="tool-tag">网络安全</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">📊 第五单元 · 把数据排列有序</div>
+    <div class="tools-grid">
+      <a href="06_sorting.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c4">📊</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 16–20 课</div>
+            <div class="tool-name">排序算法可视化</div>
+          </div>
+        </div>
+        <div class="tool-desc">逐步演示找最大数、选择排序、冒泡排序、桶排序的全过程,看清算法的每一步比较。</div>
+        <div class="tool-tags"><span class="tool-tag">排序</span><span class="tool-tag">比较</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">🐰 第六单元 · 快速遍历数据</div>
+    <div class="tools-grid">
+      <a href="07_chicken_rabbit.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c7">🐔</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 21 课</div>
+            <div class="tool-name">鸡兔同笼</div>
+          </div>
+        </div>
+        <div class="tool-desc">古老的数学题,用"枚举法"让计算机替你逐一尝试,对比与方程解法的差异。</div>
+        <div class="tool-tags"><span class="tool-tag">枚举</span><span class="tool-tag">数学</span></div>
+      </a>
+      <a href="08_fibonacci.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c2">🐰</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 22–23 课</div>
+            <div class="tool-name">斐波那契兔子</div>
+          </div>
+        </div>
+        <div class="tool-desc">兔子从 1 对增长到上千对,这串神奇数列竟出现在向日葵、松果和螺线中!</div>
+        <div class="tool-tags"><span class="tool-tag">递推</span><span class="tool-tag">数列</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">🗺️ 第七单元 · 了解更多的算法</div>
+    <div class="tools-grid">
+      <a href="22_river_crossing.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c4">🚣</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 24 课</div>
+            <div class="tool-name">过河谜题模拟器</div>
+          </div>
+        </div>
+        <div class="tool-desc">10 个成年人 + 2 个少年过河,农夫狐狼菜过河 — 两个经典谜题的互动求解。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">问题分解</span></div>
+      </a>
+      <a href="09_one_stroke.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c6">✏️</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 25 课</div>
+            <div class="tool-name">一笔画判断</div>
+          </div>
+        </div>
+        <div class="tool-desc">柯尼斯堡七桥问题催生了图论。判断一个图能否一笔画完,只需数"奇点"。</div>
+        <div class="tool-tags"><span class="tool-tag">图论</span><span class="tool-tag">欧拉路径</span></div>
+      </a>
+      <a href="10_shortest_path.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c1">🗺️</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 26 课</div>
+            <div class="tool-name">最短路径求解</div>
+          </div>
+        </div>
+        <div class="tool-desc">导航软件如何算出最短路线?动态规划,从终点倒推每个路口的最优解。</div>
+        <div class="tool-tags"><span class="tool-tag">动态规划</span><span class="tool-tag">导航</span></div>
+      </a>
+      <a href="23_pagerank.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c5">🔍</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 27 课</div>
+            <div class="tool-name">PageRank 网页排名</div>
+          </div>
+        </div>
+        <div class="tool-desc">搜索引擎背后的算法!4 个网页 + 链接关系,模拟 100 个访问者随机游走得出排名。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">搜索引擎</span></div>
+      </a>
+    </div>
+
+    <div class="section-title">🤖 第八单元 · 人工智能中的算法</div>
+    <div class="tools-grid">
+      <a href="11_decision_tree.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c2">🌳</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 28 课</div>
+            <div class="tool-name">决策树构建器</div>
+          </div>
+        </div>
+        <div class="tool-desc">想一个动物,我用一连串"是/否"问题猜出来 — 这就是机器学习的常用算法。</div>
+        <div class="tool-tags"><span class="tool-tag">机器学习</span><span class="tool-tag">分类</span></div>
+      </a>
+      <a href="24_generative_ai.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c1">🤖</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 29 课</div>
+            <div class="tool-name">生成式 AI 体验</div>
+          </div>
+        </div>
+        <div class="tool-desc">体验 AI 写诗、写代码,理解提示词的力量,认识 AI 的局限(沙漏 9 分钟难题)。</div>
+        <div class="tool-tags"><span class="tool-tag">课件版</span><span class="tool-tag">生成式 AI</span></div>
+      </a>
+      <a href="12_game_of_life.html" class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-icon c8">🌌</div>
+          <div class="tool-meta">
+            <div class="tool-lesson">第 30 课</div>
+            <div class="tool-name">生命游戏</div>
+          </div>
+        </div>
+        <div class="tool-desc">康威 1970 年发明的细胞自动机:仅用 3 条规则,就能演化出无限丰富的图案。</div>
+        <div class="tool-tags"><span class="tool-tag">细胞自动机</span><span class="tool-tag">涌现</span></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    根据《义务教育信息科技课程教学指南——身边的算法(五年级全一册)》设计制作 · 适用于课堂演示与课后探究
+  </div>
+</div>
+</body>
+</html>

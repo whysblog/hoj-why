@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最短路径求解器 - 第26课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.grid-area {
+  background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+.path-grid {
+  display: grid;
+  gap: 0;
+  position: relative;
+}
+.grid-node {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: 700;
+  transition: all 0.5s;
+  z-index: 2;
+}
+.grid-node .name {
+  font-size: 14px;
+  color: var(--text-light);
+}
+.grid-node .cost {
+  font-size: 18px;
+  color: var(--primary);
+  font-weight: 700;
+}
+.grid-node.start { border-color: var(--secondary); background: #E8F8EE; }
+.grid-node.start .name { color: var(--secondary); }
+.grid-node.end { border-color: var(--accent); background: #FFF4E6; }
+.grid-node.end .name { color: var(--accent); }
+.grid-node.computed {
+  border-color: var(--primary);
+  background: #F0F7FF;
+  box-shadow: 0 4px 12px rgba(74,144,226,0.2);
+}
+.grid-node.path {
+  background: linear-gradient(135deg, var(--secondary), #3FA866);
+  border-color: var(--secondary);
+  color: white;
+}
+.grid-node.path .name, .grid-node.path .cost { color: white; }
+.grid-node.checking {
+  border-color: var(--warning);
+  background: #FFF9E6;
+  transform: scale(1.1);
+}
+.path-grid svg {
+  position: absolute;
+  top: 35px;
+  left: 35px;
+  pointer-events: none;
+  z-index: 1;
+}
+.path-grid svg.full {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.path-list {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 12px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.path-list .calc-line {
+  padding: 4px 0;
+  border-bottom: 1px dashed #E0E6ED;
+}
+.path-list .calc-line.best {
+  background: #D1FAE5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid var(--secondary);
+  border-bottom: none;
+  margin: 2px 0;
+}
+.legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 14px 0;
+  font-size: 13px;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🗺 最短路径求解器</h1>
+    <div class="subtitle">用动态规划思想寻找最短路径</div>
+    <span class="lesson-tag">第26课 · 寻找最短的路径</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>问题情境：</strong>从起点到终点，只能向右或向下走。每条路上的数字代表所需时间（分钟）。求最短的路径用时。
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>地图大小：</label>
+        <select id="sizeSel">
+          <option value="3" selected>3 × 3</option>
+          <option value="4">4 × 4</option>
+          <option value="5">5 × 5</option>
+        </select>
+      </div>
+      <button onclick="randomMap()">🎲 随机权重</button>
+      <button class="btn-success" onclick="runDP()">▶ 动态规划求解</button>
+      <button class="btn-warning" onclick="runEnum()">📋 枚举所有路径</button>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="border-color:var(--secondary);background:#E8F8EE;"></div>起点</div>
+      <div class="legend-item"><div class="legend-dot" style="border-color:var(--accent);background:#FFF4E6;"></div>终点</div>
+      <div class="legend-item"><div class="legend-dot" style="border-color:var(--warning);background:#FFF9E6;"></div>正在计算</div>
+      <div class="legend-item"><div class="legend-dot" style="border-color:var(--primary);background:#F0F7FF;"></div>已计算最短用时</div>
+      <div class="legend-item"><div class="legend-dot" style="border-color:var(--secondary);background:var(--secondary);"></div>最短路径</div>
+    </div>
+
+    <div class="grid-area">
+      <div class="path-grid" id="grid"></div>
+    </div>
+
+    <div class="info-panel" id="stepInfo">点击按钮开始求解。</div>
+
+    <h3 style="margin:14px 0 8px;font-size:15px;color:var(--text-light);">🧮 计算过程</h3>
+    <div class="path-list" id="calcList"></div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>动态规划思想：</strong>把"求起点到终点的最短路径"这个大问题，分解为"求起点到每个中间点的最短用时"这些小问题。</p>
+      <p><strong>核心公式：</strong>到达 (i, j) 的最短用时 = min(从上方来, 从左方来) + 该格本身的"代价"</p>
+      <ul>
+        <li>从上方来：上方的最短用时 + 上方到该点的边权重</li>
+        <li>从左方来：左方的最短用时 + 左方到该点的边权重</li>
+        <li>两者取较小值</li>
+      </ul>
+      <p><strong>对比两种算法：</strong></p>
+      <ul>
+        <li>📋 <strong>枚举法：</strong>列出所有可能的路径，计算时间，找出最短的。简单但路径数会随着地图增大爆炸式增长。</li>
+        <li>⚡ <strong>动态规划：</strong>每个点的最短用时只计算一次并保存，避免重复计算。效率非常高。</li>
+      </ul>
+      <p><strong>实际应用：</strong>导航软件查找最快路线、物流配送规划、网络数据包路由、机器人路径规划等。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let size = 3;
+let grid = [];     // grid[r][c] = 节点最短用时
+let edgesH = [];   // 横边 edgesH[r][c] = (r,c)→(r,c+1) 的权重
+let edgesV = [];   // 竖边 edgesV[r][c] = (r,c)→(r+1,c) 的权重
+let prev = [];     // 记录前驱节点，用于追溯路径
+
+function init() {
+  size = parseInt(document.getElementById('sizeSel').value);
+  grid = Array.from({length: size}, () => Array(size).fill(null));
+  edgesH = Array.from({length: size}, () => Array(size-1).fill(0));
+  edgesV = Array.from({length: size-1}, () => Array(size).fill(0));
+  prev = Array.from({length: size}, () => Array(size).fill(null));
+  randomEdges();
+  render();
+}
+
+function randomEdges() {
+  for (let r = 0; r < size; r++)
+    for (let c = 0; c < size-1; c++)
+      edgesH[r][c] = Math.floor(Math.random() * 5) + 1;
+  for (let r = 0; r < size-1; r++)
+    for (let c = 0; c < size; c++)
+      edgesV[r][c] = Math.floor(Math.random() * 5) + 1;
+}
+
+function randomMap() {
+  randomEdges();
+  grid = Array.from({length: size}, () => Array(size).fill(null));
+  prev = Array.from({length: size}, () => Array(size).fill(null));
+  document.getElementById('calcList').innerHTML = '';
+  document.getElementById('stepInfo').textContent = '已生成新的地图。点击按钮开始求解。';
+  render();
+}
+
+function render(highlightPath = []) {
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+  const cellSize = 70;
+  const gap = 50;
+  gridEl.style.gridTemplateColumns = `repeat(${size}, ${cellSize}px)`;
+  gridEl.style.gridTemplateRows = `repeat(${size}, ${cellSize}px)`;
+  gridEl.style.gap = gap + 'px';
+  // SVG 边
+  const totalW = size * cellSize + (size-1) * gap;
+  const totalH = size * cellSize + (size-1) * gap;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'full');
+  svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
+  svg.setAttribute('width', totalW);
+  svg.setAttribute('height', totalH);
+
+  // 横向边
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size-1; c++) {
+      const x1 = c * (cellSize + gap) + cellSize;
+      const x2 = (c+1) * (cellSize + gap);
+      const y = r * (cellSize + gap) + cellSize/2;
+      const onPath = highlightPath.some((p, i) =>
+        i < highlightPath.length-1 && p[0] === r && p[1] === c &&
+        highlightPath[i+1][0] === r && highlightPath[i+1][1] === c+1);
+      svg.innerHTML += `
+        <line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${onPath?'#50C878':'#7F8C8D'}" stroke-width="${onPath?4:2.5}" />
+        <circle cx="${(x1+x2)/2}" cy="${y}" r="13" fill="white" stroke="${onPath?'#50C878':'#7F8C8D'}" stroke-width="2"/>
+        <text x="${(x1+x2)/2}" y="${y+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${onPath?'#50C878':'#5A6B7C'}">${edgesH[r][c]}</text>
+      `;
+    }
+  }
+  // 纵向边
+  for (let r = 0; r < size-1; r++) {
+    for (let c = 0; c < size; c++) {
+      const x = c * (cellSize + gap) + cellSize/2;
+      const y1 = r * (cellSize + gap) + cellSize;
+      const y2 = (r+1) * (cellSize + gap);
+      const onPath = highlightPath.some((p, i) =>
+        i < highlightPath.length-1 && p[0] === r && p[1] === c &&
+        highlightPath[i+1][0] === r+1 && highlightPath[i+1][1] === c);
+      svg.innerHTML += `
+        <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${onPath?'#50C878':'#7F8C8D'}" stroke-width="${onPath?4:2.5}" />
+        <circle cx="${x}" cy="${(y1+y2)/2}" r="13" fill="white" stroke="${onPath?'#50C878':'#7F8C8D'}" stroke-width="2"/>
+        <text x="${x}" y="${(y1+y2)/2+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${onPath?'#50C878':'#5A6B7C'}">${edgesV[r][c]}</text>
+      `;
+    }
+  }
+  gridEl.appendChild(svg);
+
+  // 节点
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-node';
+      cell.id = `cell-${r}-${c}`;
+      if (r === 0 && c === 0) cell.classList.add('start');
+      else if (r === size-1 && c === size-1) cell.classList.add('end');
+      const label = String.fromCharCode(65 + r * size + c);
+      let costText = '?';
+      if (grid[r][c] !== null) {
+        costText = grid[r][c];
+        cell.classList.add('computed');
+      }
+      const isInPath = highlightPath.some(p => p[0] === r && p[1] === c);
+      if (isInPath) cell.classList.add('path');
+      cell.innerHTML = `<div class="name">${label}</div><div class="cost">${costText}</div>`;
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function runDP() {
+  grid = Array.from({length: size}, () => Array(size).fill(null));
+  prev = Array.from({length: size}, () => Array(size).fill(null));
+  document.getElementById('calcList').innerHTML = '';
+  document.getElementById('stepInfo').textContent = '🚀 开始动态规划求解...';
+  render();
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      cell.classList.add('checking');
+      await sleep(500);
+      let label = String.fromCharCode(65 + r*size + c);
+      let calcDesc = '';
+      if (r === 0 && c === 0) {
+        grid[r][c] = 0;
+        calcDesc = `<strong>${label}</strong> 是起点：用时 = <strong>0</strong>`;
+      } else {
+        let candidates = [];
+        if (r > 0) {
+          const v = grid[r-1][c] + edgesV[r-1][c];
+          candidates.push({val: v, from: [r-1, c], desc: `从上方 ${String.fromCharCode(65+(r-1)*size+c)} (${grid[r-1][c]}) + 边${edgesV[r-1][c]} = ${v}`});
+        }
+        if (c > 0) {
+          const v = grid[r][c-1] + edgesH[r][c-1];
+          candidates.push({val: v, from: [r, c-1], desc: `从左方 ${String.fromCharCode(65+r*size+(c-1))} (${grid[r][c-1]}) + 边${edgesH[r][c-1]} = ${v}`});
+        }
+        const best = candidates.reduce((a, b) => a.val <= b.val ? a : b);
+        grid[r][c] = best.val;
+        prev[r][c] = best.from;
+        calcDesc = `<strong>${label}</strong>：${candidates.map(x => x.desc).join('；')}。取较小值 = <strong>${best.val}</strong>`;
+      }
+      const lineEl = document.createElement('div');
+      lineEl.className = 'calc-line';
+      lineEl.innerHTML = calcDesc;
+      document.getElementById('calcList').appendChild(lineEl);
+      lineEl.scrollIntoView({block:'nearest'});
+      render();
+    }
+  }
+  // 追溯路径
+  const path = [];
+  let cur = [size-1, size-1];
+  while (cur) {
+    path.unshift(cur);
+    cur = prev[cur[0]][cur[1]];
+  }
+  render(path);
+  document.getElementById('stepInfo').innerHTML = `🎉 完成！最短用时为 <strong style="color:var(--secondary);font-size:18px;">${grid[size-1][size-1]}</strong> 分钟，共计算 ${size*size} 次。`;
+
+  // 添加最短路径行
+  const finalLine = document.createElement('div');
+  finalLine.className = 'calc-line best';
+  const pathStr = path.map(p => String.fromCharCode(65 + p[0]*size + p[1])).join(' → ');
+  finalLine.innerHTML = `🏆 最短路径：${pathStr}（用时 ${grid[size-1][size-1]} 分钟）`;
+  document.getElementById('calcList').appendChild(finalLine);
+}
+
+async function runEnum() {
+  grid = Array.from({length: size}, () => Array(size).fill(null));
+  document.getElementById('calcList').innerHTML = '';
+  document.getElementById('stepInfo').textContent = '📋 枚举所有可能的路径...';
+  render();
+  const allPaths = [];
+  function dfs(r, c, path, cost) {
+    path.push([r,c]);
+    if (r === size-1 && c === size-1) {
+      allPaths.push({ path: [...path], cost });
+    } else {
+      if (c < size-1) dfs(r, c+1, path, cost + edgesH[r][c]);
+      if (r < size-1) dfs(r+1, c, path, cost + edgesV[r][c]);
+    }
+    path.pop();
+  }
+  dfs(0, 0, [], 0);
+  let bestCost = Infinity;
+  let bestPath = null;
+  for (let i = 0; i < allPaths.length; i++) {
+    const p = allPaths[i];
+    if (p.cost < bestCost) { bestCost = p.cost; bestPath = p.path; }
+    const line = document.createElement('div');
+    line.className = 'calc-line';
+    const pathStr = p.path.map(x => String.fromCharCode(65 + x[0]*size + x[1])).join('→');
+    line.innerHTML = `第${i+1}条: ${pathStr} = <strong>${p.cost}</strong>`;
+    document.getElementById('calcList').appendChild(line);
+    render(p.path);
+    line.scrollIntoView({block:'nearest'});
+    await sleep(400);
+  }
+  render(bestPath);
+  document.getElementById('stepInfo').innerHTML = `🎉 共有 <strong>${allPaths.length}</strong> 条路径，最短用时为 <strong style="color:var(--secondary);font-size:18px;">${bestCost}</strong> 分钟。`;
+  const finalLine = document.createElement('div');
+  finalLine.className = 'calc-line best';
+  const pathStr = bestPath.map(x => String.fromCharCode(65 + x[0]*size + x[1])).join(' → ');
+  finalLine.innerHTML = `🏆 最短路径：${pathStr}（用时 ${bestCost} 分钟）`;
+  document.getElementById('calcList').appendChild(finalLine);
+}
+
+document.getElementById('sizeSel').addEventListener('change', init);
+init();
+</script>
+</body>
+</html>

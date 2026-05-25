@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>IP 地址解析器 · 第6课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;--panel:#1a2340;--panel2:#222d50;
+  --line:#2d3a63;--text:#e6eaf5;--muted:#8a96b8;
+  --accent:#4ed1b8;--accent2:#ffb347;--warn:#ff6b81;
+  --shadow:0 8px 30px rgba(0,0,0,.3);
+  --classA:#5b9cff;--classB:#9d7bff;--classC:#4ed1b8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 80% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:24px}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.lesson-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.02);}
+.subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+
+.tabs{display:flex;gap:6px;margin:14px 0 18px}
+.tabs button{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:8px 16px;border-radius:8px;font-family:inherit;cursor:pointer;font-size:14px;
+}
+.tabs button.on{background:linear-gradient(135deg,var(--accent),#3ab8a0);color:#0a1226;border-color:transparent;font-weight:700}
+
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);
+}
+.card h2{font-size:15px;margin:0 0 14px;color:var(--accent)}
+
+/* IPv4 input */
+.ipv4-input{
+  display:flex;gap:8px;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:24px;
+  margin:18px 0;
+}
+.ipv4-input input{
+  width:80px;text-align:center;font-size:24px;
+  background:#0c1426;color:var(--accent);border:1px solid var(--line);
+  border-radius:8px;padding:10px;font-family:inherit;font-weight:700;
+  outline:none;transition:border-color .2s;
+}
+.ipv4-input input:focus{border-color:var(--accent)}
+.ipv4-input input.err{border-color:var(--warn);color:var(--warn)}
+.ipv4-input .dot{color:var(--accent2);font-weight:700}
+
+.examples{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.example-btn{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:6px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;
+  font-size:12px;cursor:pointer;transition:all .2s;
+}
+.example-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.results{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:760px){.results{grid-template-columns:1fr}}
+
+.result-card{
+  background:#0c1426;border:1px solid var(--line);border-radius:10px;padding:16px;
+}
+.result-card h3{font-size:13px;color:var(--muted);margin:0 0 10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+
+.binary-row{
+  display:flex;gap:6px;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+}
+.binary-octet{
+  background:#172040;border:1px solid var(--line);border-radius:6px;padding:8px 10px;
+  letter-spacing:1px;
+}
+.binary-octet .dec{display:block;text-align:center;color:var(--accent);font-size:12px;margin-top:4px;font-weight:700}
+
+/* Class indicator */
+.class-display{
+  display:flex;flex-direction:column;align-items:center;padding:14px;
+  border-radius:10px;background:#0c1426;border:1px solid var(--line);
+  text-align:center;
+}
+.class-letter{
+  font-size:48px;font-weight:700;line-height:1;
+  font-family:'JetBrains Mono',monospace;
+}
+.class-A{color:var(--classA)}
+.class-B{color:var(--classB)}
+.class-C{color:var(--classC)}
+.class-D,.class-E{color:var(--muted)}
+.class-info{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+.split-display{
+  display:flex;gap:8px;font-family:'JetBrains Mono',monospace;font-size:14px;
+  flex-wrap:wrap;justify-content:center;
+}
+.split-block{
+  padding:10px 14px;border-radius:6px;font-weight:700;
+}
+.split-block .label{font-size:10px;color:rgba(255,255,255,.7);font-weight:500;display:block;margin-bottom:4px}
+.split-net{background:linear-gradient(135deg,var(--accent),#3ab8a0);color:#0a1226}
+.split-host{background:linear-gradient(135deg,var(--accent2),#ff8c42);color:#1a1208}
+
+.usage-tag{
+  display:inline-block;padding:5px 12px;border-radius:999px;
+  font-size:12px;font-weight:700;margin-top:10px;
+}
+.usage-public{background:rgba(78,209,184,.15);color:var(--accent);border:1px solid var(--accent)}
+.usage-private{background:rgba(255,179,71,.15);color:var(--accent2);border:1px solid var(--accent2)}
+.usage-special{background:rgba(141,154,184,.15);color:var(--muted);border:1px solid var(--muted)}
+
+.error-msg{
+  color:var(--warn);text-align:center;padding:12px;
+  background:rgba(255,107,129,.08);border:1px solid var(--warn);
+  border-radius:8px;margin-top:14px;font-size:13px;
+}
+
+/* IPv6 view */
+.ipv6-input{
+  width:100%;background:#0c1426;color:var(--accent);
+  border:1px solid var(--line);border-radius:8px;padding:14px;
+  font-family:'JetBrains Mono',monospace;font-size:18px;
+  outline:none;letter-spacing:1px;
+}
+.ipv6-input:focus{border-color:var(--accent)}
+
+.simplify-flow{
+  display:flex;flex-direction:column;gap:12px;margin-top:16px;
+}
+.simplify-step{
+  background:#0c1426;border:1px solid var(--line);border-radius:8px;padding:12px;
+}
+.simplify-step .step-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.simplify-step .step-content{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--accent);word-break:break-all}
+.simplify-step .step-explain{font-size:12px;color:var(--accent2);margin-top:6px;font-style:italic}
+
+.note{
+  font-size:12px;color:var(--muted);background:rgba(78,209,184,.06);
+  border-left:3px solid var(--accent);padding:12px;border-radius:6px;
+  margin-top:14px;line-height:1.7;
+}
+.note b{color:var(--accent)}
+
+.classes-table{
+  display:grid;grid-template-columns:80px 1fr 1fr 1fr;gap:8px;
+  font-size:12px;margin-top:10px;
+}
+.classes-table .th{font-weight:700;color:var(--muted);padding:8px;border-bottom:1px solid var(--line)}
+.classes-table .td{padding:8px;font-family:'JetBrains Mono',monospace;color:var(--text)}
+.classes-table .ca{color:var(--classA);font-weight:700}
+.classes-table .cb{color:var(--classB);font-weight:700}
+.classes-table .cc{color:var(--classC);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>IP 地址解析器</h1>
+      <div class="subtitle">理解数字身份——IPv4 编码、地址分类与 IPv6 演进</div>
+    </div>
+    <span class="lesson-tag">第二单元 · 第6课《数字身份辨设备》</span>
+  </header>
+
+  <div class="tabs">
+    <button id="t4" class="on">IPv4 解析</button>
+    <button id="t6">IPv6 简化</button>
+    <button id="tc">地址分类参考</button>
+  </div>
+
+  <!-- IPv4 -->
+  <section id="view4" class="card">
+    <h2>IPv4 地址分析（点分十进制 ↔ 二进制）</h2>
+    <div class="ipv4-input">
+      <input id="o1" type="number" min="0" max="255" value="192">
+      <span class="dot">.</span>
+      <input id="o2" type="number" min="0" max="255" value="168">
+      <span class="dot">.</span>
+      <input id="o3" type="number" min="0" max="255" value="10">
+      <span class="dot">.</span>
+      <input id="o4" type="number" min="0" max="255" value="4">
+    </div>
+
+    <div class="examples">
+      <button class="example-btn" data-ip="10.0.0.1">10.0.0.1（A类私有）</button>
+      <button class="example-btn" data-ip="172.16.5.20">172.16.5.20（B类私有）</button>
+      <button class="example-btn" data-ip="192.168.1.100">192.168.1.100（C类私有）</button>
+      <button class="example-btn" data-ip="8.8.8.8">8.8.8.8（公用）</button>
+      <button class="example-btn" data-ip="127.0.0.1">127.0.0.1（本地回环）</button>
+      <button class="example-btn" data-ip="255.255.255.255">255.255.255.255</button>
+    </div>
+
+    <div id="errorBox" style="display:none" class="error-msg"></div>
+
+    <div id="ipv4Results" class="results"></div>
+  </section>
+
+  <!-- IPv6 -->
+  <section id="view6" class="card" style="display:none">
+    <h2>IPv6 地址简化（冒号十六进制法）</h2>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">输入完整 IPv6 地址，工具会自动展示简化过程</div>
+    <input id="v6" class="ipv6-input" type="text" value="68E6:8C64:0000:0000:0000:960A:0008:FFFF" spellcheck="false">
+
+    <div class="examples" style="margin-top:14px">
+      <button class="example-btn v6eg" data-ip="68E6:8C64:0000:0000:0000:960A:0008:FFFF">教材示例</button>
+      <button class="example-btn v6eg" data-ip="2001:0db8:0000:0000:0000:0000:1428:57ab">连续 0 段</button>
+      <button class="example-btn v6eg" data-ip="2001:0db8:85a3:0000:0000:8a2e:0370:7334">文档地址</button>
+      <button class="example-btn v6eg" data-ip="0000:0000:0000:0000:0000:0000:0000:0001">回环地址</button>
+      <button class="example-btn v6eg" data-ip="FE80:0000:0000:0000:0202:B3FF:FE1E:8329">链路本地</button>
+    </div>
+
+    <div id="v6Out" class="simplify-flow"></div>
+
+    <div class="note">
+      🌐 <b>为什么需要 IPv6？</b><br>
+      IPv4 地址长 32 位，最多约 43 亿个，已经枯竭。<br>
+      IPv6 地址长 <b>128 位</b>，可提供约 <b>3.4×10³⁸</b> 个地址，足以让地球上每一粒沙子都拥有 IP 地址。<br>
+      🇨🇳 我国已建成全球最大规模的 IPv6 网络。
+    </div>
+  </section>
+
+  <!-- Classes table -->
+  <section id="viewC" class="card" style="display:none">
+    <h2>IP 地址分类参考表</h2>
+    <p style="font-size:13px;color:var(--muted);margin-top:0">根据网络号位数不同，IP 地址主要分为三类：</p>
+
+    <div class="classes-table">
+      <div class="th">类别</div><div class="th">网络号位数</div><div class="th">首位特征</div><div class="th">地址范围</div>
+      <div class="td ca">A 类</div><div class="td">前 8 位</div><div class="td">首位 = <b>0</b></div><div class="td">0.0.0.0 ~ 127.255.255.255</div>
+      <div class="td cb">B 类</div><div class="td">前 16 位</div><div class="td">前两位 = <b>10</b></div><div class="td">128.0.0.0 ~ 191.255.255.255</div>
+      <div class="td cc">C 类</div><div class="td">前 24 位</div><div class="td">前三位 = <b>110</b></div><div class="td">192.0.0.0 ~ 223.255.255.255</div>
+      <div class="td" style="color:var(--muted);font-weight:700">D 类</div><div class="td">—</div><div class="td">前四位 = <b>1110</b></div><div class="td">224.0.0.0 ~ 239.255.255.255（组播）</div>
+      <div class="td" style="color:var(--muted);font-weight:700">E 类</div><div class="td">—</div><div class="td">前四位 = <b>1111</b></div><div class="td">240.0.0.0 ~ 255.255.255.255（保留）</div>
+    </div>
+
+    <h2 style="margin-top:24px">私有地址（仅用于内部网络）</h2>
+    <div class="classes-table">
+      <div class="th">类别</div><div class="th colspan2" style="grid-column:span 3">私有地址范围</div>
+      <div class="td ca">A 类私有</div><div class="td" style="grid-column:span 3">10.0.0.0 ~ 10.255.255.255</div>
+      <div class="td cb">B 类私有</div><div class="td" style="grid-column:span 3">172.16.0.0 ~ 172.31.255.255</div>
+      <div class="td cc">C 类私有</div><div class="td" style="grid-column:span 3">192.168.0.0 ~ 192.168.255.255</div>
+    </div>
+
+    <div class="note">
+      🔍 <b>IP 地址 = 网络号 + 主机号</b><br>
+      网络号标识"哪个网络"，主机号标识"网络中的哪台设备"。<br>
+      警方追查犯罪，常通过 IP 地址 → 网络号 → 锁定地区/机构 → 再凭主机号定位具体设备。
+    </div>
+  </section>
+</div>
+
+<script>
+const els = {
+  o1:document.getElementById('o1'),o2:document.getElementById('o2'),
+  o3:document.getElementById('o3'),o4:document.getElementById('o4'),
+  err:document.getElementById('errorBox'),
+  out:document.getElementById('ipv4Results'),
+};
+
+function toBin(n){return n.toString(2).padStart(8,'0');}
+
+function classify(o1){
+  if(o1>=0 && o1<=127) return {cls:'A',col:'classA'};
+  if(o1>=128 && o1<=191) return {cls:'B',col:'classB'};
+  if(o1>=192 && o1<=223) return {cls:'C',col:'classC'};
+  if(o1>=224 && o1<=239) return {cls:'D',col:'classD'};
+  return {cls:'E',col:'classE'};
+}
+
+function isPrivate(o1,o2){
+  if(o1===10) return true;
+  if(o1===172 && o2>=16 && o2<=31) return true;
+  if(o1===192 && o2===168) return true;
+  return false;
+}
+function isLoopback(o1){return o1===127;}
+function isBroadcast(o){return o.every(v=>v===255);}
+function isAny(o){return o.every(v=>v===0);}
+
+function update(){
+  const vals = [els.o1,els.o2,els.o3,els.o4].map(e=>parseInt(e.value,10));
+  // validate
+  let valid=true;
+  [els.o1,els.o2,els.o3,els.o4].forEach((e,i)=>{
+    const v = vals[i];
+    if(isNaN(v)||v<0||v>255){e.classList.add('err');valid=false;}
+    else e.classList.remove('err');
+  });
+  if(!valid){
+    els.err.style.display='block';
+    els.err.textContent='⚠ IP 地址不合法：每段必须是 0~255 之间的整数';
+    els.out.innerHTML='';
+    return;
+  }
+  els.err.style.display='none';
+  const [a,b,c,d] = vals;
+  const klass = classify(a);
+
+  // network/host split based on class
+  let netParts=[],hostParts=[];
+  if(klass.cls==='A'){netParts=[a];hostParts=[b,c,d];}
+  else if(klass.cls==='B'){netParts=[a,b];hostParts=[c,d];}
+  else if(klass.cls==='C'){netParts=[a,b,c];hostParts=[d];}
+  else {netParts=[a,b,c,d];hostParts=[];}
+
+  // usage
+  let usage='公用地址',usageCls='usage-public';
+  if(isLoopback(a)){usage='本地回环地址';usageCls='usage-special';}
+  else if(isPrivate(a,b)){usage='私有地址';usageCls='usage-private';}
+  else if(isBroadcast(vals)){usage='受限广播地址';usageCls='usage-special';}
+  else if(isAny(vals)){usage='保留/未指定';usageCls='usage-special';}
+  else if(klass.cls==='D'||klass.cls==='E'){usage='特殊用途（'+klass.cls+'类）';usageCls='usage-special';}
+
+  // build output
+  els.out.innerHTML = `
+    <!-- Binary -->
+    <div class="result-card">
+      <h3>① 二进制表示（32 位）</h3>
+      <div class="binary-row">
+        ${vals.map(v=>`<div class="binary-octet">${toBin(v)}<span class="dec">${v}</span></div>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center">
+        IP 地址本质是 <b style="color:var(--accent)">32 位二进制数</b>，"点分十进制"只是为了方便记忆
+      </p>
+    </div>
+
+    <!-- Class -->
+    <div class="result-card">
+      <h3>② 地址类别</h3>
+      <div class="class-display">
+        <div class="class-letter class-${klass.cls}">${klass.cls}</div>
+        <div style="font-size:14px;color:var(--text);font-weight:700;margin-top:4px">${klass.cls} 类地址</div>
+        <div class="class-info">${classDesc(klass.cls)}</div>
+        <div class="usage-tag ${usageCls}">${usage}</div>
+      </div>
+    </div>
+
+    <!-- Network/Host split -->
+    <div class="result-card" style="grid-column:1/-1">
+      <h3>③ 网络号 与 主机号</h3>
+      <div class="split-display">
+        ${netParts.map(v=>`<div class="split-block split-net"><span class="label">网络号</span>${v}</div>`).join('')}
+        ${hostParts.map(v=>`<div class="split-block split-host"><span class="label">主机号</span>${v}</div>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.6">
+        网络号 <b style="color:var(--accent)">${netParts.join('.')}</b>
+        ${hostParts.length?` &nbsp;|&nbsp; 主机号 <b style="color:var(--accent2)">${hostParts.join('.')}</b>`:''}
+        <br>${klass.cls} 类地址的网络号占前 ${netParts.length*8} 位
+      </p>
+    </div>
+  `;
+}
+
+function classDesc(c){
+  const m={
+    'A':'网络号 8 位（首位 0），可容纳极大型网络',
+    'B':'网络号 16 位（前两位 10），中等规模网络',
+    'C':'网络号 24 位（前三位 110），小型网络',
+    'D':'多播地址，用于一对多通信',
+    'E':'保留地址，用于实验研究'
+  };
+  return m[c]||'';
+}
+
+[els.o1,els.o2,els.o3,els.o4].forEach(e=>e.oninput=update);
+document.querySelectorAll('.example-btn[data-ip]').forEach(b=>{
+  b.onclick=()=>{
+    const parts = b.dataset.ip.split('.');
+    [els.o1,els.o2,els.o3,els.o4].forEach((e,i)=>e.value=parts[i]);
+    update();
+  };
+});
+update();
+
+// IPv6 logic
+const v6Input = document.getElementById('v6');
+const v6Out = document.getElementById('v6Out');
+function simplifyV6(addr){
+  // Validate basic format
+  const groups = addr.split(':');
+  if(groups.length!==8) return null;
+  if(!groups.every(g=>/^[0-9a-fA-F]{1,4}$/.test(g))) return null;
+  // Step 1: leading zeros removed
+  const noLeading = groups.map(g=>g.replace(/^0+/,'')||'0');
+  // Step 2: longest run of '0' compressed to '::'
+  let runStart=-1,runLen=0,bestStart=-1,bestLen=0;
+  for(let i=0;i<noLeading.length;i++){
+    if(noLeading[i]==='0'){
+      if(runStart<0)runStart=i;
+      runLen=i-runStart+1;
+      if(runLen>bestLen){bestLen=runLen;bestStart=runStart;}
+    }else{
+      runStart=-1;runLen=0;
+    }
+  }
+  let final;
+  if(bestLen>=2){
+    const before = noLeading.slice(0,bestStart);
+    const after = noLeading.slice(bestStart+bestLen);
+    if(before.length===0 && after.length===0) final='::';
+    else if(before.length===0) final = '::'+after.join(':');
+    else if(after.length===0) final = before.join(':')+'::';
+    else final = before.join(':')+'::'+after.join(':');
+  }else{
+    final = noLeading.join(':');
+  }
+  return {groups,noLeading,final};
+}
+function renderV6(){
+  const r = simplifyV6(v6Input.value.trim());
+  if(!r){
+    v6Out.innerHTML = `<div class="error-msg">⚠ IPv6 地址格式不正确（应为 8 组 1-4 位十六进制数，用 ":" 分隔）</div>`;
+    return;
+  }
+  v6Out.innerHTML = `
+    <div class="simplify-step">
+      <div class="step-label">原始地址（128 位 = 8 组 × 16 位）</div>
+      <div class="step-content">${r.groups.join(' : ')}</div>
+    </div>
+    <div class="simplify-step">
+      <div class="step-label">第一步：去掉每组前导 0</div>
+      <div class="step-content">${r.noLeading.join(' : ')}</div>
+      <div class="step-explain">每组中开头的 "0" 可以省略（如 "0008" → "8"）</div>
+    </div>
+    <div class="simplify-step">
+      <div class="step-label">第二步：用 "::" 替代最长的连续 0 段</div>
+      <div class="step-content" style="font-size:18px">${r.final}</div>
+      <div class="step-explain">"::" 在一个地址中只能使用一次，可以缩短书写</div>
+    </div>
+  `;
+}
+v6Input.oninput = renderV6;
+document.querySelectorAll('.v6eg').forEach(b=>b.onclick=()=>{v6Input.value=b.dataset.ip;renderV6();});
+renderV6();
+
+// tabs
+const v4=document.getElementById('view4'),v6=document.getElementById('view6'),vc=document.getElementById('viewC');
+const t4=document.getElementById('t4'),t6=document.getElementById('t6'),tc=document.getElementById('tc');
+function showTab(which){
+  [v4,v6,vc].forEach(e=>e.style.display='none');
+  [t4,t6,tc].forEach(b=>b.classList.remove('on'));
+  if(which==='4'){v4.style.display='block';t4.classList.add('on');}
+  if(which==='6'){v6.style.display='block';t6.classList.add('on');}
+  if(which==='c'){vc.style.display='block';tc.classList.add('on');}
+}
+t4.onclick=()=>showTab('4');t6.onclick=()=>showTab('6');tc.onclick=()=>showTab('c');
+</script>
+</body>
+</html>

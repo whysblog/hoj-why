@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>音频记录声音 — 第7课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#fffbeb;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#b45309,#f59e0b);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}
+.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#b45309;font-size:28px;margin-bottom:8px}
+.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#f59e0b;color:white;border-color:#b45309}
+.intro{background:linear-gradient(135deg,#fef3c7,#fde68a);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#b45309;margin-bottom:8px;font-size:20px}.intro p{color:#78350f;line-height:1.7}
+.know{background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-left:4px solid #3b82f6;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#1e40af;font-size:15px;margin-bottom:6px}.know p{color:#1e3a8a;font-size:14px;line-height:1.7}
+.app-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.app-card{background:white;padding:18px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.app-card .icon{font-size:42px}.app-card h4{color:#b45309;margin:8px 0 4px}.app-card p{color:#78350f;font-size:12px;line-height:1.5}
+.recorder{background:white;border-radius:14px;padding:30px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.06);margin:18px 0}
+.mic-btn{width:120px;height:120px;border:none;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#b45309);color:white;cursor:pointer;font-size:50px;box-shadow:0 6px 20px rgba(245,158,11,.4);transition:all .2s}
+.mic-btn:hover{transform:scale(1.05)}
+.mic-btn.recording{animation:pulse 1.2s infinite;background:linear-gradient(135deg,#ef4444,#dc2626)}
+@keyframes pulse{50%{box-shadow:0 0 0 16px rgba(239,68,68,.15)}}
+.timer{font-size:32px;font-family:monospace;color:#b45309;margin:14px 0;font-weight:700}
+.waveform{height:80px;background:#fef3c7;border-radius:10px;margin:14px 0;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 16px}
+.bar{width:4px;background:#f59e0b;border-radius:2px;transition:height .1s}
+.audio-record-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.audio-record-table table{width:100%;border-collapse:collapse}
+.audio-record-table th{background:#fef3c7;color:#b45309;padding:10px;font-weight:600;font-size:13px;text-align:left}
+.audio-record-table td{padding:10px;border-top:1px solid #fef3c7;font-size:13px}
+.process-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.process-item{background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.process-item .icon{font-size:32px}.process-item h4{color:#b45309;margin:6px 0 2px;font-size:13px}.process-item p{color:#78350f;font-size:11px;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🎙️ 音频记录声音</h1>
+    <div class="lesson">第 7 课 · 第二单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>音频在身边</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>录音设备</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>录音体验</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>处理音频</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🎵 音频在身边</h2>
+      <div class="lead">音频传递丰富的情感，能更直接地触动心灵</div>
+      <div class="intro">
+        <h3>👂 想一想</h3>
+        <p>我们每天会听到哪些音频？歌曲、有声书、播客、英语听力、视频通话……音频虽然只有声音，但能<b>非常生动地传递信息和情感</b>。</p>
+      </div>
+      <div class="app-grid" style="margin-top:14px;">
+        <div class="app-card"><div class="icon">🎤</div><h4>跟唱歌</h4><p>跟着伴奏一起唱歌</p></div>
+        <div class="app-card"><div class="icon">🎼</div><h4>听音乐</h4><p>欣赏各种音乐作品</p></div>
+        <div class="app-card"><div class="icon">📖</div><h4>听故事</h4><p>有声读物、童话故事</p></div>
+        <div class="app-card"><div class="icon">🎭</div><h4>听戏曲</h4><p>欣赏传统戏曲艺术</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📻 录音设备</h2>
+      <div class="lead">想录音用什么设备？不同设备各有优势</div>
+      <div class="app-grid">
+        <div class="app-card"><div class="icon">📱</div><h4>手机</h4><p>最方便，随时随地</p></div>
+        <div class="app-card"><div class="icon">📲</div><h4>平板计算机</h4><p>屏幕大易操作</p></div>
+        <div class="app-card"><div class="icon">🎙️</div><h4>录音笔</h4><p>专业、便携</p></div>
+        <div class="app-card"><div class="icon">🎧</div><h4>耳麦</h4><p>计算机录音用</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 录音注意事项</h3>
+        <p>① 选择<b>安静的环境</b>，避免背景噪音；② 距离麦克风 <b>10-20 厘米</b>，太近声音会失真；③ 不要对着麦克风<b>大喘气</b>；④ 录制前可以<b>试录一段</b>，确认声音清晰。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎤 录音体验</h2>
+      <div class="lead">点击下方麦克风按钮，体验录音过程</div>
+      <div class="recorder">
+        <button class="mic-btn" id="micBtn" onclick="rec()">🎤</button>
+        <div class="timer" id="timer">00:00</div>
+        <div style="color:#64748b;font-size:14px;" id="recTip">点击麦克风开始录音（需允许浏览器使用麦克风）</div>
+        <div class="waveform" id="waveform"></div>
+        <div id="audioPlayer" style="display:none;margin-top:14px;">
+          <audio controls id="audio" style="width:100%;"></audio>
+        </div>
+      </div>
+      <div class="know">
+        <h3>🔬 声音是怎么变成数据的？</h3>
+        <p>麦克风把<b>空气振动</b>转成<b>电信号</b>，再转成<b>数字信号</b>（一连串的 0 和 1）保存。播放时再反过来：数字信号→电信号→喇叭振动→空气振动→进入耳朵。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>✂️ 处理音频</h2>
+      <div class="lead">录好的音频可以用音频编辑软件处理</div>
+      <div class="process-list">
+        <div class="process-item"><div class="icon">✂️</div><h4>裁剪</h4><p>截取需要的部分</p></div>
+        <div class="process-item"><div class="icon">🔗</div><h4>合并</h4><p>把多段音频拼接</p></div>
+        <div class="process-item"><div class="icon">🎵</div><h4>加背景音乐</h4><p>让音频更生动</p></div>
+        <div class="process-item"><div class="icon">🎚️</div><h4>音量调节</h4><p>过大或过小时调整</p></div>
+        <div class="process-item"><div class="icon">🎛️</div><h4>淡入淡出</h4><p>让开头结尾更自然</p></div>
+        <div class="process-item"><div class="icon">✨</div><h4>添加特效</h4><p>回声、变声等</p></div>
+      </div>
+      <h3 style="color:#b45309;margin-top:18px;font-size:16px;">📋 音频记录表（处理前的检查）</h3>
+      <div class="audio-record-table" style="margin-top:10px;">
+        <table>
+          <tr><th>时间段</th><th>存在的问题 / 想添加的特效</th><th>具体解决方法</th></tr>
+          <tr><td>0:00 - 0:05</td><td>开头有静默</td><td>裁剪掉</td></tr>
+          <tr><td>0:30 - 0:45</td><td>背景声音过大</td><td>降低噪音</td></tr>
+          <tr><td>整体</td><td>想加背景音乐</td><td>合并轻音乐</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">回顾今天的学习内容</div>
+      <div class="app-grid">
+        <div class="app-card" style="border-top:4px solid #f59e0b;"><div class="icon">🎯</div><h4>明确主题</h4><p>录音前想好"录什么"</p></div>
+        <div class="app-card" style="border-top:4px solid #f59e0b;"><div class="icon">🤫</div><h4>安静环境</h4><p>减少背景噪音</p></div>
+        <div class="app-card" style="border-top:4px solid #f59e0b;"><div class="icon">🛠️</div><h4>合理处理</h4><p>裁剪、合并、特效</p></div>
+        <div class="app-card" style="border-top:4px solid #f59e0b;"><div class="icon">⚖️</div><h4>遵守版权</h4><p>不盗用他人音频</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 拓展任务</h3>
+        <p>① 朗读一首古诗或唱一首歌，用录音设备录下来；<br>② 探究"边播放背景音乐边朗读"和"先朗读再加背景音乐"哪种效果更好；<br>③ 大胆使用各种音频处理功能，感受数字工具带来的便利。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+let mediaRec, recBlob, recording = false, recSec = 0, recTimerId, audCtx, analyser, animId;
+
+async function rec() {
+  const btn = document.getElementById('micBtn');
+  if (!recording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRec = new MediaRecorder(stream);
+      const chunks = [];
+      mediaRec.ondataavailable = e => chunks.push(e.data);
+      mediaRec.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        document.getElementById('audio').src = url;
+        document.getElementById('audioPlayer').style.display = 'block';
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRec.start();
+      
+      // 可视化
+      audCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audCtx.createMediaStreamSource(stream);
+      analyser = audCtx.createAnalyser();
+      analyser.fftSize = 64;
+      src.connect(analyser);
+      drawWave();
+      
+      recording = true;
+      btn.classList.add('recording');
+      document.getElementById('recTip').textContent = '🔴 正在录音...再点一次结束';
+      recSec = 0;
+      recTimerId = setInterval(() => {
+        recSec++;
+        document.getElementById('timer').textContent = formatTime(recSec);
+      }, 1000);
+    } catch (err) {
+      alert('无法访问麦克风：' + err.message + '\n请在浏览器中允许使用麦克风');
+    }
+  } else {
+    mediaRec.stop();
+    cancelAnimationFrame(animId);
+    clearInterval(recTimerId);
+    recording = false;
+    btn.classList.remove('recording');
+    document.getElementById('recTip').textContent = '✅ 录音完成！可以播放试听';
+  }
+}
+
+function drawWave() {
+  const wave = document.getElementById('waveform');
+  if (!wave.children.length) {
+    for (let i = 0; i < 40; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = '4px';
+      wave.appendChild(bar);
+    }
+  }
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  function update() {
+    if (!recording) return;
+    analyser.getByteFrequencyData(data);
+    const bars = wave.children;
+    for (let i = 0; i < bars.length; i++) {
+      const v = data[i % data.length] || 0;
+      bars[i].style.height = Math.max(4, v / 4) + 'px';
+    }
+    animId = requestAnimationFrame(update);
+  }
+  update();
+}
+
+function formatTime(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((n, idx) => n.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

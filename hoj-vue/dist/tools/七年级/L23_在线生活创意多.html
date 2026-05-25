@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第23课 · 在线生活创意多</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第5单元 · 第23课</span>
+    <span class="title">在线生活创意多</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>在线生活<br>创意多</h1>
+<p class="subtitle">第五单元 · 第23课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>互联网应用创新</strong></span>
+<span>💡 关键词：<strong>智能家居 · 共享 · 电商</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🏠</span><div class="card-title">认识智能家居</div><div class="card-desc">了解物联网如何改变家庭。</div></div><div class="card"><span class="card-icon">🚲</span><div class="card-title">理解共享经济</div><div class="card-desc">认识共享单车、共享充电宝的商业逻辑。</div></div><div class="card"><span class="card-icon">🛒</span><div class="card-title">体察电商创新</div><div class="card-desc">感受电商如何重塑购物体验。</div></div></div></section>
+<section class="slide"><h2>智能家居：让家"会思考"</h2><p>把家中设备接入互联网，通过<strong>APP 或语音</strong>控制，互相协作。</p><div class="cards"><div class="card"><span class="card-icon">🔊</span><div class="card-title">智能音箱</div><div class="card-desc">小爱同学、天猫精灵，语音控制家电、查天气、放音乐。</div></div><div class="card"><span class="card-icon">💡</span><div class="card-title">智能灯具</div><div class="card-desc">远程开关、定时、调色，营造不同场景氛围。</div></div><div class="card"><span class="card-icon">🌡</span><div class="card-title">智能空调/温控</div><div class="card-desc">回家路上提前打开，自动调节温度湿度。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">扫地机器人</div><div class="card-desc">LiDAR 导航、APP 划区清扫、自动回充。</div></div><div class="card"><span class="card-icon">📹</span><div class="card-title">智能安防</div><div class="card-desc">摄像头、门锁、门铃，远程查看，异常报警。</div></div><div class="card"><span class="card-icon">🪟</span><div class="card-title">智能窗帘</div><div class="card-desc">早晨自动拉开，傍晚自动关闭，与日出日落联动。</div></div></div><div class="highlight">🔧 <strong>背后技术：</strong>IoT (物联网) + WiFi/蓝牙/Zigbee 通信 + 云端 AI。整套生态以"<strong>智能家居中枢</strong>"（智能音箱）为核心。</div></section>
+<section class="slide"><h2>共享经济：闲置资源新利用</h2><div class="highlight">📦 <strong>核心思想：</strong>把闲置资源（车、自行车、充电宝、房间）通过互联网平台<strong>临时租给需要的人</strong>，提高资源利用率。</div><h3>典型代表</h3><div class="cards"><div class="card"><span class="card-icon">🚲</span><div class="card-title">共享单车</div><div class="card-desc">哈啰、美团、青桔。扫码即开，解决"最后一公里"。</div></div><div class="card"><span class="card-icon">🔌</span><div class="card-title">共享充电宝</div><div class="card-desc">餐厅、咖啡店常见。手机没电应急救星。</div></div><div class="card"><span class="card-icon">🚗</span><div class="card-title">网约车 / 顺风车</div><div class="card-desc">滴滴、嘀嗒。私家车空座位变成移动运力。</div></div><div class="card"><span class="card-icon">🏠</span><div class="card-title">短租住宿</div><div class="card-desc">爱彼迎(Airbnb)、小猪短租。把空闲房间租给游客。</div></div><div class="card"><span class="card-icon">📚</span><div class="card-title">共享自习室 / 健身房</div><div class="card-desc">按时收费的自习室、24小时智能健身房。</div></div><div class="card"><span class="card-icon">🛠</span><div class="card-title">共享工具 / 知识</div><div class="card-desc">知识付费、技能租赁，零工经济兴起。</div></div></div><div class="highlight">⚖️ <strong>挑战：</strong>资源损耗（共享单车被破坏）、停放秩序、安全风险、平台抽成过高等。需法律法规和文明素养双重保障。</div></section>
+<section class="slide"><h2>电商：重塑购物体验</h2>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">2003 · 淘宝诞生</div><div class="tl-title">C2C 个人开店</div><div class="tl-desc">个人小卖家也能开店，让网购变得普及。</div></div>
+<div class="tl-item"><div class="tl-year">2008 · 京东自营</div><div class="tl-title">B2C 品牌直营</div><div class="tl-desc">3C 数码自营+次日达，开创"快"的体验。</div></div>
+<div class="tl-item"><div class="tl-year">2015 · 拼多多崛起</div><div class="tl-title">社交电商</div><div class="tl-desc">"拼团" 模式，性价比 + 下沉市场，三年上市。</div></div>
+<div class="tl-item"><div class="tl-year">2018 · 直播电商</div><div class="tl-title">"主播带货"</div><div class="tl-desc">李佳琦、薇娅，单场带货上亿，重塑销售方式。</div></div>
+<div class="tl-item"><div class="tl-year">2023 · AI 电商</div><div class="tl-title">智能推荐 + 数字人</div><div class="tl-desc">AI 数字人 24h 直播、个性化推荐千人千面、AI 客服。</div></div>
+</div>
+<div class="highlight">📊 <strong>规模：</strong>2024 年中国网络零售额超 15 万亿元，连续 11 年全球第一。</div></section>
+<section class="slide"><h2>外卖 + 即时零售</h2><p>从"<strong>30 分钟送到家</strong>"到"<strong>万物到家</strong>"。</p><div class="cards"><div class="card"><span class="card-icon">🍱</span><div class="card-title">外卖</div><div class="card-desc">美团、饿了么。一日三餐都能送上门，无需自己做饭。</div></div><div class="card"><span class="card-icon">🍎</span><div class="card-title">生鲜配送</div><div class="card-desc">叮咚买菜、盒马鲜生。早上下单中午到，比超市更新鲜。</div></div><div class="card"><span class="card-icon">💊</span><div class="card-title">医药配送</div><div class="card-desc">美团买药、京东健康。半夜发烧也能 30 分钟送药到家。</div></div><div class="card"><span class="card-icon">📦</span><div class="card-title">即时百货</div><div class="card-desc">从手机充电器到换季衣服，"即时零售" 把全城便利店变成"前置仓"。</div></div></div><h3>背后的"即时"密码</h3>
+<ul>
+<li><strong>密集网点：</strong>城市里几百个前置仓/小店分布</li>
+<li><strong>骑手网络：</strong>美团有超 700 万活跃骑手</li>
+<li><strong>智能调度：</strong>AI 算法实时分配订单、规划路线</li>
+<li><strong>无人配送：</strong>美团/京东已在部分园区使用无人车、无人机送货</li>
+</ul></section>
+<section class="slide"><h2>在线生活的辩证思考</h2>
+<div class="compare-row">
+<div class="compare-col good"><h3>✅ 美好的一面</h3>
+<ul><li>便利、高效、节省时间</li><li>促进消费、创造就业</li><li>提高资源利用率</li><li>足不出户解决大部分需求</li><li>带动数字经济发展</li></ul></div>
+<div class="compare-col bad"><h3>⚠️ 需警惕的一面</h3>
+<ul><li>过度消费、剁手族</li><li>骑手工作压力、安全隐患</li><li>"懒人"生活方式、缺乏运动</li><li>过度依赖、停电就失能</li><li>个人数据被深度采集</li></ul></div>
+</div>
+<div class="highlight">🎯 <strong>合理使用三原则：</strong>① <strong>需要</strong>而非<strong>欲望</strong>购物 ② <strong>感谢</strong>而非<strong>苛责</strong>劳动者 ③ <strong>掌控</strong>而非<strong>沉迷</strong>科技。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 共享经济的核心思想是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">免费送东西</div>
+<div class="quiz-opt" data-correct="true">提高闲置资源利用率</div>
+<div class="quiz-opt" data-correct="false">政府补贴</div>
+<div class="quiz-opt" data-correct="false">零下乡</div></div>
+<div class="quiz-feedback">✅ 共享经济通过互联网平台，把闲置资源（车、自行车、房间等）临时租给有需要的人，提高利用率。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 智能家居系统的"大脑"通常是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">扫地机器人</div>
+<div class="quiz-opt" data-correct="true">智能音箱</div>
+<div class="quiz-opt" data-correct="false">智能灯泡</div>
+<div class="quiz-opt" data-correct="false">窗帘电机</div></div>
+<div class="quiz-feedback">✅ 智能音箱（如小爱同学、天猫精灵）通常作为家居中枢，通过语音控制其他设备。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 享受外卖等便利服务时，下列哪个做法<strong>更值得提倡</strong>？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">对骑手颐指气使</div>
+<div class="quiz-opt" data-correct="true">感谢辛苦劳动者，按时收餐</div>
+<div class="quiz-opt" data-correct="false">恶意差评赚返现</div>
+<div class="quiz-opt" data-correct="false">点完不取消让骑手白跑</div></div>
+<div class="quiz-feedback">✅ 互联网平台经济离不开千万劳动者的辛勤付出，尊重和体谅是数字时代的基本素养。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>智能家居</strong>：IoT 让家电"会思考"，语音/APP 控制</li>
+<li><strong>共享经济</strong>：闲置资源通过平台再利用</li>
+<li><strong>电商演进</strong>：C2C → B2C → 社交电商 → 直播 → AI 电商</li>
+<li><strong>即时零售</strong>：30 分钟万物到家</li>
+<li><strong>合理使用</strong>：理性消费 + 尊重劳动者 + 不过度依赖</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>调查家中的"在线生活"现状：① 列出家里所有联网设备；② 记录一周外卖/快递次数；③ 与父母聊一聊20年前没有这些服务时的生活。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "智能家居", "共享经济", "电商演进", "即时零售", "辩证思考", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

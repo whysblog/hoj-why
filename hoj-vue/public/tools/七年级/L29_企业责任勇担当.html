@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第29课 · 企业责任勇担当</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第6单元 · 第29课</span>
+    <span class="title">企业责任勇担当</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>企业责任<br>勇担当</h1>
+<p class="subtitle">第六单元 · 第29课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>企业的网络责任</strong></span>
+<span>💡 关键词：<strong>数据保护 · 自主可控</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🏢</span><div class="card-title">认识企业责任</div><div class="card-desc">理解互联网企业肩负的社会责任。</div></div><div class="card"><span class="card-icon">🔒</span><div class="card-title">数据保护意识</div><div class="card-desc">了解企业如何保护用户数据。</div></div><div class="card"><span class="card-icon">🇨🇳</span><div class="card-title">技术自主可控</div><div class="card-desc">认识"卡脖子"问题与自主创新的意义。</div></div></div></section>
+<section class="slide"><h2>为什么要谈"企业责任"？</h2><div class="highlight">⚖️ <strong>能力越大，责任越大。</strong> 互联网企业掌握着海量用户数据、强大的算法推荐能力、广泛的社会影响力。这些"<strong>能力</strong>"必须配上对等的"<strong>责任</strong>"，否则就会成为社会风险。</div><h3>互联网企业的五大责任</h3><div class="cards"><div class="card"><span class="card-icon">🔒</span><div class="card-title">数据安全责任</div><div class="card-desc">妥善保管用户数据，防止泄露、滥用、非法买卖。</div></div><div class="card"><span class="card-icon">🛡</span><div class="card-title">网络安全责任</div><div class="card-desc">建设安全防护体系，防御黑客攻击，保障服务稳定。</div></div><div class="card"><span class="card-icon">📰</span><div class="card-title">内容管理责任</div><div class="card-desc">审核平台内容，打击违法、低俗、虚假信息。</div></div><div class="card"><span class="card-icon">👶</span><div class="card-title">未成年人保护</div><div class="card-desc">青少年模式、防沉迷系统、内容分级。</div></div><div class="card"><span class="card-icon">💼</span><div class="card-title">公平竞争责任</div><div class="card-desc">不滥用市场支配地位、不强制"二选一"、不大数据杀熟。</div></div></div></section>
+<section class="slide"><h2>用户数据保护：企业的硬性要求</h2>
+<p>2021 年《<strong>个人信息保护法</strong>》和《<strong>数据安全法</strong>》正式实施，对企业有严格规定。</p>
+<h3>企业必须做到</h3>
+<ul>
+<li><strong>① 知情同意：</strong>收集前明示用途，用户主动同意（不能默认勾选）</li>
+<li><strong>② 最小必要：</strong>只收集业务必需的信息，不可贪多</li>
+<li><strong>③ 目的限定：</strong>不能挪作他用、不可超范围使用</li>
+<li><strong>④ 安全保护：</strong>加密存储、访问控制、备份容灾</li>
+<li><strong>⑤ 用户权利：</strong>用户可查询、复制、删除自己的数据</li>
+<li><strong>⑥ 跨境传输：</strong>把数据传出境外有严格条件，敏感数据不许出境</li>
+<li><strong>⑦ 通知义务：</strong>发生数据泄露要及时通知用户和监管部门</li>
+</ul>
+<div class="highlight">⚖️ <strong>违法成本：</strong>2022 年滴滴因违规收集个人信息被罚 80.26 亿元；某教育公司因强制收集人脸被罚 60 万元。<strong>企业违法成本极高</strong>。</div></section>
+<section class="slide"><h2>未成年人保护：特别责任</h2><p>对未成年人，互联网企业有<strong>更高</strong>的保护责任。</p><div class="cards"><div class="card"><span class="card-icon">⏰</span><div class="card-title">防沉迷</div><div class="card-desc">游戏 / 短视频实名制 + 时长限制。未成年人每天游戏不超 1 小时，节假日不超 2 小时。</div></div><div class="card"><span class="card-icon">🌈</span><div class="card-title">青少年模式</div><div class="card-desc">抖音、B站、快手等都有"青少年模式"，限制内容和时长。</div></div><div class="card"><span class="card-icon">💰</span><div class="card-title">充值限额</div><div class="card-desc">未成年游戏充值有上限，超额可全额追回。</div></div><div class="card"><span class="card-icon">🚫</span><div class="card-title">内容过滤</div><div class="card-desc">屏蔽暴力、色情、博彩等内容，推荐积极向上内容。</div></div><div class="card"><span class="card-icon">📋</span><div class="card-title">家长监管</div><div class="card-desc">家长可远程查看孩子使用情况，设置限制。</div></div><div class="card"><span class="card-icon">🛡</span><div class="card-title">隐私加强</div><div class="card-desc">对未成年人信息保护标准更严格，禁止画像式推送。</div></div></div></section>
+<section class="slide"><h2>内容生态责任</h2><p>平台不仅要"传输"内容，还要"<strong>治理</strong>"内容。</p><div class="cards"><div class="card"><span class="card-icon">🚨</span><div class="card-title">违法信息</div><div class="card-desc">涉黄涉赌、暴恐宣传、虚假诈骗——平台有义务发现和清除。</div></div><div class="card"><span class="card-icon">📰</span><div class="card-title">虚假信息</div><div class="card-desc">辟谣、标注"未经核实"、限制传播范围。</div></div><div class="card"><span class="card-icon">😈</span><div class="card-title">网络欺凌</div><div class="card-desc">建立举报机制，快速处置网暴行为。</div></div><div class="card"><span class="card-icon">📢</span><div class="card-title">广告合规</div><div class="card-desc">明确标识"广告"，禁止虚假宣传。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">算法治理</div><div class="card-desc">算法不得歧视、不得操纵舆论，用户有"关闭个性化推荐"权利。</div></div><div class="card"><span class="card-icon">🎭</span><div class="card-title">深度合成标识</div><div class="card-desc">AI 换脸、AI 配音必须显著标注"由 AI 合成"。</div></div></div><div class="highlight">📋 <strong>实例：</strong>《互联网信息服务深度合成管理规定》《生成式人工智能服务管理暂行办法》对 AI 内容做了详细规定。</div></section>
+<section class="slide"><h2>"卡脖子"技术与自主可控</h2><div class="highlight">⚠️ <strong>"卡脖子"技术</strong>：关键核心技术依赖外国，一旦被限制就会被"卡住"。这是国家安全的重大风险。</div><h3>常见的"卡脖子"领域</h3><div class="cards"><div class="card"><span class="card-icon">💻</span><div class="card-title">芯片</div><div class="card-desc">高端芯片(7nm 以下)、EUV 光刻机、EDA 设计软件等。</div></div><div class="card"><span class="card-icon">🖥</span><div class="card-title">操作系统</div><div class="card-desc">PC: Windows / macOS 占主导；手机：Android / iOS 双寡头。</div></div><div class="card"><span class="card-icon">🧰</span><div class="card-title">工业软件</div><div class="card-desc">CAD/CAE 设计软件、数据库等被欧美企业垄断。</div></div><div class="card"><span class="card-icon">🎮</span><div class="card-title">关键算法</div><div class="card-desc">部分基础算法、AI 框架原型来自国外。</div></div></div><h3>中国企业的自主创新</h3>
+<ul>
+<li><strong>华为：</strong>麒麟芯片、鸿蒙系统(HarmonyOS)、欧拉系统(openEuler)</li>
+<li><strong>中芯国际：</strong>中国大陆最先进的晶圆代工厂</li>
+<li><strong>龙芯：</strong>自主指令集 LoongArch 的国产 CPU</li>
+<li><strong>统信 UOS / 麒麟 OS：</strong>中国自主操作系统</li>
+<li><strong>百度、阿里、华为：</strong>自研 AI 大模型 (文心、通义、盘古)</li>
+</ul></section>
+<section class="slide"><h2>负责任的中国互联网</h2><div class="cards"><div class="card"><span class="card-icon">🌱</span><div class="card-title">公益事业</div><div class="card-desc">腾讯 99公益日、阿里 公益宝贝、字节 益童乐园，企业承担社会责任。</div></div><div class="card"><span class="card-icon">🌾</span><div class="card-title">乡村振兴</div><div class="card-desc">拼多多农产品上行、抖音三农、淘宝村，互联网助力脱贫致富。</div></div><div class="card"><span class="card-icon">🏥</span><div class="card-title">医疗援助</div><div class="card-desc">平安好医生、好大夫在线，把优质医疗下沉到偏远地区。</div></div><div class="card"><span class="card-icon">🌍</span><div class="card-title">绿色低碳</div><div class="card-desc">阿里"蚂蚁森林"、腾讯碳中和、华为绿色数据中心。</div></div><div class="card"><span class="card-icon">🚨</span><div class="card-title">应急救援</div><div class="card-desc">疫情、洪灾时，互联网企业第一时间出力（健康码、捐物、协同救援）。</div></div><div class="card"><span class="card-icon">🌐</span><div class="card-title">技术开源</div><div class="card-desc">华为鸿蒙、阿里 PolarDB、字节 ByteCode，参与全球开源生态。</div></div></div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 中国 2021 年实施的《个人信息保护法》对企业的<strong>核心要求</strong>是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">不能存任何数据</div>
+<div class="quiz-opt" data-correct="true">知情同意 + 最小必要</div>
+<div class="quiz-opt" data-correct="false">只能收集姓名</div>
+<div class="quiz-opt" data-correct="false">数据全部归政府</div></div>
+<div class="quiz-feedback">✅ 收集个人信息必须明示用途并获得同意，且只收集业务必需的最少信息，不可贪多。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 未成年人保护方面，互联网企业<strong>不应</strong>做的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">设置防沉迷</div>
+<div class="quiz-opt" data-correct="false">青少年模式过滤内容</div>
+<div class="quiz-opt" data-correct="true">诱导未成年充值打赏</div>
+<div class="quiz-opt" data-correct="false">家长可监管使用</div></div>
+<div class="quiz-feedback">✅ 平台不能利用未成年人的判断力不足，诱导其大额充值打赏。这是国家明令禁止的。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ "卡脖子"技术问题主要指？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">颈椎病</div>
+<div class="quiz-opt" data-correct="true">关键技术依赖外国</div>
+<div class="quiz-opt" data-correct="false">网速慢</div>
+<div class="quiz-opt" data-correct="false">字体显示问题</div></div>
+<div class="quiz-feedback">✅ "卡脖子"指关键核心技术依赖外国，一旦被限制就会"被卡住"。摆脱卡脖子需要长期自主创新。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>企业五大责任</strong>：数据、网络、内容、未成年人、公平竞争</li>
+<li><strong>数据保护核心</strong>：知情同意 + 最小必要 + 目的限定</li>
+<li><strong>未成年人保护</strong>：防沉迷、青少年模式、充值限额</li>
+<li><strong>内容治理</strong>：违法/虚假/欺凌信息须主动清理</li>
+<li><strong>自主可控</strong>：摆脱"卡脖子"，建设自主技术体系</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>调查一款你常用的 APP：① 它的隐私政策都写了什么？② 设置中能找到哪些"用户权利"开关（如"个性化推荐"开关）？③ 是否提供青少年模式？</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "为何要谈责任", "数据保护", "未成年人保护", "内容生态", "自主可控", "负责任的企业", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

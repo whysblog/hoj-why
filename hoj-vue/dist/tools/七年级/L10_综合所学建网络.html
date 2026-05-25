@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第10课 · 综合所学建网络</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第2单元 · 第10课</span>
+    <span class="title">综合所学建网络</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>综合所学<br>建网络</h1>
+<p class="subtitle">第二单元 · 第10课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>组网设备 · 网络参数</strong></span>
+<span>💡 关键词：<strong>实践综合</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🔌</span><div class="card-title">认识组网设备</div><div class="card-desc">了解组建网络常用的设备及其功能。</div></div><div class="card"><span class="card-icon">⚙️</span><div class="card-title">配置网络参数</div><div class="card-desc">理解 IP 地址、子网掩码、网关、DNS 的含义。</div></div><div class="card"><span class="card-icon">🏠</span><div class="card-title">综合实战</div><div class="card-desc">能为家庭/教室搭建一个小型局域网。</div></div></div></section>
+<section class="slide"><h2>组网设备一览</h2>
+<div class="cards">
+<div class="card"><span class="card-icon">📡</span><div class="card-title">路由器 Router</div><div class="card-desc">连接<strong>不同网络</strong>，负责路由选择。家庭路由器还内置 WiFi、DHCP、NAT 等功能。</div></div>
+<div class="card"><span class="card-icon">🔀</span><div class="card-title">交换机 Switch</div><div class="card-desc">在<strong>同一网络</strong>内连接多台设备，比集线器智能（只发给目标，不是广播）。</div></div>
+<div class="card"><span class="card-icon">📶</span><div class="card-title">无线 AP / WiFi</div><div class="card-desc">提供无线接入，让手机、电脑通过 WiFi 上网。许多家用路由器集成了 AP 功能。</div></div>
+<div class="card"><span class="card-icon">📞</span><div class="card-title">光猫 / 调制解调器</div><div class="card-desc">把运营商的光纤信号转成网线信号，是入户的第一道关口。</div></div>
+<div class="card"><span class="card-icon">🔌</span><div class="card-title">网卡 NIC</div><div class="card-desc">每台联网设备都有的网络接口，每张网卡有唯一的 <strong>MAC 地址</strong>。</div></div>
+<div class="card"><span class="card-icon">🧵</span><div class="card-title">网线 / 光纤</div><div class="card-desc">物理传输介质。常见双绞线(网线)、光纤、同轴电缆。</div></div>
+</div></section>
+<section class="slide"><h2>家庭网络典型结构</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 700 320" style="width:100%;max-width:700px;display:block;margin:0 auto;">
+<text x="50" y="40" fill="#8a96b8" font-size="12">运营商</text>
+<line x1="80" y1="60" x2="180" y2="60" stroke="#ff6b81" stroke-width="3" stroke-dasharray="6,4"/>
+<text x="120" y="55" fill="#ff6b81" font-size="11">光纤</text>
+<rect x="180" y="40" width="100" height="50" fill="#1a2340" stroke="#4ed1b8" stroke-width="2" rx="8"/>
+<text x="230" y="62" fill="#4ed1b8" font-size="13" font-weight="700" text-anchor="middle">光猫</text>
+<text x="230" y="78" fill="#8a96b8" font-size="10" text-anchor="middle">入户终端</text>
+<line x1="280" y1="65" x2="350" y2="120" stroke="#4ed1b8" stroke-width="2.5"/>
+<rect x="350" y="100" width="120" height="50" fill="#1a2340" stroke="#ffb347" stroke-width="2" rx="8"/>
+<text x="410" y="122" fill="#ffb347" font-size="13" font-weight="700" text-anchor="middle">家庭路由器</text>
+<text x="410" y="138" fill="#8a96b8" font-size="10" text-anchor="middle">WiFi + 网关</text>
+<line x1="410" y1="150" x2="200" y2="240" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="410" y1="150" x2="350" y2="250" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="410" y1="150" x2="500" y2="250" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="410" y1="150" x2="630" y2="240" stroke="#4ed1b8" stroke-width="2" stroke-dasharray="3,3"/>
+<rect x="160" y="240" width="80" height="50" fill="#232d4f" stroke="#4ed1b8" stroke-width="1.5" rx="6"/><text x="200" y="262" fill="#4ed1b8" font-size="12" text-anchor="middle">💻 电脑</text><text x="200" y="278" fill="#8a96b8" font-size="9" text-anchor="middle">.10</text>
+<rect x="310" y="250" width="80" height="50" fill="#232d4f" stroke="#4ed1b8" stroke-width="1.5" rx="6"/><text x="350" y="272" fill="#4ed1b8" font-size="12" text-anchor="middle">📱 手机</text><text x="350" y="288" fill="#8a96b8" font-size="9" text-anchor="middle">.11</text>
+<rect x="460" y="250" width="80" height="50" fill="#232d4f" stroke="#4ed1b8" stroke-width="1.5" rx="6"/><text x="500" y="272" fill="#4ed1b8" font-size="12" text-anchor="middle">📺 电视</text><text x="500" y="288" fill="#8a96b8" font-size="9" text-anchor="middle">.12</text>
+<rect x="590" y="240" width="80" height="50" fill="#232d4f" stroke="#ffb347" stroke-width="1.5" rx="6"/><text x="630" y="262" fill="#ffb347" font-size="12" text-anchor="middle">🔧 IoT</text><text x="630" y="278" fill="#8a96b8" font-size="9" text-anchor="middle">.13</text>
+<text x="350" y="200" fill="#4ed1b8" font-size="11" text-anchor="middle">局域网 192.168.1.0/24</text>
+</svg>
+</div>
+<p style="margin-top:12px;">家庭路由器是网络的"<strong>大脑</strong>"——内部所有设备通过它访问互联网。</p></section>
+<section class="slide"><h2>四个关键网络参数</h2>
+<div class="cards">
+<div class="card"><span class="card-icon">🆔</span><div class="card-title">① IP 地址</div><div class="card-desc">设备在网络中的"身份证号"。例：<code style="color:var(--accent)">192.168.1.10</code></div></div>
+<div class="card"><span class="card-icon">✂️</span><div class="card-title">② 子网掩码</div><div class="card-desc">告诉你 IP 哪部分是网络号、哪部分是主机号。例：<code style="color:var(--accent)">255.255.255.0</code></div></div>
+<div class="card"><span class="card-icon">🚪</span><div class="card-title">③ 默认网关</div><div class="card-desc">"出门"的路由器 IP，要访问外网就走这里。例：<code style="color:var(--accent)">192.168.1.1</code></div></div>
+<div class="card"><span class="card-icon">🧭</span><div class="card-title">④ DNS 服务器</div><div class="card-desc">把域名转成 IP。例：<code style="color:var(--accent)">114.114.114.114</code> 或 <code style="color:var(--accent)">8.8.8.8</code></div></div>
+</div>
+<div class="highlight" style="margin-top:18px;">🔑 <strong>类比理解：</strong>IP=门牌号、子网掩码=城区划分、网关=出小区的大门、DNS=电话黄页。这四个参数缺一不可！</div></section>
+<section class="slide"><h2>DHCP：自动获取网络参数</h2>
+<p>每次连 WiFi 不用手动输 IP，是因为<strong>DHCP（动态主机配置协议）</strong>。</p>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">Step 1 · DISCOVER</div><div class="tl-title">广播请求："谁能给我配置？"</div><div class="tl-desc">新设备入网后，向全网广播：寻找 DHCP 服务器。</div></div>
+<div class="tl-item"><div class="tl-year">Step 2 · OFFER</div><div class="tl-title">DHCP服务器："给你这套参数"</div><div class="tl-desc">家庭路由器(集成DHCP) 回复一个可用的 IP、子网掩码、网关、DNS。</div></div>
+<div class="tl-item"><div class="tl-year">Step 3 · REQUEST</div><div class="tl-title">设备："好，我用这个"</div><div class="tl-desc">设备正式请求使用刚才分配的参数。</div></div>
+<div class="tl-item"><div class="tl-year">Step 4 · ACK</div><div class="tl-title">服务器："确认！可以使用了"</div><div class="tl-desc">最终确认，设备开始使用这套配置上网，通常有"租约"时长(如24小时)。</div></div>
+</div>
+<div class="highlight">⚡ <strong>整个过程不超过1秒</strong>，所以你打开手机连WiFi几乎是瞬间完成。</div></section>
+<section class="slide"><h2>🛠 实践：动手查看本机参数</h2>
+<p>在不同操作系统下，查看自己的网络参数：</p>
+<h3>Windows</h3>
+<div class="code-block">打开"命令提示符"(cmd) → 输入：<br><span style="color:var(--accent2)">ipconfig /all</span></div>
+<h3>macOS / Linux</h3>
+<div class="code-block">打开"终端" → 输入：<br><span style="color:var(--accent2)">ifconfig</span>  或  <span style="color:var(--accent2)">ip addr show</span></div>
+<h3>手机</h3>
+<p>设置 → WiFi → 点击已连接的 WiFi → 查看详细信息</p>
+<div class="highlight">📝 <strong>课堂任务：</strong>查看自己设备的：① IP 地址 ② 子网掩码 ③ 默认网关 ④ DNS 服务器；与同学对比，会发现你们的"网关"是相同的(同一路由器)，但 IP 不同。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 家庭网络中，提供 WiFi 信号和上网功能的核心设备是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">光猫</div>
+<div class="quiz-opt" data-correct="true">家庭路由器</div>
+<div class="quiz-opt" data-correct="false">网卡</div>
+<div class="quiz-opt" data-correct="false">交换机</div></div>
+<div class="quiz-feedback">✅ 家庭路由器集成了路由、WiFi、DHCP 等多种功能，是家庭网络的核心。光猫只负责信号转换。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 关于 DHCP，下列说法<strong>正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">需要手动配置 IP</div>
+<div class="quiz-opt" data-correct="true">自动给入网设备分配参数</div>
+<div class="quiz-opt" data-correct="false">只能给电脑用，手机不行</div>
+<div class="quiz-opt" data-correct="false">只用于公司，家里没有</div></div>
+<div class="quiz-feedback">✅ DHCP 自动为新入网设备分配 IP、子网掩码、网关、DNS 等参数，免去手动配置。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 同一局域网内，所有设备的"默认网关"通常是：</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">完全不同</div>
+<div class="quiz-opt" data-correct="true">相同的，指向同一路由器</div>
+<div class="quiz-opt" data-correct="false">随机变化</div>
+<div class="quiz-opt" data-correct="false">就是设备自己</div></div>
+<div class="quiz-feedback">✅ 同一局域网内，所有设备的网关都指向出口路由器的 IP（如 192.168.1.1）。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>组网三剑客</strong>：光猫(入户) + 路由器(分发) + 设备(终端)</li>
+<li><strong>四个参数缺一不可</strong>：IP、子网掩码、网关、DNS</li>
+<li><strong>DHCP</strong> 让网络配置"零配置化"，开机即用</li>
+<li><strong>路由器 vs 交换机</strong>：路由器连接不同网络，交换机连接同网络内设备</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>登录你家路由器的管理后台 (常见地址 192.168.1.1)，查看连接的设备列表，是否能识别出每个设备？</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "组网设备", "家庭网络结构", "四个参数", "DHCP原理", "动手实践", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

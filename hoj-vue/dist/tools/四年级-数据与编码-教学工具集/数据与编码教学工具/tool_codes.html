@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生活编码解析器 · 第7、8课</title>
+<style>
+:root {
+  --c-primary: #ff7043;
+  --c-primary-dark: #e64a19;
+  --c-primary-soft: #ffe5d6;
+  --c-blue: #2196f3;
+  --c-green: #43a047;
+  --c-purple: #8e24aa;
+  --c-yellow: #fbc02d;
+  --c-ink: #2a1c14;
+  --c-ink-soft: #6b5a50;
+  --c-line: #f0e2d8;
+  --c-card: #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fff7f0 0%, #fff9f3 100%);
+  color: var(--c-ink);
+  min-height: 100vh;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-ink-soft);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.back-link:hover { color: var(--c-primary); }
+
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.header .lesson-tag {
+  display: inline-block;
+  padding: 4px 14px;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-dark);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  margin-bottom: 8px;
+}
+.header p {
+  font-size: 15px;
+  color: var(--c-ink-soft);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.app {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.code-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.code-tab {
+  background: white;
+  border: 2px solid var(--c-line);
+  border-radius: 14px;
+  padding: 16px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: inherit;
+  color: var(--c-ink);
+}
+.code-tab:hover {
+  border-color: var(--c-primary);
+  transform: translateY(-2px);
+}
+.code-tab.active {
+  background: var(--c-primary);
+  color: white;
+  border-color: var(--c-primary);
+  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.3);
+}
+.code-tab .icon {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 6px;
+}
+.code-tab .name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.card {
+  background: var(--c-card);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 8px 32px rgba(255, 112, 67, 0.08);
+  border: 1px solid var(--c-line);
+  margin-bottom: 20px;
+}
+
+.code-input {
+  width: 100%;
+  padding: 18px 20px;
+  border: 2px solid var(--c-line);
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  letter-spacing: 0.15em;
+  text-align: center;
+  font-weight: 700;
+}
+.code-input:focus { outline: none; border-color: var(--c-primary); }
+
+.examples-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  justify-content: center;
+}
+.example-tag {
+  padding: 6px 12px;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-dark);
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: 'Courier New', monospace;
+  transition: all 0.2s;
+}
+.example-tag:hover {
+  border-color: var(--c-primary);
+  background: white;
+}
+
+/* 编码可视化 */
+.code-visualization {
+  margin-top: 24px;
+  padding: 24px;
+  background: #fafafa;
+  border-radius: 14px;
+  overflow-x: auto;
+}
+.digit-string {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.code-digit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Courier New', monospace;
+  position: relative;
+}
+.code-digit .pos {
+  font-size: 11px;
+  color: var(--c-ink-soft);
+  margin-bottom: 4px;
+}
+.code-digit .ch {
+  width: 36px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid var(--c-line);
+  border-radius: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-ink);
+  transition: all 0.2s;
+}
+.code-digit.seg-1 .ch { background: #e3f2fd; border-color: #64b5f6; color: #1565c0; }
+.code-digit.seg-2 .ch { background: #fff3e0; border-color: #ffb74d; color: #e65100; }
+.code-digit.seg-3 .ch { background: #f3e5f5; border-color: #ba68c8; color: #6a1b9a; }
+.code-digit.seg-4 .ch { background: #e8f5e9; border-color: #81c784; color: #2e7d32; }
+.code-digit.seg-5 .ch { background: #fff9c4; border-color: #fdd835; color: #f57f17; }
+.code-digit.seg-6 .ch { background: #fce4ec; border-color: #f48fb1; color: #ad1457; }
+
+/* 分段说明 */
+.segments {
+  display: grid;
+  gap: 12px;
+}
+.segment-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid var(--c-line);
+  transition: all 0.2s;
+}
+.segment-row:hover {
+  border-color: var(--c-primary);
+  box-shadow: 0 4px 12px rgba(255, 112, 67, 0.06);
+}
+.segment-badge {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+}
+.segment-badge.seg-1 { background: #e3f2fd; color: #1565c0; }
+.segment-badge.seg-2 { background: #fff3e0; color: #e65100; }
+.segment-badge.seg-3 { background: #f3e5f5; color: #6a1b9a; }
+.segment-badge.seg-4 { background: #e8f5e9; color: #2e7d32; }
+.segment-badge.seg-5 { background: #fff9c4; color: #f57f17; }
+.segment-badge.seg-6 { background: #fce4ec; color: #ad1457; }
+
+.segment-info .label {
+  font-size: 13px;
+  color: var(--c-ink-soft);
+  margin-bottom: 4px;
+}
+.segment-info .desc {
+  font-size: 14px;
+  color: var(--c-ink);
+  font-weight: 600;
+}
+.segment-info .value {
+  display: inline-block;
+  margin-left: 6px;
+  font-family: 'Courier New', monospace;
+  background: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.theory-card {
+  background: linear-gradient(135deg, #fff8e1, #fff3c4);
+  border-left: 4px solid var(--c-yellow);
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #6b4e00;
+  margin-bottom: 20px;
+}
+.theory-card strong { color: #8a5d00; }
+
+.error-msg {
+  padding: 16px;
+  background: #ffebee;
+  border-left: 4px solid #c62828;
+  border-radius: 8px;
+  color: #b71c1c;
+  font-size: 14px;
+  margin-top: 20px;
+}
+
+@media (max-width: 720px) {
+  .header h1 { font-size: 24px; }
+  .code-tabs { grid-template-columns: repeat(2, 1fr); }
+  .code-input { font-size: 17px; }
+  .code-digit .ch { width: 28px; height: 36px; font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← 返回工具集</a>
+
+<div class="header">
+  <span class="lesson-tag">第 7、8 课 · 数据编码随处见 / 编码管理我知道</span>
+  <h1>生活编码解析器</h1>
+  <p>邮政编码、条形码、身份证号、车牌号 ... 这些每天看得到的编码,每一位都藏着丰富的信息!</p>
+</div>
+
+<div class="app">
+
+  <div class="code-tabs">
+    <button class="code-tab active" data-type="postal">
+      <span class="icon">✉️</span>
+      <span class="name">邮政编码</span>
+    </button>
+    <button class="code-tab" data-type="barcode">
+      <span class="icon">📦</span>
+      <span class="name">商品条形码</span>
+    </button>
+    <button class="code-tab" data-type="id">
+      <span class="icon">🆔</span>
+      <span class="name">身份证号</span>
+    </button>
+    <button class="code-tab" data-type="plate">
+      <span class="icon">🚗</span>
+      <span class="name">车牌号</span>
+    </button>
+  </div>
+
+  <div class="card" id="main-card">
+    <!-- 内容由 JS 动态生成 -->
+  </div>
+
+</div>
+
+<script>
+// === 编码定义 ===
+
+// 中国部分省级行政区邮政编码前缀
+const POSTAL_PROV = {
+  '10': '北京市', '11': '北京市',
+  '12': '天津市', '13': '河北省', '14': '河北省', '15': '山西省',
+  '16': '内蒙古自治区', '17': '内蒙古自治区',
+  '20': '辽宁省', '21': '辽宁省',
+  '22': '吉林省', '23': '吉林省', '24': '黑龙江省', '25': '黑龙江省',
+  '26': '黑龙江省', '20': '辽宁省',
+  '30': '上海市', '31': '上海市',
+  '32': '江苏省', '33': '浙江省', '34': '安徽省', '35': '福建省', '36': '江西省',
+  '37': '山东省', '38': '山东省',
+  '40': '河南省', '41': '河南省', '42': '湖北省', '43': '湖南省',
+  '44': '广东省', '45': '广东省', '46': '海南省',
+  '47': '广西壮族自治区', '48': '广西壮族自治区',
+  '50': '重庆市', '51': '重庆市',
+  '52': '四川省', '53': '四川省', '54': '四川省', '55': '四川省',
+  '56': '贵州省', '57': '贵州省', '58': '贵州省',
+  '59': '云南省', '65': '云南省', '66': '云南省', '67': '云南省',
+  '6': '云南/西藏',
+  '71': '陕西省', '72': '陕西省', '73': '甘肃省', '74': '甘肃省',
+  '75': '青海省', '76': '青海省', '78': '宁夏回族自治区', '83': '宁夏回族自治区',
+  '83': '新疆维吾尔自治区', '84': '新疆维吾尔自治区',
+  '85': '新疆维吾尔自治区',
+  '85': '西藏自治区',
+  '85': '西藏自治区',
+  // 完整数据
+};
+
+// 简化的中国邮编省份判断 (使用前两位)
+function lookupProvinceByPostal(p) {
+  const head = p.slice(0, 2);
+  const map = {
+    '10': '北京市', '11': '北京市',
+    '30': '上海市',
+    '20': '辽宁省', '21': '辽宁省',
+    '22': '吉林省', '23': '吉林省',
+    '24': '黑龙江省', '25': '黑龙江省', '26': '黑龙江省',
+    '12': '天津市',
+    '13': '河北省', '14': '河北省',
+    '15': '山西省',
+    '16': '内蒙古自治区', '17': '内蒙古自治区',
+    '32': '江苏省', '33': '浙江省', '34': '安徽省',
+    '35': '福建省', '36': '江西省',
+    '37': '山东省', '38': '山东省',
+    '40': '河南省', '41': '河南省',
+    '42': '湖北省', '43': '湖南省',
+    '44': '广东省', '45': '广东省',
+    '46': '海南省',
+    '47': '广西壮族自治区', '48': '广西壮族自治区',
+    '50': '重庆市',
+    '52': '四川省', '53': '四川省', '54': '四川省', '55': '四川省',
+    '56': '贵州省', '57': '贵州省', '58': '贵州省',
+    '59': '云南省', '65': '云南省',
+    '67': '云南省',
+    '70': '陕西省', '71': '陕西省', '72': '陕西省',
+    '73': '甘肃省', '74': '甘肃省', '75': '甘肃省',
+    '76': '青海省',
+    '83': '新疆维吾尔自治区', '84': '新疆维吾尔自治区',
+    '85': '西藏自治区',
+    '78': '宁夏回族自治区', '79': '宁夏回族自治区',
+  };
+  return map[head] || '请查询权威资料';
+}
+
+// 国家代码 (GS1 商品条形码)
+function lookupCountryByBarcode(prefix) {
+  const code = +prefix;
+  if (code >= 0 && code <= 19) return '美国和加拿大';
+  if (code >= 30 && code <= 39) return '美国 (药品)';
+  if (code >= 40 && code <= 49) return '企业内部使用 (非全球)';
+  if (code >= 50 && code <= 59) return '优惠券';
+  if (code >= 690 && code <= 699) return '中国大陆';
+  if (code === 460 || code === 461 || code === 462 || code === 463 || code === 464 || code === 465 || code === 466 || code === 467 || code === 468 || code === 469) return '俄罗斯';
+  if (code === 471) return '中国台湾';
+  if (code === 489) return '中国香港';
+  if (code === 880) return '韩国';
+  if (code >= 450 && code <= 459) return '日本';
+  if (code >= 490 && code <= 499) return '日本';
+  if (code >= 500 && code <= 509) return '英国';
+  if (code === 539) return '爱尔兰';
+  if (code >= 760 && code <= 769) return '瑞士';
+  if (code >= 400 && code <= 440) return '德国';
+  if (code >= 300 && code <= 379) return '法国';
+  if (code === 754 || code === 755) return '加拿大';
+  return '其他国家/地区 (请查询 GS1 国际编码表)';
+}
+
+// 中国身份证地区前缀 (前两位代表省级)
+function lookupProvinceByID(prefix) {
+  const map = {
+    '11': '北京市', '12': '天津市', '13': '河北省', '14': '山西省',
+    '15': '内蒙古自治区', '21': '辽宁省', '22': '吉林省', '23': '黑龙江省',
+    '31': '上海市', '32': '江苏省', '33': '浙江省', '34': '安徽省',
+    '35': '福建省', '36': '江西省', '37': '山东省', '41': '河南省',
+    '42': '湖北省', '43': '湖南省', '44': '广东省', '45': '广西壮族自治区',
+    '46': '海南省', '50': '重庆市', '51': '四川省', '52': '贵州省',
+    '53': '云南省', '54': '西藏自治区', '61': '陕西省', '62': '甘肃省',
+    '63': '青海省', '64': '宁夏回族自治区', '65': '新疆维吾尔自治区',
+    '71': '台湾省', '81': '香港特别行政区', '82': '澳门特别行政区',
+  };
+  return map[prefix.slice(0, 2)] || '未知地区';
+}
+
+// 车牌省份简称
+const PLATE_PROVS = {
+  '京': '北京', '津': '天津', '沪': '上海', '渝': '重庆',
+  '冀': '河北', '豫': '河南', '云': '云南', '辽': '辽宁',
+  '黑': '黑龙江', '湘': '湖南', '皖': '安徽', '鲁': '山东',
+  '新': '新疆', '苏': '江苏', '浙': '浙江', '赣': '江西',
+  '鄂': '湖北', '桂': '广西', '甘': '甘肃', '晋': '山西',
+  '蒙': '内蒙古', '陕': '陕西', '吉': '吉林', '闽': '福建',
+  '贵': '贵州', '粤': '广东', '青': '青海', '藏': '西藏',
+  '川': '四川', '宁': '宁夏', '琼': '海南'
+};
+
+// === 解析器 ===
+
+const parsers = {
+  postal: {
+    title: '邮政编码 (6 位)',
+    placeholder: '例如: 100871',
+    examples: [
+      { code: '100871', label: '北京大学' },
+      { code: '200120', label: '上海浦东' },
+      { code: '510275', label: '广州中山大学' },
+      { code: '710071', label: '西安电子科大' }
+    ],
+    intro: '我国邮政编码采用"四级六码"制:第 1 位是省级行政区编号,第 2 位是邮区,第 3 位是邮局,第 4 位是支局,后两位是投递局编号。',
+    parse(code) {
+      if (!/^\d{6}$/.test(code)) {
+        return { error: '邮政编码必须是 6 位数字' };
+      }
+      return {
+        type: 'postal',
+        code,
+        segments: [
+          {
+            seg: 1,
+            range: '第 1-2 位',
+            digits: [0, 1],
+            label: '省级行政区',
+            value: code.slice(0, 2),
+            desc: lookupProvinceByPostal(code)
+          },
+          {
+            seg: 2,
+            range: '第 3 位',
+            digits: [2],
+            label: '邮区代码',
+            value: code[2],
+            desc: '该省内的邮区编号'
+          },
+          {
+            seg: 3,
+            range: '第 4 位',
+            digits: [3],
+            label: '邮局代码',
+            value: code[3],
+            desc: '该邮区下的县/市级邮局'
+          },
+          {
+            seg: 4,
+            range: '第 5-6 位',
+            digits: [4, 5],
+            label: '投递局编号',
+            value: code.slice(4, 6),
+            desc: '具体的投递分局或邮政支局'
+          }
+        ]
+      };
+    }
+  },
+
+  barcode: {
+    title: '商品条形码 EAN-13 (13 位)',
+    placeholder: '例如: 6901028000017',
+    examples: [
+      { code: '6901028000017', label: '中国生产' },
+      { code: '6925281000018', label: '中国生产' },
+      { code: '4900057011004', label: '日本生产' }
+    ],
+    intro: '我国超市常见的 13 位商品条形码遵循 EAN-13 标准:第 1-3 位是国家代码,第 4-7 位是厂商代码,第 8-12 位是商品代码,第 13 位是校验码。',
+    parse(code) {
+      const cleaned = code.replace(/\s|-/g, '');
+      if (!/^\d{13}$/.test(cleaned)) {
+        return { error: '商品条形码必须是 13 位数字 (EAN-13)' };
+      }
+      return {
+        type: 'barcode',
+        code: cleaned,
+        segments: [
+          {
+            seg: 1,
+            range: '第 1-3 位',
+            digits: [0, 1, 2],
+            label: '国家代码',
+            value: cleaned.slice(0, 3),
+            desc: lookupCountryByBarcode(cleaned.slice(0, 3))
+          },
+          {
+            seg: 2,
+            range: '第 4-7 位',
+            digits: [3, 4, 5, 6],
+            label: '厂商代码',
+            value: cleaned.slice(3, 7),
+            desc: '由该国家的编码中心分配给生产厂商'
+          },
+          {
+            seg: 3,
+            range: '第 8-12 位',
+            digits: [7, 8, 9, 10, 11],
+            label: '商品代码',
+            value: cleaned.slice(7, 12),
+            desc: '由生产厂商自行分配给具体商品'
+          },
+          {
+            seg: 4,
+            range: '第 13 位',
+            digits: [12],
+            label: '校验码',
+            value: cleaned[12],
+            desc: '依据规则计算得出,用于验证整体编码的正确性'
+          }
+        ]
+      };
+    }
+  },
+
+  id: {
+    title: '公民身份号码 (18 位)',
+    placeholder: '例如: 11010519491231002X',
+    examples: [
+      { code: '11010519491231002X', label: '北京示例' },
+      { code: '44030120000101001X', label: '深圳示例' }
+    ],
+    intro: '我国公民身份号码遵循《公民身份号码》(GB 11643-1999):第 1-6 位是地址码,第 7-14 位是出生日期码,第 15-17 位是顺序码,第 18 位是校验码。',
+    parse(code) {
+      const cleaned = code.replace(/\s/g, '').toUpperCase();
+      if (!/^\d{17}[0-9X]$/.test(cleaned)) {
+        return { error: '身份证号必须是 18 位 (前 17 位为数字,最后 1 位是 0~9 或 X)' };
+      }
+      const year = cleaned.slice(6, 10);
+      const month = cleaned.slice(10, 12);
+      const day = cleaned.slice(12, 14);
+      const seq = cleaned.slice(14, 17);
+      const seqNum = parseInt(seq, 10);
+      const genderText = (seqNum % 2 === 1) ? '男 (顺序码奇数)' : '女 (顺序码偶数)';
+      return {
+        type: 'id',
+        code: cleaned,
+        segments: [
+          {
+            seg: 1,
+            range: '第 1-6 位',
+            digits: [0, 1, 2, 3, 4, 5],
+            label: '地址码',
+            value: cleaned.slice(0, 6),
+            desc: lookupProvinceByID(cleaned) + ' (前两位省/直辖市,后四位市县)'
+          },
+          {
+            seg: 2,
+            range: '第 7-14 位',
+            digits: [6, 7, 8, 9, 10, 11, 12, 13],
+            label: '出生日期',
+            value: cleaned.slice(6, 14),
+            desc: `${year} 年 ${parseInt(month, 10)} 月 ${parseInt(day, 10)} 日`
+          },
+          {
+            seg: 3,
+            range: '第 15-17 位',
+            digits: [14, 15, 16],
+            label: '顺序码',
+            value: cleaned.slice(14, 17),
+            desc: '同地区同生日的人编序号,' + genderText
+          },
+          {
+            seg: 4,
+            range: '第 18 位',
+            digits: [17],
+            label: '校验码',
+            value: cleaned[17],
+            desc: '依据 GB 11643-1999 规则计算的校验位'
+          }
+        ]
+      };
+    }
+  },
+
+  plate: {
+    title: '机动车号牌',
+    placeholder: '例如: 京A12345',
+    examples: [
+      { code: '京A12345', label: '北京' },
+      { code: '沪B66666', label: '上海' },
+      { code: '粤B88888', label: '广东深圳' },
+      { code: '川A学666', label: '成都教练车' }
+    ],
+    intro: '我国机动车号牌的编码规则:第 1 位是汉字,代表省/自治区/直辖市的简称;第 2 位是字母,代表该省下的发牌机关代号 (一般 A 为省会);后 5 位是数字字母组合的序号,有时含特殊汉字。',
+    parse(code) {
+      const cleaned = code.replace(/[\s·•-]/g, '').replace(/[a-z]/g, c => c.toUpperCase());
+      if (cleaned.length < 7 || cleaned.length > 8) {
+        return { error: '车牌号通常是 7 位 (普通) 或 8 位 (新能源)' };
+      }
+      const provChar = cleaned[0];
+      if (!PLATE_PROVS[provChar]) {
+        return { error: '第一位应为汉字省/直辖市/自治区简称 (例如 京、沪、粤、川)' };
+      }
+      const auth = cleaned[1];
+      if (!/[A-Z]/.test(auth)) {
+        return { error: '第二位应为大写字母 (发牌机关代号)' };
+      }
+      const seq = cleaned.slice(2);
+      return {
+        type: 'plate',
+        code: cleaned,
+        segments: [
+          {
+            seg: 1,
+            range: '第 1 位',
+            digits: [0],
+            label: '省/直辖市/自治区简称',
+            value: provChar,
+            desc: PLATE_PROVS[provChar]
+          },
+          {
+            seg: 2,
+            range: '第 2 位',
+            digits: [1],
+            label: '发牌机关代号',
+            value: auth,
+            desc: '一般情况下,A 代表省会城市,B、C、D 等依次为其他城市'
+          },
+          {
+            seg: 3,
+            range: '第 3 位起',
+            digits: Array.from({length: cleaned.length - 2}, (_, i) => i + 2),
+            label: '序号',
+            value: seq,
+            desc: '由数字、字母组成,部分含汉字 (如"学"=教练车,"警"=警车,"挂"=挂车,"使"=使馆车)'
+          }
+        ]
+      };
+    }
+  }
+};
+
+// === 渲染 ===
+let currentType = 'postal';
+
+function renderPanel() {
+  const cfg = parsers[currentType];
+  const card = document.getElementById('main-card');
+  card.innerHTML = `
+    <div class="theory-card">
+      <strong>📖 ${cfg.title}</strong> ${cfg.intro}
+    </div>
+    <input type="text" class="code-input" id="code-input" placeholder="${cfg.placeholder}">
+    <div class="examples-row">
+      ${cfg.examples.map(ex => `<span class="example-tag" data-code="${ex.code}">${ex.code} (${ex.label})</span>`).join('')}
+    </div>
+    <div id="result-area"></div>
+  `;
+  const input = document.getElementById('code-input');
+  input.addEventListener('input', () => {
+    if (input.value.trim()) renderResult(input.value.trim());
+    else document.getElementById('result-area').innerHTML = '';
+  });
+  card.querySelectorAll('.example-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      input.value = tag.dataset.code;
+      renderResult(tag.dataset.code);
+    });
+  });
+  // 初始示例
+  input.value = cfg.examples[0].code;
+  renderResult(cfg.examples[0].code);
+}
+
+function renderResult(code) {
+  const area = document.getElementById('result-area');
+  const result = parsers[currentType].parse(code);
+  if (result.error) {
+    area.innerHTML = `<div class="error-msg">⚠ ${result.error}</div>`;
+    return;
+  }
+
+  // 数字字符串可视化
+  let digitStr = '<div class="digit-string">';
+  for (let i = 0; i < result.code.length; i++) {
+    const seg = result.segments.find(s => s.digits.includes(i));
+    digitStr += `<div class="code-digit ${seg ? 'seg-' + seg.seg : ''}">
+      <span class="pos">${i+1}</span>
+      <span class="ch">${result.code[i]}</span>
+    </div>`;
+  }
+  digitStr += '</div>';
+
+  // 段落说明
+  const segHtml = result.segments.map(s => `
+    <div class="segment-row">
+      <span class="segment-badge seg-${s.seg}">${s.range}</span>
+      <div class="segment-info">
+        <div class="label">${s.label} <span class="value">${s.value}</span></div>
+        <div class="desc">${s.desc}</div>
+      </div>
+    </div>
+  `).join('');
+
+  area.innerHTML = `
+    <div class="code-visualization">
+      ${digitStr}
+      <div class="segments">${segHtml}</div>
+    </div>
+  `;
+}
+
+// 切换类型
+document.querySelectorAll('.code-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentType = tab.dataset.type;
+    renderPanel();
+  });
+});
+
+// 初始化
+renderPanel();
+</script>
+
+</body>
+</html>

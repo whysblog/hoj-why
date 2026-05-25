@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第10课 · 物物互通有新径 — MQTT 发布订阅模拟器</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --panel: #131826;
+    --panel-2: #1c2333;
+    --line: #2a3344;
+    --ink: #e6edf3;
+    --ink-soft: #8b949e;
+    --pub: #ff7b54;
+    --sub: #5db9f5;
+    --srv: #b594ff;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(181,148,255,.08), transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(255,123,84,.06), transparent 50%);
+    min-height: 100vh;
+  }
+  .mono { font-family: "JetBrains Mono","SF Mono","Consolas",monospace; }
+
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--sub); text-decoration: none; border-bottom: 1px dotted var(--sub); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--pub); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--pub); margin-right: 8px; font-size: 14px; }
+
+  /* 类比模型 */
+  .analogy {
+    background: var(--panel); padding: 24px 28px; border-radius: 12px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: center;
+  }
+  .analogy h3 { font-size: 16px; color: var(--yellow); margin-bottom: 14px; }
+  .analogy p { font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+  .analogy strong { color: var(--ink); }
+  .analogy-fig { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 16px; background: var(--bg); border-radius: 8px; }
+  .person { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .person .ic { font-size: 36px; }
+  .person .lbl { font-size: 11px; color: var(--ink-soft); }
+  .person .role { font-size: 10px; padding: 2px 8px; border-radius: 999px; }
+  .person.pub .role { background: var(--pub); color: #000; }
+  .person.srv .role { background: var(--srv); color: #000; }
+  .person.sub .role { background: var(--sub); color: #000; }
+  .arrow-h { font-size: 20px; color: var(--ink-soft); }
+
+  /* 发布-订阅可视化场景 */
+  .stage {
+    background: var(--panel); padding: 30px; border-radius: 12px;
+    border: 1px solid var(--line); box-shadow: var(--shadow); position: relative;
+    margin-top: 18px;
+  }
+  .stage svg { width: 100%; height: 460px; }
+  .role-box {
+    fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5;
+  }
+  .role-label { fill: var(--ink); font-size: 13px; font-weight: 600; text-anchor: middle; }
+  .role-sub-label { fill: var(--ink-soft); font-size: 10px; text-anchor: middle; }
+
+  /* 控制面板 */
+  .control {
+    margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+  }
+  .ctl-card {
+    background: var(--panel-2); padding: 18px; border-radius: 8px;
+    border: 1px solid var(--line); border-top: 4px solid;
+  }
+  .ctl-card.pub-c { border-top-color: var(--pub); }
+  .ctl-card.srv-c { border-top-color: var(--srv); }
+  .ctl-card.sub-c { border-top-color: var(--sub); }
+  .ctl-card h4 { font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .ctl-card.pub-c h4 { color: var(--pub); }
+  .ctl-card.srv-c h4 { color: var(--srv); }
+  .ctl-card.sub-c h4 { color: var(--sub); }
+
+  .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .input-row input, .input-row select {
+    flex: 1; padding: 8px 10px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 4px; font-size: 12px; font-family: inherit;
+  }
+  .input-row button {
+    padding: 8px 14px; background: var(--pub); color: #1a1a1a; border: none;
+    border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .input-row button:hover { opacity: .85; }
+  .ctl-card.sub-c .input-row button { background: var(--sub); }
+  .ctl-card.srv-c .input-row button { background: var(--srv); }
+
+  .topics-box {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+    padding: 8px; min-height: 70px; font-size: 11px; color: var(--ink-soft); 
+    font-family: monospace; line-height: 1.7;
+  }
+  .topic-item {
+    display: inline-block; padding: 2px 10px; background: var(--panel-2);
+    border-radius: 99px; margin: 2px; font-size: 11px;
+  }
+  .topic-item .x { margin-left: 6px; cursor: pointer; color: var(--ink-soft); }
+  .topic-item .x:hover { color: var(--pub); }
+  .topic-item.subscribed { background: var(--sub); color: #000; }
+
+  /* 消息日志 */
+  .log-area {
+    margin-top: 18px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px; max-height: 220px; overflow-y: auto; font-size: 12px; line-height: 1.7;
+  }
+  .log-area::before { content: "📜 消息日志"; display: block; color: var(--ink-soft); font-size: 11px; letter-spacing: 1px; margin-bottom: 8px; }
+  .log-line { font-family: monospace; padding: 3px 0; color: var(--ink-soft); }
+  .log-line .t { color: var(--yellow); margin-right: 8px; }
+  .log-line .a { color: var(--pub); }
+  .log-line .b { color: var(--sub); }
+  .log-line .c { color: var(--srv); }
+  .log-line .topic { color: var(--green); font-weight: 700; }
+
+  /* HTTP vs MQTT 对比 */
+  .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .vs-card { background: var(--panel); padding: 22px; border-radius: 10px; border: 1px solid var(--line); }
+  .vs-card h4 { padding-bottom: 8px; border-bottom: 2px solid; margin-bottom: 12px; font-size: 16px; }
+  .vs-card.http h4 { color: var(--pub); border-color: var(--pub); }
+  .vs-card.mqtt h4 { color: var(--sub); border-color: var(--sub); }
+  .vs-row { display: grid; grid-template-columns: 80px 1fr; gap: 12px; padding: 8px 0; font-size: 13px; border-bottom: 1px dashed var(--line); }
+  .vs-row:last-child { border: none; }
+  .vs-row .k { color: var(--ink-soft); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .analogy, .control, .vs-grid { grid-template-columns: 1fr; }
+    .stage svg { height: 360px; }
+  }
+
+  /* SVG 动画消息包 */
+  .msg-pkt { font-family: monospace; font-size: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 10 课</span>物物互通有新径</h1>
+  <p class="lead">MQTT（Message Queuing Telemetry Transport，消息队列遥测传输）是物联网中流行的协议，具有<strong>开放、轻量、可靠、易实现</strong>的特点。本工具通过"邮政局类比"和发布订阅模拟，帮助你理解 MQTT 的工作机制。</p>
+</header>
+
+<main>
+
+  <!-- 邮政局类比 -->
+  <section class="section">
+    <div class="section-title">一、用"订报纸"理解 MQTT</div>
+    <div class="analogy">
+      <div>
+        <h3>📮 生活类比：邮政局送报纸</h3>
+        <p>把 <strong>MQTT 服务器</strong>理解为<strong>邮政局</strong>，<strong>订阅者</strong>理解为<strong>订报客户</strong>，<strong>发布者</strong>理解为<strong>报纸出版机构</strong>。报纸出版机构每天把新报纸送到邮政局；邮政局会把客户订购的报纸送达；客户不必每天重复订购。</p>
+        <p style="margin-top:12px;color:var(--green);">→ 发布者和订阅者并不直接通信，而是通过 MQTT 服务器作为"桥梁"。</p>
+      </div>
+      <div class="analogy-fig">
+        <div class="person pub">
+          <div class="ic">🏭</div>
+          <div class="lbl">报社</div>
+          <div class="role">发布者</div>
+        </div>
+        <div class="arrow-h">→</div>
+        <div class="person srv">
+          <div class="ic">📮</div>
+          <div class="lbl">邮政局</div>
+          <div class="role">服务器</div>
+        </div>
+        <div class="arrow-h">→</div>
+        <div class="person sub">
+          <div class="ic">🏠</div>
+          <div class="lbl">订报户</div>
+          <div class="role">订阅者</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 主模拟器 -->
+  <section class="section">
+    <div class="section-title">二、MQTT 发布订阅交互模拟</div>
+    <div class="stage">
+      <svg id="mqttStage" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="server-glow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stop-color="rgba(181,148,255,.4)"/>
+            <stop offset="1" stop-color="rgba(181,148,255,0)"/>
+          </radialGradient>
+        </defs>
+        
+        <!-- 装饰性背景 -->
+        <circle cx="450" cy="230" r="120" fill="url(#server-glow)"/>
+
+        <!-- 三个发布者 -->
+        <g id="pub-A" transform="translate(60 50)">
+          <rect class="role-box" x="0" y="0" width="110" height="80" rx="8"/>
+          <text class="role-label" x="55" y="28" fill="var(--pub)">📡 温度传感器</text>
+          <text class="role-sub-label" x="55" y="48">Publisher A</text>
+          <text class="role-sub-label" x="55" y="65" fill="var(--pub)">主题: temp</text>
+        </g>
+        <g id="pub-B" transform="translate(60 180)">
+          <rect class="role-box" x="0" y="0" width="110" height="80" rx="8"/>
+          <text class="role-label" x="55" y="28" fill="var(--pub)">💧 湿度传感器</text>
+          <text class="role-sub-label" x="55" y="48">Publisher B</text>
+          <text class="role-sub-label" x="55" y="65" fill="var(--pub)">主题: humid</text>
+        </g>
+        <g id="pub-C" transform="translate(60 310)">
+          <rect class="role-box" x="0" y="0" width="110" height="80" rx="8"/>
+          <text class="role-label" x="55" y="28" fill="var(--pub)">💡 光敏传感器</text>
+          <text class="role-sub-label" x="55" y="48">Publisher C</text>
+          <text class="role-sub-label" x="55" y="65" fill="var(--pub)">主题: light</text>
+        </g>
+
+        <!-- MQTT 服务器（中心） -->
+        <g id="server" transform="translate(370 160)">
+          <rect class="role-box" x="0" y="0" width="170" height="140" rx="10" fill="#1c2333" stroke="var(--srv)" stroke-width="2"/>
+          <text class="role-label" x="85" y="32" fill="var(--srv)" font-size="15">⚙ MQTT 服务器</text>
+          <text class="role-sub-label" x="85" y="50" fill="var(--ink-soft)">Broker · 端口 1883</text>
+          <line x1="20" y1="60" x2="150" y2="60" stroke="var(--line)"/>
+          <text x="85" y="80" font-size="10" text-anchor="middle" fill="var(--green)" class="mono">📂 主题列表</text>
+          <text id="srvTopics" x="85" y="100" font-size="9" text-anchor="middle" fill="var(--ink-soft)" class="mono">temp, humid, light</text>
+          <text id="srvActivity" x="85" y="125" font-size="9" text-anchor="middle" fill="var(--yellow)" class="mono">⌛ 待机中</text>
+        </g>
+
+        <!-- 三个订阅者 -->
+        <g id="sub-1" transform="translate(720 50)">
+          <rect class="role-box" x="0" y="0" width="120" height="80" rx="8"/>
+          <text class="role-label" x="60" y="28" fill="var(--sub)">📱 手机APP</text>
+          <text class="role-sub-label" x="60" y="48">Subscriber 1</text>
+          <text class="role-sub-label" x="60" y="65" fill="var(--sub)" id="sub1-topics">订阅: temp</text>
+        </g>
+        <g id="sub-2" transform="translate(720 180)">
+          <rect class="role-box" x="0" y="0" width="120" height="80" rx="8"/>
+          <text class="role-label" x="60" y="28" fill="var(--sub)">🖥 监控屏</text>
+          <text class="role-sub-label" x="60" y="48">Subscriber 2</text>
+          <text class="role-sub-label" x="60" y="65" fill="var(--sub)" id="sub2-topics">订阅: humid, light</text>
+        </g>
+        <g id="sub-3" transform="translate(720 310)">
+          <rect class="role-box" x="0" y="0" width="120" height="80" rx="8"/>
+          <text class="role-label" x="60" y="28" fill="var(--sub)">⚠ 告警系统</text>
+          <text class="role-sub-label" x="60" y="48">Subscriber 3</text>
+          <text class="role-sub-label" x="60" y="65" fill="var(--sub)" id="sub3-topics">订阅: temp</text>
+        </g>
+
+        <!-- 连接线 -->
+        <line x1="170" y1="90"  x2="370" y2="180" stroke="var(--line)" stroke-dasharray="4 4"/>
+        <line x1="170" y1="220" x2="370" y2="230" stroke="var(--line)" stroke-dasharray="4 4"/>
+        <line x1="170" y1="350" x2="370" y2="280" stroke="var(--line)" stroke-dasharray="4 4"/>
+        <line x1="540" y1="180" x2="720" y2="90"  stroke="var(--line)" stroke-dasharray="4 4"/>
+        <line x1="540" y1="230" x2="720" y2="220" stroke="var(--line)" stroke-dasharray="4 4"/>
+        <line x1="540" y1="280" x2="720" y2="350" stroke="var(--line)" stroke-dasharray="4 4"/>
+
+        <!-- 动画消息（发布） -->
+        <g id="anim-pub" opacity="0">
+          <circle id="anim-pub-circle" cx="170" cy="90" r="10" fill="var(--pub)"/>
+          <text id="anim-pub-text" class="msg-pkt" x="170" y="95" text-anchor="middle" fill="#fff">📦</text>
+        </g>
+        <!-- 动画消息（分发） -->
+        <g id="anim-sub-1" opacity="0">
+          <circle id="anim-sub-1-circle" cx="540" cy="230" r="10" fill="var(--sub)"/>
+        </g>
+        <g id="anim-sub-2" opacity="0">
+          <circle id="anim-sub-2-circle" cx="540" cy="230" r="10" fill="var(--sub)"/>
+        </g>
+        <g id="anim-sub-3" opacity="0">
+          <circle id="anim-sub-3-circle" cx="540" cy="230" r="10" fill="var(--sub)"/>
+        </g>
+      </svg>
+
+      <!-- 控制面板 -->
+      <div class="control">
+        <!-- 发布者面板 -->
+        <div class="ctl-card pub-c">
+          <h4>🟠 发布者操作</h4>
+          <div class="input-row">
+            <select id="pubTopic">
+              <option value="temp">temp</option>
+              <option value="humid">humid</option>
+              <option value="light">light</option>
+            </select>
+            <input class="mono" id="pubMsg" placeholder='例如：25℃' value="25℃" style="flex:2"/>
+          </div>
+          <div class="input-row">
+            <button onclick="publish()">📤 发布消息</button>
+            <button onclick="autoPublish()" style="background:var(--yellow);">🔄 自动模拟</button>
+          </div>
+          <p style="font-size:11px;color:var(--ink-soft);line-height:1.6;">将消息上传到指定主题。已订阅该主题的客户端会收到消息。</p>
+        </div>
+
+        <!-- 服务器状态 -->
+        <div class="ctl-card srv-c">
+          <h4>🟣 MQTT 服务器</h4>
+          <div class="topics-box">
+            <div style="color:var(--green);">📌 当前主题列表：</div>
+            <div id="topicsBox">
+              <span class="topic-item">temp</span>
+              <span class="topic-item">humid</span>
+              <span class="topic-item">light</span>
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--ink-soft);line-height:1.6;margin-top:8px;">服务器维护主题，将发布者的消息分发给订阅了该主题的所有订阅者。</p>
+        </div>
+
+        <!-- 订阅者面板 -->
+        <div class="ctl-card sub-c">
+          <h4>🔵 订阅者操作</h4>
+          <div class="input-row">
+            <select id="subClient">
+              <option value="1">📱 手机APP</option>
+              <option value="2">🖥 监控屏</option>
+              <option value="3">⚠ 告警系统</option>
+            </select>
+            <select id="subTopic">
+              <option value="temp">temp</option>
+              <option value="humid">humid</option>
+              <option value="light">light</option>
+            </select>
+          </div>
+          <div class="input-row">
+            <button onclick="subscribe()">📥 订阅</button>
+            <button onclick="unsubscribe()" style="background:var(--ink-soft);color:#000;">取消订阅</button>
+          </div>
+          <p style="font-size:11px;color:var(--ink-soft);line-height:1.6;">客户端可以订阅一个或多个主题，仅接收已订阅主题的消息。</p>
+        </div>
+      </div>
+
+      <!-- 消息日志 -->
+      <div class="log-area" id="logArea"></div>
+    </div>
+  </section>
+
+  <!-- HTTP vs MQTT 对比 -->
+  <section class="section">
+    <div class="section-title">三、HTTP 与 MQTT 对比</div>
+    <div class="vs-grid">
+      <div class="vs-card http">
+        <h4>HTTP（请求—响应）</h4>
+        <div class="vs-row"><div class="k">通信模型</div><div>客户端主动请求 → 服务器响应</div></div>
+        <div class="vs-row"><div class="k">实时性</div><div>需要轮询，延时高</div></div>
+        <div class="vs-row"><div class="k">报文大小</div><div>较大（含 Header）</div></div>
+        <div class="vs-row"><div class="k">能耗</div><div>较高，不利于电池供电设备</div></div>
+        <div class="vs-row"><div class="k">主要场景</div><div>网页浏览、API 调用</div></div>
+        <div class="vs-row"><div class="k">物联适用性</div><div style="color:var(--pub);">⚠ 不太理想</div></div>
+      </div>
+      <div class="vs-card mqtt">
+        <h4>MQTT（发布—订阅）</h4>
+        <div class="vs-row"><div class="k">通信模型</div><div>发布者发消息到主题，订阅者接收</div></div>
+        <div class="vs-row"><div class="k">实时性</div><div>消息推送，低延时</div></div>
+        <div class="vs-row"><div class="k">报文大小</div><div>极小（最小2字节）</div></div>
+        <div class="vs-row"><div class="k">能耗</div><div>极低，适合电池设备</div></div>
+        <div class="vs-row"><div class="k">主要场景</div><div>智能家居、传感器网络、远程监控</div></div>
+        <div class="vs-row"><div class="k">物联适用性</div><div style="color:var(--green);">✓ 物联网首选</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 10 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+// ============ 状态 ============
+var subscriptions = {
+  1: ["temp"],
+  2: ["humid", "light"],
+  3: ["temp"]
+};
+function refreshSubLabels() {
+  for (var i = 1; i <= 3; i++) {
+    var t = subscriptions[i].length ? subscriptions[i].join(", ") : "(无订阅)";
+    document.getElementById("sub" + i + "-topics").textContent = "\u8BA2\u9605: " + t;
+  }
+}
+function log(html, color) {
+  var log = document.getElementById('logArea');
+  var line = document.createElement('div');
+  line.className = 'log-line';
+  var time = new Date().toLocaleTimeString('zh-CN', {
+    hour12: false
+  });
+  line.innerHTML = "<span class=\"t\">[" + time + "]</span> " + html;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  if (log.children.length > 30) log.removeChild(log.firstChild);
+}
+
+// ============ 订阅 ============
+function subscribe() {
+  var client = parseInt(document.getElementById('subClient').value);
+  var topic = document.getElementById('subTopic').value;
+  if (!subscriptions[client].includes(topic)) {
+    subscriptions[client].push(topic);
+    log("<span class=\"b\">\u8BA2\u9605\u8005 " + client + "</span> \u2192 \u8BA2\u9605\u4E3B\u9898 <span class=\"topic\">" + topic + "</span>", 'sub');
+    refreshSubLabels();
+  } else {
+    log("<span style=\"color:var(--yellow)\">\u26A0 \u8BA2\u9605\u8005 " + client + " \u5DF2\u8BA2\u9605\u8BE5\u4E3B\u9898</span>");
+  }
+}
+function unsubscribe() {
+  var client = parseInt(document.getElementById('subClient').value);
+  var topic = document.getElementById('subTopic').value;
+  var idx = subscriptions[client].indexOf(topic);
+  if (idx >= 0) {
+    subscriptions[client].splice(idx, 1);
+    log("<span class=\"b\">\u8BA2\u9605\u8005 " + client + "</span> \u2717 \u53D6\u6D88\u8BA2\u9605 <span class=\"topic\">" + topic + "</span>");
+    refreshSubLabels();
+  } else {
+    log("<span style=\"color:var(--yellow)\">\u26A0 \u8BA2\u9605\u8005 " + client + " \u672A\u8BA2\u9605\u8BE5\u4E3B\u9898</span>");
+  }
+}
+
+// ============ 发布 ============
+var pubPositions = {
+  temp: {
+    x: 170,
+    y: 90
+  },
+  humid: {
+    x: 170,
+    y: 220
+  },
+  light: {
+    x: 170,
+    y: 350
+  }
+};
+var subPositions = {
+  1: {
+    x: 720,
+    y: 90
+  },
+  2: {
+    x: 720,
+    y: 220
+  },
+  3: {
+    x: 720,
+    y: 350
+  }
+};
+var serverPos = {
+  x: 540,
+  y: 230
+};
+function publish() {
+  var topic = document.getElementById('pubTopic').value;
+  var msg = document.getElementById('pubMsg').value;
+  if (!msg) {
+    log("<span style=\"color:var(--yellow)\">\u26A0 \u6D88\u606F\u5185\u5BB9\u4E3A\u7A7A</span>");
+    return;
+  }
+  var pubPos = pubPositions[topic];
+  log("<span class=\"a\">\u53D1\u5E03\u8005(" + topic + ")</span> \uD83D\uDCE4 PUBLISH \u2192 <span class=\"topic\">" + topic + "</span> = \"" + msg + "\"");
+  document.getElementById('srvActivity').textContent = "\uD83D\uDCE5 \u63A5\u6536 " + topic;
+  document.getElementById('srvActivity').setAttribute('fill', 'var(--pub)');
+
+  // 动画 1：发布者 → 服务器
+  var anim = document.getElementById('anim-pub');
+  var circ = document.getElementById('anim-pub-circle');
+  anim.setAttribute('opacity', 1);
+  circ.setAttribute('cx', pubPos.x);
+  circ.setAttribute('cy', pubPos.y);
+  var t = 0;
+  var dur = 600;
+  var start = Date.now();
+  var startX = pubPos.x,
+    startY = pubPos.y,
+    endX = serverPos.x - 80,
+    endY = serverPos.y;
+  var _tick2 = function tick1() {
+    var p = Math.min(1, (Date.now() - start) / dur);
+    circ.setAttribute('cx', startX + (endX - startX) * p);
+    circ.setAttribute('cy', startY + (endY - startY) * p);
+    if (p < 1) requestAnimationFrame(_tick2);else {
+      anim.setAttribute('opacity', 0);
+      // 服务器收到，开始分发
+      log("<span class=\"c\">\u670D\u52A1\u5668</span> \u6536\u5230 <span class=\"topic\">" + topic + "</span> \u6D88\u606F\uFF0C\u6B63\u5728\u5206\u53D1...");
+
+      // 找到所有订阅者
+      var subs = [];
+      for (var i = 1; i <= 3; i++) {
+        if (subscriptions[i].includes(topic)) subs.push(i);
+      }
+      if (subs.length === 0) {
+        log("<span style=\"color:var(--ink-soft)\">\u26AA \u6CA1\u6709\u8BA2\u9605\u8005\u8BA2\u9605 " + topic + " \u4E3B\u9898\uFF0C\u6D88\u606F\u88AB\u4E22\u5F03</span>");
+        document.getElementById('srvActivity').textContent = "\u231B \u5F85\u673A\u4E2D";
+        document.getElementById('srvActivity').setAttribute('fill', 'var(--yellow)');
+        return;
+      }
+
+      // 动画 2：服务器 → 各订阅者
+      subs.forEach(function (subId, idx) {
+        setTimeout(function () {
+          var animSub = document.getElementById("anim-sub-" + subId);
+          var c = document.getElementById("anim-sub-" + subId + "-circle");
+          animSub.setAttribute('opacity', 1);
+          var subPos = subPositions[subId];
+          var startX2 = serverPos.x + 80,
+            startY2 = serverPos.y;
+          var endX2 = subPos.x,
+            endY2 = subPos.y;
+          var start2 = Date.now();
+          var _tick = function tick2() {
+            var p2 = Math.min(1, (Date.now() - start2) / 600);
+            c.setAttribute('cx', startX2 + (endX2 - startX2) * p2);
+            c.setAttribute('cy', startY2 + (endY2 - startY2) * p2);
+            if (p2 < 1) requestAnimationFrame(_tick);else {
+              animSub.setAttribute('opacity', 0);
+              log("<span class=\"b\">\u8BA2\u9605\u8005 " + subId + "</span> \u6536\u5230\u6D88\u606F\uFF1A<span class=\"topic\">" + topic + "</span> = \"" + msg + "\" \u2713");
+            }
+          };
+          _tick();
+        }, idx * 150);
+      });
+      setTimeout(function () {
+        document.getElementById('srvActivity').textContent = "\u231B \u5F85\u673A\u4E2D";
+        document.getElementById('srvActivity').setAttribute('fill', 'var(--yellow)');
+      }, 1200);
+    }
+  };
+  _tick2();
+}
+var autoTimer = null;
+var autoData = [{
+  topic: "temp",
+  msg: "23℃"
+}, {
+  topic: "humid",
+  msg: "65%"
+}, {
+  topic: "light",
+  msg: "1200lux"
+}, {
+  topic: "temp",
+  msg: "24℃"
+}, {
+  topic: "humid",
+  msg: "62%"
+}];
+var autoIdx = 0;
+function autoPublish() {
+  if (autoTimer) {
+    clearInterval(autoTimer);
+    autoTimer = null;
+    log("<span style=\"color:var(--yellow)\">\u23F8 \u81EA\u52A8\u6A21\u62DF\u5DF2\u505C\u6B62</span>");
+    return;
+  }
+  log("<span style=\"color:var(--green)\">\u25B6 \u81EA\u52A8\u6A21\u62DF\u5F00\u59CB\uFF08\u6BCF 3 \u79D2\u53D1\u5E03\u4E00\u6761\u6D88\u606F\uFF09</span>");
+  autoTimer = setInterval(function () {
+    var d = autoData[autoIdx % autoData.length];
+    autoIdx++;
+    document.getElementById('pubTopic').value = d.topic;
+    document.getElementById('pubMsg').value = d.msg;
+    publish();
+  }, 3000);
+}
+
+// ============ 初始化 ============
+refreshSubLabels();
+log("<span style=\"color:var(--green)\">\u7CFB\u7EDF\u5DF2\u542F\u52A8</span>\uFF0C\u521D\u59CB\u8BA2\u9605\u72B6\u6001\uFF1A\u624B\u673A=temp\uFF0C\u76D1\u63A7=humid+light\uFF0C\u544A\u8B66=temp");
+log("<span style=\"color:var(--ink-soft)\">\u2192 \u8BD5\u8BD5\u70B9\u51FB <strong>\"\u53D1\u5E03\u6D88\u606F\"</strong> \u6216 <strong>\"\u81EA\u52A8\u6A21\u62DF\"</strong></span>");
+
+</script>
+</body>
+</html>

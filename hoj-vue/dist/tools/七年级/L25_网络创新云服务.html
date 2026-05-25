@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第25课 · 网络创新云服务</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第5单元 · 第25课</span>
+    <span class="title">网络创新云服务</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>网络创新<br>云服务</h1>
+<p class="subtitle">第五单元 · 第25课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>云计算原理与应用</strong></span>
+<span>💡 关键词：<strong>IaaS · PaaS · SaaS</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">☁️</span><div class="card-title">认识云计算</div><div class="card-desc">理解"上云"的含义和价值。</div></div><div class="card"><span class="card-icon">📦</span><div class="card-title">了解三层服务</div><div class="card-desc">区分 IaaS / PaaS / SaaS。</div></div><div class="card"><span class="card-icon">🇨🇳</span><div class="card-title">中国云力量</div><div class="card-desc">了解中国云服务的发展。</div></div></div></section>
+<section class="slide"><h2>什么是云计算？</h2><div class="highlight">☁️ <strong>定义：</strong>把计算资源（CPU、内存、存储、网络）放到<strong>远程的大型数据中心</strong>，按需付费使用，<strong>像用水电一样用计算</strong>。</div><h3>三个关键特征</h3><div class="cards"><div class="card"><span class="card-icon">📊</span><div class="card-title">按需使用</div><div class="card-desc">需要 1 台服务器开 1 台，需要 1000 台开 1000 台，不用了就关。</div></div><div class="card"><span class="card-icon">💰</span><div class="card-title">按量付费</div><div class="card-desc">用多少付多少，类似水电费，无需先期大笔投入。</div></div><div class="card"><span class="card-icon">⚡</span><div class="card-title">弹性伸缩</div><div class="card-desc">双11高峰来临，几分钟扩容数千台机器；过后自动收回。</div></div></div><div class="highlight">🚰 <strong>类比理解：</strong>过去每家每户都要打井(自建机房)、买水泵(买服务器)、修水管(网络)，又贵又麻烦。<strong>云计算就像自来水公司</strong>，统一供水(算力)，你打开水龙头(API)就能用。</div></section>
+<section class="slide"><h2>云的三层服务模型</h2><div class="cards"><div class="card"><span class="card-icon">🏗</span><div class="card-title">IaaS · 基础设施即服务</div><div class="card-desc"><strong>"租房子"</strong>。云厂商提供虚拟机/网络/存储等"原料"，用户自己搭建系统。如阿里云 ECS、AWS EC2。</div></div><div class="card"><span class="card-icon">🏠</span><div class="card-title">PaaS · 平台即服务</div><div class="card-desc"><strong>"租精装公寓"</strong>。云厂商提供运行环境（数据库、消息队列、AI 平台），用户专注于写应用。</div></div><div class="card"><span class="card-icon">🏢</span><div class="card-title">SaaS · 软件即服务</div><div class="card-desc"><strong>"住酒店"</strong>。云厂商直接提供成品软件，用户只需打开浏览器使用。如钉钉、企业微信、腾讯文档、Office 365。</div></div></div><table class="tbl" style="margin-top:18px;">
+<tr><th></th><th>用户负责</th><th>云厂商负责</th></tr>
+<tr><td><strong>IaaS</strong></td><td>操作系统、软件、数据</td><td>硬件、虚拟化、网络</td></tr>
+<tr><td><strong>PaaS</strong></td><td>应用代码、数据</td><td>+ 操作系统、运行时</td></tr>
+<tr><td><strong>SaaS</strong></td><td>只是使用</td><td>+ 全部应用</td></tr>
+</table></section>
+<section class="slide"><h2>云存储：随身的"无限硬盘"</h2><p><strong>云存储 (Cloud Storage)</strong>：把文件存到云端，多设备同步、永不丢失。</p><div class="cards"><div class="card"><span class="card-icon">📁</span><div class="card-title">个人云盘</div><div class="card-desc">百度网盘、阿里云盘、腾讯微云、iCloud、Google Drive。</div></div><div class="card"><span class="card-icon">📷</span><div class="card-title">照片云相册</div><div class="card-desc">iCloud 相册、华为云空间、谷歌相册，照片自动备份。</div></div><div class="card"><span class="card-icon">📝</span><div class="card-title">云端文档</div><div class="card-desc">腾讯文档、石墨文档、Google Docs，多人实时协作。</div></div><div class="card"><span class="card-icon">🏢</span><div class="card-title">企业云存储</div><div class="card-desc">阿里云 OSS、腾讯云 COS，存放网站图片、视频。</div></div></div><h3>云存储的优势</h3>
+<ul>
+<li>✅ <strong>跨设备同步：</strong>手机拍的照片，电脑能看</li>
+<li>✅ <strong>容量大：</strong>免费 5GB 到 TB 级，比本地硬盘大</li>
+<li>✅ <strong>不怕丢失：</strong>多份冗余备份，硬盘坏了也不丢</li>
+<li>✅ <strong>方便分享：</strong>生成链接给他人，无需邮件附件</li>
+</ul>
+<div class="highlight">⚠️ <strong>注意事项：</strong>云存储的安全依赖于密码 + 二步验证；隐私照片建议本地加密后再上传；重要数据要"<strong>本地 + 云端</strong>" 双备份。</div></section>
+<section class="slide"><h2>云计算的典型应用场景</h2><div class="cards"><div class="card"><span class="card-icon">🛒</span><div class="card-title">电商大促</div><div class="card-desc">双11、618 期间订单激增千万倍，必须靠云的弹性扩容。</div></div><div class="card"><span class="card-icon">🎮</span><div class="card-title">在线游戏 / 云游戏</div><div class="card-desc">游戏服务器在云上，玩家全球接入；云游戏让手机也能玩 3A 大作。</div></div><div class="card"><span class="card-icon">🎬</span><div class="card-title">在线视频</div><div class="card-desc">B站、爱奇艺，海量视频用云存储 + CDN 分发。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">AI 训练</div><div class="card-desc">大模型训练需要数千张 GPU 数月运算，只能上云。</div></div><div class="card"><span class="card-icon">🏥</span><div class="card-title">医疗影像</div><div class="card-desc">CT、MRI 影像存云端，AI 辅助诊断。</div></div><div class="card"><span class="card-icon">🚗</span><div class="card-title">自动驾驶</div><div class="card-desc">车端 + 云端协同，每辆车的数据训练全局模型。</div></div></div></section>
+<section class="slide"><h2>中国云力量</h2><div class="cards"><div class="card"><span class="card-icon">☁️</span><div class="card-title">阿里云</div><div class="card-desc">中国第一、亚太第一、全球第三。支撑双11、12306 等关键系统。</div></div><div class="card"><span class="card-icon">📱</span><div class="card-title">华为云</div><div class="card-desc">技术自主可控，政企客户首选，鸿蒙生态根基。</div></div><div class="card"><span class="card-icon">🐧</span><div class="card-title">腾讯云</div><div class="card-desc">游戏、社交、视频领域强势，微信、王者荣耀的底座。</div></div><div class="card"><span class="card-icon">🏛</span><div class="card-title">天翼云</div><div class="card-desc">中国电信旗下，政务和央企客户多。</div></div><div class="card"><span class="card-icon">📡</span><div class="card-title">移动云 / 联通云</div><div class="card-desc">运营商云，靠近基础网络优势。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">百度智能云</div><div class="card-desc">AI 优势，文心一言、Apollo 自动驾驶在此运行。</div></div></div><div class="highlight">🇨🇳 <strong>"东数西算"工程：</strong>2022 年启动，在贵州、内蒙古、甘肃、宁夏等 8 大算力枢纽建设国家级数据中心集群，让东部需求与西部资源(气候、清洁能源)更好匹配。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 关于云计算，下列说法<strong>正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">必须自己买服务器</div>
+<div class="quiz-opt" data-correct="true">按需使用、按量付费</div>
+<div class="quiz-opt" data-correct="false">只有大公司能用</div>
+<div class="quiz-opt" data-correct="false">和互联网无关</div></div>
+<div class="quiz-feedback">✅ 云计算最大特点是按需使用、按量付费，让小公司、个人都能用得起强大算力。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 钉钉、腾讯文档属于云服务的哪一层？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">IaaS</div>
+<div class="quiz-opt" data-correct="false">PaaS</div>
+<div class="quiz-opt" data-correct="true">SaaS</div>
+<div class="quiz-opt" data-correct="false">FaaS</div></div>
+<div class="quiz-feedback">✅ 它们是直接给最终用户使用的成品软件，属于 SaaS（Software as a Service）。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 重要照片用云存储后，做法<strong>最佳</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">删除本地原件</div>
+<div class="quiz-opt" data-correct="false">只用一个云盘</div>
+<div class="quiz-opt" data-correct="true">"本地+云端"双备份</div>
+<div class="quiz-opt" data-correct="false">刻光盘最安全</div></div>
+<div class="quiz-feedback">✅ 重要数据应该"鸡蛋不放一个篮子里"——本地、云端、不同云厂商之间多份备份，最大程度防止丢失。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>云计算</strong>：算力像水电一样按需使用、按量付费</li>
+<li><strong>三层模型</strong>：IaaS（基础设施）/ PaaS（平台）/ SaaS（软件）</li>
+<li><strong>云存储</strong>：跨设备同步、容量大、不怕丢</li>
+<li><strong>典型应用</strong>：电商大促、AI 训练、在线视频、自动驾驶</li>
+<li><strong>中国云力量</strong>：阿里云、华为云、腾讯云三巨头领跑</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>对比你家里的电脑硬盘和一个云盘：① 各自的容量；② 各自的安全性；③ 哪些文件该存本地、哪些该存云端？</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "什么是云计算", "三层服务", "云存储", "应用场景", "中国云力量", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

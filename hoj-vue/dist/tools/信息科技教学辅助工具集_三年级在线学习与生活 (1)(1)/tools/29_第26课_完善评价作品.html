@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>完善评价作品 — 第26课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#ecfeff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#0e7490,#06b6d4);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#0e7490;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#06b6d4;color:white;border-color:#0e7490}
+.intro{background:linear-gradient(135deg,#cffafe,#a5f3fc);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#0e7490;margin-bottom:8px;font-size:20px}.intro p{color:#0c4a6e;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tool-card{background:white;padding:16px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:36px}.tool-card h4{color:#0e7490;margin:6px 0 4px;font-size:14px}.tool-card p{color:#475569;font-size:12px;line-height:1.5}
+
+/* 检查清单 */
+.checklist{background:white;border-radius:12px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.check-section{margin-bottom:16px}
+.check-section h4{color:#0e7490;font-size:14px;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #cffafe}
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:all .2s}
+.check-item:hover{background:#ecfeff}
+.check-item.checked{background:#cffafe}
+.check-item .box{width:22px;height:22px;border-radius:6px;border:2px solid #a5f3fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:transparent;background:white}
+.check-item.checked .box{background:#06b6d4;border-color:#0e7490;color:white}
+.check-item .text{font-size:13px;color:#475569;flex:1}
+.check-item.checked .text{color:#0e7490}
+.progress-bar{height:8px;background:#cffafe;border-radius:4px;overflow:hidden;margin-top:14px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#06b6d4,#0e7490);transition:width .3s}
+
+/* 在线投票 */
+.vote-section{background:white;border-radius:12px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.vote-work{background:#ecfeff;padding:14px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.vote-work:hover{border-color:#06b6d4}
+.vote-work.voted{border-color:#22c55e;background:#dcfce7}
+.work-cover{width:60px;height:60px;border-radius:8px;background:linear-gradient(135deg,#67e8f9,#06b6d4);color:white;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.work-info{flex:1}
+.work-title{font-weight:600;color:#0e7490;font-size:14px}
+.work-team{font-size:11px;color:#94a3b8;margin-top:2px}
+.work-votes{font-weight:700;color:#0e7490;font-size:16px}
+.work-bar{height:6px;background:#cffafe;border-radius:3px;margin-top:6px;overflow:hidden}
+.work-bar-fill{height:100%;background:#06b6d4;transition:width .3s}
+
+/* 改进建议 */
+.improve-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.improve-grid{grid-template-columns:1fr}}
+.improve-card{background:white;padding:14px 16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);border-left:4px solid}
+.improve-card.before{border-color:#ef4444}
+.improve-card.after{border-color:#22c55e}
+.improve-card h4{margin-bottom:6px;font-size:13px}
+.improve-card.before h4{color:#b91c1c}
+.improve-card.after h4{color:#15803d}
+.improve-card p{font-size:12px;color:#475569;line-height:1.6}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>✏️ 完善评价作品</h1>
+    <div class="lesson">第 26 课 · 第七单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>本课导入</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>作品检查清单</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>改进对比示例</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>在线投票评价</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>✏️ 本课导入</h2>
+      <div class="lead">作品做完了不是结束，最后的"完善"才是质量保证的关键</div>
+      <div class="intro">
+        <h3>💡 完善的意义</h3>
+        <p>"好作品是改出来的"。第一稿往往有不少瑕疵——错别字、排版问题、内容不完整……<b>认真检查、虚心听取建议、勇于修改</b>，才能让作品越来越好。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">🔍</div><h4>仔细检查</h4><p>从头到尾过一遍</p></div>
+        <div class="tool-card"><div class="icon">👂</div><h4>听取意见</h4><p>请同学和老师看</p></div>
+        <div class="tool-card"><div class="icon">✏️</div><h4>认真修改</h4><p>逐项改正、不糊弄</p></div>
+        <div class="tool-card"><div class="icon">⭐</div><h4>客观评价</h4><p>看到优点和不足</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 作品检查清单</h2>
+      <div class="lead">逐项检查，让作品更完美</div>
+      <div class="checklist" id="checklistBox"></div>
+      <div class="know">
+        <h3>💡 用清单的好处</h3>
+        <p>清单帮你<b>系统地检查</b>，不会漏项。每完成一项打勾，看到进度也很有成就感。你也可以根据自己作品的特点，再增加几项检查内容。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🔄 改进对比示例</h2>
+      <div class="lead">同一件作品，"改前"和"改后"差别有多大？</div>
+      <div class="improve-grid">
+        <div class="improve-card before">
+          <h4>❌ 改前：标题不突出</h4>
+          <p>"我的家乡介绍" 字号 14px 黑色，和正文混在一起，没有特别突出。</p>
+        </div>
+        <div class="improve-card after">
+          <h4>✅ 改后：标题醒目</h4>
+          <p>《我的家乡——苏州》字号 28px，深蓝色，加粗，居中。一眼就能看到。</p>
+        </div>
+        <div class="improve-card before">
+          <h4>❌ 改前：图片杂乱</h4>
+          <p>5 张图片大小不一，随便摆放，部分挡住了文字。</p>
+        </div>
+        <div class="improve-card after">
+          <h4>✅ 改后：图片整齐</h4>
+          <p>统一调整图片大小，3 行 2 列对齐排列，每张图下方有简短说明。</p>
+        </div>
+        <div class="improve-card before">
+          <h4>❌ 改前：错别字多</h4>
+          <p>"苏州一座美厉的城市"——"美厉"应为"美丽"。检查后还发现 5 处错别字。</p>
+        </div>
+        <div class="improve-card after">
+          <h4>✅ 改后：用词准确</h4>
+          <p>"苏州是一座美丽的城市，有着 2500 多年的历史。"句子通顺、用词准确。</p>
+        </div>
+        <div class="improve-card before">
+          <h4>❌ 改前：内容单薄</h4>
+          <p>只介绍了"园林"一个特色，整体内容显得不够丰富。</p>
+        </div>
+        <div class="improve-card after">
+          <h4>✅ 改后：内容充实</h4>
+          <p>增加了"美食（松鼠桂鱼）""文化（昆曲）""景点（虎丘）"三个方面。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🗳️ 在线投票评价</h2>
+      <div class="lead">点击你最喜欢的作品，给它投一票</div>
+      <div class="vote-section">
+        <div id="voteWorks"></div>
+        <div style="margin-top:14px;padding:12px 16px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e;line-height:1.7;">
+          📊 <b>投票统计</b>：共 <span id="totalVotes">0</span> 票 · 最高票作品：<span id="topWork">- -</span>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 在线评价的好处</h3>
+        <p>① <b>方便快捷</b>：点一下就能投票；<br>② <b>结果透明</b>：人人都能看到结果；<br>③ <b>匿名公正</b>：不会因为人情打分；<br>④ <b>可以重复</b>：投错了可以改。<br>常用工具：腾讯问卷、问卷星、班级小管家、Forms。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课重点</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">📋</div><h4>用清单检查</h4><p>系统全面不遗漏</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🔄</div><h4>反复打磨</h4><p>好作品是改出来的</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">👥</div><h4>互相评价</h4><p>从他人角度看问题</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🗳️</div><h4>在线投票</h4><p>客观透明的评价</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 给同学评价的"三个一"</h3>
+        <p>① 说<b>一个</b>具体的<b>优点</b>（不要空说"很棒"）；<br>② 提<b>一个</b>具体的<b>改进建议</b>（要善意可行）；<br>③ 给<b>一个</b>鼓励的<b>祝福</b>（让对方更有信心）。这样的评价才有帮助。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const checklist = [
+  {
+    section: '📌 主题与内容',
+    items: ['主题鲜明，让人一眼看出主旨','内容完整，没有缺少重要部分','信息准确，没有错别字和事实错误','文字通顺，读起来顺口','有自己的想法，不是照抄']
+  },
+  {
+    section: '🎨 排版与设计',
+    items: ['标题醒目，字号比正文大','图片清晰，大小合适','颜色搭配协调，不刺眼','版面整齐，没有歪歪扭扭','留白适当，不显得拥挤']
+  },
+  {
+    section: '🔧 技术与规范',
+    items: ['文件名规范，方便查找','所用素材合法，注明来源','文件已保存，不会丢失','导出格式正确（如 PDF、MP4）','可以正常打开和播放']
+  },
+];
+
+let total = 0, checked = 0;
+checklist.forEach(s => total += s.items.length);
+
+function renderChecklist() {
+  const html = checklist.map((s, si) => `
+    <div class="check-section">
+      <h4>${s.section}</h4>
+      ${s.items.map((it, ii) => `
+        <div class="check-item" onclick="toggleCheck(${si}, ${ii}, this)">
+          <div class="box">✓</div>
+          <div class="text">${it}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+  document.getElementById('checklistBox').innerHTML = html + `
+    <div style="margin-top:10px;text-align:right;font-size:13px;color:#0e7490;">已完成：<span id="checkCount">0</span> / ${total} 项</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+  `;
+}
+
+function toggleCheck(si, ii, el) {
+  el.classList.toggle('checked');
+  checked = document.querySelectorAll('.check-item.checked').length;
+  document.getElementById('checkCount').textContent = checked;
+  document.getElementById('progressFill').style.width = (checked/total*100) + '%';
+}
+
+renderChecklist();
+
+// 投票
+const works = [
+  { id: 1, title: '《我爱我的家乡》电子小报', team: '第 1 组', cover: '📰', votes: 3 },
+  { id: 2, title: '《校园四季》数字相册', team: '第 2 组', cover: '📸', votes: 5 },
+  { id: 3, title: '《传统节日大观》PPT', team: '第 3 组', cover: '📊', votes: 2 },
+  { id: 4, title: '《我们的航天梦》短视频', team: '第 4 组', cover: '🎬', votes: 7 },
+  { id: 5, title: '《古诗朗诵集》音频', team: '第 5 组', cover: '🎵', votes: 1 },
+];
+
+let myVote = null;
+
+function renderWorks() {
+  const maxV = Math.max(...works.map(w => w.votes), 1);
+  document.getElementById('voteWorks').innerHTML = works.map(w => `
+    <div class="vote-work ${myVote === w.id ? 'voted' : ''}" onclick="vote(${w.id})">
+      <div class="work-cover">${w.cover}</div>
+      <div class="work-info">
+        <div class="work-title">${w.title}</div>
+        <div class="work-team">${w.team}</div>
+        <div class="work-bar"><div class="work-bar-fill" style="width:${w.votes/maxV*100}%;"></div></div>
+      </div>
+      <div class="work-votes">${w.votes} 票</div>
+    </div>
+  `).join('');
+  const total = works.reduce((s, w) => s + w.votes, 0);
+  document.getElementById('totalVotes').textContent = total;
+  const top = works.reduce((m, w) => w.votes > m.votes ? w : m);
+  document.getElementById('topWork').textContent = top.title + '（' + top.votes + ' 票）';
+}
+
+function vote(id) {
+  if (myVote === id) {
+    works.find(w => w.id === id).votes--;
+    myVote = null;
+  } else {
+    if (myVote !== null) works.find(w => w.id === myVote).votes--;
+    works.find(w => w.id === id).votes++;
+    myVote = id;
+  }
+  renderWorks();
+}
+
+renderWorks();
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

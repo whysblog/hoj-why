@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CSS 样式调试器 · 第18课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;--panel:#1a2340;--panel2:#222d50;
+  --line:#2d3a63;--text:#e6eaf5;--muted:#8a96b8;
+  --accent:#4ed1b8;--accent2:#ffb347;
+  --shadow:0 8px 30px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 60% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:20px}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+h1{font-size:24px;margin:0;font-weight:700;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.lesson-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.02);}
+.subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+
+.layout{display:grid;grid-template-columns:340px 1fr 1fr;gap:14px}
+@media(max-width:1100px){.layout{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.layout{grid-template-columns:1fr}}
+
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:12px;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.card-head{
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.card-head h2{margin:0;font-size:13px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.card-body{padding:14px;overflow-y:auto}
+
+/* Controls */
+.section{margin-bottom:16px}
+.section-title{
+  font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;
+  font-weight:700;margin-bottom:8px;border-left:3px solid var(--accent2);padding-left:8px;
+}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.row label{font-size:12px;color:var(--muted);min-width:80px}
+.row .val{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;min-width:42px;text-align:right}
+input[type=range]{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:4px;background:var(--line);border-radius:2px;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:14px;height:14px;
+  background:var(--accent);border-radius:50%;cursor:pointer;
+}
+input[type=color]{
+  width:38px;height:28px;border:1px solid var(--line);border-radius:4px;
+  background:transparent;cursor:pointer;
+}
+select{
+  background:#0c1426;color:var(--text);border:1px solid var(--line);
+  border-radius:6px;padding:5px 8px;font-family:inherit;font-size:12px;
+  flex:1;outline:none;
+}
+input[type=text]{
+  background:#0c1426;color:var(--text);border:1px solid var(--line);
+  border-radius:6px;padding:5px 8px;font-family:'JetBrains Mono',monospace;
+  font-size:12px;flex:1;outline:none;
+}
+input:focus,select:focus{border-color:var(--accent)}
+
+.tabs{display:flex;gap:4px;margin-bottom:14px}
+.tab{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:6px 12px;border-radius:6px;font-family:inherit;cursor:pointer;
+  font-size:12px;flex:1;
+}
+.tab.on{background:var(--accent);color:#0a1226;border-color:transparent;font-weight:700}
+
+/* Code panel */
+.code-panel{padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow:auto;background:#0a1226;flex:1}
+.code-panel .sel{color:var(--accent2)}
+.code-panel .prop{color:#ff8fb3}
+.code-panel .val{color:var(--accent)}
+.code-panel .punc{color:var(--muted)}
+.code-panel .com{color:#666;font-style:italic}
+
+/* Preview panel */
+.preview-area{flex:1;background:#fff;padding:24px;overflow:auto;color:#222;min-height:380px}
+.demo-page{max-width:600px;margin:0 auto}
+.demo-page h1{margin:0 0 12px}
+.demo-page p{margin:0 0 12px;line-height:1.6}
+.demo-page .demo-box{
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;
+}
+.demo-page .demo-img{display:block;max-width:100%;border-radius:4px}
+.demo-page ul{margin:0 0 12px;padding-left:24px}
+.demo-page li{margin:4px 0}
+
+button.action{
+  background:var(--accent);color:#0a1226;border:0;border-radius:6px;
+  padding:6px 12px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;
+}
+button.action:hover{background:#3ab8a0}
+button.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
+button.secondary:hover{border-color:var(--accent)}
+
+.box-model{
+  background:#0c1426;border:1px solid var(--line);border-radius:6px;padding:10px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+}
+.box-model .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.box-model input{padding:4px 6px;font-size:11px}
+
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.preset{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;
+}
+.preset:hover{border-color:var(--accent);color:var(--accent)}
+
+.note{
+  font-size:11px;color:var(--muted);background:rgba(78,209,184,.06);
+  border-left:2px solid var(--accent);padding:8px;border-radius:4px;
+  margin-top:10px;line-height:1.6;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>CSS 样式可视化调试器</h1>
+      <div class="subtitle">通过滑块和选择器调整样式，实时查看代码与效果（理解串联样式表 CSS）</div>
+    </div>
+    <span class="lesson-tag">第四单元 · 第18课《美化网页方法多》</span>
+  </header>
+
+  <div class="layout">
+    <!-- Controls -->
+    <section class="card">
+      <div class="card-head">
+        <h2>🎛 样式控制</h2>
+      </div>
+      <div class="card-body">
+        <div class="tabs">
+          <button class="tab on" data-target="h1">h1 标题</button>
+          <button class="tab" data-target="p">p 段落</button>
+          <button class="tab" data-target="box">.box 盒子</button>
+        </div>
+
+        <div id="ctlPanel">
+          <!-- generated below -->
+        </div>
+
+        <div class="note">
+          💡 选择器（如 <b>h1</b>、<b>.box</b>）告诉浏览器"对哪些元素应用样式"；属性（如 <b>color</b>、<b>font-size</b>）规定"应用什么样式"。
+        </div>
+      </div>
+    </section>
+
+    <!-- CSS code -->
+    <section class="card">
+      <div class="card-head">
+        <h2>🎨 生成的 CSS 代码</h2>
+        <button id="btnCopy" class="action">复制</button>
+      </div>
+      <div class="code-panel" id="codePanel"></div>
+    </section>
+
+    <!-- Preview -->
+    <section class="card">
+      <div class="card-head">
+        <h2>🖥 网页预览</h2>
+        <button id="btnReset" class="secondary">重置</button>
+      </div>
+      <div class="preview-area">
+        <div class="demo-page">
+          <h1 id="el-h1">读书节线上分享</h1>
+          <p id="el-p">读书使人充实，思考使人深邃，交流使人清醒。本届读书节以"<b>书香润心灵</b>"为主题，邀请同学们分享自己最喜爱的书籍，围绕阅读体会展开交流。</p>
+          <div id="el-box" class="demo-box">推荐书目专栏</div>
+          <ul>
+            <li>《海底两万里》—— 凡尔纳</li>
+            <li>《草房子》—— 曹文轩</li>
+            <li>《时间简史》—— 霍金</li>
+          </ul>
+          <p>欢迎每一位同学积极参与，让阅读照亮我们的青春！</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// State for each selector
+const styles = {
+  'h1': {
+    color:'#222222', fontSize:32, fontFamily:'serif',
+    fontWeight:'bold', textAlign:'left', borderBottom:'2px solid #4ed1b8',
+    paddingBottom:8
+  },
+  'p': {
+    color:'#444444', fontSize:16, fontFamily:'sans-serif',
+    lineHeight:1.6, textAlign:'left', textIndent:0
+  },
+  '.box': {
+    width:300, height:80, bgColor:'#4ed1b8', textColor:'#ffffff',
+    borderRadius:8, padding:16, marginTop:14, marginBottom:14,
+    boxShadow:'0 4px 12px rgba(0,0,0,0.15)'
+  }
+};
+
+let currentSelector = 'h1';
+
+const ctlPanel = document.getElementById('ctlPanel');
+const codePanel = document.getElementById('codePanel');
+
+// build controls
+function buildCtl(){
+  const s = styles[currentSelector];
+  let html='';
+  if(currentSelector==='h1' || currentSelector==='p'){
+    html += `<div class="section">
+      <div class="section-title">字体属性</div>
+      <div class="row"><label>颜色</label><input type="color" data-prop="color" value="${s.color}"><span class="val">${s.color}</span></div>
+      <div class="row"><label>字号</label><input type="range" min="12" max="${currentSelector==='h1'?72:32}" data-prop="fontSize" value="${s.fontSize}"><span class="val">${s.fontSize}px</span></div>
+      <div class="row"><label>字体</label>
+        <select data-prop="fontFamily">
+          <option value="serif" ${s.fontFamily==='serif'?'selected':''}>serif（衬线）</option>
+          <option value="sans-serif" ${s.fontFamily==='sans-serif'?'selected':''}>sans-serif（无衬线）</option>
+          <option value="'KaiTi','楷体',serif" ${s.fontFamily.includes('Kai')?'selected':''}>KaiTi（楷体）</option>
+          <option value="'SimHei','黑体',sans-serif" ${s.fontFamily.includes('SimHei')?'selected':''}>SimHei（黑体）</option>
+          <option value="monospace" ${s.fontFamily==='monospace'?'selected':''}>monospace（等宽）</option>
+        </select>
+      </div>
+    </div>`;
+    if(currentSelector==='h1'){
+      html += `<div class="section">
+        <div class="section-title">字重 / 对齐</div>
+        <div class="row"><label>字重</label>
+          <select data-prop="fontWeight">
+            <option value="normal" ${s.fontWeight==='normal'?'selected':''}>normal 正常</option>
+            <option value="bold" ${s.fontWeight==='bold'?'selected':''}>bold 加粗</option>
+            <option value="lighter" ${s.fontWeight==='lighter'?'selected':''}>lighter 细体</option>
+          </select>
+        </div>
+        <div class="row"><label>对齐</label>
+          <select data-prop="textAlign">
+            <option value="left" ${s.textAlign==='left'?'selected':''}>left 左对齐</option>
+            <option value="center" ${s.textAlign==='center'?'selected':''}>center 居中</option>
+            <option value="right" ${s.textAlign==='right'?'selected':''}>right 右对齐</option>
+          </select>
+        </div>
+      </div>`;
+      html += `<div class="section">
+        <div class="section-title">下划线 / 装饰</div>
+        <div class="row"><label>边框</label>
+          <select data-prop="borderBottom">
+            <option value="none" ${s.borderBottom==='none'?'selected':''}>none 无</option>
+            <option value="2px solid #4ed1b8" ${s.borderBottom==='2px solid #4ed1b8'?'selected':''}>2px solid 青色</option>
+            <option value="3px double #ffb347" ${s.borderBottom==='3px double #ffb347'?'selected':''}>3px double 橙色</option>
+            <option value="1px dashed #999" ${s.borderBottom==='1px dashed #999'?'selected':''}>1px dashed 灰色</option>
+          </select>
+        </div>
+      </div>`;
+    }
+    if(currentSelector==='p'){
+      html += `<div class="section">
+        <div class="section-title">行高 / 对齐 / 缩进</div>
+        <div class="row"><label>行高</label><input type="range" min="1" max="3" step="0.1" data-prop="lineHeight" value="${s.lineHeight}"><span class="val">${s.lineHeight}</span></div>
+        <div class="row"><label>对齐</label>
+          <select data-prop="textAlign">
+            <option value="left" ${s.textAlign==='left'?'selected':''}>left 左对齐</option>
+            <option value="center" ${s.textAlign==='center'?'selected':''}>center 居中</option>
+            <option value="right" ${s.textAlign==='right'?'selected':''}>right 右对齐</option>
+            <option value="justify" ${s.textAlign==='justify'?'selected':''}>justify 两端对齐</option>
+          </select>
+        </div>
+        <div class="row"><label>首行缩进</label><input type="range" min="0" max="60" data-prop="textIndent" value="${s.textIndent}"><span class="val">${s.textIndent}px</span></div>
+      </div>`;
+    }
+  }
+  if(currentSelector==='.box'){
+    html += `<div class="section">
+      <div class="section-title">尺寸</div>
+      <div class="row"><label>宽度</label><input type="range" min="100" max="600" data-prop="width" value="${s.width}"><span class="val">${s.width}px</span></div>
+      <div class="row"><label>高度</label><input type="range" min="40" max="200" data-prop="height" value="${s.height}"><span class="val">${s.height}px</span></div>
+    </div>`;
+    html += `<div class="section">
+      <div class="section-title">颜色</div>
+      <div class="row"><label>背景色</label><input type="color" data-prop="bgColor" value="${s.bgColor}"><span class="val">${s.bgColor}</span></div>
+      <div class="row"><label>文字色</label><input type="color" data-prop="textColor" value="${s.textColor}"><span class="val">${s.textColor}</span></div>
+    </div>`;
+    html += `<div class="section">
+      <div class="section-title">圆角 / 内距 / 外距</div>
+      <div class="row"><label>圆角</label><input type="range" min="0" max="60" data-prop="borderRadius" value="${s.borderRadius}"><span class="val">${s.borderRadius}px</span></div>
+      <div class="row"><label>内距</label><input type="range" min="0" max="40" data-prop="padding" value="${s.padding}"><span class="val">${s.padding}px</span></div>
+      <div class="row"><label>上外距</label><input type="range" min="0" max="40" data-prop="marginTop" value="${s.marginTop}"><span class="val">${s.marginTop}px</span></div>
+      <div class="row"><label>下外距</label><input type="range" min="0" max="40" data-prop="marginBottom" value="${s.marginBottom}"><span class="val">${s.marginBottom}px</span></div>
+    </div>`;
+    html += `<div class="section">
+      <div class="section-title">阴影预设</div>
+      <div class="preset-row">
+        <button class="preset" data-shadow="none">无</button>
+        <button class="preset" data-shadow="0 2px 4px rgba(0,0,0,0.1)">轻</button>
+        <button class="preset" data-shadow="0 4px 12px rgba(0,0,0,0.15)">中</button>
+        <button class="preset" data-shadow="0 8px 24px rgba(0,0,0,0.25)">重</button>
+        <button class="preset" data-shadow="0 0 16px #4ed1b8">发光</button>
+      </div>
+    </div>`;
+  }
+  ctlPanel.innerHTML = html;
+  bindCtl();
+}
+
+function bindCtl(){
+  ctlPanel.querySelectorAll('input[data-prop],select[data-prop]').forEach(el=>{
+    el.oninput = ()=>{
+      const prop = el.dataset.prop;
+      let v = el.value;
+      if(['fontSize','lineHeight','textIndent','width','height','borderRadius','padding','marginTop','marginBottom'].includes(prop)){
+        v = (prop==='lineHeight') ? parseFloat(v) : parseInt(v,10);
+      }
+      styles[currentSelector][prop] = v;
+      // update val display
+      const valSpan = el.parentElement.querySelector('.val');
+      if(valSpan){
+        if(['fontSize','textIndent','width','height','borderRadius','padding','marginTop','marginBottom'].includes(prop)) valSpan.textContent = v+'px';
+        else if(prop==='lineHeight') valSpan.textContent = v;
+        else valSpan.textContent = v;
+      }
+      apply();
+    };
+  });
+  ctlPanel.querySelectorAll('.preset').forEach(b=>{
+    b.onclick = ()=>{
+      styles['.box'].boxShadow = b.dataset.shadow;
+      apply();
+    };
+  });
+}
+
+function generateCSS(){
+  let css = '';
+  // h1
+  const h = styles.h1;
+  css += `h1 {\n`+
+    `  color: ${h.color};\n`+
+    `  font-size: ${h.fontSize}px;\n`+
+    `  font-family: ${h.fontFamily};\n`+
+    `  font-weight: ${h.fontWeight};\n`+
+    `  text-align: ${h.textAlign};\n`+
+    `  border-bottom: ${h.borderBottom};\n`+
+    `  padding-bottom: ${h.paddingBottom}px;\n`+
+    `}\n\n`;
+  const p = styles.p;
+  css += `p {\n`+
+    `  color: ${p.color};\n`+
+    `  font-size: ${p.fontSize}px;\n`+
+    `  font-family: ${p.fontFamily};\n`+
+    `  line-height: ${p.lineHeight};\n`+
+    `  text-align: ${p.textAlign};\n`+
+    `  text-indent: ${p.textIndent}px;\n`+
+    `}\n\n`;
+  const b = styles['.box'];
+  css += `.box {\n`+
+    `  width: ${b.width}px;\n`+
+    `  height: ${b.height}px;\n`+
+    `  background-color: ${b.bgColor};\n`+
+    `  color: ${b.textColor};\n`+
+    `  border-radius: ${b.borderRadius}px;\n`+
+    `  padding: ${b.padding}px;\n`+
+    `  margin: ${b.marginTop}px 0 ${b.marginBottom}px 0;\n`+
+    `  box-shadow: ${b.boxShadow};\n`+
+    `}`;
+  return css;
+}
+
+function highlightCSS(css){
+  return css
+    .replace(/\/\*.*?\*\//g,'<span class="com">$&</span>')
+    .replace(/^([a-zA-Z0-9.#-]+)(?= ?\{)/gm,'<span class="sel">$1</span>')
+    .replace(/^( +)([a-z-]+)(:)/gm,'$1<span class="prop">$2</span><span class="punc">$3</span>')
+    .replace(/: ([^;]+);/g,': <span class="val">$1</span><span class="punc">;</span>');
+}
+
+function apply(){
+  // apply to preview elements
+  const h1 = document.getElementById('el-h1');
+  const p = document.getElementById('el-p');
+  const box = document.getElementById('el-box');
+  const h = styles.h1;
+  Object.assign(h1.style,{
+    color:h.color,fontSize:h.fontSize+'px',fontFamily:h.fontFamily,
+    fontWeight:h.fontWeight,textAlign:h.textAlign,
+    borderBottom:h.borderBottom,paddingBottom:h.paddingBottom+'px'
+  });
+  const pp = styles.p;
+  Object.assign(p.style,{
+    color:pp.color,fontSize:pp.fontSize+'px',fontFamily:pp.fontFamily,
+    lineHeight:pp.lineHeight,textAlign:pp.textAlign,textIndent:pp.textIndent+'px'
+  });
+  const b = styles['.box'];
+  Object.assign(box.style,{
+    width:b.width+'px',height:b.height+'px',
+    backgroundColor:b.bgColor,color:b.textColor,
+    borderRadius:b.borderRadius+'px',padding:b.padding+'px',
+    margin:b.marginTop+'px 0 '+b.marginBottom+'px 0',
+    boxShadow:b.boxShadow
+  });
+  // also apply to other p elements
+  document.querySelectorAll('.demo-page p').forEach(e=>{
+    if(e.id!=='el-p'){
+      Object.assign(e.style,{
+        color:pp.color,fontSize:pp.fontSize+'px',fontFamily:pp.fontFamily,
+        lineHeight:pp.lineHeight,textAlign:pp.textAlign,textIndent:pp.textIndent+'px'
+      });
+    }
+  });
+  // code panel
+  codePanel.innerHTML = highlightCSS(generateCSS());
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    currentSelector = t.dataset.target;
+    buildCtl();
+  };
+});
+
+document.getElementById('btnCopy').onclick = ()=>{
+  navigator.clipboard.writeText(generateCSS()).then(()=>{
+    const b = document.getElementById('btnCopy');
+    const o = b.textContent;b.textContent='已复制 ✓';
+    setTimeout(()=>b.textContent=o,1200);
+  });
+};
+document.getElementById('btnReset').onclick = ()=>{
+  // reload page to reset
+  location.reload();
+};
+
+buildCtl();
+apply();
+</script>
+</body>
+</html>

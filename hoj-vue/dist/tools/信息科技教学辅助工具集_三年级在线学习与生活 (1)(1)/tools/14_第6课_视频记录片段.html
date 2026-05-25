@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>视频记录片段 — 第6课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #fffbeb; color: #1e293b; }
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 230px; background: linear-gradient(180deg, #b45309, #f59e0b); color: white; padding: 24px 16px; flex-shrink: 0; }
+.sidebar h1 { font-size: 16px; margin-bottom: 4px; }
+.sidebar .lesson { font-size: 12px; opacity: .8; margin-bottom: 22px; }
+.nav-item { padding: 12px 14px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 14px; transition: all .2s; display: flex; align-items: center; gap: 10px; }
+.nav-item:hover { background: rgba(255,255,255,.12); }
+.nav-item.active { background: rgba(255,255,255,.22); font-weight: 600; }
+.nav-item .num { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+.slide { display: none; animation: fadeIn .4s; }
+.slide.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide h2 { color: #b45309; font-size: 28px; margin-bottom: 8px; }
+.slide .lead { color: #64748b; margin-bottom: 24px; font-size: 15px; }
+.controls { position: fixed; bottom: 24px; right: 32px; display: flex; gap: 8px; }
+.ctrl-btn { padding: 10px 20px; background: white; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.ctrl-btn.primary { background: #f59e0b; color: white; border-color: #b45309; }
+.intro { background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 24px 28px; border-radius: 16px; margin-bottom: 18px; }
+.intro h3 { color: #b45309; margin-bottom: 8px; font-size: 20px; }
+.intro p { color: #78350f; line-height: 1.7; }
+.knowledge { background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 8px; margin-top: 18px; }
+.knowledge h3 { color: #1e40af; font-size: 15px; margin-bottom: 6px; }
+.knowledge p { color: #1e3a8a; font-size: 14px; line-height: 1.7; }
+.video-screen { background: #1e293b; border-radius: 14px; aspect-ratio: 16/9; max-width: 600px; margin: 18px auto; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: white; }
+.video-screen .scene { font-size: 100px; transition: opacity .4s; }
+.rec-dot { position: absolute; top: 14px; left: 14px; width: 14px; height: 14px; background: #ef4444; border-radius: 50%; animation: blink 1.2s infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+.rec-time { position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 14px; }
+.video-controls { position: absolute; bottom: 14px; left: 14px; right: 14px; display: flex; gap: 10px; align-items: center; }
+.shot-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.shot-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.05); cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+.shot-card:hover { transform: translateY(-2px); border-color: #f59e0b; }
+.shot-card.active { background: #fef3c7; border-color: #b45309; }
+.shot-frame { aspect-ratio: 16/9; background: linear-gradient(135deg, #fef9c3, #fde68a); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; position: relative; overflow: hidden; }
+.shot-card h4 { color: #b45309; font-size: 14px; margin-bottom: 4px; }
+.shot-card p { color: #78350f; font-size: 12px; line-height: 1.5; }
+.tips-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.tip-card { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.04); text-align: center; }
+.tip-card .icon { font-size: 36px; margin-bottom: 6px; }
+.tip-card h4 { color: #b45309; margin-bottom: 4px; font-size: 14px; }
+.tip-card p { color: #78350f; font-size: 12px; line-height: 1.5; }
+.checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .checklist { grid-template-columns: 1fr; } }
+.check-card { background: white; padding: 14px 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.04); border-left: 4px solid; }
+.check-card.good { border-color: #22c55e; }
+.check-card.bad { border-color: #ef4444; }
+.check-card .text { color: #475569; margin-bottom: 6px; font-size: 13px; line-height: 1.6; }
+.check-card .verdict { font-weight: 600; font-size: 12px; }
+.check-card.good .verdict { color: #15803d; }
+.check-card.bad .verdict { color: #b91c1c; }
+.youth-mode { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.youth-mode .youth-screen { background: linear-gradient(135deg, #1e3a8a, #312e81); padding: 24px; border-radius: 12px; color: white; text-align: center; }
+.youth-mode .youth-screen h3 { font-size: 22px; margin-bottom: 14px; }
+.youth-mode .youth-screen p { font-size: 14px; opacity: .9; line-height: 1.7; }
+.youth-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+.yf { background: rgba(255,255,255,.15); padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+@media (max-width: 800px) { .app { flex-direction: column; } .sidebar { width: 100%; } .main { padding: 20px; padding-bottom: 100px; } .controls { bottom: 12px; right: 12px; left: 12px; justify-content: center; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🎬 视频记录片段</h1>
+    <div class="lesson">第 6 课 · 第二单元</div>
+    <div class="nav-item active" onclick="goSlide(0)"><span class="num">1</span>视频的魅力</div>
+    <div class="nav-item" onclick="goSlide(1)"><span class="num">2</span>录制小演练</div>
+    <div class="nav-item" onclick="goSlide(2)"><span class="num">3</span>了解镜头景别</div>
+    <div class="nav-item" onclick="goSlide(3)"><span class="num">4</span>录制小技巧</div>
+    <div class="nav-item" onclick="goSlide(4)"><span class="num">5</span>合理观看分享</div>
+    <div class="nav-item" onclick="goSlide(5)"><span class="num">6</span>青少年模式</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🎥 视频的魅力</h2>
+      <div class="lead">视频综合了图片、文字、音频等多种元素，能给人视觉和听觉上的冲击</div>
+      <div class="intro">
+        <h3>📺 想一想</h3>
+        <p>为什么这么多人爱看视频？因为视频能<b>"动起来"</b>——画面会变、有声音、有节奏，更生动地讲述故事。本课我们一起来录制视频、处理视频。</p>
+      </div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div class="tip-card"><div class="icon">🎬</div><h4>动态画面</h4><p>有运动、变化的视觉效果</p></div>
+        <div class="tip-card"><div class="icon">🔊</div><h4>有声音</h4><p>语音、音乐、环境声</p></div>
+        <div class="tip-card"><div class="icon">📖</div><h4>讲故事</h4><p>有情节、有节奏</p></div>
+        <div class="tip-card"><div class="icon">🎨</div><h4>多元素</h4><p>图文音综合呈现</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎬 录制小演练</h2>
+      <div class="lead">点击"开始录制"按钮，模拟视频录制过程</div>
+      <div class="video-screen">
+        <div class="scene" id="vScene">📹</div>
+        <div class="rec-dot" id="recDot" style="display:none;"></div>
+        <div class="rec-time" id="recTime" style="display:none;">REC 00:00</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="ctrl-btn primary" onclick="toggleRec()" id="recBtn">⏺ 开始录制</button>
+        <button class="ctrl-btn" onclick="changeScene()">🔄 切换场景</button>
+      </div>
+      <div class="knowledge">
+        <h3>💡 录制视频的设备</h3>
+        <p>手机、平板、数字照相机、摄像机都能录制视频。和拍照的区别是<b>选择"录像"模式</b>。建议初学者使用手机或平板。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📐 了解镜头景别</h2>
+      <div class="lead">点击不同景别，了解它们的用途</div>
+      <div class="shot-types">
+        <div class="shot-card active" onclick="selectShot(this, 0)">
+          <div class="shot-frame">
+            <div style="font-size:14px;color:#92400e;text-align:center;">远处的小人 🧍 + 远山 🏔️</div>
+          </div>
+          <h4>① 远景</h4>
+          <p>展示大场面、环境，主体小</p>
+        </div>
+        <div class="shot-card" onclick="selectShot(this, 1)">
+          <div class="shot-frame">
+            <div style="font-size:30px;">🧍</div>
+          </div>
+          <h4>② 中景</h4>
+          <p>主体占画面一半，最常用</p>
+        </div>
+        <div class="shot-card" onclick="selectShot(this, 2)">
+          <div class="shot-frame">
+            <div style="font-size:60px;">🧍</div>
+          </div>
+          <h4>③ 近景</h4>
+          <p>突出表情、动作细节</p>
+        </div>
+        <div class="shot-card" onclick="selectShot(this, 3)">
+          <div class="shot-frame">
+            <div style="font-size:90px;">😀</div>
+          </div>
+          <h4>④ 特写</h4>
+          <p>放大局部，强调情感</p>
+        </div>
+      </div>
+      <div id="shotTip" style="margin-top:14px;padding:14px 18px;background:white;border-radius:10px;color:#475569;font-size:14px;line-height:1.7;">💡 远景适合开场展示环境，例如展示校园全景或风景。</div>
+    </div>
+
+    <div class="slide">
+      <h2>📝 录制小技巧</h2>
+      <div class="lead">想录出好视频，记住这几个小窍门</div>
+      <div class="tips-grid">
+        <div class="tip-card"><div class="icon">🤲</div><h4>稳！</h4><p>双手持机，或用三脚架</p></div>
+        <div class="tip-card"><div class="icon">💡</div><h4>光线足</h4><p>避免在昏暗环境下录制</p></div>
+        <div class="tip-card"><div class="icon">🎯</div><h4>主体清晰</h4><p>录制前先点击屏幕对焦</p></div>
+        <div class="tip-card"><div class="icon">🎬</div><h4>分段录</h4><p>录一段就停，避免无关内容</p></div>
+        <div class="tip-card"><div class="icon">🔇</div><h4>注意声音</h4><p>选择安静的环境</p></div>
+        <div class="tip-card"><div class="icon">🎭</div><h4>主题鲜明</h4><p>事先想好"要展示什么"</p></div>
+      </div>
+      <div class="knowledge">
+        <h3>🎞️ 拍摄后还可以处理视频</h3>
+        <p>录好的视频可以剪辑（截取精彩片段）、加滤镜、配背景音乐、加片头片尾……让视频更精彩。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>👀 合理观看和分享视频</h2>
+      <div class="lead">这些做法对不对？</div>
+      <div class="checklist">
+        <div class="check-card good">
+          <div class="text">小华想看视频，请妈妈帮忙开启了"青少年模式"</div>
+          <div class="verdict">✓ 对！青少年模式过滤不适合的内容</div>
+        </div>
+        <div class="check-card bad">
+          <div class="text">小智每天花很多时间观看网络视频</div>
+          <div class="verdict">✗ 错！长时间看伤眼睛、影响学习</div>
+        </div>
+        <div class="check-card bad">
+          <div class="text">小夏未经同意，把同学的视频随意分享</div>
+          <div class="verdict">✗ 错！侵犯他人肖像权</div>
+        </div>
+        <div class="check-card good">
+          <div class="text">小慧发布视频前，将自己头像模糊处理</div>
+          <div class="verdict">✓ 对！保护个人隐私</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🛡️ 青少年模式</h2>
+      <div class="lead">这是国家为保护未成年人专门设置的网络模式</div>
+      <div class="youth-mode">
+        <div class="youth-screen">
+          <h3>🛡️ 青少年模式已开启</h3>
+          <p>本模式下使用时间、可观看内容、可使用功能均受限，<br>请家长设置专属密码后管理。</p>
+          <div class="youth-features">
+            <div class="yf">⏰ 单日最长 40 分钟</div>
+            <div class="yf">🌙 22:00–6:00 不可用</div>
+            <div class="yf">🎓 优质教育内容</div>
+            <div class="yf">🚫 屏蔽不当内容</div>
+            <div class="yf">💰 关闭充值打赏</div>
+            <div class="yf">🔒 家长密码控制</div>
+          </div>
+        </div>
+      </div>
+      <div class="knowledge">
+        <h3>📜 法律依据</h3>
+        <p>《未成年人网络保护条例》（2024年1月1日施行）规定，网络平台必须为未成年人提供"青少年模式"。这是法律对我们的保护，要主动使用！</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="prevSlide()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="nextSlide()">下一页 →</button>
+</div>
+
+<script>
+let recording = false, recSec = 0, recTimer;
+function toggleRec() {
+  recording = !recording;
+  document.getElementById('recDot').style.display = recording ? 'block' : 'none';
+  document.getElementById('recTime').style.display = recording ? 'block' : 'none';
+  document.getElementById('recBtn').textContent = recording ? '⏹ 停止录制' : '⏺ 开始录制';
+  if (recording) {
+    recSec = 0;
+    recTimer = setInterval(() => {
+      recSec++;
+      const m = String(Math.floor(recSec/60)).padStart(2,'0');
+      const s = String(recSec%60).padStart(2,'0');
+      document.getElementById('recTime').textContent = `REC ${m}:${s}`;
+    }, 1000);
+  } else { clearInterval(recTimer); }
+}
+const scenes = ['🏫', '🌷', '🎵', '⚽', '🎨', '📚', '👥'];
+let sceneIdx = 0;
+function changeScene() {
+  sceneIdx = (sceneIdx + 1) % scenes.length;
+  document.getElementById('vScene').textContent = scenes[sceneIdx];
+}
+const shotTips = [
+  '远景适合开场展示环境，例如展示校园全景或风景。',
+  '中景是最常用的景别，能展示人物上半身和周围环境，叙事感强。',
+  '近景突出表情和动作，让观众感受到主体的情绪。',
+  '特写强调局部（如眼神、手势），有强烈的视觉冲击和情感表达。',
+];
+function selectShot(c, i) {
+  document.querySelectorAll('.shot-card').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  document.getElementById('shotTip').innerHTML = '💡 ' + shotTips[i];
+}
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function goSlide(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((n, idx) => n.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextSlide() { if (cur < slides.length - 1) goSlide(cur + 1); }
+function prevSlide() { if (cur > 0) goSlide(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第16课 数据管理与编码 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#7b1fa2;
+  --theme-dark:#6a1b9a;
+  --theme-light:#f3e5f5;
+  --bg:#faf5fc;
+}
+.compare-view{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin:14px 0;
+}
+.mess-box,.order-box{
+  background:#fff;border-radius:12px;
+  padding:14px;
+}
+.mess-box{border-top:4px solid #ef5350}
+.order-box{border-top:4px solid #43a047}
+.mess-box h4{color:#c62828;margin-bottom:8px;font-size:15px}
+.order-box h4{color:#2e7d32;margin-bottom:8px;font-size:15px}
+.mess-list{font-size:13px;color:#37474f;line-height:1.8}
+.mess-list span{
+  display:inline-block;
+  background:#ffebee;
+  padding:2px 8px;
+  margin:2px;
+  border-radius:4px;
+}
+.order-table{
+  width:100%;border-collapse:collapse;
+  font-size:13px;
+}
+.order-table th{
+  background:var(--theme);color:#fff;
+  padding:6px 10px;text-align:left;
+}
+.order-table td{
+  padding:6px 10px;
+  border-bottom:1px solid #eceff1;
+}
+.benefit-card{
+  display:flex;gap:12px;align-items:flex-start;
+  background:#fff;border-radius:10px;
+  padding:14px;margin:8px 0;
+  border-left:4px solid var(--theme);
+}
+.benefit-card .b-icon{
+  font-size:28px;flex-shrink:0;
+}
+.benefit-card h4{
+  color:var(--theme-dark);font-size:15px;
+  margin-bottom:4px;
+}
+.benefit-card p{font-size:13px;color:#37474f;margin:0}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第四单元 · 第16课</span>
+    <h1>🗂️ 数据管理与编码</h1>
+    <p>认识数据管理的重要性，理解编码在数据管理中的作用</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">📚 为什么要管理</button>
+    <button class="nav-btn" data-slide="2">🔗 编码助力管理</button>
+    <button class="nav-btn" data-slide="3">🎮 整理小书库</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      图书馆里有<b>几十万本书</b>，管理员是怎么<b>一下子找到</b>你想要的那本《西游记》的？
+      <br><br>
+      家里几十本书随便找还行，几十万本怎么办？这就需要——<b>数据管理</b>！
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>理解<b>数据管理</b>的意义</li>
+      <li>知道编码在数据管理中的<b>关键作用</b></li>
+      <li>能用编码方法整理一组小型数据</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>为什么要管理数据？</h2>
+
+    <p>看看下面这两种情况，你觉得哪种好？</p>
+
+    <div class="compare-view">
+      <div class="mess-box">
+        <h4>❌ 没有管理</h4>
+        <p style="font-size:13px;color:#607d8b;margin-bottom:10px">数据胡乱堆在一起：</p>
+        <div class="mess-list">
+          <span>西游记</span><span>苹果 5 元</span><span>小明 142cm</span>
+          <span>三国演义</span><span>香蕉 3 元</span><span>小红 138cm</span>
+          <span>小华 145cm</span><span>橙子 4 元</span><span>水浒传</span>
+          <span>红楼梦</span><span>小军 140cm</span><span>葡萄 8 元</span>
+        </div>
+        <p style="margin-top:10px;font-size:13px;color:#c62828">
+          💢 找一项数据要从头翻到尾！
+        </p>
+      </div>
+      <div class="order-box">
+        <h4>✅ 经过管理</h4>
+        <p style="font-size:13px;color:#607d8b;margin-bottom:10px">按编号分类整理：</p>
+        <table class="order-table">
+          <tr><th>编号</th><th>类别</th><th>名称</th></tr>
+          <tr><td>B01</td><td>书</td><td>西游记</td></tr>
+          <tr><td>B02</td><td>书</td><td>三国演义</td></tr>
+          <tr><td>F01</td><td>水果</td><td>苹果</td></tr>
+          <tr><td>F02</td><td>水果</td><td>香蕉</td></tr>
+          <tr><td>S01</td><td>学生</td><td>小明</td></tr>
+          <tr><td>S02</td><td>学生</td><td>小红</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px;color:#2e7d32">
+          😊 一目了然，查找超快！
+        </p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 数据管理的意义</h4>
+      <ul style="margin-top:4px">
+        <li>📁 <b>分类整齐</b>：相同类型放一起</li>
+        <li>🔍 <b>查找快速</b>：知道编号秒找到</li>
+        <li>🛡️ <b>不易丢失</b>：清点容易</li>
+        <li>📊 <b>便于分析</b>：可以统计、排序、筛选</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>编码是管理的"好帮手"</h2>
+
+    <p>编码在数据管理中到底起到什么作用？</p>
+
+    <div class="benefit-card">
+      <span class="b-icon">🆔</span>
+      <div>
+        <h4>给数据起"身份证"</h4>
+        <p>每条数据都有<b>唯一编码</b>，再也不怕同名同姓搞混了</p>
+      </div>
+    </div>
+
+    <div class="benefit-card">
+      <span class="b-icon">📂</span>
+      <div>
+        <h4>自动分类</h4>
+        <p>编码本身就包含<b>类别信息</b>，看到 "B01" 就知道是书</p>
+      </div>
+    </div>
+
+    <div class="benefit-card">
+      <span class="b-icon">⚡</span>
+      <div>
+        <h4>加速查找</h4>
+        <p>计算机用编码做"<b>索引</b>"，几亿条数据也能瞬间找到</p>
+      </div>
+    </div>
+
+    <div class="benefit-card">
+      <span class="b-icon">🔗</span>
+      <div>
+        <h4>关联数据</h4>
+        <p>不同表之间用<b>同一个编码</b>关联，例如：学号→姓名→成绩→班级</p>
+      </div>
+    </div>
+
+    <h3>📖 实际例子：图书馆</h3>
+    <div class="info-box">
+      每本书都有一个 <b>ISBN（国际标准书号）</b>，比如《数学课本》= <code>978-7-107-35975-0</code>。
+      <br>
+      图书馆通过 ISBN 就能管理上百万本书，知道：
+      <ul style="margin-top:6px">
+        <li>每本书<b>在哪个书架</b></li>
+        <li>这本书有<b>多少本库存</b></li>
+        <li>谁<b>借走了</b>这本书</li>
+        <li>这本书<b>已经借出去多少次</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>整理小书库</h2>
+
+    <p>请你来当图书管理员！给班级小书架的书设计编码 ↓</p>
+
+    <div class="interactive">
+      <h4>📚 编码规则：类别 + 序号</h4>
+      <p style="font-size:13px;color:#607d8b">类别字母：S=故事书，K=科普书，G=工具书，Z=作文</p>
+      
+      <table class="compare-table" id="bookTable">
+        <thead>
+          <tr><th>书名</th><th>类别</th><th>序号</th><th>编码</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>《西游记》</td><td><select><option>S 故事</option><option>K 科普</option><option>G 工具</option><option>Z 作文</option></select></td><td><input type="number" value="1" min="1"></td><td class="code-out">S01</td></tr>
+          <tr><td>《十万个为什么》</td><td><select><option>S 故事</option><option selected>K 科普</option><option>G 工具</option><option>Z 作文</option></select></td><td><input type="number" value="1" min="1"></td><td class="code-out">K01</td></tr>
+          <tr><td>《新华字典》</td><td><select><option>S 故事</option><option>K 科普</option><option selected>G 工具</option><option>Z 作文</option></select></td><td><input type="number" value="1" min="1"></td><td class="code-out">G01</td></tr>
+          <tr><td>《三国演义》</td><td><select><option selected>S 故事</option><option>K 科普</option><option>G 工具</option><option>Z 作文</option></select></td><td><input type="number" value="2" min="1"></td><td class="code-out">S02</td></tr>
+          <tr><td>《优秀作文选》</td><td><select><option>S 故事</option><option>K 科普</option><option>G 工具</option><option selected>Z 作文</option></select></td><td><input type="number" value="1" min="1"></td><td class="code-out">Z01</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:13px;color:#607d8b;margin-top:10px">
+        💡 改变类别或序号，看编码自动更新！
+      </p>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 想一想</h4>
+      用编码后，找书是不是变得超级简单了？
+      <ul style="margin-top:6px">
+        <li>想找科普书？→ 看所有 K 开头</li>
+        <li>找第 3 本工具书？→ 找 <b>G03</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📚</span>
+        <h4>什么是管理</h4>
+        <p>分类、整理、保存、查找数据</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🆔</span>
+        <h4>编码作用</h4>
+        <p>给每条数据一个"身份证"</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">⚡</span>
+        <h4>查找更快</h4>
+        <p>编码相当于"索引"</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔗</span>
+        <h4>关联数据</h4>
+        <p>用同一编码把多张表连起来</p>
+      </div>
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      数据多了起来，<b>怎么从一大堆里快速找到我要的那一条</b>？
+      下节课《查找筛选讲效率》，学习数字化工具的查找绝技！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+// 书码计算
+document.querySelectorAll('#bookTable tbody tr').forEach(tr=>{
+  const sel = tr.querySelector('select');
+  const inp = tr.querySelector('input');
+  const out = tr.querySelector('.code-out');
+  function upd(){
+    const letter = sel.value.split(' ')[0];
+    const num = String(parseInt(inp.value)||1).padStart(2,'0');
+    out.textContent = letter + num;
+  }
+  sel.addEventListener('change', upd);
+  inp.addEventListener('input', upd);
+});
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

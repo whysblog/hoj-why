@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第20课 · 组建网站跟我做</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第4单元 · 第20课</span>
+    <span class="title">组建网站跟我做</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>组建网站<br>跟我做</h1>
+<p class="subtitle">第四单元 · 第20课</p>
+<div class="meta"><span>📅 课时：<strong>1-2 学时</strong></span>
+<span>🎯 重点：<strong>建站全流程</strong></span>
+<span>💡 关键词：<strong>域名 · 服务器 · 发布</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🗺</span><div class="card-title">理解流程</div><div class="card-desc">掌握网站建设的完整流程。</div></div><div class="card"><span class="card-icon">🌐</span><div class="card-title">认识域名</div><div class="card-desc">了解域名是怎么注册和工作的。</div></div><div class="card"><span class="card-icon">☁️</span><div class="card-title">学会部署</div><div class="card-desc">知道把网站发布到互联网需要哪些条件。</div></div></div></section>
+<section class="slide"><h2>网站建设六步流程</h2>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">① 规划 (Plan)</div><div class="tl-title">想清楚做什么</div><div class="tl-desc">明确目标用户、主要功能、内容结构、视觉风格。先画"<strong>站点地图</strong>"。</div></div>
+<div class="tl-item"><div class="tl-year">② 设计 (Design)</div><div class="tl-title">画出蓝图</div><div class="tl-desc">用 Figma、墨刀等工具设计每个页面的<strong>原型</strong>和<strong>视觉稿</strong>。</div></div>
+<div class="tl-item"><div class="tl-year">③ 开发 (Develop)</div><div class="tl-title">写代码实现</div><div class="tl-desc">用 HTML/CSS/JS 写前端，必要时用 Python/Node.js 写后端。</div></div>
+<div class="tl-item"><div class="tl-year">④ 测试 (Test)</div><div class="tl-title">找出 bug</div><div class="tl-desc">在不同浏览器、不同尺寸屏幕、不同网络环境下测试。</div></div>
+<div class="tl-item"><div class="tl-year">⑤ 发布 (Publish)</div><div class="tl-title">上线让大家访问</div><div class="tl-desc">注册域名 + 购买服务器/云主机 + 上传文件 + 配置 DNS。</div></div>
+<div class="tl-item"><div class="tl-year">⑥ 维护 (Maintain)</div><div class="tl-title">持续优化</div><div class="tl-desc">更新内容、修复问题、收集反馈、性能优化、安全防护。</div></div>
+</div></section>
+<section class="slide"><h2>域名注册全攻略</h2>
+<p>每个网站要有一个独一无二的<strong>域名</strong>(如 baidu.com)，需要从授权机构注册。</p>
+<h3>常见顶级域名 (TLD)</h3>
+<table class="tbl">
+<tr><th>域名后缀</th><th>含义</th><th>典型用户</th></tr>
+<tr><td>.com</td><td>商业 (commercial)</td><td>最常用，taobao.com</td></tr>
+<tr><td>.cn</td><td>中国国家域名</td><td>baidu.cn</td></tr>
+<tr><td>.org</td><td>组织 (organization)</td><td>wikipedia.org</td></tr>
+<tr><td>.edu / .edu.cn</td><td>教育机构</td><td>tsinghua.edu.cn</td></tr>
+<tr><td>.gov / .gov.cn</td><td>政府</td><td>moe.gov.cn</td></tr>
+<tr><td>.net</td><td>网络服务</td><td>github.net</td></tr>
+</table>
+<h3>注册流程</h3>
+<ol>
+<li>在域名注册商（万网、腾讯云、华为云、GoDaddy等）查询想要的域名是否可注册</li>
+<li>选择域名 + 注册年限 → 支付（约 ¥50-300/年）</li>
+<li>实名认证（中国大陆要求）</li>
+<li><strong>ICP 备案</strong>（在中国大陆使用必须备案，约 20 个工作日）</li>
+<li>把域名解析到服务器 IP（在注册商管理后台配置 DNS）</li>
+</ol></section>
+<section class="slide"><h2>选择网站托管方式</h2><div class="cards"><div class="card"><span class="card-icon">🏠</span><div class="card-title">虚拟主机</div><div class="card-desc">多人共用一台服务器。<strong>便宜（¥50-300/年）</strong>，适合个人/小博客。功能有限。</div></div><div class="card"><span class="card-icon">🖥</span><div class="card-title">云服务器 (ECS)</div><div class="card-desc">一台独立云主机。<strong>灵活（¥1000-5000/年）</strong>，能跑各种应用。需要懂运维。</div></div><div class="card"><span class="card-icon">📦</span><div class="card-title">静态网站托管</div><div class="card-desc">如 Vercel、GitHub Pages、阿里云 OSS。<strong>免费或极便宜</strong>，仅支持纯前端网站。</div></div><div class="card"><span class="card-icon">⚙️</span><div class="card-title">PaaS / 容器</div><div class="card-desc">Heroku、阿里云函数计算。按使用量计费，自动伸缩，适合中大型应用。</div></div></div><h3>典型部署流程（以阿里云为例）</h3>
+<ol>
+<li>购买 ECS 云服务器（选 Linux 系统）</li>
+<li>SSH 远程登录服务器</li>
+<li>安装 Web 服务器（Nginx、Apache）</li>
+<li>上传网站文件到指定目录</li>
+<li>在 DNS 控制台把域名 A 记录指向服务器 IP</li>
+<li>申请 SSL 证书（HTTPS）并配置</li>
+<li>测试访问 → 上线！</li>
+</ol></section>
+<section class="slide"><h2>初学者建站三方案</h2>
+<div class="compare-row">
+<div class="compare-col"><h3>🥉 零代码</h3>
+<ul><li>用建站工具：腾讯云 EDP、阿里云宜搭、Wix</li><li>拖拽组件即可生成</li><li>无需编程</li><li>适合：班级网站、个人主页</li><li>限制：模板有限、扩展性差</li></ul></div>
+<div class="compare-col"><h3>🥈 入门级</h3>
+<ul><li>用 HTML/CSS 手写</li><li>上传到 GitHub Pages（免费）</li><li>需要 Git 基础</li><li>适合：学习项目、作品集</li><li>限制：仅静态页面</li></ul></div>
+</div>
+<div class="compare-col good" style="margin-top:16px;"><h3>🥇 进阶级</h3>
+<ul><li>使用 Vue/React 等框架</li><li>部署到云服务器或 Vercel</li><li>有完整前后端开发能力</li><li>适合：商业网站、Web 应用</li></ul></div>
+<div class="highlight">🎓 <strong>给同学们的建议：</strong>从最简单的 HTML 手写起步，先用 <strong>GitHub Pages</strong> 免费发布。等熟悉了再考虑更复杂的方案。</div></section>
+<section class="slide"><h2>网站建设要遵守的规则</h2><div class="cards"><div class="card"><span class="card-icon">📜</span><div class="card-title">实名 + ICP 备案</div><div class="card-desc">中国大陆运营网站必须实名注册域名、办理 ICP 备案，否则无法访问。</div></div><div class="card"><span class="card-icon">©️</span><div class="card-title">尊重版权</div><div class="card-desc">使用图片、字体、文章前要确认授权，不能随便用别人的素材。</div></div><div class="card"><span class="card-icon">🔒</span><div class="card-title">保护隐私</div><div class="card-desc">收集用户信息要明示用途，遵守《个人信息保护法》。</div></div><div class="card"><span class="card-icon">🛡</span><div class="card-title">安全防护</div><div class="card-desc">用 HTTPS、定期更新、防注入攻击、备份数据。</div></div><div class="card"><span class="card-icon">📝</span><div class="card-title">内容合规</div><div class="card-desc">不发布违法、虚假、低俗、引战内容。</div></div><div class="card"><span class="card-icon">⚖️</span><div class="card-title">未成年人保护</div><div class="card-desc">如面向未成年人，需提供未成年模式、防沉迷措施。</div></div></div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 网站建设六步法中，<strong>第一步</strong>是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">开发代码</div>
+<div class="quiz-opt" data-correct="false">购买服务器</div>
+<div class="quiz-opt" data-correct="true">规划</div>
+<div class="quiz-opt" data-correct="false">做 logo</div></div>
+<div class="quiz-feedback">✅ 规划是第一步，先想清楚做什么、给谁用，再动手做。这能避免大量返工。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 在中国大陆运营网站，必须办理的手续是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">微信认证</div>
+<div class="quiz-opt" data-correct="true">ICP 备案</div>
+<div class="quiz-opt" data-correct="false">支付宝实名</div>
+<div class="quiz-opt" data-correct="false">身份证复印</div></div>
+<div class="quiz-feedback">✅ ICP 备案是工信部要求的网站合规手续，没有备案的网站会被阿里云、腾讯云等服务商屏蔽访问。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 想免费发布一个静态个人主页，最便捷的方式是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">购买云服务器</div>
+<div class="quiz-opt" data-correct="true">GitHub Pages</div>
+<div class="quiz-opt" data-correct="false">租机房</div>
+<div class="quiz-opt" data-correct="false">微信小程序</div></div>
+<div class="quiz-feedback">✅ GitHub Pages 免费、易用，是开发者发布个人主页和作品集的常用选择。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>六步建站流程</strong>：规划→设计→开发→测试→发布→维护</li>
+<li><strong>域名注册</strong>：选 TLD + 注册 + 实名 + 备案 + 解析</li>
+<li><strong>托管方式</strong>：虚拟主机/云服务器/静态托管/PaaS</li>
+<li><strong>初学者推荐</strong>：HTML 手写 + GitHub Pages 免费发布</li>
+<li><strong>合规底线</strong>：备案、版权、隐私、安全、内容合法</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>为自己设计一个个人主页：① 想好要展示什么；② 写一份"站点地图"；③ 选择一个想注册的域名。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "建站六步", "域名注册", "托管方式", "三套方案", "合规要求", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

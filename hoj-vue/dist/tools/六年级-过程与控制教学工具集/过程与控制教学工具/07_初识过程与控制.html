@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>初识过程与控制 · 第1-4课综合课件</title>
+<style>
+  :root {
+    --primary: #ea580c;
+    --primary-dark: #c2410c;
+    --bg: #fff7ed;
+    --card: #ffffff;
+    --text: #431407;
+    --muted: #78716c;
+    --border: #fed7aa;
+    --ok: #16a34a;
+    --warn: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(234, 88, 12, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  /* 课时导航 */
+  .lesson-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    overflow-x: auto;
+  }
+  .lesson-nav button {
+    flex: 1;
+    min-width: 130px;
+    padding: 10px 14px;
+    background: white;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .lesson-nav button:hover { background: #fff7ed; }
+  .lesson-nav button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .lesson-nav button .lesson-num {
+    display: block;
+    font-size: 11px;
+    opacity: 0.7;
+    margin-bottom: 2px;
+  }
+  .lesson-nav button.active .lesson-num {
+    opacity: 0.85;
+  }
+
+  /* 课时内容 */
+  .lesson { display: none; }
+  .lesson.active { display: block; }
+
+  /* 幻灯片式分节导航 */
+  .slide-nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .slide-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .slide-dot.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.1);
+  }
+  .slide-dot.done {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: white;
+  }
+  .slide-arrow {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .slide-arrow:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+  .slide-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* 幻灯片卡片 */
+  .slide {
+    display: none;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+    min-height: 480px;
+    animation: slideIn 0.3s ease-out;
+  }
+  .slide.active { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-type {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: #fff7ed;
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .slide h2 {
+    font-size: 22px;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  .slide h2::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 22px;
+    background: var(--primary);
+    border-radius: 3px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .slide h3 {
+    font-size: 17px;
+    margin: 18px 0 10px;
+    color: var(--primary-dark);
+  }
+  .slide p {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .slide ul {
+    padding-left: 22px;
+    margin-bottom: 16px;
+  }
+  .slide li {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  /* 学习目标卡片 */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .goal-card {
+    padding: 18px;
+    background: #fff7ed;
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  .goal-card .num {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .goal-card .text { font-size: 14px; line-height: 1.6; }
+
+  /* 教室场景（第1课） */
+  .classroom-scene {
+    background: linear-gradient(180deg, #ecfeff 0%, #fef3c7 100%);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    position: relative;
+    min-height: 280px;
+  }
+  .classroom-svg {
+    width: 100%;
+    height: auto;
+    max-height: 320px;
+    display: block;
+  }
+  .device-hotspot {
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .device-hotspot:hover {
+    transform: scale(1.05);
+  }
+  .device-hotspot.selected {
+    filter: drop-shadow(0 0 8px var(--primary));
+  }
+
+  /* 信息卡片 */
+  .info-card {
+    background: #fff7ed;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  .info-card .title {
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin-bottom: 6px;
+  }
+  .info-card .body { font-size: 14px; color: var(--text); }
+
+  /* 开关组件（第2课） */
+  .switch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    margin: 20px 0;
+  }
+  .switch-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .switch-card.on {
+    border-color: var(--ok);
+    background: #f0fdf4;
+  }
+  .switch-card .device-svg {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 10px;
+    display: block;
+  }
+  .switch-card .device-name {
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .switch-card .device-state {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: "Courier New", monospace;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    background: #d4d4d8;
+    border-radius: 15px;
+    cursor: pointer;
+    margin: 0 auto;
+    transition: background 0.25s;
+  }
+  .toggle-switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .switch-card.on .toggle-switch { background: var(--ok); }
+  .switch-card.on .toggle-switch::after { left: 33px; }
+
+  /* 角色扮演（第3课） */
+  .role-play {
+    background: #fffbeb;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 2px dashed var(--primary);
+  }
+  .role-flow {
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+    margin: 18px 0;
+    flex-wrap: wrap;
+  }
+  .role-step {
+    flex: 1;
+    min-width: 150px;
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+  }
+  .role-step.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.03);
+  }
+  .role-step .icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  .role-step .name {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .role-step .desc {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  .role-arrow {
+    align-self: center;
+    color: var(--muted);
+    font-size: 20px;
+  }
+  @media (max-width: 600px) {
+    .role-flow { flex-direction: column; }
+    .role-arrow { transform: rotate(90deg); }
+  }
+
+  /* 输入-计算-输出 (第4课) */
+  .ico-diagram {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+  }
+  .ico-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+    margin: 16px 0;
+  }
+  @media (max-width: 700px) {
+    .ico-flow {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto auto auto;
+    }
+    .ico-flow > span { text-align: center; transform: rotate(90deg); }
+  }
+  .ico-box {
+    background: #fff7ed;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    min-height: 100px;
+  }
+  .ico-box .stage {
+    font-size: 11px;
+    color: var(--primary-dark);
+    margin-bottom: 4px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .ico-box .content {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .ico-arrow {
+    font-size: 26px;
+    color: var(--primary);
+    font-weight: bold;
+  }
+
+  /* 测验 */
+  .quiz {
+    background: #fef3c7;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 16px 0;
+    border: 1.5px solid #fcd34d;
+  }
+  .quiz-question {
+    font-weight: 700;
+    margin-bottom: 14px;
+    font-size: 15px;
+  }
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quiz-option {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .quiz-option:hover { background: #fff7ed; }
+  .quiz-option.correct {
+    background: #dcfce7;
+    border-color: var(--ok);
+    color: #166534;
+    font-weight: 600;
+  }
+  .quiz-option.wrong {
+    background: #fee2e2;
+    border-color: var(--warn);
+    color: #991b1b;
+  }
+  .quiz-feedback {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #dcfce7; color: #166534; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+
+  /* 案例选择 */
+  .case-selector {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+  }
+  .case-btn {
+    padding: 8px 14px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .case-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .case-btn:hover:not(.active) { background: #fff7ed; }
+
+  .device-detail {
+    background: #fffbeb;
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 12px;
+    min-height: 80px;
+    font-size: 14px;
+    border-left: 4px solid var(--primary);
+  }
+  .device-detail strong { color: var(--primary-dark); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第一单元 · 4课时综合课件</span>
+    <h1>初识过程与控制</h1>
+    <p>从身边的设备出发，认识控制系统及其工作过程</p>
+  </div>
+
+  <!-- 课时切换 -->
+  <div class="lesson-nav">
+    <button class="active" data-lesson="1"><span class="lesson-num">第1课</span>设备控制处处在</button>
+    <button data-lesson="2"><span class="lesson-num">第2课</span>一分为二开与关</button>
+    <button data-lesson="3"><span class="lesson-num">第3课</span>我是小小控制员</button>
+    <button data-lesson="4"><span class="lesson-num">第4课</span>输入输出与计算</button>
+  </div>
+
+  <!-- ============== 第1课 ============== -->
+  <div class="lesson active" id="lesson-1">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(1)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(1)">下一页 →</button>
+    </div>
+
+    <!-- L1 - 幻灯片 1: 学习目标 -->
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">目标 1</div>
+          <div class="text">了解一些常见设备的控制方法</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 2</div>
+          <div class="text">知道生活中常用的一些设备属于控制系统</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 3</div>
+          <div class="text">通过了解一些控制系统的发展历程，体会科技发展的重要性</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">人们通过控制各种设备，让它们实现相应的功能，为学习、工作和生活提供帮助。我们身边到底有多少这样的设备呢？让我们一起来找一找！</div>
+      </div>
+    </div>
+
+    <!-- L1 - 幻灯片 2: 教室场景（互动） -->
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🎯 学习活动 1</span>
+      <h2>控制教室里的设备</h2>
+      <p>点击教室中的设备，看看同学们是如何控制它的，实现了哪些功能。</p>
+
+      <div class="classroom-scene">
+        <svg class="classroom-svg" viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg">
+          <!-- 教室背景 -->
+          <rect width="600" height="280" fill="#fef3c7"/>
+          <!-- 墙面 -->
+          <rect x="0" y="0" width="600" height="200" fill="#fef9c3"/>
+          <!-- 地板 -->
+          <rect x="0" y="200" width="600" height="80" fill="#d6d3d1"/>
+          <line x1="0" y1="200" x2="600" y2="200" stroke="#a8a29e" stroke-width="2"/>
+
+          <!-- 灯（顶部） -->
+          <g class="device-hotspot" data-device="light" onclick="selectDevice(this, 'light')">
+            <rect x="60" y="10" width="100" height="14" rx="4" fill="#fde047" stroke="#a16207" stroke-width="1.5"/>
+            <rect x="65" y="14" width="90" height="6" fill="#fef9c3"/>
+            <text x="110" y="40" text-anchor="middle" font-size="11" fill="#78350f">教室灯</text>
+          </g>
+
+          <!-- 空调 -->
+          <g class="device-hotspot" data-device="ac" onclick="selectDevice(this, 'ac')">
+            <rect x="430" y="20" width="120" height="36" rx="6" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+            <line x1="438" y1="35" x2="542" y2="35" stroke="#0369a1" stroke-width="1"/>
+            <line x1="438" y1="43" x2="542" y2="43" stroke="#0369a1" stroke-width="1"/>
+            <text x="490" y="70" text-anchor="middle" font-size="11" fill="#78350f">空调</text>
+          </g>
+
+          <!-- 多媒体投影屏 -->
+          <g class="device-hotspot" data-device="projector" onclick="selectDevice(this, 'projector')">
+            <rect x="220" y="40" width="160" height="100" fill="white" stroke="#1e293b" stroke-width="2"/>
+            <rect x="225" y="45" width="150" height="90" fill="#dbeafe"/>
+            <text x="300" y="95" text-anchor="middle" font-size="14" fill="#1e40af">多媒体设备</text>
+            <!-- 支架 -->
+            <line x1="295" y1="140" x2="295" y2="150" stroke="#1e293b" stroke-width="2"/>
+            <line x1="305" y1="140" x2="305" y2="150" stroke="#1e293b" stroke-width="2"/>
+            <rect x="285" y="150" width="30" height="6" fill="#1e293b"/>
+            <text x="300" y="172" text-anchor="middle" font-size="11" fill="#78350f">投影/电脑</text>
+          </g>
+
+          <!-- 计算机 -->
+          <g class="device-hotspot" data-device="computer" onclick="selectDevice(this, 'computer')">
+            <rect x="60" y="220" width="80" height="50" rx="4" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/>
+            <rect x="64" y="224" width="72" height="36" fill="#1e293b"/>
+            <rect x="80" y="262" width="40" height="6" fill="#475569"/>
+            <rect x="70" y="268" width="60" height="6" rx="2" fill="#475569"/>
+            <text x="100" y="245" text-anchor="middle" font-size="10" fill="#cbd5e1">计算机</text>
+          </g>
+
+          <!-- 黑板/讲台 -->
+          <rect x="190" y="230" width="220" height="40" rx="2" fill="#854d0e"/>
+          <text x="300" y="255" text-anchor="middle" font-size="13" fill="white">讲台</text>
+
+          <!-- 电风扇 -->
+          <g class="device-hotspot" data-device="fan" onclick="selectDevice(this, 'fan')">
+            <circle cx="500" cy="240" r="25" fill="#cbd5e1" stroke="#475569" stroke-width="1.5"/>
+            <line x1="500" y1="215" x2="500" y2="265" stroke="#475569" stroke-width="2"/>
+            <line x1="475" y1="240" x2="525" y2="240" stroke="#475569" stroke-width="2"/>
+            <circle cx="500" cy="240" r="6" fill="#475569"/>
+            <text x="500" y="278" text-anchor="middle" font-size="11" fill="#78350f">电风扇</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="device-detail" id="deviceDetail">
+        👆 点击教室里的设备，查看它的控制方法和功能。
+      </div>
+    </div>
+
+    <!-- L1 - 幻灯片 3: 知识小结 -->
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 知识小结</span>
+      <h2>什么是控制系统？</h2>
+      <div class="info-card">
+        <div class="title">核心概念</div>
+        <div class="body">
+          像教室里的灯、空调、电风扇、计算机这样可以被人们控制并实现一定功能的设备，都属于<strong>控制系统</strong>。<br>
+          人们通过开关、遥控器、按键等方式控制这些设备，让它们为学习、工作和生活提供帮助。
+        </div>
+      </div>
+
+      <h3>控制系统在我们身边随处可见</h3>
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">家中</div>
+          <div class="text">电视、洗衣机、微波炉、空调、热水器</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">学校</div>
+          <div class="text">投影仪、打印机、广播系统、铃声系统</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">街道</div>
+          <div class="text">红绿灯、公交车、电梯、自动门</div>
+        </div>
+      </div>
+
+      <p style="margin-top: 16px;">📌 <strong>思考：</strong>从过去的算盘到今天的计算机，从扇子到空调，控制系统经历了怎样的发展？这反映了什么？</p>
+    </div>
+
+    <!-- L1 - 幻灯片 4: 检测 -->
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测你的掌握程度</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 下面哪一项 <u>不属于</u> 我们身边的控制系统？</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q1')">A. 教室里的空调</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q1')">B. 学校的多媒体设备</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q1')">C. 一支铅笔</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q1')">D. 家里的洗衣机</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 关于控制系统，下列说法 <u>正确</u> 的是？</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q2')">A. 控制系统只存在于工厂里</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q2')">B. 我们通过开关、遥控器等方式控制设备</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q2')">C. 所有控制系统都必须连接互联网</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q2')">D. 控制系统不会给生活带来便利</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 第2课 ============== -->
+  <div class="lesson" id="lesson-2">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(2)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(2)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">目标 1</div>
+          <div class="text">了解开与关操作如何改变设备的状态</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 2</div>
+          <div class="text">学习用流程图描述开与关的算法</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 3</div>
+          <div class="text">体会"一分为二"的简单逻辑</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">不论多复杂的设备，最基础的控制就是<strong>开</strong>和<strong>关</strong>。让我们看看身边的开关都能做什么。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🎯 互动演示</span>
+      <h2>点击开关，看看设备状态如何变化</h2>
+      <p>每个设备只有两个状态："开"或"关"。试着切换下面的开关，观察设备和环境的变化。</p>
+
+      <div class="switch-grid">
+        <div class="switch-card" id="sw-light">
+          <svg class="device-svg" viewBox="0 0 64 64">
+            <ellipse cx="32" cy="22" rx="14" ry="16" fill="#fde047" stroke="#a16207" stroke-width="2" id="bulb-fill"/>
+            <rect x="26" y="36" width="12" height="8" fill="#475569"/>
+            <rect x="24" y="42" width="16" height="4" fill="#1e293b"/>
+            <g id="bulb-rays" style="display:none">
+              <line x1="32" y1="2" x2="32" y2="8" stroke="#fbbf24" stroke-width="2"/>
+              <line x1="50" y1="22" x2="56" y2="22" stroke="#fbbf24" stroke-width="2"/>
+              <line x1="14" y1="22" x2="8" y2="22" stroke="#fbbf24" stroke-width="2"/>
+            </g>
+          </svg>
+          <div class="device-name">电灯</div>
+          <div class="device-state" id="state-light">状态：关闭（不亮）</div>
+          <div class="toggle-switch" onclick="toggleDevice('light')"></div>
+        </div>
+
+        <div class="switch-card" id="sw-fan">
+          <svg class="device-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+            <g id="fan-blades" style="transform-origin: 32px 32px; transition: transform 1s linear;">
+              <ellipse cx="32" cy="14" rx="4" ry="14" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+              <ellipse cx="50" cy="32" rx="14" ry="4" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+              <ellipse cx="32" cy="50" rx="4" ry="14" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+              <ellipse cx="14" cy="32" rx="14" ry="4" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+            </g>
+            <circle cx="32" cy="32" r="5" fill="#475569"/>
+          </svg>
+          <div class="device-name">电风扇</div>
+          <div class="device-state" id="state-fan">状态：停止（无风）</div>
+          <div class="toggle-switch" onclick="toggleDevice('fan')"></div>
+        </div>
+
+        <div class="switch-card" id="sw-tv">
+          <svg class="device-svg" viewBox="0 0 64 64">
+            <rect x="6" y="14" width="52" height="36" rx="3" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+            <rect x="10" y="18" width="44" height="28" fill="#475569" id="tv-screen"/>
+            <rect x="22" y="52" width="20" height="3" fill="#475569"/>
+            <text x="32" y="35" text-anchor="middle" font-size="10" fill="#94a3b8" id="tv-text" style="display:none">▶</text>
+          </svg>
+          <div class="device-name">电视机</div>
+          <div class="device-state" id="state-tv">状态：关机（黑屏）</div>
+          <div class="toggle-switch" onclick="toggleDevice('tv')"></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">📌 观察发现</div>
+        <div class="body">无论是电灯、风扇还是电视机，它们都有"开"和"关"两种状态——这是最简单也最重要的控制方式。我们把这种<strong>只有两种值的数据</strong>（开/关、亮/灭、是/否）叫做<strong>开关量</strong>。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 知识小结</span>
+      <h2>用流程图描述"开与关"</h2>
+      <p>计算机科学中常用<strong>流程图</strong>来表示一个操作的过程。下面是"开灯"这一动作的流程图：</p>
+
+      <div class="ico-diagram">
+        <svg viewBox="0 0 600 200" style="width:100%; height:auto; max-height:240px;">
+          <!-- 开始 -->
+          <ellipse cx="60" cy="100" rx="40" ry="22" fill="#fef3c7" stroke="#ea580c" stroke-width="2"/>
+          <text x="60" y="105" text-anchor="middle" font-size="13" fill="#7c2d12">开始</text>
+          <line x1="100" y1="100" x2="140" y2="100" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <!-- 判断 -->
+          <polygon points="180,100 230,75 280,100 230,125" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+          <text x="230" y="98" text-anchor="middle" font-size="12" fill="#7c2d12">灯是否</text>
+          <text x="230" y="113" text-anchor="middle" font-size="12" fill="#7c2d12">关闭？</text>
+          <line x1="280" y1="100" x2="320" y2="100" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="298" y="96" font-size="11" fill="#ea580c">是</text>
+
+          <!-- 动作 -->
+          <rect x="320" y="80" width="100" height="40" rx="4" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+          <text x="370" y="105" text-anchor="middle" font-size="13" fill="#7c2d12">按下开关</text>
+          <line x1="420" y1="100" x2="460" y2="100" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <!-- 结果 -->
+          <rect x="460" y="80" width="100" height="40" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+          <text x="510" y="105" text-anchor="middle" font-size="13" fill="#166534">灯亮起</text>
+
+          <!-- 否分支 -->
+          <line x1="230" y1="125" x2="230" y2="160" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="238" y="148" font-size="11" fill="#ea580c">否</text>
+          <rect x="180" y="160" width="100" height="32" rx="4" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2"/>
+          <text x="230" y="180" text-anchor="middle" font-size="12" fill="#374151">无需操作</text>
+
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#ea580c"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="info-card">
+        <div class="title">💭 想一想</div>
+        <div class="body">流程图能让我们清晰地看到一个动作的逻辑：先判断当前状态，再决定要做什么。这就是计算机程序工作的基本方式。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测你的掌握程度</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. "开关量"是指：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q3')">A. 一个连续变化的数据</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q3')">B. 只有两种值的数据（如开/关、是/否）</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q3')">C. 由计算机生成的数据</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q3')">D. 多个数据的组合</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q3"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 关于"开与关"操作，下列说法<u>错误</u>的是？</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q4')">A. 它能改变设备的状态</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q4')">B. 可以用流程图来描述</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q4')">C. 它是控制设备最复杂的方式</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q4')">D. 是最基础的控制操作</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 第3课 ============== -->
+  <div class="lesson" id="lesson-3">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(3)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <button class="slide-arrow" onclick="nextSlide(3)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">目标 1</div>
+          <div class="text">通过角色扮演体验控制系统的内部工作</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 2</div>
+          <div class="text">了解控制系统内部各角色的作用</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 3</div>
+          <div class="text">体会"控制"的真正含义</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">同学们按下开关，灯就亮了——但是从按开关到灯亮，中间到底发生了什么？让我们扮演控制系统里的不同角色，把这个过程演一遍！</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🎭 角色扮演</span>
+      <h2>"按下开关 → 灯亮起"的过程</h2>
+      <p>点击下方按钮，观察这个过程中每个角色（设备部件）依次做了什么。</p>
+
+      <div class="role-play">
+        <div class="role-flow" id="roleFlow">
+          <div class="role-step" data-step="0">
+            <div class="icon">👆</div>
+            <div class="name">使用者</div>
+            <div class="desc">按下开关</div>
+          </div>
+          <div class="role-arrow">→</div>
+          <div class="role-step" data-step="1">
+            <div class="icon">🔘</div>
+            <div class="name">开关</div>
+            <div class="desc">导通电路</div>
+          </div>
+          <div class="role-arrow">→</div>
+          <div class="role-step" data-step="2">
+            <div class="icon">⚡</div>
+            <div class="name">电流</div>
+            <div class="desc">流向灯泡</div>
+          </div>
+          <div class="role-arrow">→</div>
+          <div class="role-step" data-step="3">
+            <div class="icon">💡</div>
+            <div class="name">灯泡</div>
+            <div class="desc">发光发热</div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:14px;">
+          <button class="case-btn active" onclick="playRolePlay()" id="playBtn">▶ 播放过程</button>
+          <button class="case-btn" onclick="resetRolePlay()">↺ 重置</button>
+        </div>
+        <div id="roleNarration" style="margin-top:14px; padding:12px 16px; background:white; border-radius:8px; min-height:50px; text-align:center; color:var(--muted);">
+          点击"播放过程"看看控制系统是如何工作的
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 知识小结</span>
+      <h2>控制系统的内部</h2>
+      <p>原来一个简单的"按下开关 → 灯亮"动作，背后有这么多角色配合工作！这就是<strong>控制系统的内部过程</strong>。</p>
+
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">使用者</div>
+          <div class="text">通过操作设备，发出控制指令（如按下开关）</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">开关</div>
+          <div class="text">把使用者的动作变成电信号</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">电路</div>
+          <div class="text">把电信号传递到执行设备</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">灯泡</div>
+          <div class="text">执行最终的功能——发光</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">💭 深入思考</div>
+        <div class="body">现在再想想空调遥控器：你按下"制冷"按钮后，遥控器、红外线、空调内部电路、压缩机……各个"角色"是怎么配合的呢？这正是控制系统内部的奥秘。</div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">课堂讨论：你能说出"用计算机播放音乐"过程中，有哪些"角色"在配合工作吗？</div>
+        <p style="font-size:13px; color:var(--muted); margin-top: 8px;">参考：手指 → 鼠标/键盘 → 计算机 CPU → 声卡 → 扬声器 → 声音</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 第4课 ============== -->
+  <div class="lesson" id="lesson-4">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(4)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(4)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">目标 1</div>
+          <div class="text">理解控制系统的三个核心环节：输入、计算、输出</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 2</div>
+          <div class="text">能识别常见控制系统中的输入和输出</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">目标 3</div>
+          <div class="text">了解"计算"在控制系统中的重要作用</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入 · 核心计算模式</div>
+        <div class="body">所有的控制系统，不管多么复杂，都遵循同一个工作模式：<strong>输入 → 计算 → 输出</strong>。这是过程与控制最重要的核心概念！</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🔍 案例分析</span>
+      <h2>三个环节是什么样的？</h2>
+      <p>选择一个常见的控制系统，看看它的"输入"、"计算"、"输出"分别是什么。</p>
+
+      <div class="case-selector">
+        <button class="case-btn active" onclick="showCase('elevator')">电梯</button>
+        <button class="case-btn" onclick="showCase('washer')">洗衣机</button>
+        <button class="case-btn" onclick="showCase('ac')">空调</button>
+        <button class="case-btn" onclick="showCase('microwave')">微波炉</button>
+      </div>
+
+      <div class="ico-diagram">
+        <div class="ico-flow">
+          <div class="ico-box">
+            <div class="stage">输 入</div>
+            <div class="content" id="case-input">按下"5"层按钮</div>
+          </div>
+          <div class="ico-arrow">→</div>
+          <div class="ico-box">
+            <div class="stage">计 算</div>
+            <div class="content" id="case-compute">系统判断当前楼层与目标楼层关系</div>
+          </div>
+          <div class="ico-arrow">→</div>
+          <div class="ico-box">
+            <div class="stage">输 出</div>
+            <div class="content" id="case-output">电梯上升至 5 层并开门</div>
+          </div>
+        </div>
+        <div class="info-card" style="margin-top: 14px;">
+          <div class="title" id="case-title">案例：电梯</div>
+          <div class="body" id="case-desc">人们按楼层按钮（输入），电梯控制系统通过比较当前楼层与目标楼层（计算），决定电梯如何运行（输出）。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 知识小结</span>
+      <h2>"计算"为什么如此重要？</h2>
+
+      <div class="ico-diagram">
+        <h3 style="margin-top: 0;">没有"计算"的话……</h3>
+        <p>设备只能<strong>盲目地</strong>把输入直接传给输出，无法做出任何"判断"。比如：</p>
+        <ul>
+          <li>电梯收到所有按键就同时去所有楼层（不知道先去哪个）</li>
+          <li>空调收到指令就一直制冷（不知道何时该停）</li>
+          <li>洗衣机不知道衣服洗了多久就该进入漂洗阶段</li>
+        </ul>
+
+        <h3>有了"计算"……</h3>
+        <p>系统就<strong>"聪明"</strong>了。它能：</p>
+        <ul>
+          <li>比较数据大小（如"当前温度 vs 设定温度"）</li>
+          <li>判断条件（如"是否所有传感器都正常？"）</li>
+          <li>按顺序执行任务（如"先洗涤，再漂洗，最后脱水"）</li>
+        </ul>
+      </div>
+
+      <div class="info-card">
+        <div class="title">💡 重要结论</div>
+        <div class="body">现代计算机就是最强大的"计算"工具，所以越来越多的控制系统使用计算机来实现"计算"环节——这就是控制系统越来越智能的原因！</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>综合检测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 控制系统工作过程的三个环节是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q5')">A. 开始、运行、结束</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q5')">B. 输入、计算、输出</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q5')">C. 输入、传送、输出</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q5')">D. 数据、命令、动作</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q5"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 关于"计算"环节，下面说法<u>正确</u>的是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q6')">A. 只是把输入原样传给输出</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q6')">B. 让系统能比较、判断和决策，是控制系统智能的关键</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q6')">C. 在控制系统中可有可无</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q6')">D. 只能在大型电脑中实现</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q6"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">3. <strong>开放思考：</strong>请你说出一个控制系统的例子，并指出它的输入、计算和输出。</div>
+        <p style="font-size:13px; color:var(--muted); margin-top: 8px;">参考答案：自动饮水机 → 输入：按钮按下；计算：判断水温和水量；输出：出水。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === 课时切换 ===
+  document.querySelectorAll('.lesson-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lesson-nav button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('lesson-' + btn.dataset.lesson).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // === 幻灯片导航 ===
+  function getCurrentLesson() {
+    return document.querySelector('.lesson.active');
+  }
+  function showSlide(lesson, index) {
+    const lessonEl = document.getElementById('lesson-' + lesson);
+    const slides = lessonEl.querySelectorAll('.slide');
+    const dots = lessonEl.querySelectorAll('.slide-dot');
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach((d, i) => {
+      d.classList.remove('active');
+      if (i < index) d.classList.add('done'); else d.classList.remove('done');
+    });
+    slides[index].classList.add('active');
+    dots[index].classList.add('active');
+  }
+  function getCurrentSlideIndex(lesson) {
+    const lessonEl = document.getElementById('lesson-' + lesson);
+    const slides = Array.from(lessonEl.querySelectorAll('.slide'));
+    return slides.findIndex(s => s.classList.contains('active'));
+  }
+  function nextSlide(lesson) {
+    const idx = getCurrentSlideIndex(lesson);
+    const total = document.getElementById('lesson-' + lesson).querySelectorAll('.slide').length;
+    if (idx < total - 1) showSlide(lesson, idx + 1);
+  }
+  function prevSlide(lesson) {
+    const idx = getCurrentSlideIndex(lesson);
+    if (idx > 0) showSlide(lesson, idx - 1);
+  }
+  // 点击数字直接跳
+  document.querySelectorAll('.slide-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const lesson = dot.closest('.lesson').id.split('-')[1];
+      showSlide(lesson, +dot.dataset.i);
+    });
+  });
+
+  // === 第1课：教室设备识别 ===
+  const deviceInfo = {
+    light: { name: '教室灯', method: '按动墙上的开关', func: '提供光照，让大家看清黑板和书本' },
+    ac: { name: '空调', method: '使用遥控器选择制冷/制热模式', func: '调节室内温度，让大家更舒适' },
+    projector: { name: '多媒体设备（电脑+投影仪）', method: '按电源键，遥控器或电脑控制', func: '播放教学课件、视频、音频' },
+    computer: { name: '计算机', method: '通过鼠标、键盘操作', func: '处理信息、播放内容、运行各种程序' },
+    fan: { name: '电风扇', method: '拉绳或按动开关', func: '通过吹风让室内更凉爽' }
+  };
+  function selectDevice(el, key) {
+    document.querySelectorAll('.device-hotspot').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    const info = deviceInfo[key];
+    document.getElementById('deviceDetail').innerHTML =
+      `<strong>设备：</strong>${info.name}<br>
+       <strong>控制方法：</strong>${info.method}<br>
+       <strong>实现功能：</strong>${info.func}`;
+  }
+
+  // === 第2课：开关 ===
+  const switchState = { light: false, fan: false, tv: false };
+  function toggleDevice(name) {
+    switchState[name] = !switchState[name];
+    const card = document.getElementById('sw-' + name);
+    card.classList.toggle('on', switchState[name]);
+    if (name === 'light') {
+      document.getElementById('state-light').textContent = '状态：' + (switchState.light ? '打开（亮）' : '关闭（不亮）');
+      document.getElementById('bulb-fill').setAttribute('fill', switchState.light ? '#fde047' : '#e5e7eb');
+      document.getElementById('bulb-rays').style.display = switchState.light ? 'inline' : 'none';
+    }
+    if (name === 'fan') {
+      document.getElementById('state-fan').textContent = '状态：' + (switchState.fan ? '运行（有风）' : '停止（无风）');
+      const blades = document.getElementById('fan-blades');
+      if (switchState.fan) {
+        blades.style.animation = 'spin 0.5s linear infinite';
+      } else {
+        blades.style.animation = 'none';
+      }
+    }
+    if (name === 'tv') {
+      document.getElementById('state-tv').textContent = '状态：' + (switchState.tv ? '开机（播放中）' : '关机（黑屏）');
+      document.getElementById('tv-screen').setAttribute('fill', switchState.tv ? '#fbbf24' : '#475569');
+      document.getElementById('tv-text').style.display = switchState.tv ? 'inline' : 'none';
+    }
+  }
+  // 风扇旋转动画
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+  document.head.appendChild(styleSheet);
+
+  // === 第3课：角色扮演 ===
+  const narrations = [
+    '【使用者】小智走进教室，看到教室有点暗，他伸手去按墙上的开关。',
+    '【开关】开关被按下后，内部触点连接，电路被接通了！',
+    '【电流】220V 的电流从开关流向灯泡，速度极快（接近光速）。',
+    '【灯泡】电流通过灯丝，灯丝发热并发出明亮的光，教室一下亮起来了！✨'
+  ];
+  let rolePlayIndex = -1;
+  let rolePlayTimer = null;
+  function playRolePlay() {
+    resetRolePlay();
+    rolePlayIndex = 0;
+    runRolePlayStep();
+  }
+  function runRolePlayStep() {
+    if (rolePlayIndex < 0) return;
+    document.querySelectorAll('.role-step').forEach(s => s.classList.remove('active'));
+    if (rolePlayIndex < narrations.length) {
+      document.querySelector(`.role-step[data-step="${rolePlayIndex}"]`).classList.add('active');
+      document.getElementById('roleNarration').textContent = narrations[rolePlayIndex];
+      rolePlayIndex++;
+      rolePlayTimer = setTimeout(runRolePlayStep, 1800);
+    } else {
+      document.getElementById('roleNarration').innerHTML = '✓ 完整流程演示完毕！这就是控制系统内部的工作过程。';
+    }
+  }
+  function resetRolePlay() {
+    if (rolePlayTimer) clearTimeout(rolePlayTimer);
+    rolePlayIndex = -1;
+    document.querySelectorAll('.role-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('roleNarration').textContent = '点击"播放过程"看看控制系统是如何工作的';
+  }
+
+  // === 第4课：案例 ===
+  const cases = {
+    elevator: {
+      title: '案例：电梯',
+      input: '按下"5"层按钮',
+      compute: '系统判断当前楼层与目标楼层的关系（上升/下降/停止）',
+      output: '电梯上升至 5 层并开门',
+      desc: '人们按楼层按钮（输入），电梯控制系统通过比较当前楼层与目标楼层（计算），决定电梯如何运行（输出）。'
+    },
+    washer: {
+      title: '案例：洗衣机',
+      input: '选择"标准洗"程序并按启动',
+      compute: '系统按预定步骤计时：进水→洗涤→排水→漂洗→脱水',
+      output: '洗衣机按步骤完成各阶段动作',
+      desc: '使用者选择洗涤程序（输入），洗衣机按内部计时计数程序（计算），依次执行进水、洗涤、漂洗、脱水（输出）。'
+    },
+    ac: {
+      title: '案例：空调',
+      input: '设定目标温度 26°C',
+      compute: '系统持续比较当前室温与设定温度',
+      output: '当前温度高于设定时启动制冷，达到时停止',
+      desc: '使用者设定温度（输入），空调通过温度传感器持续检测并比较（计算），决定是否启动压缩机制冷（输出）。'
+    },
+    microwave: {
+      title: '案例：微波炉',
+      input: '设定加热时间 3 分钟，按启动',
+      compute: '系统倒计时，时间到则停止',
+      output: '微波炉加热食物 3 分钟后自动停止并提示',
+      desc: '使用者设定时间（输入），微波炉按设定时间倒计时（计算），到时自动停止并发出提示（输出）。'
+    }
+  };
+  function showCase(key) {
+    document.querySelectorAll('.case-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    const c = cases[key];
+    document.getElementById('case-input').textContent = c.input;
+    document.getElementById('case-compute').textContent = c.compute;
+    document.getElementById('case-output').textContent = c.output;
+    document.getElementById('case-title').textContent = c.title;
+    document.getElementById('case-desc').textContent = c.desc;
+  }
+
+  // === 测验 ===
+  const quizExplanations = {
+    q1: '✓ 一支铅笔需要人直接使用，不存在"控制"的内部过程，所以不是控制系统。',
+    q2: '✓ 控制系统通过开关、遥控器、按钮等方式接受人的指令，是我们生活中常见的设备。',
+    q3: '✓ 开关量只有两种值，常用 0/1 或 真/假 表示。下一节我们会专门学习它的运算！',
+    q4: '✓ 开与关恰恰是最基础、最简单的控制方式，并非最复杂。',
+    q5: '✓ "输入—计算—输出"是控制系统最核心的工作模式，请牢记！',
+    q6: '✓ "计算"让控制系统能够"思考"，这就是计算机被广泛用于控制系统的原因。'
+  };
+  function answer(btn, isCorrect, qid) {
+    const options = btn.parentElement.querySelectorAll('.quiz-option');
+    options.forEach(o => o.disabled = true);
+    if (isCorrect) {
+      btn.classList.add('correct');
+      const fb = document.getElementById('fb-' + qid);
+      fb.className = 'quiz-feedback show correct';
+      fb.innerHTML = '<strong>回答正确！</strong> ' + (quizExplanations[qid] || '');
+    } else {
+      btn.classList.add('wrong');
+      // 显示正确答案
+      options.forEach(o => {
+        if (o.getAttribute('onclick').includes('true')) {
+          o.classList.add('correct');
+        }
+      });
+      const fb = document.getElementById('fb-' + qid);
+      fb.className = 'quiz-feedback show wrong';
+      fb.innerHTML = '<strong>再想想~</strong> ' + (quizExplanations[qid] || '');
+    }
+  }
+</script>
+</body>
+</html>

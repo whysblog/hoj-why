@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第17课 · 物联数据需采集 — 传感器采集实时模拟</title>
+<style>
+  :root {
+    --bg: #ecfeff;
+    --bg-2: #cffafe;
+    --ink: #042f2e;
+    --ink-soft: #4a6c5e;
+    --primary: #0d9488;
+    --primary-2: #14b8a6;
+    --accent: #06b6d4;
+    --warn: #f59e0b;
+    --line: #bae6e6;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(13,148,136,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 采集实时面板 */
+  .live-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 16px 0; }
+  .panel-s {
+    background: var(--bg-2); padding: 16px; border-radius: 8px;
+    text-align: center;
+  }
+  .panel-s .ic { font-size: 32px; margin-bottom: 6px; }
+  .panel-s h4 { font-size: 12px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 6px; }
+  .panel-s .val {
+    font-size: 28px; font-weight: 700; color: var(--primary); font-family: "JetBrains Mono",monospace;
+    line-height: 1;
+  }
+  .panel-s .val .unit { font-size: 14px; color: var(--ink-soft); margin-left: 4px; }
+  .panel-s .ts {
+    font-size: 10px; color: var(--ink-soft); margin-top: 6px; font-family: monospace;
+  }
+
+  .controls {
+    display: flex; justify-content: space-between; align-items: center; margin: 16px 0;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .controls .freq { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .controls .freq input { width: 140px; }
+  .start-btn {
+    padding: 10px 22px; background: var(--primary); color: #fff;
+    border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    font-family: inherit;
+  }
+  .start-btn.stop { background: var(--warn); }
+
+  /* 历史数据表 */
+  .data-table {
+    width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12px;
+  }
+  .data-table th, .data-table td {
+    padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left;
+    font-family: "JetBrains Mono",monospace;
+  }
+  .data-table th { background: var(--bg-2); color: var(--primary); font-size: 11px; letter-spacing: 1px; }
+  .data-table tbody tr { transition: background .15s; }
+  .data-table tbody tr:hover { background: var(--bg-2); }
+
+  /* 思考问题 */
+  .questions-card { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .q {
+    border-left: 3px solid var(--primary); padding-left: 14px; margin-bottom: 16px;
+  }
+  .q h4 { font-size: 14px; margin-bottom: 6px; color: var(--primary); }
+  .q p { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  .q .ans {
+    margin-top: 8px; padding: 10px 14px; background: var(--bg-2); border-radius: 6px;
+    font-size: 12px; line-height: 1.7; display: none;
+  }
+  .q.open .ans { display: block; }
+  .q .toggle {
+    background: var(--bg-2); border: 1px solid var(--line); padding: 4px 12px;
+    border-radius: 99px; font-size: 11px; cursor: pointer; margin-top: 6px;
+    color: var(--primary); font-family: inherit;
+  }
+
+  /* Code */
+  .code {
+    background: #042f2e; color: #84d2a3; padding: 18px;
+    border-radius: 8px; font-family: "JetBrains Mono",monospace; font-size: 12px;
+    line-height: 1.8; overflow-x: auto; white-space: pre;
+  }
+  .code .kw { color: #fbbf24; }
+  .code .str { color: #93c5fd; }
+  .code .com { color: #6b7280; }
+  .code .num { color: #f87171; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .panels { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 17 课</span>物联数据需采集</h1>
+  <p class="lead">物联系统中，"<strong>采集</strong>"是数据生命周期的起点。本课带你了解传感器数据采集的基本要素：<strong>采样频率、数据格式、时间戳、本地缓存</strong>，并通过实时模拟器观察一台智能花盆是如何持续采集数据的。</p>
+</header>
+
+<main>
+
+  <!-- 实时面板 -->
+  <section class="section">
+    <div class="section-title">一、实时采集模拟器</div>
+    <div class="live-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;">下面是一台<strong>智能花盆</strong>正在采集的实时数据。点击"开始采集"，调整采样频率，观察数据变化和历史记录：</p>
+      <div class="controls">
+        <div class="freq">
+          <span>采样频率：</span>
+          <input type="range" id="freqSlider" min="500" max="5000" step="500" value="1000" oninput="updateFreq()">
+          <span><strong id="freqLabel">1.0</strong> 秒/次</span>
+        </div>
+        <button id="ctlBtn" class="start-btn" onclick="toggleCollect()">▶ 开始采集</button>
+      </div>
+      <div class="panels">
+        <div class="panel-s">
+          <div class="ic">🌱</div>
+          <h4>土壤湿度</h4>
+          <div class="val" id="vSoil">— <span class="unit">/4095</span></div>
+          <div class="ts" id="tsSoil">上次：—</div>
+        </div>
+        <div class="panel-s">
+          <div class="ic">🌡</div>
+          <h4>空气温度</h4>
+          <div class="val" id="vTemp">— <span class="unit">℃</span></div>
+          <div class="ts" id="tsTemp">上次：—</div>
+        </div>
+        <div class="panel-s">
+          <div class="ic">💧</div>
+          <h4>空气湿度</h4>
+          <div class="val" id="vHum">— <span class="unit">%</span></div>
+          <div class="ts" id="tsHum">上次：—</div>
+        </div>
+        <div class="panel-s">
+          <div class="ic">☀</div>
+          <h4>光照强度</h4>
+          <div class="val" id="vLight">— <span class="unit">lux</span></div>
+          <div class="ts" id="tsLight">上次：—</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-top:14px;">📋 <strong>最近 10 条采集记录：</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>序号</th><th>时间戳</th><th>土壤</th><th>温度</th><th>空气湿度</th><th>光照</th></tr>
+        </thead>
+        <tbody id="histBody">
+          <tr><td colspan="6" style="text-align:center;color:#94a3b8;">无数据</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 采集要素 -->
+  <section class="section">
+    <div class="section-title">二、采集需要考虑的几个问题</div>
+    <div class="questions-card">
+      <div class="q">
+        <h4>① 采样频率多高合适？</h4>
+        <p>采样频率（每秒采集几次）需要根据<strong>数据变化速度</strong>和<strong>系统资源</strong>权衡。</p>
+        <button class="toggle" onclick="this.parentElement.classList.toggle('open')">📖 展开建议</button>
+        <div class="ans">
+          <strong>土壤湿度</strong>：变化慢，每分钟 1 次足够<br>
+          <strong>空气温湿度</strong>：每 30 秒 ~ 1 分钟<br>
+          <strong>振动/姿态</strong>：需要 50~100 Hz（每秒 50~100 次）<br>
+          <strong>心率监测</strong>：可达 200 Hz<br>
+          采样过密 → 浪费电、占用存储；过稀 → 可能错过关键变化。
+        </div>
+      </div>
+      <div class="q">
+        <h4>② 数据需要带时间戳吗？</h4>
+        <p>每条数据都应该<strong>带上采集时间</strong>，否则就是"无源之水"。</p>
+        <button class="toggle" onclick="this.parentElement.classList.toggle('open')">📖 展开建议</button>
+        <div class="ans">
+          <strong>时间戳作用：</strong><br>
+          1. 数据排序、绘制时间序列图<br>
+          2. 数据合并（来自不同传感器的数据按时间对齐）<br>
+          3. 故障定位（"问题发生在 14:32"）<br>
+          4. 数据去重（避免重复存储）<br>
+          5. 通常使用 Unix 时间戳或 ISO 8601 格式
+        </div>
+      </div>
+      <div class="q">
+        <h4>③ 如何应对传感器异常？</h4>
+        <p>传感器可能松动、损坏，读数会出现<strong>异常值</strong>。</p>
+        <button class="toggle" onclick="this.parentElement.classList.toggle('open')">📖 展开建议</button>
+        <div class="ans">
+          <strong>常见异常类型：</strong>读数突然跳到 0、最大值、负数、NaN<br>
+          <strong>应对策略：</strong><br>
+          1. <strong>范围校验：</strong>温度 -40~80℃ 之间才合理<br>
+          2. <strong>滑动平均：</strong>连续 N 次取平均，过滤毛刺<br>
+          3. <strong>变化率限制：</strong>1 秒内温度变化不可能超过 10℃<br>
+          4. <strong>多传感器冗余：</strong>两个传感器互验
+        </div>
+      </div>
+      <div class="q">
+        <h4>④ 网络断开时数据怎么办？</h4>
+        <p>Wi-Fi 可能临时断网，但<strong>采集不能停</strong>。</p>
+        <button class="toggle" onclick="this.parentElement.classList.toggle('open')">📖 展开建议</button>
+        <div class="ans">
+          <strong>本地缓存策略：</strong><br>
+          1. 网络正常时，数据采集后<strong>立即上传 + 本地缓存</strong><br>
+          2. 网络断开时，<strong>数据保存到本地 Flash 或 SD 卡</strong><br>
+          3. 网络恢复后，<strong>批量补传</strong>缓存中的数据<br>
+          4. 缓存空间满时按时间淘汰旧数据
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 代码实现 -->
+  <section class="section">
+    <div class="section-title">三、采集程序参考代码</div>
+    <div class="live-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">教材中的典型采集代码（MicroPython 风格）：</p>
+      <div class="code"><span class="kw">from</span> soil_humid <span class="kw">import</span> soil_humid
+<span class="kw">from</span> dht <span class="kw">import</span> dht11
+<span class="kw">from</span> light <span class="kw">import</span> light
+<span class="kw">import</span> time, json
+
+soil  = soil_humid(pin=<span class="num">36</span>)
+th    = dht11(pin=<span class="num">23</span>)
+lgt   = light(pin=<span class="num">39</span>)
+
+<span class="kw">while True</span>:
+    <span class="com"># 1) 采集</span>
+    data = {
+        <span class="str">"ts"</span>: time.time(),         <span class="com"># 时间戳</span>
+        <span class="str">"soil"</span>: soil.read(),         <span class="com"># 土壤湿度</span>
+        <span class="str">"temp"</span>: th.temperature(),    <span class="com"># 温度</span>
+        <span class="str">"hum"</span>: th.humidity(),        <span class="com"># 空气湿度</span>
+        <span class="str">"lgt"</span>: lgt.read()            <span class="com"># 光照</span>
+    }
+    
+    <span class="com"># 2) 范围校验（去掉异常值）</span>
+    <span class="kw">if</span> <span class="num">0</span> &lt;= data[<span class="str">"soil"</span>] &lt;= <span class="num">4095</span> <span class="kw">and</span> -<span class="num">40</span> &lt;= data[<span class="str">"temp"</span>] &lt;= <span class="num">80</span>:
+        <span class="com"># 3) 本地缓存（断网时备用）</span>
+        cache.append(json.dumps(data))
+        
+        <span class="com"># 4) 尝试上传到云端</span>
+        <span class="kw">if</span> wifi.is_connected():
+            client.publish(<span class="str">"plant/data"</span>, json.dumps(data))
+            cache.clear()                <span class="com"># 上传成功后清缓存</span>
+        
+        print(data)
+    
+    time.sleep(<span class="num">60</span>)                     <span class="com"># 每 60 秒采集一次</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 17 课配套交互工具</footer>
+
+<script>
+var collecting = false;
+var collectTimer = null;
+var freq = 1000;
+var history = [];
+var seq = 0;
+// Smooth simulation values
+var values = { soil: 2400, temp: 22, hum: 60, light: 800 };
+
+function updateFreq() {
+  freq = parseInt(document.getElementById('freqSlider').value, 10);
+  document.getElementById('freqLabel').textContent = (freq / 1000).toFixed(1);
+  if (collecting) {
+    clearInterval(collectTimer);
+    collectTimer = setInterval(doCollect, freq);
+  }
+}
+
+function doCollect() {
+  seq++;
+  // 模拟随机漂移
+  values.soil = clamp(values.soil + randStep(80, 25), 1800, 3500);
+  values.temp = clamp(values.temp + randStep(0.5, 0), 18, 30);
+  values.hum  = clamp(values.hum  + randStep(2, 0), 40, 80);
+  values.light= clamp(values.light + randStep(150, 0), 0, 2400);
+
+  var now = new Date();
+  var t = now.toTimeString().slice(0, 8);
+
+  document.getElementById('vSoil').innerHTML = Math.round(values.soil) + ' <span class="unit">/4095</span>';
+  document.getElementById('vTemp').innerHTML = values.temp.toFixed(1) + ' <span class="unit">℃</span>';
+  document.getElementById('vHum').innerHTML  = Math.round(values.hum)  + ' <span class="unit">%</span>';
+  document.getElementById('vLight').innerHTML= Math.round(values.light)+ ' <span class="unit">lux</span>';
+  document.getElementById('tsSoil').textContent = '上次：' + t;
+  document.getElementById('tsTemp').textContent = '上次：' + t;
+  document.getElementById('tsHum').textContent  = '上次：' + t;
+  document.getElementById('tsLight').textContent= '上次：' + t;
+
+  history.unshift({
+    seq: seq, ts: t,
+    soil: Math.round(values.soil),
+    temp: values.temp.toFixed(1),
+    hum: Math.round(values.hum),
+    light: Math.round(values.light)
+  });
+  if (history.length > 10) history = history.slice(0, 10);
+  renderHist();
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function randStep(scale, baseOffset) {
+  return (Math.random() * 2 - 1) * scale + baseOffset;
+}
+
+function renderHist() {
+  var body = document.getElementById('histBody');
+  if (history.length === 0) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">无数据</td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < history.length; i++) {
+    var h = history[i];
+    html += '<tr><td>#' + h.seq + '</td><td>' + h.ts + '</td><td>' + h.soil + '</td><td>' + h.temp + '℃</td><td>' + h.hum + '%</td><td>' + h.light + '</td></tr>';
+  }
+  body.innerHTML = html;
+}
+
+function toggleCollect() {
+  collecting = !collecting;
+  var btn = document.getElementById('ctlBtn');
+  if (collecting) {
+    btn.textContent = '⏸ 停止采集';
+    btn.className = 'start-btn stop';
+    doCollect(); // immediate
+    collectTimer = setInterval(doCollect, freq);
+  } else {
+    btn.textContent = '▶ 开始采集';
+    btn.className = 'start-btn';
+    clearInterval(collectTimer); collectTimer = null;
+  }
+}
+
+window.toggleCollect = toggleCollect;
+window.updateFreq = updateFreq;
+</script>
+</body>
+</html>

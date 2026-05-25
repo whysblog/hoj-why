@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第5课 数据价值巧发现 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#00897b;
+  --theme-dark:#00695c;
+  --theme-light:#e0f2f1;
+  --bg:#f0f7f6;
+}
+.value-stage{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.value-stage h4{
+  color:var(--theme-dark);margin-bottom:8px;
+  font-size:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.value-stage .level-badge{
+  background:var(--theme);color:#fff;
+  padding:2px 10px;border-radius:12px;
+  font-size:11px;
+  font-weight:normal;
+}
+.case-card{
+  background:linear-gradient(135deg,#e0f2f1 0%,#b2dfdb 100%);
+  border-radius:12px;padding:16px;
+  margin:12px 0;
+  display:flex;gap:14px;align-items:flex-start;
+}
+.case-card .case-icon{
+  font-size:42px;flex-shrink:0;
+  background:#fff;
+  width:64px;height:64px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.case-card h4{
+  color:var(--theme-dark);font-size:16px;
+  margin-bottom:4px;
+}
+.case-card p{font-size:14px;color:#37474f;margin-bottom:4px}
+.case-card .case-data{
+  background:#fff;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:13px;
+  color:var(--theme-dark);
+  display:inline-block;
+  margin-top:4px;
+  font-family:"Courier New",monospace;
+}
+.flag{
+  background:linear-gradient(135deg,#c62828 0%,#b71c1c 100%);
+  color:#fff;
+  border-radius:12px;
+  padding:18px 22px;
+  margin:14px 0;
+  position:relative;
+  overflow:hidden;
+}
+.flag::before{
+  content:"";
+  position:absolute;
+  top:-20px;right:-20px;
+  width:80px;height:80px;
+  background:#ffd700;
+  border-radius:50%;
+  opacity:0.2;
+}
+.flag h4{font-size:17px;margin-bottom:8px}
+.flag p{font-size:14px;opacity:0.95}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第一单元 · 第5课</span>
+    <h1>✨ 数据价值巧发现</h1>
+    <p>发现数据背后的巨大价值，认识数据对国家发展的重要意义</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前思考</button>
+    <button class="nav-btn" data-slide="1">📈 数据的三层价值</button>
+    <button class="nav-btn" data-slide="2">🌟 数据改变生活</button>
+    <button class="nav-btn" data-slide="3">🇨🇳 国家数据安全</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前思考</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      你每天看天气预报。它怎么知道明天会下雨呢？
+      <br><br>
+      <b>因为有大量的气象数据！</b>风速、气压、温度、湿度……成千上万的数据，
+      经过分析后，就变成了能<b>预测未来</b>的本领。
+      <br><br>
+      这就是数据的<b>价值</b>——它不只是数字，更能<b>解决实际问题</b>！
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>知道数据的<b>三个层次的价值</b>：记录、分析、决策</li>
+      <li>了解数据如何<b>改变我们的生活</b></li>
+      <li>认识数据对<b>国家发展和安全</b>的重要性</li>
+      <li>建立"数据是国家战略资源"的意识</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>数据价值的三个层次</h2>
+
+    <div class="value-stage">
+      <h4>📌 第一层 <span class="level-badge">记录现状</span></h4>
+      <p>数据可以告诉我们<b>"现在是什么样"</b>。</p>
+      <p style="background:var(--theme-light);padding:8px 12px;border-radius:6px;font-size:13px">
+        例：我们班今天有 30 个同学到齐 → 知道<b>出勤情况</b>
+      </p>
+    </div>
+
+    <div class="value-stage">
+      <h4>📊 第二层 <span class="level-badge">分析规律</span></h4>
+      <p>把<b>很多数据放在一起</b>分析，能发现隐藏的规律。</p>
+      <p style="background:var(--theme-light);padding:8px 12px;border-radius:6px;font-size:13px">
+        例：连续记录一个月气温 → 发现"中午最热、早晚最凉"
+      </p>
+    </div>
+
+    <div class="value-stage">
+      <h4>🚀 第三层 <span class="level-badge">指导决策</span></h4>
+      <p>根据规律，做出<b>更好的判断和决定</b>。</p>
+      <p style="background:var(--theme-light);padding:8px 12px;border-radius:6px;font-size:13px">
+        例：发现明天气温会到 35℃ → 决定<b>早出门</b>，避开烈日
+      </p>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 重要发现</h4>
+      数据本身只是"数字"，<b>有了分析才有价值，有了应用才有意义</b>！
+      数据 → 信息 → 知识 → 智慧，这是数据"升级"的过程。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>数据改变生活</h2>
+
+    <div class="case-card">
+      <div class="case-icon">🌤️</div>
+      <div>
+        <h4>天气预报</h4>
+        <p>气象卫星每天采集海量气象数据，经过分析告诉我们明天会不会下雨、要不要带伞。</p>
+        <span class="case-data">每天采集数据 1000+ TB</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon">🚗</div>
+      <div>
+        <h4>智能导航</h4>
+        <p>导航软件收集千万辆车的位置数据，实时计算最快路线、提示堵车。</p>
+        <span class="case-data">每秒处理数据 数百万条</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon">🏥</div>
+      <div>
+        <h4>医疗健康</h4>
+        <p>分析病人的化验数据、心率、血压，医生能更早发现疾病、对症下药。</p>
+        <span class="case-data">基因数据 30 亿对碱基</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon">🌾</div>
+      <div>
+        <h4>农业生产</h4>
+        <p>测量土壤、温度、降雨量等数据，指导农民什么时候播种、施肥、收割，提高产量。</p>
+        <span class="case-data">小麦亩产 600+ kg</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon">🚀</div>
+      <div>
+        <h4>航天事业</h4>
+        <p>火箭发射时，每秒采集成千上万的飞行数据，确保飞船精准入轨、安全返回。</p>
+        <span class="case-data">数据采样 数千次/秒</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>数据与国家安全</h2>
+
+    <div class="flag">
+      <h4>🇨🇳 数据是国家的"战略资源"</h4>
+      <p>在今天这个时代，数据像石油、像粮食一样重要！谁掌握了数据，谁就掌握了未来的发展。</p>
+    </div>
+
+    <h3>💎 数据对国家的重要性</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📊</span>
+        <h4>人口数据</h4>
+        <p>每 10 年一次人口普查，帮助规划学校、医院、住房</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🌾</span>
+        <h4>农业数据</h4>
+        <p>保障 14 亿人的粮食安全</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🌍</span>
+        <h4>气候数据</h4>
+        <p>应对气候变化，预防自然灾害</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🛰️</span>
+        <h4>地理数据</h4>
+        <p>北斗导航、国家地图、国土资源</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💉</span>
+        <h4>医疗数据</h4>
+        <p>疫情防控、健康保障</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔬</span>
+        <h4>科研数据</h4>
+        <p>支撑各类科学研究和发明创造</p>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      <h4>⚠️ 数据安全很重要！</h4>
+      重要数据如果被坏人窃取或破坏，会给国家、社会带来巨大损失：
+      <ul style="margin-top:6px">
+        <li>军事数据被偷 → 影响<b>国防安全</b></li>
+        <li>个人数据泄露 → 影响<b>每个人的隐私</b></li>
+        <li>科研数据丢失 → 影响<b>科技进步</b></li>
+      </ul>
+      所以国家有《<b>数据安全法</b>》《<b>个人信息保护法</b>》等法律来保护重要数据。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📌</span>
+        <h4>第一层</h4>
+        <p>数据记录现状</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📊</span>
+        <h4>第二层</h4>
+        <p>数据分析规律</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🚀</span>
+        <h4>第三层</h4>
+        <p>数据指导决策</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🇨🇳</span>
+        <h4>国家战略</h4>
+        <p>数据是国家的宝贵资源</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 单元总结</h4>
+      第一单元《奇妙的数据世界》到这里就结束啦！我们学会了：
+      <ul style="margin-top:6px">
+        <li>第1课：什么是数据 → 多种多样的<b>记录</b></li>
+        <li>第2课：怎么获取数据 → 观察、测量、调查、查询</li>
+        <li>第3课：找到可靠数据 → 权威、自主可控</li>
+        <li>第4课：怎么记录数据 → 表格、文字、照片、音视频</li>
+        <li>第5课：数据的价值 → 改变生活、强国根基</li>
+      </ul>
+    </div>
+
+    <h3>🔮 下个单元预告</h3>
+    <div class="info-box tip">
+      数据要在计算机里保存，需要用一种特殊的"语言"——<b>编码</b>！
+      <br>
+      下一个单元《用编码描绘世界》，我们将学习人类怎么用编码来表达万千世界，
+      从古代的结绳记事到现代的二维码，编码无处不在！🎉
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

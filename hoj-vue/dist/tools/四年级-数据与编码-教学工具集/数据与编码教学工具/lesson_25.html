@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第25课 知识图谱来帮忙 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#e53935;
+  --theme-dark:#c62828;
+  --theme-light:#ffebee;
+  --bg:#fffafa;
+}
+.graph-container{
+  background:#fff;border-radius:12px;
+  padding:14px;margin:14px 0;
+  text-align:center;
+}
+.graph-container svg{
+  max-width:100%;height:auto;
+}
+.graph-node{cursor:pointer;transition:all .2s}
+.graph-node:hover circle{stroke-width:4}
+.entity-card{
+  display:flex;gap:12px;align-items:flex-start;
+  background:#fff;border-radius:10px;
+  padding:14px;margin:8px 0;
+  border-left:4px solid var(--theme);
+}
+.entity-card .e-icon{
+  font-size:28px;flex-shrink:0;
+  background:var(--theme-light);
+  width:50px;height:50px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.entity-card h4{
+  color:var(--theme-dark);font-size:15px;
+  margin-bottom:4px;
+}
+.entity-card p{font-size:13px;color:#37474f;margin:0}
+.relation-demo{
+  background:#fff;border-radius:10px;
+  padding:14px;margin:10px 0;
+  text-align:center;
+}
+.relation-demo .rel-flow{
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;font-size:14px;
+  flex-wrap:wrap;
+}
+.relation-demo .rel-node{
+  background:var(--theme-light);
+  border:2px solid var(--theme);
+  border-radius:20px;
+  padding:6px 14px;
+  color:var(--theme-dark);
+  font-weight:bold;
+}
+.relation-demo .rel-arrow{
+  color:var(--theme);font-weight:bold;
+  font-size:14px;
+}
+.relation-demo .rel-label{
+  background:#fff;
+  border:1px dashed var(--theme);
+  border-radius:12px;
+  padding:2px 10px;
+  font-size:12px;
+  color:var(--theme-dark);
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第五单元 · 第25课</span>
+    <h1>🕸️ 知识图谱来帮忙</h1>
+    <p>用图谱把零散的知识连成网，让数据更有价值</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">🔍 什么是图谱</button>
+    <button class="nav-btn" data-slide="2">🌟 图谱的价值</button>
+    <button class="nav-btn" data-slide="3">🎮 制作图谱</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      读一篇课文，里面有一堆人物：李白、杜甫、王维、孟浩然……他们之间什么关系？
+      <br><br>
+      如果只是<b>一长串名字</b>，你很难记住。但如果画成<b>一张关系图</b>——
+      "李白和杜甫是<b>朋友</b>，杜甫崇拜李白，孟浩然是李白的<b>偶像</b>"——一下就<b>清楚多了</b>！
+      <br><br>
+      这就是<b>知识图谱</b>的魔力。
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>什么是<b>知识图谱</b>，它的基本组成</li>
+      <li>认识图谱中的<b>实体</b>和<b>关系</b></li>
+      <li>能从文本中<b>抽取</b>实体和关系，做一个简单图谱</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>什么是知识图谱</h2>
+
+    <p><b>知识图谱</b>就是把<b>知识</b>用<b>图</b>的方式画出来！它由两个东西组成：</p>
+
+    <div class="entity-card">
+      <span class="e-icon">📌</span>
+      <div>
+        <h4>实体（点）</h4>
+        <p>具体的人、物、事、地点。比如：李白、苹果、唐朝、北京</p>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <span class="e-icon">➡️</span>
+      <div>
+        <h4>关系（线）</h4>
+        <p>实体之间的联系。比如：李白—生活在—唐朝；李白—好朋友—杜甫</p>
+      </div>
+    </div>
+
+    <h3>🔗 简单的关系示例</h3>
+
+    <div class="relation-demo">
+      <div class="rel-flow">
+        <span class="rel-node">李白</span>
+        <span class="rel-arrow">→</span>
+        <span class="rel-label">朝代</span>
+        <span class="rel-arrow">→</span>
+        <span class="rel-node">唐朝</span>
+      </div>
+    </div>
+
+    <div class="relation-demo">
+      <div class="rel-flow">
+        <span class="rel-node">李白</span>
+        <span class="rel-arrow">→</span>
+        <span class="rel-label">朋友</span>
+        <span class="rel-arrow">→</span>
+        <span class="rel-node">杜甫</span>
+      </div>
+    </div>
+
+    <div class="relation-demo">
+      <div class="rel-flow">
+        <span class="rel-node">李白</span>
+        <span class="rel-arrow">→</span>
+        <span class="rel-label">代表作</span>
+        <span class="rel-arrow">→</span>
+        <span class="rel-node">《静夜思》</span>
+      </div>
+    </div>
+
+    <p>把这些关系<b>串起来</b>，就形成了一张<b>知识网络</b>：</p>
+
+    <div class="graph-container">
+      <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+        <!-- 连线 -->
+        <g stroke="#e53935" stroke-width="2" fill="none">
+          <line x1="300" y1="160" x2="120" y2="80"/>
+          <line x1="300" y1="160" x2="480" y2="80"/>
+          <line x1="300" y1="160" x2="120" y2="240"/>
+          <line x1="300" y1="160" x2="480" y2="240"/>
+          <line x1="300" y1="160" x2="300" y2="290"/>
+          <line x1="480" y1="80" x2="480" y2="240"/>
+        </g>
+        <!-- 关系标签 -->
+        <g font-size="11" fill="#c62828" text-anchor="middle">
+          <rect x="170" y="105" width="60" height="18" rx="9" fill="#fff" stroke="#e53935"/>
+          <text x="200" y="118">朝代</text>
+          <rect x="370" y="105" width="60" height="18" rx="9" fill="#fff" stroke="#e53935"/>
+          <text x="400" y="118">好友</text>
+          <rect x="170" y="195" width="60" height="18" rx="9" fill="#fff" stroke="#e53935"/>
+          <text x="200" y="208">代表作</text>
+          <rect x="370" y="195" width="60" height="18" rx="9" fill="#fff" stroke="#e53935"/>
+          <text x="400" y="208">字</text>
+          <rect x="265" y="220" width="70" height="18" rx="9" fill="#fff" stroke="#e53935"/>
+          <text x="300" y="233">称号</text>
+          <rect x="450" y="155" width="60" height="18" rx="9" fill="#fff" stroke="#e53935"/>
+          <text x="480" y="168">字</text>
+        </g>
+        <!-- 节点 -->
+        <g class="graph-node">
+          <circle cx="300" cy="160" r="40" fill="#e53935" stroke="#fff" stroke-width="3"/>
+          <text x="300" y="166" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">李白</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="120" cy="80" r="32" fill="#fb8c00" stroke="#fff" stroke-width="3"/>
+          <text x="120" y="86" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">唐朝</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="480" cy="80" r="32" fill="#43a047" stroke="#fff" stroke-width="3"/>
+          <text x="480" y="86" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">杜甫</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="120" cy="240" r="32" fill="#1e88e5" stroke="#fff" stroke-width="3"/>
+          <text x="120" y="240" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">《静夜</text>
+          <text x="120" y="254" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">思》</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="480" cy="240" r="32" fill="#43a047" stroke="#fff" stroke-width="3"/>
+          <text x="480" y="246" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">子美</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="300" cy="290" r="28" fill="#7b1fa2" stroke="#fff" stroke-width="3"/>
+          <text x="300" y="296" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">诗仙</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>知识图谱的价值</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🧠</span>
+        <h4>结构清晰</h4>
+        <p>知识不再零散，关系一目了然</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔗</span>
+        <h4>方便联想</h4>
+        <p>从一个实体出发，能看到所有关联</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💾</span>
+        <h4>便于存储</h4>
+        <p>计算机更容易理解和处理</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔍</span>
+        <h4>智能查询</h4>
+        <p>"李白的朋友的代表作是？" → 一查就有</p>
+      </div>
+    </div>
+
+    <h3>🌟 实际应用</h3>
+
+    <div class="info-box">
+      <h4>📱 你身边的知识图谱</h4>
+      <ul style="margin-top:6px">
+        <li>🔍 <b>百度百科</b>：每个词条都关联着其他词条</li>
+        <li>🎬 <b>电影 APP</b>：电影 → 导演 → 演员 → 其他作品</li>
+        <li>🛒 <b>淘宝</b>：你看的商品 → 相关商品 → 类似商品</li>
+        <li>🤖 <b>智能助手</b>：能回答"鲁迅原名是？"是因为有知识图谱</li>
+      </ul>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 一个让人惊叹的事实</h4>
+      谷歌、百度等搜索引擎的<b>知识图谱</b>包含<b>几十亿个实体</b>和<b>几百亿条关系</b>！
+      它们让搜索引擎"理解"了世界。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>动手做一个图谱</h2>
+
+    <p>读这段话，然后<b>抽取实体和关系</b>：</p>
+
+    <div class="info-box">
+      <b>📜 文本：</b><br>
+      鲁迅，原名周树人，是浙江绍兴人。他写过《狂人日记》、《阿Q正传》。
+      鲁迅生活在民国时期，是著名的文学家。他的弟弟是周作人，也是文学家。
+    </div>
+
+    <h3>📌 步骤一：找出所有实体</h3>
+    <div class="info-box success">
+      ① 鲁迅 ② 周树人 ③ 浙江绍兴 ④ 《狂人日记》 ⑤ 《阿Q正传》
+      <br>⑥ 民国 ⑦ 文学家 ⑧ 周作人
+    </div>
+
+    <h3>📌 步骤二：找出关系</h3>
+    <div class="info-box success">
+      <ul>
+        <li>鲁迅 — 原名 → 周树人</li>
+        <li>鲁迅 — 籍贯 → 浙江绍兴</li>
+        <li>鲁迅 — 代表作 → 《狂人日记》《阿Q正传》</li>
+        <li>鲁迅 — 时期 → 民国</li>
+        <li>鲁迅 — 身份 → 文学家</li>
+        <li>鲁迅 — 弟弟 → 周作人</li>
+        <li>周作人 — 身份 → 文学家</li>
+      </ul>
+    </div>
+
+    <h3>📌 步骤三：画出图谱</h3>
+    <div class="graph-container">
+      <svg viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="#e53935" stroke-width="2" fill="none">
+          <line x1="300" y1="180" x2="100" y2="80"/>
+          <line x1="300" y1="180" x2="500" y2="80"/>
+          <line x1="300" y1="180" x2="100" y2="180"/>
+          <line x1="300" y1="180" x2="500" y2="180"/>
+          <line x1="300" y1="180" x2="100" y2="290"/>
+          <line x1="300" y1="180" x2="500" y2="290"/>
+          <line x1="300" y1="180" x2="300" y2="320"/>
+        </g>
+        <g class="graph-node">
+          <circle cx="300" cy="180" r="38" fill="#e53935" stroke="#fff" stroke-width="3"/>
+          <text x="300" y="186" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">鲁迅</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="100" cy="80" r="28" fill="#fb8c00" stroke="#fff" stroke-width="2"/>
+          <text x="100" y="86" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">周树人</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="500" cy="80" r="28" fill="#43a047" stroke="#fff" stroke-width="2"/>
+          <text x="500" y="80" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">浙江</text>
+          <text x="500" y="93" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">绍兴</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="100" cy="180" r="32" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+          <text x="100" y="178" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">《狂人</text>
+          <text x="100" y="191" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">日记》</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="500" cy="180" r="32" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+          <text x="500" y="178" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">《阿Q</text>
+          <text x="500" y="191" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">正传》</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="100" cy="290" r="28" fill="#7b1fa2" stroke="#fff" stroke-width="2"/>
+          <text x="100" y="296" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">民国</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="500" cy="290" r="28" fill="#5e35b1" stroke="#fff" stroke-width="2"/>
+          <text x="500" y="296" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">文学家</text>
+        </g>
+        <g class="graph-node">
+          <circle cx="300" cy="320" r="28" fill="#fb8c00" stroke="#fff" stroke-width="2"/>
+          <text x="300" y="326" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">周作人</text>
+        </g>
+        <g font-size="10" fill="#c62828" text-anchor="middle">
+          <text x="195" y="125" background="#fff">原名</text>
+          <text x="405" y="125">籍贯</text>
+          <text x="195" y="175">代表作</text>
+          <text x="405" y="175">代表作</text>
+          <text x="195" y="240">时期</text>
+          <text x="405" y="240">身份</text>
+          <text x="320" y="260">弟弟</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📌</span>
+        <h4>实体</h4>
+        <p>人、物、事、地点</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">➡️</span>
+        <h4>关系</h4>
+        <p>连接实体的"线"</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🕸️</span>
+        <h4>图谱</h4>
+        <p>实体 + 关系 = 知识网</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🚀</span>
+        <h4>用途</h4>
+        <p>搜索、推荐、智能问答</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      读你最喜欢的一本书（《西游记》、《哈利波特》、《三国演义》……），
+      画一张<b>主要人物的关系图谱</b>。
+      <br>
+      例：孙悟空 — 师父 → 唐僧；孙悟空 — 师弟 → 猪八戒、沙僧
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      数据这么有用、这么多种表达方式，怎么把它<b>用在我们的观点和报告里</b>呢？
+      下节课《用数据支撑观点》，让你的发言更有说服力！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

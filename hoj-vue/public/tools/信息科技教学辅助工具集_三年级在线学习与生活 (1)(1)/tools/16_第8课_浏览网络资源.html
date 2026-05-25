@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>浏览网络资源 — 第8课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3ff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#6d28d9,#8b5cf6);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}
+.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#6d28d9;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#8b5cf6;color:white;border-color:#6d28d9}
+.intro{background:linear-gradient(135deg,#ede9fe,#ddd6fe);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#6d28d9;margin-bottom:8px;font-size:20px}.intro p{color:#5b21b6;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+
+/* 浏览器模拟 */
+.browser{background:white;border-radius:12px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.1);margin:14px 0}
+.browser-bar{background:#f5f3ff;padding:10px 14px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #e9d5ff}
+.dot{width:12px;height:12px;border-radius:50%}.r{background:#ef4444}.y{background:#f59e0b}.g{background:#22c55e}
+.bbtn{padding:4px 10px;background:white;border:1px solid #c4b5fd;border-radius:6px;cursor:pointer;font-size:12px}
+.bbtn:hover{background:#ede9fe}
+.url-bar{flex:1;padding:6px 12px;background:white;border:1.5px solid #c4b5fd;border-radius:6px;font-size:13px;font-family:monospace}
+.url-bar:focus{outline:none;border-color:#6d28d9}
+.tabs-row{display:flex;background:#ede9fe;padding:0 14px;border-bottom:1px solid #e9d5ff}
+.btab{padding:8px 14px;background:white;border-radius:6px 6px 0 0;margin-right:4px;margin-bottom:-1px;font-size:12px;cursor:pointer;border:1px solid #e9d5ff;border-bottom:none}
+.btab.active{background:white;color:#6d28d9;font-weight:600}
+.browser-page{padding:24px;min-height:300px;background:white}
+.page-content h3{color:#6d28d9;margin-bottom:10px}
+.page-content p{line-height:1.7;margin-bottom:8px;color:#475569}
+.page-content a{color:#8b5cf6;text-decoration:underline;cursor:pointer}
+.page-content a:hover{color:#6d28d9}
+.bookmark-row{background:#faf5ff;padding:6px 14px;display:flex;gap:6px;align-items:center;border-bottom:1px solid #e9d5ff;flex-wrap:wrap}
+.bm{padding:3px 8px;background:white;border:1px solid #c4b5fd;border-radius:4px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:3px}
+.bm:hover{background:#ede9fe}
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.r-card{background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.r-card .icon{font-size:36px}.r-card h4{color:#6d28d9;margin:6px 0 4px;font-size:13px}.r-card p{color:#5b21b6;font-size:11px;line-height:1.4}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🌐 浏览网络资源</h1>
+    <div class="lesson">第 8 课 · 第三单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>多样的网络资源</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>认识浏览器</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>浏览器模拟</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>收藏网页</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🌐 多样的网络资源</h2>
+      <div class="lead">网络世界精彩纷呈，足不出户就能获取丰富的信息</div>
+      <div class="intro">
+        <h3>📡 网络资源都有什么？</h3>
+        <p>文字、图片、视频、音频……网络资源种类繁多，给我们的学习生活带来了极大便利。</p>
+      </div>
+      <div class="resource-grid">
+        <div class="r-card"><div class="icon">📰</div><h4>新闻</h4><p>了解时事</p></div>
+        <div class="r-card"><div class="icon">🎓</div><h4>课程</h4><p>在线学习</p></div>
+        <div class="r-card"><div class="icon">🖼️</div><h4>图片</h4><p>各种素材</p></div>
+        <div class="r-card"><div class="icon">🎬</div><h4>视频</h4><p>影视、纪录片</p></div>
+        <div class="r-card"><div class="icon">🎵</div><h4>音乐</h4><p>音频资源</p></div>
+        <div class="r-card"><div class="icon">📚</div><h4>电子书</h4><p>海量阅读</p></div>
+        <div class="r-card"><div class="icon">🏛️</div><h4>博物馆</h4><p>云上参观</p></div>
+        <div class="r-card"><div class="icon">🗺️</div><h4>地图</h4><p>导航定位</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🔍 认识浏览器</h2>
+      <div class="lead">浏览器是用来浏览网页的软件，是我们打开网络世界的"窗口"</div>
+      <div class="resource-grid">
+        <div class="r-card"><div class="icon">🌐</div><h4>Chrome</h4><p>谷歌浏览器</p></div>
+        <div class="r-card"><div class="icon">🦊</div><h4>Firefox</h4><p>火狐浏览器</p></div>
+        <div class="r-card"><div class="icon">🌊</div><h4>Edge</h4><p>微软浏览器</p></div>
+        <div class="r-card"><div class="icon">🧭</div><h4>Safari</h4><p>苹果浏览器</p></div>
+      </div>
+      <div class="know">
+        <h3>📖 几个浏览器名词</h3>
+        <p><b>网址</b>：网站的地址，例如 https://www.gov.cn<br>
+        <b>网页</b>：浏览器显示的一个页面<br>
+        <b>网站</b>：多个相关网页的集合<br>
+        <b>超链接</b>：可以点击跳转的文字或图片<br>
+        <b>地址栏</b>：浏览器顶部输入网址的地方</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>💻 浏览器模拟</h2>
+      <div class="lead">模拟使用浏览器访问"中国国家博物馆"网站</div>
+      <div class="browser">
+        <div class="browser-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <button class="bbtn" onclick="goBack()">←</button>
+          <button class="bbtn" onclick="goForward()">→</button>
+          <button class="bbtn" onclick="refresh()">🔄</button>
+          <input class="url-bar" id="urlBar" value="https://www.chnmuseum.cn" onkeydown="if(event.key==='Enter')visitUrl()">
+          <button class="bbtn" onclick="addBookmark()">⭐</button>
+          <button class="bbtn" onclick="visitUrl()">访问</button>
+        </div>
+        <div class="bookmark-row" id="bookmarkBar">
+          <span style="font-size:11px;color:#6d28d9;font-weight:600;">📑 收藏夹：</span>
+        </div>
+        <div class="tabs-row">
+          <div class="btab active">中国国家博物馆 ×</div>
+          <div class="btab" onclick="newTab()">+ 新标签页</div>
+        </div>
+        <div class="browser-page" id="browserPage"></div>
+      </div>
+      <div class="know">
+        <h3>💡 试试这些操作</h3>
+        <p>① 在地址栏输入新网址（如 <b>kepu.gov.cn</b>）后回车<br>② 点击页面中蓝色超链接<br>③ 点击 ⭐ 收藏当前网页<br>④ 用 ←/→ 按钮在历史中前进后退</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>⭐ 收藏网页</h2>
+      <div class="lead">把感兴趣的网页收藏起来，下次直接点开</div>
+      <div class="resource-grid">
+        <div class="r-card"><div class="icon">⭐</div><h4>① 添加</h4><p>点击地址栏的星星图标</p></div>
+        <div class="r-card"><div class="icon">📁</div><h4>② 命名</h4><p>给收藏的网页起个好记的名字</p></div>
+        <div class="r-card"><div class="icon">🗂️</div><h4>③ 分类</h4><p>把同类网页放进一个文件夹</p></div>
+        <div class="r-card"><div class="icon">🔓</div><h4>④ 打开</h4><p>下次直接从收藏夹访问</p></div>
+      </div>
+      <h3 style="color:#6d28d9;margin-top:18px;font-size:16px;">📚 推荐的好网站</h3>
+      <div class="resource-grid" style="margin-top:10px;">
+        <div class="r-card"><div class="icon">🎖️</div><h4>军事博物馆</h4><p>了解军事历史</p></div>
+        <div class="r-card"><div class="icon">🏛️</div><h4>故宫博物院</h4><p>云游故宫</p></div>
+        <div class="r-card"><div class="icon">📖</div><h4>国家版本馆</h4><p>典籍宝库</p></div>
+        <div class="r-card"><div class="icon">🎭</div><h4>国家大剧院</h4><p>艺术殿堂</p></div>
+        <div class="r-card"><div class="icon">🔬</div><h4>中国科普网</h4><p>科普知识</p></div>
+        <div class="r-card"><div class="icon">📚</div><h4>智慧教育平台</h4><p>学习资源</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课重点回顾</div>
+      <div class="resource-grid">
+        <div class="r-card" style="border-top:4px solid #8b5cf6;"><div class="icon">🌐</div><h4>多样资源</h4><p>文字图片视频音频</p></div>
+        <div class="r-card" style="border-top:4px solid #8b5cf6;"><div class="icon">🔍</div><h4>用浏览器</h4><p>输入网址打开网页</p></div>
+        <div class="r-card" style="border-top:4px solid #8b5cf6;"><div class="icon">⭐</div><h4>收藏网页</h4><p>方便下次访问</p></div>
+        <div class="r-card" style="border-top:4px solid #8b5cf6;"><div class="icon">✓</div><h4>选官方源</h4><p>政府机构网站可信</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 关键提醒</h3>
+        <p>网络资源良莠不齐，要优先访问<b>政府机关、官方机构、知名媒体</b>的网站，确保信息真实可靠。比如 ".gov.cn"（政府）、".edu.cn"（教育）的域名一般比较可信。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const sites = {
+  'https://www.chnmuseum.cn': {
+    title: '中国国家博物馆',
+    html: `<h3>🏛️ 中国国家博物馆</h3>
+      <p>欢迎来到中国国家博物馆官方网站！这里收藏了中华民族五千年文明的瑰宝。</p>
+      <p><b>常设展览：</b><a onclick="navigate('/exhibit/ancient-china')">古代中国</a> | <a onclick="navigate('/exhibit/clothing')">中国古代服饰文化</a> | <a onclick="navigate('/exhibit/youth')">复兴之路</a></p>
+      <p><b>专题展览：</b><a onclick="navigate('/special/dunhuang')">敦煌石窟艺术展</a> | <a onclick="navigate('/special/silk-road')">丝绸之路</a></p>
+      <div style="background:#faf5ff;padding:14px;border-radius:8px;margin-top:14px;">
+        <b>📢 最新动态：</b>"中国古代服饰文化"专题展览正在展出，展示从远古到清代的中国服饰变迁，欢迎参观。
+      </div>`
+  },
+  'https://www.chnmuseum.cn/exhibit/clothing': {
+    title: '中国古代服饰文化',
+    html: `<h3>👘 中国古代服饰文化</h3>
+      <p>中国古代服饰文化源远流长，每个朝代都有独特的服饰风格。</p>
+      <p>🏺 <b>商周时期</b>：上衣下裳，端庄朴素</p>
+      <p>🐎 <b>秦汉时期</b>：深衣盛行，袖口宽大</p>
+      <p>🏯 <b>唐代</b>：服饰华丽，胡服流行</p>
+      <p>🎋 <b>宋代</b>：清雅简约，文人气息</p>
+      <p>🐉 <b>明清时期</b>：补服制度，官服华丽</p>
+      <p style="margin-top:14px;"><a onclick="navigate('/')">← 返回首页</a></p>`
+  },
+  'https://kepu.gov.cn': {
+    title: '中国科普网',
+    html: `<h3>🔬 中国科普网</h3>
+      <p>欢迎来到中国科普网！这里有最权威的科普知识。</p>
+      <p>🌌 <a onclick="alert('打开了：天文知识专栏')">天文宇宙</a> | 🦕 <a onclick="alert('打开了：恐龙百科')">古生物</a> | 🧬 <a onclick="alert('打开了：人体科学')">生命科学</a></p>
+      <p>💡 推荐：<b>认识太阳系的八大行星</b> · <b>恐龙的奥秘</b> · <b>植物如何吸收水分</b></p>`
+  },
+};
+
+let history = ['https://www.chnmuseum.cn'];
+let historyIdx = 0;
+let bookmarks = [];
+
+function visitUrl() {
+  const url = document.getElementById('urlBar').value.trim();
+  let realUrl = url;
+  if (!url.startsWith('http')) realUrl = 'https://' + url;
+  
+  // 添加到历史
+  if (history[historyIdx] !== realUrl) {
+    history = history.slice(0, historyIdx + 1);
+    history.push(realUrl);
+    historyIdx = history.length - 1;
+  }
+  showPage(realUrl);
+}
+
+function showPage(url) {
+  document.getElementById('urlBar').value = url;
+  const page = document.getElementById('browserPage');
+  if (sites[url]) {
+    page.innerHTML = '<div class="page-content">' + sites[url].html + '</div>';
+  } else {
+    page.innerHTML = `<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:60px;">🤷</div>
+      <h3 style="color:#6d28d9;margin:14px 0;">这个网站没找到</h3>
+      <p style="color:#64748b;">试试这些网址：</p>
+      <p style="margin-top:10px;">
+        <a onclick="setUrl('https://www.chnmuseum.cn')" style="color:#8b5cf6;cursor:pointer;text-decoration:underline;">www.chnmuseum.cn</a>（国家博物馆）<br>
+        <a onclick="setUrl('https://kepu.gov.cn')" style="color:#8b5cf6;cursor:pointer;text-decoration:underline;">kepu.gov.cn</a>（中国科普网）
+      </p>
+    </div>`;
+  }
+}
+
+function setUrl(url) {
+  document.getElementById('urlBar').value = url;
+  visitUrl();
+}
+
+function navigate(path) {
+  const base = 'https://www.chnmuseum.cn';
+  const newUrl = path.startsWith('/') ? base + path : path;
+  document.getElementById('urlBar').value = newUrl;
+  visitUrl();
+}
+
+function goBack() {
+  if (historyIdx > 0) { historyIdx--; showPage(history[historyIdx]); }
+}
+function goForward() {
+  if (historyIdx < history.length - 1) { historyIdx++; showPage(history[historyIdx]); }
+}
+function refresh() { showPage(history[historyIdx]); }
+
+function addBookmark() {
+  const url = document.getElementById('urlBar').value;
+  const title = sites[url] ? sites[url].title : url.replace(/https?:\/\//, '').slice(0, 15);
+  if (bookmarks.find(b => b.url === url)) { alert('该网页已收藏'); return; }
+  bookmarks.push({ title, url });
+  renderBookmarks();
+}
+
+function renderBookmarks() {
+  const bar = document.getElementById('bookmarkBar');
+  bar.innerHTML = '<span style="font-size:11px;color:#6d28d9;font-weight:600;">📑 收藏夹：</span>' +
+    bookmarks.map((b, i) => `<span class="bm" onclick="setUrl('${b.url}')">⭐ ${b.title}</span>`).join('');
+}
+
+function newTab() { alert('新标签页功能：可以同时打开多个网页'); }
+
+// 初始化
+showPage('https://www.chnmuseum.cn');
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT') p();
+});
+</script>
+</body>
+</html>

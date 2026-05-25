@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>密码强度检测器 · 个人信息防泄露</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1729;
+    --panel: #1a2340;
+    --panel-2: #232d4f;
+    --accent: #4ed1b8;
+    --accent2: #ffb347;
+    --warn: #ff6b81;
+    --good: #4ed1b8;
+    --mid: #ffb347;
+    --bad: #ff6b81;
+    --text: #e6eaf5;
+    --muted: #8a96b8;
+    --border: #2c3760;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(78, 209, 184, 0.06), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(255, 179, 71, 0.06), transparent 40%);
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    padding: 28px 32px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    position: relative;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  }
+  .header h1 {
+    color: #0f1729;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .header p { color: rgba(15, 23, 41, 0.8); font-size: 14px; }
+  .lesson-tag {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: rgba(15, 23, 41, 0.85);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  }
+  .card h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+  }
+  .card h2::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+  }
+  .input-row {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .input-row input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 50px 14px 16px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .toggle-eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .toggle-eye:hover { background: var(--panel-2); color: var(--accent); }
+  .meter-wrap {
+    margin-top: 18px;
+  }
+  .meter-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .meter-label .level {
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .meter {
+    width: 100%;
+    height: 12px;
+    background: var(--bg);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+  }
+  .meter .seg {
+    flex: 1;
+    background: var(--panel-2);
+    border-radius: 3px;
+    transition: background 0.3s;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .stat {
+    background: var(--panel-2);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+  }
+  .checks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .check .icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .check.pass .icon { background: var(--good); color: #0f1729; }
+  .check.pass { border-color: var(--good); }
+  .check.fail .icon { background: var(--bad); color: #fff; }
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .feedback.warn { border-left-color: var(--bad); }
+  .feedback strong { color: var(--accent2); }
+  .crack-time {
+    background: linear-gradient(135deg, rgba(78, 209, 184, 0.12), rgba(255, 179, 71, 0.08));
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-top: 16px;
+  }
+  .crack-time-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .crack-time-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .crack-time-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .tips {
+    margin-top: 0;
+  }
+  .tips ul { list-style: none; }
+  .tips li {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    border-left: 3px solid var(--accent);
+  }
+  .tips li strong { color: var(--accent2); }
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .example-btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s;
+  }
+  .example-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .info-banner {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .info-banner strong { color: var(--accent); }
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="lesson-tag">第6单元 · 第27课《个人信息防泄露》</span>
+    <h1>🔒 密码强度检测器</h1>
+    <p>实时分析密码的安全性，学习创建强密码的方法</p>
+  </div>
+
+  <div class="info-banner">
+    💡 <strong>知识链接：</strong>密码是保护个人信息和数字身份的第一道防线。一个强密码应当具有足够的<strong>长度</strong>、混合的<strong>字符类型</strong>、避免使用<strong>常见词汇</strong>和<strong>个人信息</strong>。本工具仅在你的浏览器中分析，不会上传任何数据。
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>输入密码</h2>
+      <div class="input-row">
+        <input type="password" id="pwdInput" placeholder="在此输入密码进行测试…" autocomplete="off">
+        <button class="toggle-eye" id="toggleEye" title="显示/隐藏">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="meter-wrap">
+        <div class="meter-label">
+          <span>强度等级</span>
+          <span class="level" id="levelText">—</span>
+        </div>
+        <div class="meter" id="meter">
+          <div class="seg"></div><div class="seg"></div><div class="seg"></div>
+          <div class="seg"></div><div class="seg"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">长度</div>
+          <div class="stat-value" id="lenStat">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">字符空间</div>
+          <div class="stat-value" id="poolStat">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">熵 (bits)</div>
+          <div class="stat-value" id="entropyStat">0.0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">组合数量</div>
+          <div class="stat-value" id="combStat">—</div>
+        </div>
+      </div>
+
+      <div class="crack-time">
+        <div class="crack-time-label">⏱ 暴力破解预估时间（每秒尝试 10 亿次）</div>
+        <div class="crack-time-value" id="crackTime">—</div>
+        <div class="crack-time-note">基于熵值的理论估算，仅供学习参考</div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">试一试这些示例密码：</div>
+        <div class="examples">
+          <button class="example-btn" data-pwd="123456">123456</button>
+          <button class="example-btn" data-pwd="password">password</button>
+          <button class="example-btn" data-pwd="zhang123">zhang123</button>
+          <button class="example-btn" data-pwd="P@ssw0rd">P@ssw0rd</button>
+          <button class="example-btn" data-pwd="MyD0g!Loves#Bones2024">MyD0g!Loves#Bones2024</button>
+          <button class="example-btn" data-pwd="🌸春暖花开2025!@#">🌸春暖花开2025!@#</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>检查项</h2>
+      <div class="checks" id="checks">
+        <div class="check" data-key="len8"><span class="icon">·</span><span>长度 ≥ 8 位</span></div>
+        <div class="check" data-key="len12"><span class="icon">·</span><span>长度 ≥ 12 位</span></div>
+        <div class="check" data-key="lower"><span class="icon">·</span><span>包含小写字母</span></div>
+        <div class="check" data-key="upper"><span class="icon">·</span><span>包含大写字母</span></div>
+        <div class="check" data-key="digit"><span class="icon">·</span><span>包含数字</span></div>
+        <div class="check" data-key="symbol"><span class="icon">·</span><span>包含特殊符号</span></div>
+        <div class="check" data-key="noCommon"><span class="icon">·</span><span>不是常见弱密码</span></div>
+        <div class="check" data-key="noSeq"><span class="icon">·</span><span>无连续/重复字符</span></div>
+      </div>
+      <div class="feedback" id="feedback">
+        请输入密码开始检测。
+      </div>
+    </div>
+  </div>
+
+  <div class="card tips">
+    <h2>创建强密码的小贴士</h2>
+    <ul>
+      <li><strong>① 足够长</strong> — 推荐 12 位以上。每增加 1 位长度，破解难度成倍增加。</li>
+      <li><strong>② 多种字符</strong> — 同时使用大写字母、小写字母、数字、特殊符号 (! @ # $ % 等)。</li>
+      <li><strong>③ 不用个人信息</strong> — 避免使用姓名、生日、电话号码、学号、宠物名字。</li>
+      <li><strong>④ 不用常见词</strong> — 避免 password、123456、qwerty、abc123、admin 等。</li>
+      <li><strong>⑤ 一站一密</strong> — 不同网站用不同密码，避免一个泄露全部受影响。</li>
+      <li><strong>⑥ 口令短语法</strong> — 用一句容易记的话生成密码，例如 "我家的小猫2只爱吃鱼!" → "Wjdxm2zcyf!"。</li>
+      <li><strong>⑦ 定期更换</strong> — 重要账号(邮箱、网银)建议半年更换一次。</li>
+      <li><strong>⑧ 双重验证</strong> — 开启短信/APP验证码二次确认，密码泄露也多一道保护。</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    🛡 本工具完全在你的浏览器本地运行，不会向任何服务器发送密码 · 仅用于教学演示
+  </div>
+</div>
+
+<script>
+// 常见弱密码字典 (节选 100+ 条)
+const commonPasswords = new Set([
+  '123456','password','12345678','qwerty','123456789','12345','1234','111111','1234567','dragon',
+  '123123','baseball','abc123','football','monkey','letmein','696969','shadow','master','666666',
+  '888888','000000','iloveyou','admin','welcome','login','passw0rd','solo','qwerty123','starwars',
+  '1q2w3e4r','sunshine','princess','azerty','trustno1','batman','superman','michael','football1','jordan',
+  'harley','ranger','jennifer','hunter','buster','soccer','tigger','charlie','andrew','michelle',
+  '123qwe','asdfgh','zxcvbn','asdf','qaz','wsx','edc','rfv','tgb','yhn',
+  'pa$$w0rd','p@ssword','password1','password123','admin123','root','toor','test','test123','demo',
+  'guest','user','login123','welcome1','changeme','default','master123','secret','abcdef','hello',
+  '1qaz2wsx','qwertyuiop','asdfghjkl','aaaaaa','bbbbbb','qweasd','zhang123','wang123','liu123','li123',
+  '88888888','11111111','99999999','12121212','11223344','11112222','77777777','55555555','44444444',
+  'woaini','woaini520','520520','521521','5201314','wodemima','mima123','tianya','qq123456','baidu'
+]);
+
+// 检查连续/重复字符 (3个以上)
+function hasSequence(pwd) {
+  for (let i = 0; i <= pwd.length - 3; i++) {
+    const a = pwd.charCodeAt(i), b = pwd.charCodeAt(i+1), c = pwd.charCodeAt(i+2);
+    if (a === b && b === c) return true; // 重复 aaa
+    if (b - a === 1 && c - b === 1) return true; // 升序 abc 123
+    if (a - b === 1 && b - c === 1) return true; // 降序 cba 321
+  }
+  return false;
+}
+
+function analyze(pwd) {
+  const len = pwd.length;
+  const hasLower = /[a-z]/.test(pwd);
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasDigit = /[0-9]/.test(pwd);
+  const hasSymbol = /[^a-zA-Z0-9]/.test(pwd);
+  const lowerPwd = pwd.toLowerCase();
+  const isCommon = commonPasswords.has(lowerPwd) ||
+                   commonPasswords.has(lowerPwd.replace(/[^a-z0-9]/g, ''));
+  const seq = hasSequence(pwd);
+
+  // 字符空间大小
+  let pool = 0;
+  if (hasLower) pool += 26;
+  if (hasUpper) pool += 26;
+  if (hasDigit) pool += 10;
+  if (hasSymbol) {
+    // 假设一般符号约 33 个 (ASCII 可见符号)
+    // 但若包含非 ASCII (中文等), 进一步扩展
+    if (/[^\x00-\x7F]/.test(pwd)) pool += 5000; // 中文/Unicode
+    else pool += 33;
+  }
+  if (pool === 0) pool = 1;
+
+  // 熵 = log2(pool^len) = len * log2(pool)
+  let entropy = len * Math.log2(pool);
+  // 若是常见密码或有规律, 大幅扣减
+  if (isCommon) entropy = Math.min(entropy, 8);
+  if (seq) entropy = entropy * 0.7;
+
+  // 组合数量
+  const combinations = Math.pow(pool, len);
+
+  // 破解时间 (每秒 1e9 次尝试, 平均尝试一半)
+  const seconds = combinations / 2 / 1e9;
+
+  return {
+    len, pool, entropy, combinations, seconds,
+    hasLower, hasUpper, hasDigit, hasSymbol,
+    isCommon, seq,
+    checks: {
+      len8: len >= 8,
+      len12: len >= 12,
+      lower: hasLower,
+      upper: hasUpper,
+      digit: hasDigit,
+      symbol: hasSymbol,
+      noCommon: !isCommon && len > 0,
+      noSeq: !seq && len > 0
+    }
+  };
+}
+
+function strengthLevel(entropy, len, isCommon) {
+  if (len === 0) return { level: 0, name: '—', color: 'var(--muted)' };
+  if (isCommon) return { level: 1, name: '危险', color: 'var(--bad)' };
+  if (entropy < 28) return { level: 1, name: '极弱', color: 'var(--bad)' };
+  if (entropy < 40) return { level: 2, name: '较弱', color: '#ff8b6b' };
+  if (entropy < 60) return { level: 3, name: '一般', color: 'var(--mid)' };
+  if (entropy < 80) return { level: 4, name: '较强', color: '#a8e063' };
+  return { level: 5, name: '极强', color: 'var(--good)' };
+}
+
+function formatTime(s) {
+  if (!isFinite(s) || isNaN(s)) return '∞ (近乎无限)';
+  if (s < 0.001) return '< 1 毫秒（瞬间破解）';
+  if (s < 1) return (s * 1000).toFixed(1) + ' 毫秒';
+  if (s < 60) return s.toFixed(1) + ' 秒';
+  if (s < 3600) return (s / 60).toFixed(1) + ' 分钟';
+  if (s < 86400) return (s / 3600).toFixed(1) + ' 小时';
+  if (s < 86400 * 365) return (s / 86400).toFixed(1) + ' 天';
+  const years = s / (86400 * 365);
+  if (years < 1e3) return years.toFixed(1) + ' 年';
+  if (years < 1e6) return (years / 1e3).toFixed(2) + ' 千年';
+  if (years < 1e9) return (years / 1e6).toFixed(2) + ' 百万年';
+  if (years < 1e12) return (years / 1e9).toFixed(2) + ' 十亿年';
+  return years.toExponential(2) + ' 年';
+}
+
+function formatNum(n) {
+  if (!isFinite(n)) return '∞';
+  if (n < 1e6) return Math.round(n).toLocaleString();
+  if (n < 1e9) return (n / 1e6).toFixed(2) + ' 百万';
+  if (n < 1e12) return (n / 1e9).toFixed(2) + ' 十亿';
+  if (n < 1e15) return (n / 1e12).toFixed(2) + ' 万亿';
+  return n.toExponential(2);
+}
+
+function update() {
+  const pwd = document.getElementById('pwdInput').value;
+  const r = analyze(pwd);
+  const lvl = strengthLevel(r.entropy, r.len, r.isCommon);
+
+  // 数据
+  document.getElementById('lenStat').textContent = r.len;
+  document.getElementById('poolStat').textContent = r.pool === 1 ? '0' : r.pool;
+  document.getElementById('entropyStat').textContent = r.entropy.toFixed(1);
+  document.getElementById('combStat').textContent = r.len === 0 ? '—' : formatNum(r.combinations);
+  document.getElementById('crackTime').textContent = r.len === 0 ? '—' : formatTime(r.seconds);
+
+  // 等级显示
+  const levelText = document.getElementById('levelText');
+  levelText.textContent = lvl.name;
+  levelText.style.color = lvl.color;
+
+  // 进度条
+  const segs = document.querySelectorAll('.meter .seg');
+  segs.forEach((seg, i) => {
+    seg.style.background = i < lvl.level ? lvl.color : 'var(--panel-2)';
+  });
+
+  // 检查项
+  Object.keys(r.checks).forEach(key => {
+    const el = document.querySelector(`.check[data-key="${key}"]`);
+    if (!el) return;
+    el.classList.remove('pass', 'fail');
+    if (r.len === 0) { el.querySelector('.icon').textContent = '·'; return; }
+    if (r.checks[key]) {
+      el.classList.add('pass');
+      el.querySelector('.icon').textContent = '✓';
+    } else {
+      el.classList.add('fail');
+      el.querySelector('.icon').textContent = '✗';
+    }
+  });
+
+  // 反馈
+  const fb = document.getElementById('feedback');
+  fb.classList.remove('warn');
+  if (r.len === 0) {
+    fb.innerHTML = '请输入密码开始检测。';
+  } else if (r.isCommon) {
+    fb.classList.add('warn');
+    fb.innerHTML = '⚠️ <strong>危险！</strong>这是一个广为人知的弱密码，黑客字典中必有此条目，几乎可以瞬间被破解。请立即更换。';
+  } else if (lvl.level <= 2) {
+    fb.classList.add('warn');
+    fb.innerHTML = '⚠️ 密码强度<strong>不足</strong>。建议增加长度至 12 位以上，并混合使用大小写字母、数字和特殊符号。';
+  } else if (lvl.level === 3) {
+    fb.innerHTML = '🟡 密码强度<strong>一般</strong>，可用于不重要的场景。重要账号建议进一步提升强度。';
+  } else if (lvl.level === 4) {
+    fb.innerHTML = '✅ 密码强度<strong>较好</strong>，可用于大多数场景。请记得不同网站使用不同密码。';
+  } else {
+    fb.innerHTML = '🛡️ <strong>极佳！</strong>这是一个非常强壮的密码。配合双重验证，安全级别更上一层楼。';
+  }
+}
+
+// 事件
+document.getElementById('pwdInput').addEventListener('input', update);
+document.getElementById('toggleEye').addEventListener('click', () => {
+  const inp = document.getElementById('pwdInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+document.querySelectorAll('.example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById('pwdInput');
+    inp.value = btn.dataset.pwd;
+    inp.type = 'text';
+    update();
+  });
+});
+
+update();
+</script>
+</body>
+</html>

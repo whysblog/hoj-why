@@ -94,6 +94,9 @@
                 $t('m.NavBar_Developer')
               }}</el-menu-item>
             </el-submenu>
+            <el-menu-item index="/tools/index.html" @click.native="openTools"
+              ><i class="el-icon-collection"></i>工具集</el-menu-item
+            >
         </template>
         <template v-else-if="mode == 'training'">
           <el-menu-item index="/home"
@@ -694,6 +697,16 @@
               }}</mu-list-item-title>
             </mu-list-item>
           </mu-list-item>
+
+          <mu-list-item
+            button
+            @click="openTools"
+          >
+            <mu-list-item-action>
+              <mu-icon value=":el-icon-collection" size="24"></mu-icon>
+            </mu-list-item-action>
+            <mu-list-item-title>工具集</mu-list-item-title>
+          </mu-list-item>
         </mu-list>
       </mu-drawer>
     </div>
@@ -794,6 +807,10 @@ export default {
       } else {
         window.open('/admin/');
       }
+    },
+    openTools() {
+      this.opendrawer = false;
+      window.location.href = '/tools/index.html';
     },
     getUnreadMsgCount() {
       api.getUnreadMsgCount().then((res) => {

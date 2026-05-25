@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>分享学习资源 — 第21课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#ecfeff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#0e7490,#06b6d4);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#0e7490;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#06b6d4;color:white;border-color:#0e7490}
+.intro{background:linear-gradient(135deg,#cffafe,#a5f3fc);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#0e7490;margin-bottom:8px;font-size:20px}.intro p{color:#0c4a6e;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:36px}.tool-card h4{color:#0e7490;margin:6px 0 4px;font-size:14px}.tool-card p{color:#475569;font-size:12px;line-height:1.5}
+
+/* 协作表单 */
+.collab-form{background:white;border-radius:12px;padding:20px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.form-title{font-size:18px;color:#0e7490;margin-bottom:6px;font-weight:600}
+.form-desc{font-size:12px;color:#64748b;margin-bottom:14px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:13px;color:#475569;margin-bottom:6px;font-weight:500}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 12px;border:1.5px solid #a5f3fc;border-radius:6px;font-size:14px;font-family:inherit}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:#06b6d4}
+.form-row textarea{resize:vertical;min-height:60px}
+.form-buttons{display:flex;gap:8px;margin-top:10px}
+
+/* 已提交列表 */
+.submissions{margin-top:16px}
+.submissions h3{color:#0e7490;font-size:15px;margin-bottom:10px}
+.sub-item{background:white;padding:14px 16px;border-radius:10px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;align-items:start;gap:12px}
+.sub-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#67e8f9,#06b6d4);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
+.sub-content{flex:1}
+.sub-meta{font-size:12px;color:#94a3b8;margin-bottom:4px}
+.sub-meta .name{color:#0e7490;font-weight:600;margin-right:8px}
+.sub-tag{display:inline-block;padding:2px 8px;background:#cffafe;color:#0e7490;border-radius:8px;font-size:11px;margin-right:4px}
+.sub-title{font-weight:600;color:#1e293b;font-size:14px;margin-bottom:4px}
+.sub-resource{font-size:13px;color:#475569;line-height:1.5}
+
+.step-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.step-c{background:white;padding:16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);position:relative}
+.step-c .num{position:absolute;top:-10px;left:-10px;width:28px;height:28px;border-radius:50%;background:#06b6d4;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.step-c .icon{font-size:32px;margin:6px 0}
+.step-c h4{color:#0e7490;font-size:14px;margin-bottom:4px}
+.step-c p{color:#475569;font-size:12px;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>📤 分享学习资源</h1>
+    <div class="lesson">第 21 课 · 第六单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>为什么要分享</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>分享什么资源</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>分享的方法</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>协作表单实践</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>📤 为什么要分享</h2>
+      <div class="lead">把好的学习资源分享给同学，大家一起进步</div>
+      <div class="intro">
+        <h3>🌟 分享的力量</h3>
+        <p>一个人发现一个好资源，全班都能受益。<b>分享 = 1 + 1 > 2</b>。当你分享时，自己的理解也会更深；当你接收别人的分享时，你节省了寻找的时间。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">⚡</div><h4>提高效率</h4><p>不用每人都去找</p></div>
+        <div class="tool-card"><div class="icon">🌍</div><h4>资源共享</h4><p>1 份变 N 份</p></div>
+        <div class="tool-card"><div class="icon">💡</div><h4>互相启发</h4><p>不同人的不同视角</p></div>
+        <div class="tool-card"><div class="icon">🤝</div><h4>增进友谊</h4><p>共同学习一起成长</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📚 分享什么资源</h2>
+      <div class="lead">学习中遇到的好东西都可以分享</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">🌐</div><h4>好网站</h4><p>推荐学习平台</p></div>
+        <div class="tool-card"><div class="icon">🎬</div><h4>好视频</h4><p>科普片、教学视频</p></div>
+        <div class="tool-card"><div class="icon">📚</div><h4>好书</h4><p>电子书、有声书</p></div>
+        <div class="tool-card"><div class="icon">📰</div><h4>好文章</h4><p>科普、新闻、博文</p></div>
+        <div class="tool-card"><div class="icon">📊</div><h4>学习笔记</h4><p>自己整理的笔记</p></div>
+        <div class="tool-card"><div class="icon">📱</div><h4>好 App</h4><p>学习类应用</p></div>
+        <div class="tool-card"><div class="icon">🎵</div><h4>学习音频</h4><p>英语听力、儿歌</p></div>
+        <div class="tool-card"><div class="icon">🎯</div><h4>题库练习</h4><p>有效的练习题</p></div>
+      </div>
+      <div class="know">
+        <h3>⚠️ 分享时注意</h3>
+        <p>① <b>合法性</b>：不分享盗版资源、付费内容；<br>② <b>可信性</b>：先自己看过，确认内容正确；<br>③ <b>来源</b>：注明出处，不抢功；<br>④ <b>适龄性</b>：适合三年级同学。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🛠️ 分享的方法</h2>
+      <div class="lead">几种常用的分享方式</div>
+      <div class="step-grid">
+        <div class="step-c"><div class="num">1</div><div class="icon">💬</div><h4>班级群分享</h4><p>在班级 QQ/微信群发链接</p></div>
+        <div class="step-c"><div class="num">2</div><div class="icon">📧</div><h4>邮件发送</h4><p>把链接发到老师邮箱</p></div>
+        <div class="step-c"><div class="num">3</div><div class="icon">📝</div><h4>在线表单</h4><p>多人提交、自动汇总</p></div>
+        <div class="step-c"><div class="num">4</div><div class="icon">☁️</div><h4>云盘共享</h4><p>把文件传到云盘共享</p></div>
+        <div class="step-c"><div class="num">5</div><div class="icon">📌</div><h4>班级博客</h4><p>在校园博客发文章</p></div>
+        <div class="step-c"><div class="num">6</div><div class="icon">📺</div><h4>课堂展示</h4><p>当面投屏给大家看</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📝 协作表单实践</h2>
+      <div class="lead">模拟在线协作表单：每人填一行，自动汇总</div>
+      <div class="collab-form">
+        <div class="form-title">📋 三年级学习资源征集表</div>
+        <div class="form-desc">📌 大家一起来分享自己用过的好学习资源吧！</div>
+        
+        <div class="form-row">
+          <label>👤 你的姓名（昵称）</label>
+          <input type="text" id="f_name" placeholder="如：小明">
+        </div>
+        <div class="form-row">
+          <label>🏷️ 资源类型</label>
+          <select id="f_type">
+            <option value="🌐 学习网站">🌐 学习网站</option>
+            <option value="🎬 学习视频">🎬 学习视频</option>
+            <option value="📚 好书推荐">📚 好书推荐</option>
+            <option value="📱 学习 App">📱 学习 App</option>
+            <option value="🎵 学习音频">🎵 学习音频</option>
+            <option value="📊 学习笔记">📊 学习笔记</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>📌 资源名称</label>
+          <input type="text" id="f_title" placeholder="如：国家中小学智慧教育平台">
+        </div>
+        <div class="form-row">
+          <label>💬 推荐理由</label>
+          <textarea id="f_reason" placeholder="为什么推荐这个资源？讲讲它的特点和好处"></textarea>
+        </div>
+        <div class="form-buttons">
+          <button class="ctrl-btn primary" onclick="submitForm()">📤 提交分享</button>
+          <button class="ctrl-btn" onclick="clearForm()">🔄 重置</button>
+        </div>
+      </div>
+      
+      <div class="submissions">
+        <h3>📋 已分享的资源（<span id="subCount">3</span> 条）</h3>
+        <div id="subList"></div>
+      </div>
+      <div class="know">
+        <h3>💡 在线协作的好处</h3>
+        <p>每个人都能<b>同时填写、自动汇总</b>，老师可以看到全班的分享。常用的协作表单工具有：腾讯文档、石墨文档、金山文档、问卷星等，三年级同学可以在老师指导下使用。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🤝</div><h4>资源共享</h4><p>大家一起进步</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">📤</div><h4>多种方式</h4><p>群组、表单、云盘</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">⚖️</div><h4>合法可信</h4><p>不传盗版、不传虚假</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">📝</div><h4>用心整理</h4><p>分享时讲清理由</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 课后实践</h3>
+        <p>请你回家整理一下：你最近一个月在哪些好网站学习过？看过哪些有意义的视频？把它们记录下来，下次班会时间和同学分享。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+let submissions = [
+  { name: '小华', type: '🌐 学习网站', title: '国家中小学智慧教育平台', reason: '免费、权威，所有课程都和教材配套！强烈推荐！' },
+  { name: '小明', type: '📚 好书推荐', title: '《十万个为什么》（少年版）', reason: '解答了好多我一直好奇的问题，比如"为什么天是蓝色的"' },
+  { name: '小红', type: '🎬 学习视频', title: 'B站央视《如果国宝会说话》', reason: '5 分钟一集，了解中国文物，又短又好看' },
+];
+
+function renderSubs() {
+  document.getElementById('subCount').textContent = submissions.length;
+  document.getElementById('subList').innerHTML = submissions.map(s => `
+    <div class="sub-item">
+      <div class="sub-avatar">${s.name.charAt(0)}</div>
+      <div class="sub-content">
+        <div class="sub-meta">
+          <span class="name">${s.name}</span>
+          <span class="sub-tag">${s.type}</span>
+        </div>
+        <div class="sub-title">📌 ${s.title}</div>
+        <div class="sub-resource">${s.reason}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function submitForm() {
+  const name = document.getElementById('f_name').value.trim();
+  const type = document.getElementById('f_type').value;
+  const title = document.getElementById('f_title').value.trim();
+  const reason = document.getElementById('f_reason').value.trim();
+  if (!name || !title || !reason) { alert('请填写完整信息！'); return; }
+  submissions.push({ name, type, title, reason });
+  renderSubs();
+  clearForm();
+  alert('✅ 分享成功！谢谢你的推荐～');
+}
+
+function clearForm() {
+  document.getElementById('f_name').value = '';
+  document.getElementById('f_title').value = '';
+  document.getElementById('f_reason').value = '';
+}
+
+renderSubs();
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') p();
+});
+</script>
+</body>
+</html>

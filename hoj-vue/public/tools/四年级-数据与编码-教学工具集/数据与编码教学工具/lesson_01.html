@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第1课 数据宝藏在身边 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#00897b;
+  --theme-dark:#00695c;
+  --theme-light:#e0f2f1;
+  --bg:#f0f7f6;
+}
+.data-types{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin:14px 0;
+}
+.data-type{
+  background:#fff;
+  border:2px solid var(--theme-light);
+  border-radius:12px;
+  padding:16px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s;
+}
+.data-type:hover{
+  border-color:var(--theme);
+  background:var(--theme-light);
+  transform:translateY(-3px);
+}
+.data-type .big-icon{font-size:42px;margin-bottom:8px}
+.data-type h4{color:var(--theme-dark);margin-bottom:6px;font-size:15px}
+.data-type .examples{font-size:12px;color:#607d8b;line-height:1.5}
+.data-quiz{
+  background:#fff;
+  border-radius:12px;
+  padding:18px;
+  margin:14px 0;
+}
+.quiz-item{
+  padding:12px 14px;
+  background:#fafafa;
+  border-left:4px solid #cfd8dc;
+  border-radius:6px;
+  margin-bottom:10px;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex;align-items:center;gap:10px;
+}
+.quiz-item:hover{background:var(--theme-light);border-left-color:var(--theme)}
+.quiz-item.correct{
+  background:#e8f5e9;border-left-color:#43a047;
+}
+.quiz-item.wrong{
+  background:#ffebee;border-left-color:#e53935;
+}
+.quiz-item .item-icon{font-size:24px}
+.quiz-item .item-text{flex:1;font-size:14px}
+.quiz-item .item-answer{
+  font-size:12px;color:#90a4ae;
+  display:none;
+}
+.quiz-item.correct .item-answer,
+.quiz-item.wrong .item-answer{display:inline-block}
+.quiz-item.correct .item-answer{color:#2e7d32}
+.quiz-item.wrong .item-answer{color:#c62828}
+.illustration{
+  background:linear-gradient(135deg,#e0f2f1 0%,#b2dfdb 100%);
+  border-radius:12px;
+  padding:24px;
+  text-align:center;
+  margin:14px 0;
+}
+.illustration svg{max-width:100%;height:auto}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第一单元 · 奇妙的数据世界</span>
+    <h1>💎 第1课  数据宝藏在身边</h1>
+    <p>认识身边各种各样的数据，发现数据就像宝藏一样无处不在</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前思考</button>
+    <button class="nav-btn" data-slide="1">📚 什么是数据</button>
+    <button class="nav-btn" data-slide="2">🌈 数据有哪些</button>
+    <button class="nav-btn" data-slide="3">🎮 互动猜一猜</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <!-- 第1页：课前思考 -->
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前思考</h2>
+    
+    <div class="illustration">
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="sunGrad">
+            <stop offset="0%" stop-color="#ffd54f"/>
+            <stop offset="100%" stop-color="#ff8a65"/>
+          </radialGradient>
+        </defs>
+        <circle cx="80" cy="60" r="36" fill="url(#sunGrad)"/>
+        <text x="80" y="120" text-anchor="middle" font-size="14" fill="#5d4037">早晨</text>
+        <text x="80" y="140" text-anchor="middle" font-size="12" fill="#8d6e63">温度 18℃</text>
+        
+        <rect x="170" y="30" width="80" height="60" rx="6" fill="#90caf9" stroke="#1e88e5" stroke-width="2"/>
+        <text x="210" y="65" text-anchor="middle" font-size="22" fill="#fff" font-weight="bold">15</text>
+        <text x="210" y="120" text-anchor="middle" font-size="14" fill="#5d4037">数学</text>
+        <text x="210" y="140" text-anchor="middle" font-size="12" fill="#8d6e63">页数 15</text>
+        
+        <circle cx="330" cy="60" r="30" fill="#ce93d8"/>
+        <text x="330" y="67" text-anchor="middle" font-size="22">🎵</text>
+        <text x="330" y="120" text-anchor="middle" font-size="14" fill="#5d4037">音乐</text>
+        <text x="330" y="140" text-anchor="middle" font-size="12" fill="#8d6e63">时长 3:45</text>
+        
+        <rect x="420" y="32" width="60" height="56" rx="4" fill="#a5d6a7" stroke="#43a047" stroke-width="2"/>
+        <text x="450" y="68" text-anchor="middle" font-size="22">🏃</text>
+        <text x="450" y="120" text-anchor="middle" font-size="14" fill="#5d4037">运动</text>
+        <text x="450" y="140" text-anchor="middle" font-size="12" fill="#8d6e63">5000 步</text>
+        
+        <text x="530" y="100" font-size="40" fill="#00695c">?</text>
+        <text x="530" y="140" text-anchor="middle" font-size="12" fill="#8d6e63">更多...</text>
+      </svg>
+    </div>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      早上起来，太阳出来了，气温 18℃；上学路上你走了 5000 步；课堂上翻到第 15 页课本；
+      下午听了一首 3 分 45 秒的歌……
+      <br><br>
+      <b>这些信息有什么共同点？</b>它们都是数据！我们的一天，就是被无数数据围绕的一天。
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>知道<b>什么是数据</b>，能说出数据的多种形式</li>
+      <li>能分辨身边的<b>数字数据、文字数据、图像数据、声音数据、视频数据</b></li>
+      <li>感受数据无处不在，认识到数据的<b>多样性</b></li>
+    </ul>
+  </section>
+
+  <!-- 第2页：什么是数据 -->
+  <section class="slide">
+    <h2><span class="step-num">2</span>什么是数据</h2>
+    
+    <p><b>数据</b>是对客观事物的<b>记录</b>。它可以是数字、文字、图片、声音、视频，甚至是动作和味道！只要能<b>记录</b>下来的，都叫数据。</p>
+
+    <div class="info-box">
+      <h4>💡 一句话理解</h4>
+      凡是能被记录、能被保存、能传递信息的内容，都是数据。
+    </div>
+
+    <h3>🌟 数据从哪里来？</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">👀</span>
+        <h4>用眼睛看</h4>
+        <p>看到天气、看到颜色、看到风景</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">👂</span>
+        <h4>用耳朵听</h4>
+        <p>听到声音、音乐、铃声</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🤚</span>
+        <h4>用手触摸</h4>
+        <p>感受温度、触感、震动</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔬</span>
+        <h4>用工具测</h4>
+        <p>温度计、尺子、秒表、相机</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 第3页：数据有哪些 -->
+  <section class="slide">
+    <h2><span class="step-num">3</span>数据的多样性</h2>
+    
+    <p>数据的形式非常丰富。下面五大类，是我们生活中最常见的数据类型 ↓</p>
+
+    <div class="data-types">
+      <div class="data-type">
+        <div class="big-icon">🔢</div>
+        <h4>数字数据</h4>
+        <div class="examples">身高 142cm<br>体重 35kg<br>数学考试 92 分</div>
+      </div>
+      <div class="data-type">
+        <div class="big-icon">📝</div>
+        <h4>文字数据</h4>
+        <div class="examples">姓名"小明"<br>课文《古诗三首》<br>日记本上的话</div>
+      </div>
+      <div class="data-type">
+        <div class="big-icon">🖼️</div>
+        <h4>图像数据</h4>
+        <div class="examples">手机里的照片<br>课本上的插图<br>美术课的画</div>
+      </div>
+      <div class="data-type">
+        <div class="big-icon">🎵</div>
+        <h4>声音数据</h4>
+        <div class="examples">下课铃声<br>歌曲、广播<br>老师讲课的录音</div>
+      </div>
+      <div class="data-type">
+        <div class="big-icon">🎬</div>
+        <h4>视频数据</h4>
+        <div class="examples">动画片<br>升旗仪式录像<br>课堂视频</div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 小知识</h4>
+      不管是哪种数据，在计算机里面最终都会变成 <b>0 和 1</b> 来存储！
+      这就是为什么计算机叫"数字"计算机——所有内容都用数字来表示。
+      这个秘密，我们会在<b>第三单元</b>里慢慢揭开！
+    </div>
+  </section>
+
+  <!-- 第4页：互动猜一猜 -->
+  <section class="slide">
+    <h2><span class="step-num">4</span>互动：这是什么数据？</h2>
+    <p>点击下面每一项，看看它属于哪种数据 ↓</p>
+
+    <div class="data-quiz" id="quiz">
+      <div class="quiz-item" data-answer="数字">
+        <span class="item-icon">🌡️</span>
+        <span class="item-text">今天最高气温 32℃</span>
+        <span class="item-answer">→ 数字数据</span>
+      </div>
+      <div class="quiz-item" data-answer="文字">
+        <span class="item-icon">📖</span>
+        <span class="item-text">语文课文《观潮》</span>
+        <span class="item-answer">→ 文字数据</span>
+      </div>
+      <div class="quiz-item" data-answer="图像">
+        <span class="item-icon">📸</span>
+        <span class="item-text">爸爸拍的全家福照片</span>
+        <span class="item-answer">→ 图像数据</span>
+      </div>
+      <div class="quiz-item" data-answer="声音">
+        <span class="item-icon">🔔</span>
+        <span class="item-text">上课铃声"叮——"</span>
+        <span class="item-answer">→ 声音数据</span>
+      </div>
+      <div class="quiz-item" data-answer="视频">
+        <span class="item-icon">🎥</span>
+        <span class="item-text">运动会的开幕式录像</span>
+        <span class="item-answer">→ 视频数据</span>
+      </div>
+      <div class="quiz-item" data-answer="数字">
+        <span class="item-icon">⏱️</span>
+        <span class="item-text">小明跑 50 米用了 9.8 秒</span>
+        <span class="item-answer">→ 数字数据</span>
+      </div>
+      <div class="quiz-item" data-answer="文字">
+        <span class="item-icon">📨</span>
+        <span class="item-text">妈妈发来的微信消息"早点回家"</span>
+        <span class="item-answer">→ 文字数据</span>
+      </div>
+      <div class="quiz-item" data-answer="图像">
+        <span class="item-icon">🖼️</span>
+        <span class="item-text">画画课画的水彩画</span>
+        <span class="item-answer">→ 图像数据</span>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <h4>💭 拓展思考</h4>
+      除了上面这五大类，你还能想到什么数据吗？
+      <br>
+      💡 提示：温度计、心跳、指纹、地理位置、味道……这些都可以被记录成数据！
+    </div>
+  </section>
+
+  <!-- 第5页：课堂小结 -->
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📌</span>
+        <h4>核心概念</h4>
+        <p>数据是对客观事物的<b>记录</b></p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🌈</span>
+        <h4>数据多样</h4>
+        <p>有数字、文字、图像、声音、视频等多种形式</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🌟</span>
+        <h4>无处不在</h4>
+        <p>从早到晚，我们的生活被各种数据包围</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      回家后请仔细观察，找一找你<b>家里</b>有哪些数据：
+      <ul style="margin-top:8px">
+        <li>冰箱上的<b>温度</b>显示？（数字数据）</li>
+        <li>家庭<b>照片墙</b>？（图像数据）</li>
+        <li>电视播放的<b>动画片</b>？（视频数据）</li>
+        <li>音箱里播放的<b>儿歌</b>？（声音数据）</li>
+        <li>书架上的<b>书</b>？（文字数据）</li>
+      </ul>
+      <br>
+      明天和同学分享你的发现吧！🎉
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box success">
+      数据这么多，<b>怎么获取</b>它们呢？是直接观察？还是测量？还是网上搜索？
+      <br>
+      下节课《获取数据有方法》，我们一起来揭晓答案！
+    </div>
+  </section>
+
+  <!-- 翻页导航 -->
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === slides.length - 1;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+
+// 键盘支持
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+
+// 互动猜一猜
+document.querySelectorAll('.quiz-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    item.classList.add('correct');
+  });
+});
+
+showSlide(0);
+</script>
+</body>
+</html>

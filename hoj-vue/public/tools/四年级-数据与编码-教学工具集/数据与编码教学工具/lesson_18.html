@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第18课 排序计算有方法 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#7b1fa2;
+  --theme-dark:#6a1b9a;
+  --theme-light:#f3e5f5;
+  --bg:#faf5fc;
+}
+.sort-demo{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.bar-chart{
+  display:flex;align-items:flex-end;
+  gap:8px;height:200px;
+  padding:10px;
+  background:#fafafa;border-radius:8px;
+  margin:10px 0;
+}
+.bar-item{
+  flex:1;
+  background:linear-gradient(to top,var(--theme),var(--theme-dark));
+  border-radius:6px 6px 0 0;
+  position:relative;
+  transition:all 0.6s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;
+  min-width:30px;
+  color:#fff;
+  padding-bottom:4px;
+  font-size:11px;
+  font-weight:bold;
+}
+.bar-item .bar-label{
+  position:absolute;
+  bottom:-22px;
+  font-size:11px;color:#37474f;
+  white-space:nowrap;
+}
+.sort-controls{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin:10px 0;
+}
+.calc-demo{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.calc-table{
+  width:100%;border-collapse:collapse;
+  font-size:14px;
+}
+.calc-table th{
+  background:var(--theme);color:#fff;
+  padding:8px 12px;text-align:left;
+}
+.calc-table td{
+  padding:8px 12px;
+  border-bottom:1px solid #eceff1;
+}
+.calc-table input[type="number"]{
+  width:80px;
+  padding:4px 8px;
+  border:1px solid #ddd;
+  border-radius:4px;
+  font-family:inherit;
+}
+.calc-table tr.summary{
+  background:var(--theme-light);
+  font-weight:bold;
+}
+.calc-table tr.summary td{
+  color:var(--theme-dark);
+  border-top:2px solid var(--theme);
+}
+.formula-box{
+  background:linear-gradient(135deg,#fff3e0,#ffe0b2);
+  border-radius:8px;
+  padding:14px 18px;margin:10px 0;
+  font-family:"Courier New",monospace;
+  font-size:14px;
+  color:#bf360c;
+  border-left:4px solid #fb8c00;
+}
+.formula-box b{color:#e65100}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第四单元 · 第18课</span>
+    <h1>📊 排序计算有方法</h1>
+    <p>体验数字化工具在数据排序与计算方面的强大功能</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">📈 排序的妙用</button>
+    <button class="nav-btn" data-slide="2">🧮 自动计算</button>
+    <button class="nav-btn" data-slide="3">🎮 动手算一算</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      老师让你给班里 30 个同学的<b>数学成绩</b>排名次。<br>
+      你要：<b>把分数从高到低排好</b>，再求<b>平均分</b>、<b>最高分</b>、<b>最低分</b>……
+      <br><br>
+      用<b>手算</b>要多久？用<b>电脑</b>呢？
+    </div>
+
+    <p>手算可能要半小时，还容易出错。<br>用电脑：<b>排序一秒钟，计算一秒钟，完事！</b></p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>用数字化工具进行<b>排序</b>（升序/降序）</li>
+      <li>用数字化工具进行<b>自动计算</b>（求和、平均、最值）</li>
+      <li>体会数字化工具的<b>高效率</b>和<b>准确性</b></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>排序的妙用</h2>
+
+    <p>排序就是把数据按<b>大小、字母、时间</b>等顺序<b>重新排列</b>。</p>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">⬆️</span>
+        <h4>升序</h4>
+        <p>从小到大：1、2、3、4…<br>从 A 到 Z</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">⬇️</span>
+        <h4>降序</h4>
+        <p>从大到小：9、8、7…<br>从 Z 到 A</p>
+      </div>
+    </div>
+
+    <h3>🎨 排序的可视化</h3>
+
+    <div class="sort-demo">
+      <p style="font-size:14px;color:var(--theme-dark);font-weight:bold;margin-bottom:6px">
+        同学们的身高（cm）：
+      </p>
+      <div class="bar-chart" id="barChart"></div>
+      <div class="sort-controls" style="margin-top:36px">
+        <button class="btn btn-secondary" id="resetBtn">🔄 原始顺序</button>
+        <button class="btn btn-primary" id="ascBtn">⬆️ 升序排列</button>
+        <button class="btn btn-primary" id="descBtn">⬇️ 降序排列</button>
+        <button class="btn btn-secondary" id="randomBtn">🎲 随机打乱</button>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 排序的用处</h4>
+      <ul style="margin-top:4px">
+        <li>📊 找出<b>最高分、最低分</b>：排完一眼看清</li>
+        <li>🏆 给同学<b>排名次</b>：从高到低</li>
+        <li>📅 按<b>时间</b>整理日记：先后清楚</li>
+        <li>🔤 按<b>姓名</b>排花名册：方便点名</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>自动计算的力量</h2>
+
+    <p>数字化工具最厉害的本领之一就是<b>自动计算</b>。让我们看看 Excel/WPS 表格的常用计算 ↓</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>功能</th><th>函数</th><th>作用</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>求和</td><td><code>=SUM()</code></td><td>把一组数加起来</td></tr>
+        <tr><td>平均</td><td><code>=AVERAGE()</code></td><td>算平均值</td></tr>
+        <tr><td>最大</td><td><code>=MAX()</code></td><td>找最大的数</td></tr>
+        <tr><td>最小</td><td><code>=MIN()</code></td><td>找最小的数</td></tr>
+        <tr><td>计数</td><td><code>=COUNT()</code></td><td>数一共有多少个</td></tr>
+      </tbody>
+    </table>
+
+    <div class="formula-box">
+      📐 <b>公式举例</b>：求 A1 到 A30 这 30 个分数的平均分
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp; <b>=AVERAGE(A1:A30)</b>
+      <br>
+      不管 30 个分数还是 3000 个，<b>一秒就算好</b>！
+    </div>
+
+    <div class="info-box tip">
+      <h4>💡 自动计算的好处</h4>
+      <ul style="margin-top:4px">
+        <li>⚡ <b>快</b>：再多数据也是瞬间完成</li>
+        <li>✅ <b>准</b>：从不出错（除非公式写错）</li>
+        <li>🔁 <b>活</b>：原数据一变，结果自动更新</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>动手算一算</h2>
+
+    <p>下面是四(1)班 5 位同学的成绩，填一填，看看自动统计的奇妙 ↓</p>
+
+    <div class="calc-demo">
+      <table class="calc-table" id="calcTable">
+        <thead>
+          <tr><th>姓名</th><th>语文</th><th>数学</th><th>英语</th><th>总分</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>小明</td><td><input type="number" value="92" min="0" max="100"></td><td><input type="number" value="88" min="0" max="100"></td><td><input type="number" value="85" min="0" max="100"></td><td class="total">265</td></tr>
+          <tr><td>小红</td><td><input type="number" value="95" min="0" max="100"></td><td><input type="number" value="90" min="0" max="100"></td><td><input type="number" value="92" min="0" max="100"></td><td class="total">277</td></tr>
+          <tr><td>小华</td><td><input type="number" value="80" min="0" max="100"></td><td><input type="number" value="85" min="0" max="100"></td><td><input type="number" value="78" min="0" max="100"></td><td class="total">243</td></tr>
+          <tr><td>小军</td><td><input type="number" value="88" min="0" max="100"></td><td><input type="number" value="92" min="0" max="100"></td><td><input type="number" value="80" min="0" max="100"></td><td class="total">260</td></tr>
+          <tr><td>小丽</td><td><input type="number" value="90" min="0" max="100"></td><td><input type="number" value="86" min="0" max="100"></td><td><input type="number" value="95" min="0" max="100"></td><td class="total">271</td></tr>
+          <tr class="summary">
+            <td>📊 平均分</td>
+            <td id="avgYW">89</td><td id="avgSX">88.2</td><td id="avgYY">86</td>
+            <td id="avgTotal">263.2</td>
+          </tr>
+          <tr class="summary">
+            <td>🏆 最高分</td>
+            <td id="maxYW">95</td><td id="maxSX">92</td><td id="maxYY">95</td>
+            <td id="maxTotal">277</td>
+          </tr>
+          <tr class="summary">
+            <td>📉 最低分</td>
+            <td id="minYW">80</td><td id="minSX">85</td><td id="minYY">78</td>
+            <td id="minTotal">243</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 试试看</h4>
+      改变上面任何一个分数，注意观察：
+      <ul style="margin-top:6px">
+        <li>总分会<b>自动重算</b></li>
+        <li>平均、最高、最低也会<b>同步更新</b></li>
+      </ul>
+      这就是数字化工具的<b>魔力</b>！
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">⬆️</span>
+        <h4>升降序</h4>
+        <p>一键排好，找最值超方便</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">➕</span>
+        <h4>SUM</h4>
+        <p>自动求和</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📏</span>
+        <h4>AVERAGE</h4>
+        <p>计算平均值</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🎯</span>
+        <h4>MAX / MIN</h4>
+        <p>找最大、最小</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 单元小结（第 16-18 课）</h4>
+      <ul style="margin-top:4px">
+        <li><b>第 16 课</b>：编码让数据管理更清晰</li>
+        <li><b>第 17 课</b>：数字化工具让查找筛选飞快</li>
+        <li><b>第 18 课</b>：自动排序计算，又快又准</li>
+      </ul>
+      数据量越大，数字化工具的优势越明显！
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      数据这么有用、这么宝贵，<b>怎么保护好它们</b>？
+      下节课《数据安全意识强》，学习如何应对数据安全风险！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+// 排序演示
+const ORIGINAL_DATA = [
+  {name:'小明',height:142},
+  {name:'小红',height:138},
+  {name:'小华',height:145},
+  {name:'小军',height:140},
+  {name:'小丽',height:135},
+  {name:'明明',height:148},
+  {name:'小芳',height:142},
+  {name:'小强',height:150}
+];
+let currentData = [...ORIGINAL_DATA];
+const chart = document.getElementById('barChart');
+function renderChart(){
+  const max = Math.max(...currentData.map(d=>d.height));
+  chart.innerHTML = currentData.map(d=>`
+    <div class="bar-item" style="height:${(d.height/max)*180}px">
+      ${d.height}
+      <span class="bar-label">${d.name}</span>
+    </div>
+  `).join('');
+}
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  currentData = [...ORIGINAL_DATA];renderChart();
+});
+document.getElementById('ascBtn').addEventListener('click',()=>{
+  currentData.sort((a,b)=>a.height-b.height);renderChart();
+});
+document.getElementById('descBtn').addEventListener('click',()=>{
+  currentData.sort((a,b)=>b.height-a.height);renderChart();
+});
+document.getElementById('randomBtn').addEventListener('click',()=>{
+  currentData = [...ORIGINAL_DATA].sort(()=>Math.random()-0.5);renderChart();
+});
+renderChart();
+
+// 自动计算
+const calcTable = document.getElementById('calcTable');
+function updateCalc(){
+  const rows = calcTable.querySelectorAll('tbody tr:not(.summary)');
+  const cols = {yw:[],sx:[],yy:[],total:[]};
+  rows.forEach(tr=>{
+    const inputs = tr.querySelectorAll('input');
+    const yw = parseFloat(inputs[0].value)||0;
+    const sx = parseFloat(inputs[1].value)||0;
+    const yy = parseFloat(inputs[2].value)||0;
+    const total = yw+sx+yy;
+    tr.querySelector('.total').textContent = total;
+    cols.yw.push(yw);cols.sx.push(sx);cols.yy.push(yy);cols.total.push(total);
+  });
+  const avg = arr=>(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1);
+  const max = arr=>Math.max(...arr);
+  const min = arr=>Math.min(...arr);
+  ['yw','sx','yy','total'].forEach(k=>{
+    const id = k==='yw'?'YW':k==='sx'?'SX':k==='yy'?'YY':'Total';
+    document.getElementById('avg'+id).textContent = avg(cols[k]);
+    document.getElementById('max'+id).textContent = max(cols[k]);
+    document.getElementById('min'+id).textContent = min(cols[k]);
+  });
+}
+calcTable.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',updateCalc));
+updateCalc();
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

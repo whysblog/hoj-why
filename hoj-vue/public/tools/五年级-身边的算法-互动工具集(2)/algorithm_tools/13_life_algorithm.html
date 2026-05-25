@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生活算法发现器 - 第1课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+.case-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.case-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(74,144,226,0.18);
+}
+.case-card.selected {
+  border-color: var(--secondary);
+  background: #E8F8EE;
+}
+.case-icon { font-size: 42px; margin-bottom: 8px; }
+.case-name { font-size: 14px; font-weight: 600; color: var(--text); }
+
+.steps-display {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-top: 16px;
+}
+.steps-display h4 {
+  color: var(--primary-dark);
+  margin-bottom: 14px;
+  font-size: 17px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #E8EDF3;
+}
+.step-list { display: flex; flex-direction: column; gap: 10px; }
+.step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background: #FAFBFC;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary);
+  transition: all 0.3s;
+}
+.step-item.highlight {
+  background: #E8F8EE;
+  border-left-color: var(--secondary);
+}
+.step-num {
+  width: 28px; height: 28px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.step-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* 步骤排序游戏 */
+.shuffle-area {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.draggable-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #F0F7FF;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: grab;
+  transition: all 0.2s;
+  user-select: none;
+}
+.draggable-step:active { cursor: grabbing; }
+.draggable-step.dragging { opacity: 0.4; }
+.draggable-step.over { border-color: var(--accent); transform: scale(1.02); }
+.draggable-step .grip {
+  font-size: 18px;
+  color: var(--text-light);
+}
+.draggable-step.correct {
+  background: #E8F8EE;
+  border-color: var(--secondary);
+}
+.draggable-step.wrong {
+  background: #FDECEA;
+  border-color: var(--danger);
+}
+
+.check-result {
+  text-align: center;
+  padding: 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-weight: 600;
+  display: none;
+}
+.check-result.success {
+  background: #E8F8EE;
+  color: var(--secondary);
+  display: block;
+}
+.check-result.fail {
+  background: #FDECEA;
+  color: var(--danger);
+  display: block;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🧭 生活算法发现器</h1>
+    <div class="subtitle">从身边小事中,发现"算法"的踪迹</div>
+    <span class="lesson-tag">第1课 · 生活处处有算法</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar" style="width:16.6%"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container" id="slideContainer">
+
+      <!-- Slide 1: 学习目标 -->
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="slide-subtitle">这节课我们将认识身边的算法</div>
+        <div class="objective-card">
+          <h4>🎯 通过本课学习,你将能够:</h4>
+          <ol>
+            <li>知道<strong>算法</strong>是解决问题的一系列<strong>明确步骤</strong></li>
+            <li>用自然语言描述完成一件事情的步骤</li>
+            <li>发现日常生活中处处存在算法</li>
+            <li>初步培养<strong>"按步骤解决问题"</strong>的思维习惯</li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>💭 想一想:</strong>你今天早晨起床后,做了哪些事情?它们有先后顺序吗?如果换一下顺序会怎样?
+        </div>
+      </div>
+
+      <!-- Slide 2: 情境引入 - 西红柿炒鸡蛋 -->
+      <div class="slide" data-title="情境引入">
+        <div class="slide-title"><span class="num">2</span>情境:小夏的疑问</div>
+        <div class="slide-subtitle">为什么姐姐做的菜,味道和妈妈一样?</div>
+        <div class="scenario-box">
+          <span class="label">🍳 生活场景</span>
+          <p style="margin-top:6px;">爸爸妈妈去医院陪爷爷看病,姐姐<strong>按照菜谱</strong>做了西红柿炒鸡蛋。小夏一尝,味道竟然和妈妈做的几乎一模一样!</p>
+          <p style="margin-top:10px;">🤔 这是为什么呢?</p>
+        </div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>📖 菜谱是什么?</h4>
+            <p>菜谱写明了做菜要<strong>先做什么、再做什么</strong>,每一步都很清楚。</p>
+          </div>
+          <div class="concept-card">
+            <h4>✨ 关键发现</h4>
+            <p>只要按照同样的<strong>步骤和顺序</strong>,不同的人做出来的菜也能很像!</p>
+          </div>
+          <div class="concept-card">
+            <h4>💡 这就是算法</h4>
+            <p>菜谱本身就是一种算法 —— 把做菜的过程描述成<strong>有序的步骤</strong>。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: 案例库 -->
+      <div class="slide" data-title="案例探究">
+        <div class="slide-title"><span class="num">3</span>身边的算法案例库</div>
+        <div class="slide-subtitle">点击下方任一卡片,查看其中包含的算法步骤</div>
+        <div class="case-grid" id="caseGrid"></div>
+        <div id="stepsDisplay"></div>
+      </div>
+
+      <!-- Slide 4: 互动 - 步骤排序 -->
+      <div class="slide" data-title="步骤排序游戏">
+        <div class="slide-title"><span class="num">4</span>🎮 步骤排序挑战</div>
+        <div class="slide-subtitle">下面的步骤被打乱了,试试拖动让它们回到正确的顺序</div>
+        <div class="controls">
+          <div class="control-group">
+            <label>选择任务:</label>
+            <select id="taskSelect" onchange="loadShuffle()">
+              <option value="tomato">做西红柿炒鸡蛋</option>
+              <option value="library">去图书馆借书</option>
+              <option value="brush">刷牙</option>
+            </select>
+          </div>
+          <button onclick="checkOrder()">✓ 检查顺序</button>
+          <button onclick="loadShuffle()" class="btn-secondary">🔄 重新打乱</button>
+        </div>
+        <div class="shuffle-area" id="shuffleArea"></div>
+        <div class="check-result" id="checkResult"></div>
+      </div>
+
+      <!-- Slide 5: 概念总结 -->
+      <div class="slide" data-title="什么是算法">
+        <div class="slide-title"><span class="num">5</span>算法的基本含义</div>
+        <div class="slide-subtitle">用一句话定义"算法"</div>
+        <div class="objective-card" style="text-align:center; padding:30px;">
+          <h4 style="font-size:18px; margin-bottom:14px;">📘 算法的定义</h4>
+          <p style="font-size:18px; color:var(--text); font-weight:500; line-height:1.8;">
+            算法是通过<strong style="color:var(--primary);">明确的、可执行的操作步骤</strong>
+            描述的<strong style="color:var(--primary);">问题求解方案</strong>。
+          </p>
+        </div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>✅ 有顺序</h4>
+            <p>步骤之间有先后,不能随便交换。</p>
+          </div>
+          <div class="concept-card">
+            <h4>✅ 可执行</h4>
+            <p>每一步都能被人或机器实际操作。</p>
+          </div>
+          <div class="concept-card">
+            <h4>✅ 解决问题</h4>
+            <p>沿着步骤走下去,最终能完成任务。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🔍 进一步思考:</strong>如果要用算法控制<strong>机器人</strong>做西红柿炒鸡蛋,你需要明确哪些细节?(提示:鸡蛋打几下?火开多大?炒多久?)
+        </div>
+      </div>
+
+      <!-- Slide 6: 课堂总结 -->
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="slide-subtitle">回顾今天学到了什么</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>算法 = <strong>有序的、明确的、可执行的步骤</strong></li>
+            <li>生活中处处有算法:做菜、借书、刷牙、走路、玩游戏……</li>
+            <li>把事情拆成<strong>清晰的步骤</strong>,做起来又快又准</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后小任务</h3>
+          <p>选一件你今天做过的事(比如<strong>整理书包</strong>、<strong>过马路</strong>、<strong>洗手</strong>),试着把它写成 5 条以内的步骤。</p>
+          <p style="margin-top:8px;">下节课我们会进一步学习算法的<strong>"输入-处理-输出"</strong>基本流程!</p>
+        </div>
+        <div style="text-align:center; margin-top:30px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+          <a href="14_io_explorer.html" style="display:inline-block; margin-left:10px;">
+            <button class="btn-success">下一课 第2课 →</button>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+// ============ 案例库 ============
+const CASES = [
+  {
+    id: 'tomato', icon: '🍳', name: '西红柿炒鸡蛋',
+    steps: ['准备食材:鸡蛋、西红柿、油、调味料', '把西红柿切块,把鸡蛋打散', '在炒锅中加油,开火烧热',
+            '把打散的鸡蛋倒入锅中翻炒', '把西红柿块放入锅中,继续翻炒', '快熟时撒入调味料并翻炒', '炒熟后装盘享用']
+  },
+  {
+    id: 'library', icon: '📚', name: '图书馆借书',
+    steps: ['进入图书馆', '在管理系统中查找图书', '记下图书所在的书架号', '到对应书架找到书',
+            '在借阅台办理手续', '带着图书离开图书馆']
+  },
+  {
+    id: 'brush', icon: '🪥', name: '刷牙',
+    steps: ['拿起牙刷,挤上牙膏', '用水把牙刷打湿', '上下刷上排牙齿', '上下刷下排牙齿',
+            '清洁舌头和牙缝', '用清水漱口', '洗净牙刷放回原位']
+  },
+  {
+    id: 'cross', icon: '🚦', name: '过马路',
+    steps: ['走到路口停下', '观察红绿灯', '等待绿灯亮起', '左右观察来车', '快速通过斑马线', '到达对面']
+  },
+  {
+    id: 'bus', icon: '🚌', name: '坐公交',
+    steps: ['查询要乘坐的线路', '走到公交站台等车', '看到目标公交车招手', '上车后刷卡或投币',
+            '在车厢内找座位坐下', '到目标站点前按铃', '在停稳后下车']
+  },
+  {
+    id: 'homework', icon: '📝', name: '完成作业',
+    steps: ['拿出作业本和文具', '回顾今天学过的内容', '逐题阅读题目', '思考解题方法',
+            '工整地写下答案', '检查是否有错误', '收好作业本和文具']
+  }
+];
+
+function renderCases() {
+  const grid = document.getElementById('caseGrid');
+  grid.innerHTML = '';
+  CASES.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'case-card';
+    card.innerHTML = '<div class="case-icon">' + c.icon + '</div><div class="case-name">' + c.name + '</div>';
+    card.onclick = () => showCase(i);
+    grid.appendChild(card);
+  });
+}
+
+function showCase(i) {
+  document.querySelectorAll('.case-card').forEach((el, idx) => {
+    el.classList.toggle('selected', idx === i);
+  });
+  const c = CASES[i];
+  const display = document.getElementById('stepsDisplay');
+  display.innerHTML =
+    '<div class="steps-display"><h4>' + c.icon + ' ' + c.name + ' — 操作步骤</h4>' +
+    '<div class="step-list">' +
+    c.steps.map((s, idx) =>
+      '<div class="step-item" onclick="this.classList.toggle(\'highlight\')">' +
+      '<div class="step-num">' + (idx + 1) + '</div>' +
+      '<div class="step-text">' + s + '</div></div>'
+    ).join('') +
+    '</div></div>';
+}
+
+renderCases();
+
+// ============ 步骤排序游戏 ============
+const SHUFFLE_TASKS = {
+  tomato: { name: '做西红柿炒鸡蛋', steps: CASES[0].steps },
+  library: { name: '去图书馆借书', steps: CASES[1].steps },
+  brush: { name: '刷牙', steps: CASES[2].steps }
+};
+
+let currentTask = 'tomato';
+let shuffledOrder = [];
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  // 确保不是原顺序
+  if (a.every((v, i) => v === arr[i])) return shuffle(arr);
+  return a;
+}
+
+function loadShuffle() {
+  currentTask = document.getElementById('taskSelect').value;
+  const task = SHUFFLE_TASKS[currentTask];
+  const indices = task.steps.map((_, i) => i);
+  shuffledOrder = shuffle(indices);
+  renderShuffle();
+  document.getElementById('checkResult').className = 'check-result';
+}
+
+function renderShuffle() {
+  const task = SHUFFLE_TASKS[currentTask];
+  const area = document.getElementById('shuffleArea');
+  area.innerHTML = shuffledOrder.map((origIdx, i) =>
+    '<div class="draggable-step" draggable="true" data-orig="' + origIdx + '" data-pos="' + i + '">' +
+    '<span class="grip">≡</span>' +
+    '<span class="step-text">' + task.steps[origIdx] + '</span>' +
+    '</div>'
+  ).join('');
+  attachDragHandlers();
+}
+
+function attachDragHandlers() {
+  let dragged = null;
+  const items = document.querySelectorAll('.draggable-step');
+  items.forEach(item => {
+    item.addEventListener('dragstart', e => {
+      dragged = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      items.forEach(i => i.classList.remove('over'));
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (item !== dragged) item.classList.add('over');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      if (item === dragged) return;
+      const area = document.getElementById('shuffleArea');
+      const rect = item.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      area.insertBefore(dragged, after ? item.nextSibling : item);
+    });
+
+    // 触摸支持
+    let touchOffsetY = 0;
+    item.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      touchOffsetY = t.clientY - item.getBoundingClientRect().top;
+      dragged = item;
+      item.classList.add('dragging');
+    }, {passive: true});
+    item.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (!dragged) return;
+      const t = e.touches[0];
+      const area = document.getElementById('shuffleArea');
+      const items = Array.from(area.querySelectorAll('.draggable-step'));
+      const overItem = items.find(el => {
+        if (el === dragged) return false;
+        const r = el.getBoundingClientRect();
+        return t.clientY >= r.top && t.clientY <= r.bottom;
+      });
+      if (overItem) {
+        const r = overItem.getBoundingClientRect();
+        const after = t.clientY > r.top + r.height / 2;
+        area.insertBefore(dragged, after ? overItem.nextSibling : overItem);
+      }
+    }, {passive: false});
+    item.addEventListener('touchend', () => {
+      if (dragged) dragged.classList.remove('dragging');
+      dragged = null;
+    });
+  });
+}
+
+function checkOrder() {
+  const items = document.querySelectorAll('#shuffleArea .draggable-step');
+  let allCorrect = true;
+  items.forEach((item, i) => {
+    const orig = parseInt(item.dataset.orig);
+    if (orig === i) {
+      item.classList.add('correct');
+      item.classList.remove('wrong');
+    } else {
+      item.classList.add('wrong');
+      item.classList.remove('correct');
+      allCorrect = false;
+    }
+  });
+  const result = document.getElementById('checkResult');
+  if (allCorrect) {
+    result.className = 'check-result success';
+    result.innerHTML = '🎉 全部正确! 你成功还原了"' + SHUFFLE_TASKS[currentTask].name + '"的算法步骤!';
+  } else {
+    result.className = 'check-result fail';
+    result.innerHTML = '✗ 还有步骤位置不对哦,再仔细想想顺序~';
+  }
+}
+
+loadShuffle();
+</script>
+</body>
+</html>

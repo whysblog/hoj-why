@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第19课 · 数据呈现可视化 — IoT 数据可视化实验室</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --bg-2: #e9edf2;
+    --ink: #1a2332;
+    --ink-soft: #5a6577;
+    --accent: #2563eb;
+    --accent-2: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --line: #d8dde6;
+    --card: #ffffff;
+    --shadow: 0 4px 20px rgba(20,30,50,.08), 0 1px 3px rgba(20,30,50,.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image:
+      linear-gradient(135deg, rgba(37,99,235,.04), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(245,158,11,.05), transparent 40%);
+    min-height: 100vh;
+  }
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--accent-2); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--accent-2); margin-right: 8px; font-size: 14px; }
+
+  /* 类型选择 */
+  .type-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .type-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px; cursor: pointer; transition: all .2s; text-align: center;
+  }
+  .type-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .type-card.active { border: 2px solid var(--accent); background: linear-gradient(160deg, #fff, #eef4ff); }
+  .type-card .ic { font-size: 32px; margin-bottom: 8px; }
+  .type-card h3 { font-size: 15px; }
+  .type-card p { font-size: 11px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+
+  /* 图表区域 */
+  .lab {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 24px; box-shadow: var(--shadow);
+    display: grid; grid-template-columns: 1fr 280px; gap: 24px;
+  }
+  .chart-area {
+    background: linear-gradient(160deg, #fafbfc, #f4f6f9);
+    border-radius: 8px; padding: 20px; min-height: 460px;
+    border: 1px solid var(--line);
+  }
+  .chart-area h3 { font-size: 16px; margin-bottom: 4px; }
+  .chart-area .desc { font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+  .chart-area svg { width: 100%; height: 380px; }
+
+  .panel {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .panel-card { background: var(--bg-2); padding: 16px; border-radius: 8px; }
+  .panel-card h4 { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; }
+  .data-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; }
+  .data-row .lbl { color: var(--ink-soft); }
+  .data-row .val { font-family: "JetBrains Mono",monospace; font-weight: 700; }
+  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    padding: 6px 12px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 99px; font-size: 11px; cursor: pointer; user-select: none; transition: all .15s;
+  }
+  .pill:hover { border-color: var(--accent); }
+  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .code-box {
+    background: #1a2332; color: #84d2a3; padding: 14px;
+    border-radius: 6px; font-family: "JetBrains Mono",monospace;
+    font-size: 11px; line-height: 1.7; overflow-x: auto;
+    white-space: pre;
+  }
+  .code-box .kw { color: #ff7b54; }
+  .code-box .str { color: #fbbf24; }
+  .code-box .com { color: #6b7280; }
+
+  .principle {
+    margin-top: 18px; padding: 16px 20px; background: rgba(37,99,235,.06);
+    border-left: 4px solid var(--accent); border-radius: 4px; font-size: 13px; line-height: 1.7; color: var(--ink-soft);
+  }
+  .principle strong { color: var(--ink); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .lab { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 19 课</span>数据呈现可视化</h1>
+  <p class="lead">物联网采集到的数据需要通过<strong>可视化</strong>转化为人易于理解的图表，帮助用户和决策者快速发现规律、捕获异常。本工具提供 4 种常见图表类型（折线图、柱状图、饼图、散点图），帮你理解不同图表所传递的信息维度，并掌握配套的 matplotlib 代码思路。</p>
+</header>
+
+<main>
+
+  <!-- 类型选择 -->
+  <section class="section">
+    <div class="section-title">一、选择可视化类型</div>
+    <div class="type-grid">
+      <div class="type-card active" data-type="line" onclick="selectType('line')">
+        <div class="ic">📈</div>
+        <h3>折线图（趋势）</h3>
+        <p>展示数据随时间变化的趋势</p>
+      </div>
+      <div class="type-card" data-type="bar" onclick="selectType('bar')">
+        <div class="ic">📊</div>
+        <h3>柱状图（对比）</h3>
+        <p>对比不同类别的数值大小</p>
+      </div>
+      <div class="type-card" data-type="pie" onclick="selectType('pie')">
+        <div class="ic">🥧</div>
+        <h3>饼图（比例）</h3>
+        <p>展示部分占整体的比例关系</p>
+      </div>
+      <div class="type-card" data-type="scatter" onclick="selectType('scatter')">
+        <div class="ic">⋯</div>
+        <h3>散点图（分布）</h3>
+        <p>展示两个变量的相关性与分布</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 实验室 -->
+  <section class="section">
+    <div class="section-title">二、可视化实验室</div>
+    <div class="lab">
+      <div class="chart-area">
+        <h3 id="chartTitle">📈 折线图：温度趋势（一周）</h3>
+        <div class="desc" id="chartDesc">展示温度数据随时间的变化趋势，便于发现升降规律</div>
+        <svg id="chartSvg" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
+      <div class="panel">
+        <div class="panel-card">
+          <h4>数据集选择</h4>
+          <div class="pill-row" id="datasetPills"></div>
+        </div>
+        <div class="panel-card">
+          <h4>统计信息</h4>
+          <div id="statsBox"></div>
+        </div>
+        <div class="panel-card">
+          <h4>对应代码（matplotlib）</h4>
+          <div class="code-box" id="codeBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="principle" id="principleBox">
+      <strong>📚 学习要点：</strong>
+      折线图通过数据点之间的线条连接，直观地展示数据的时间趋势变化。常用于温度、湿度、用电量等连续型变量的监测。matplotlib 中使用 <code>plt.plot()</code> 函数绘制。
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 19 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+// ============ 数据集 ============
+var datasets = {
+  line: {
+    temp_week: {
+      label: "一周温度（℃）",
+      x: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+      y: [22, 24, 26, 27, 25, 23, 22],
+      color: "#ef4444",
+      desc: "展示一周内每天的平均温度变化趋势",
+      principle: "折线图通过数据点之间的线条连接，直观地展示数据的时间趋势变化。常用于温度、湿度、用电量等连续型变量的监测。"
+    },
+    soil_day: {
+      label: "土壤湿度（24小时）",
+      x: ["0时", "4时", "8时", "12时", "16时", "20时", "24时"],
+      y: [2800, 2750, 2400, 2100, 2050, 2300, 2700],
+      color: "#10b981",
+      desc: "智能花盆采集的一天内土壤湿度数据",
+      principle: "数值越小代表越湿润。可见 12-16 时湿度最低（蒸发最快），夜间湿度回升。"
+    },
+    light_day: {
+      label: "光照强度（24小时·lux）",
+      x: ["0时", "4时", "8时", "12时", "16时", "20时", "24时"],
+      y: [10, 30, 800, 2400, 1600, 200, 20],
+      color: "#f59e0b",
+      desc: "光敏传感器监测的一天光照强度变化",
+      principle: "光照强度白天高、夜间低，正午前后达到峰值，呈现明显的昼夜规律。"
+    }
+  },
+  bar: {
+    sensor_count: {
+      label: "教室各传感器数量",
+      x: ["温度", "湿度", "光照", "声音", "PM2.5", "CO₂"],
+      y: [4, 4, 6, 2, 1, 1],
+      color: "#2563eb",
+      desc: "智慧教室部署的各类传感器数量",
+      principle: "柱状图通过柱子的高度对比不同类别的数值，适合离散数据的比较。matplotlib 中使用 plt.bar()。"
+    },
+    monthly_water: {
+      label: "近6月用水量（吨）",
+      x: ["1月", "2月", "3月", "4月", "5月", "6月"],
+      y: [12.5, 11.8, 14.2, 15.6, 18.3, 21.1],
+      color: "#06b6d4",
+      desc: "智慧家庭6个月用水量统计",
+      principle: "可见用水量随气温升高而增加，6 月最高，反映季节性规律。"
+    }
+  },
+  pie: {
+    energy: {
+      label: "智慧家庭用电分布",
+      labels: ["空调", "冰箱", "照明", "电视", "其他"],
+      values: [42, 22, 14, 8, 14],
+      colors: ["#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6", "#94a3b8"],
+      desc: "家庭一个月不同设备的用电占比",
+      principle: "饼图通过扇形的角度展示部分占整体的比例。空调占比最大（42%），是节能的重点对象。matplotlib 中使用 plt.pie()。"
+    },
+    iot_protocol: {
+      label: "校园IoT设备协议占比",
+      labels: ["Wi-Fi", "蓝牙", "ZigBee", "NB-IoT", "LoRa"],
+      values: [45, 25, 15, 10, 5],
+      colors: ["#2563eb", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"],
+      desc: "校园物联网设备使用的通信协议分布",
+      principle: "Wi-Fi 是当前部署最多的协议，但低功耗协议（NB-IoT/LoRa）正在快速增长。"
+    }
+  },
+  scatter: {
+    temp_humid: {
+      label: "温度 vs 湿度（一周采集）",
+      points: [[22, 72], [23, 68], [24, 65], [25, 60], [26, 55], [27, 50], [28, 45], [29, 40], [24, 70], [25, 63], [26, 58], [28, 42], [23, 75], [27, 48], [25, 55], [26, 52]],
+      xLabel: "温度(℃)",
+      yLabel: "湿度(%)",
+      color: "#8b5cf6",
+      desc: "教室一周内每小时采集的温湿度数据点",
+      principle: "散点图展示两个变量之间的关系。可见温度越高湿度越低，呈负相关。matplotlib 中使用 plt.scatter()。"
+    }
+  }
+};
+var codeTemplates = {
+  line: function line(d) {
+    return "<span class=\"kw\">import</span> matplotlib.pyplot <span class=\"kw\">as</span> plt\nplt.rcParams[<span class=\"str\">'font.sans-serif'</span>] = [<span class=\"str\">'SimHei'</span>]  <span class=\"com\"># \u4E2D\u6587\u663E\u793A</span>\n\nx = " + JSON.stringify(d.x).replace(/"/g, '"') + "\ny = " + JSON.stringify(d.y) + "\n\nplt.figure(figsize=(8, 6))\nplt.plot(x, y, marker=<span class=\"str\">'o'</span>, color=<span class=\"str\">'" + d.color + "'</span>)\nplt.title(<span class=\"str\">'" + d.label + "'</span>)\nplt.xlabel(<span class=\"str\">'\u65F6\u95F4'</span>)\nplt.ylabel(<span class=\"str\">'\u6570\u503C'</span>)\nplt.grid(<span class=\"kw\">True</span>, alpha=0.3)\nplt.show()";
+  },
+  bar: function bar(d) {
+    return "<span class=\"kw\">import</span> matplotlib.pyplot <span class=\"kw\">as</span> plt\nplt.rcParams[<span class=\"str\">'font.sans-serif'</span>] = [<span class=\"str\">'SimHei'</span>]\n\nx = " + JSON.stringify(d.x).replace(/"/g, '"') + "\ny = " + JSON.stringify(d.y) + "\n\nplt.figure(figsize=(8, 6))\nplt.bar(x, y, color=<span class=\"str\">'" + d.color + "'</span>)\nplt.title(<span class=\"str\">'" + d.label + "'</span>)\nplt.ylabel(<span class=\"str\">'\u6570\u91CF'</span>)\nplt.show()";
+  },
+  pie: function pie(d) {
+    return "<span class=\"kw\">import</span> matplotlib.pyplot <span class=\"kw\">as</span> plt\nplt.rcParams[<span class=\"str\">'font.sans-serif'</span>] = [<span class=\"str\">'SimHei'</span>]\n\nlabels = " + JSON.stringify(d.labels).replace(/"/g, '"') + "\nvalues = " + JSON.stringify(d.values) + "\n\nplt.figure(figsize=(8, 8))\nplt.pie(values, labels=labels, autopct=<span class=\"str\">'%1.1f%%'</span>,\n        colors=" + JSON.stringify(d.colors).replace(/"/g, '"') + ")\nplt.title(<span class=\"str\">'" + d.label + "'</span>)\nplt.show()";
+  },
+  scatter: function scatter(d) {
+    return "<span class=\"kw\">import</span> matplotlib.pyplot <span class=\"kw\">as</span> plt\nplt.rcParams[<span class=\"str\">'font.sans-serif'</span>] = [<span class=\"str\">'SimHei'</span>]\n\nx = [p[0] <span class=\"kw\">for</span> p <span class=\"kw\">in</span> data]\ny = [p[1] <span class=\"kw\">for</span> p <span class=\"kw\">in</span> data]\n\nplt.figure(figsize=(8, 6))\nplt.scatter(x, y, color=<span class=\"str\">'" + d.color + "'</span>, alpha=0.7)\nplt.xlabel(<span class=\"str\">'" + d.xLabel + "'</span>)\nplt.ylabel(<span class=\"str\">'" + d.yLabel + "'</span>)\nplt.title(<span class=\"str\">'" + d.label + "'</span>)\nplt.grid(<span class=\"kw\">True</span>, alpha=0.3)\nplt.show()";
+  }
+};
+var currentType = "line";
+var currentDataset = "temp_week";
+function selectType(type) {
+  currentType = type;
+  document.querySelectorAll('.type-card').forEach(function (c) {
+    return c.classList.toggle('active', c.dataset.type === type);
+  });
+  // 默认选第一个
+  currentDataset = Object.keys(datasets[type])[0];
+  renderDatasetPills();
+  render();
+}
+function renderDatasetPills() {
+  var box = document.getElementById('datasetPills');
+  box.innerHTML = '';
+  Object.keys(datasets[currentType]).forEach(function (key) {
+    var p = document.createElement('span');
+    p.className = 'pill' + (key === currentDataset ? ' active' : '');
+    p.textContent = datasets[currentType][key].label;
+    p.onclick = function () {
+      currentDataset = key;
+      renderDatasetPills();
+      render();
+    };
+    box.appendChild(p);
+  });
+}
+function render() {
+  var d = datasets[currentType][currentDataset];
+  var titleIcon = {
+    line: "📈",
+    bar: "📊",
+    pie: "🥧",
+    scatter: "⋯"
+  }[currentType];
+  var typeName = {
+    line: "折线图",
+    bar: "柱状图",
+    pie: "饼图",
+    scatter: "散点图"
+  }[currentType];
+  document.getElementById('chartTitle').textContent = titleIcon + " " + typeName + "\uFF1A" + d.label;
+  document.getElementById('chartDesc').textContent = d.desc;
+  var svg = document.getElementById('chartSvg');
+  if (currentType === "line") drawLine(svg, d);else if (currentType === "bar") drawBar(svg, d);else if (currentType === "pie") drawPie(svg, d);else if (currentType === "scatter") drawScatter(svg, d);
+
+  // 统计信息
+  renderStats(d);
+  // 代码
+  document.getElementById('codeBox').innerHTML = codeTemplates[currentType](d);
+  // 学习要点
+  document.getElementById('principleBox').innerHTML = "<strong>\uD83D\uDCDA \u5B66\u4E60\u8981\u70B9\uFF1A</strong>" + d.principle;
+}
+function renderStats(d) {
+  var box = document.getElementById('statsBox');
+  if (currentType === 'pie') {
+    box.innerHTML = d.labels.map(function (l, i) {
+      return "<div class=\"data-row\"><span class=\"lbl\"><span style=\"display:inline-block;width:10px;height:10px;background:" + d.colors[i] + ";border-radius:2px;margin-right:6px;\"></span>" + l + "</span><span class=\"val\">" + d.values[i] + "%</span></div>";
+    }).join('');
+  } else if (currentType === 'scatter') {
+    var xs = d.points.map(function (p) {
+        return p[0];
+      }),
+      ys = d.points.map(function (p) {
+        return p[1];
+      });
+    box.innerHTML = "\n      <div class=\"data-row\"><span class=\"lbl\">\u6570\u636E\u70B9\u6570</span><span class=\"val\">" + d.points.length + "</span></div>\n      <div class=\"data-row\"><span class=\"lbl\">" + d.xLabel + " \u8303\u56F4</span><span class=\"val\">" + Math.min.apply(Math, xs) + " ~ " + Math.max.apply(Math, xs) + "</span></div>\n      <div class=\"data-row\"><span class=\"lbl\">" + d.yLabel + " \u8303\u56F4</span><span class=\"val\">" + Math.min.apply(Math, ys) + " ~ " + Math.max.apply(Math, ys) + "</span></div>\n    ";
+  } else {
+    var max = Math.max.apply(Math, d.y),
+      min = Math.min.apply(Math, d.y),
+      avg = (d.y.reduce(function (a, b) {
+        return a + b;
+      }) / d.y.length).toFixed(1);
+    box.innerHTML = "\n      <div class=\"data-row\"><span class=\"lbl\">\u6700\u5927\u503C</span><span class=\"val\" style=\"color:var(--red)\">" + max + "</span></div>\n      <div class=\"data-row\"><span class=\"lbl\">\u6700\u5C0F\u503C</span><span class=\"val\" style=\"color:var(--green)\">" + min + "</span></div>\n      <div class=\"data-row\"><span class=\"lbl\">\u5E73\u5747\u503C</span><span class=\"val\">" + avg + "</span></div>\n      <div class=\"data-row\"><span class=\"lbl\">\u6570\u636E\u91CF</span><span class=\"val\">" + d.y.length + "</span></div>\n    ";
+  }
+}
+
+// ============ 折线图 ============
+function drawLine(svg, d) {
+  var W = 700,
+    H = 380,
+    mL = 60,
+    mR = 30,
+    mT = 30,
+    mB = 50;
+  var cw = W - mL - mR,
+    ch = H - mT - mB;
+  var max = Math.max.apply(Math, d.y) * 1.15,
+    min = Math.min.apply(Math, d.y) * 0.85;
+  var xStep = cw / (d.x.length - 1);
+  var html = "<defs>\n    <linearGradient id=\"lineFill\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop offset=\"0\" stop-color=\"" + d.color + "\" stop-opacity=\"0.3\"/>\n      <stop offset=\"1\" stop-color=\"" + d.color + "\" stop-opacity=\"0\"/>\n    </linearGradient>\n  </defs>";
+  // 网格 + Y轴
+  for (var i = 0; i <= 5; i++) {
+    var y = mT + ch * i / 5;
+    var v = (max - (max - min) * i / 5).toFixed(0);
+    html += "<line x1=\"" + mL + "\" y1=\"" + y + "\" x2=\"" + (W - mR) + "\" y2=\"" + y + "\" stroke=\"#e5e7eb\" stroke-width=\"1\"/>";
+    html += "<text x=\"" + (mL - 8) + "\" y=\"" + (y + 4) + "\" font-size=\"11\" fill=\"#94a3b8\" text-anchor=\"end\">" + v + "</text>";
+  }
+  // X轴
+  d.x.forEach(function (label, i) {
+    var x = mL + xStep * i;
+    html += "<text x=\"" + x + "\" y=\"" + (H - mB + 18) + "\" font-size=\"11\" fill=\"#5a6577\" text-anchor=\"middle\">" + label + "</text>";
+  });
+  // 区域填充
+  var points = d.y.map(function (v, i) {
+    return mL + xStep * i + "," + (mT + ch * (1 - (v - min) / (max - min)));
+  });
+  html += "<polygon points=\"" + mL + "," + (H - mB) + " " + points.join(' ') + " " + (W - mR) + "," + (H - mB) + "\" fill=\"url(#lineFill)\"/>";
+  // 折线
+  html += "<polyline points=\"" + points.join(' ') + "\" fill=\"none\" stroke=\"" + d.color + "\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>";
+  // 数据点
+  d.y.forEach(function (v, i) {
+    var x = mL + xStep * i,
+      y = mT + ch * (1 - (v - min) / (max - min));
+    html += "<circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"5\" fill=\"#fff\" stroke=\"" + d.color + "\" stroke-width=\"2.5\"/>";
+    html += "<text x=\"" + x + "\" y=\"" + (y - 12) + "\" font-size=\"10\" fill=\"" + d.color + "\" text-anchor=\"middle\" font-weight=\"700\">" + v + "</text>";
+  });
+  svg.innerHTML = html;
+}
+
+// ============ 柱状图 ============
+function drawBar(svg, d) {
+  var W = 700,
+    H = 380,
+    mL = 60,
+    mR = 30,
+    mT = 30,
+    mB = 50;
+  var cw = W - mL - mR,
+    ch = H - mT - mB;
+  var max = Math.max.apply(Math, d.y) * 1.15;
+  var bw = cw / d.x.length * 0.6;
+  var gap = cw / d.x.length * 0.4;
+  var html = '';
+  for (var i = 0; i <= 5; i++) {
+    var y = mT + ch * i / 5;
+    var v = (max * (5 - i) / 5).toFixed(0);
+    html += "<line x1=\"" + mL + "\" y1=\"" + y + "\" x2=\"" + (W - mR) + "\" y2=\"" + y + "\" stroke=\"#e5e7eb\" stroke-width=\"1\"/>";
+    html += "<text x=\"" + (mL - 8) + "\" y=\"" + (y + 4) + "\" font-size=\"11\" fill=\"#94a3b8\" text-anchor=\"end\">" + v + "</text>";
+  }
+  d.x.forEach(function (label, i) {
+    var x = mL + cw / d.x.length * i + gap / 2;
+    var h = ch * d.y[i] / max;
+    var y = mT + ch - h;
+    html += "<rect x=\"" + x + "\" y=\"" + y + "\" width=\"" + bw + "\" height=\"" + h + "\" fill=\"" + d.color + "\" rx=\"3\" opacity=\"0.85\"><animate attributeName=\"height\" from=\"0\" to=\"" + h + "\" dur=\"0.6s\" fill=\"freeze\"/><animate attributeName=\"y\" from=\"" + (mT + ch) + "\" to=\"" + y + "\" dur=\"0.6s\" fill=\"freeze\"/></rect>";
+    html += "<text x=\"" + (x + bw / 2) + "\" y=\"" + (y - 6) + "\" font-size=\"11\" fill=\"" + d.color + "\" text-anchor=\"middle\" font-weight=\"700\">" + d.y[i] + "</text>";
+    html += "<text x=\"" + (x + bw / 2) + "\" y=\"" + (H - mB + 18) + "\" font-size=\"11\" fill=\"#5a6577\" text-anchor=\"middle\">" + label + "</text>";
+  });
+  svg.innerHTML = html;
+}
+
+// ============ 饼图 ============
+function drawPie(svg, d) {
+  var cx = 250,
+    cy = 190,
+    r = 130;
+  var total = d.values.reduce(function (a, b) {
+    return a + b;
+  }, 0);
+  var html = '';
+  var acc = -Math.PI / 2;
+  d.values.forEach(function (v, i) {
+    var angle = v / total * Math.PI * 2;
+    var x1 = cx + r * Math.cos(acc),
+      y1 = cy + r * Math.sin(acc);
+    var x2 = cx + r * Math.cos(acc + angle),
+      y2 = cy + r * Math.sin(acc + angle);
+    var large = angle > Math.PI ? 1 : 0;
+    html += "<path d=\"M " + cx + " " + cy + " L " + x1 + " " + y1 + " A " + r + " " + r + " 0 " + large + " 1 " + x2 + " " + y2 + " Z\" fill=\"" + d.colors[i] + "\" stroke=\"#fff\" stroke-width=\"2\"/>";
+    // 标签
+    var labelAngle = acc + angle / 2;
+    var lx = cx + (r + 30) * Math.cos(labelAngle),
+      ly = cy + (r + 30) * Math.sin(labelAngle);
+    html += "<text x=\"" + lx + "\" y=\"" + ly + "\" font-size=\"12\" fill=\"#1a2332\" text-anchor=\"" + (lx > cx ? 'start' : 'end') + "\" font-weight=\"600\">" + d.labels[i] + " " + (v / total * 100).toFixed(0) + "%</text>";
+    acc += angle;
+  });
+  // 图例（右侧）
+  d.labels.forEach(function (lb, i) {
+    var ly = 80 + i * 28;
+    html += "<rect x=\"450\" y=\"" + (ly - 10) + "\" width=\"14\" height=\"14\" fill=\"" + d.colors[i] + "\" rx=\"2\"/>";
+    html += "<text x=\"472\" y=\"" + (ly + 2) + "\" font-size=\"13\" fill=\"#1a2332\">" + lb + "</text>";
+    html += "<text x=\"640\" y=\"" + (ly + 2) + "\" font-size=\"13\" fill=\"#5a6577\" text-anchor=\"end\" font-family=\"JetBrains Mono\">" + d.values[i] + "%</text>";
+  });
+  svg.innerHTML = html;
+}
+
+// ============ 散点图 ============
+function drawScatter(svg, d) {
+  var W = 700,
+    H = 380,
+    mL = 60,
+    mR = 30,
+    mT = 30,
+    mB = 50;
+  var cw = W - mL - mR,
+    ch = H - mT - mB;
+  var xs = d.points.map(function (p) {
+      return p[0];
+    }),
+    ys = d.points.map(function (p) {
+      return p[1];
+    });
+  var xMin = Math.min.apply(Math, xs) - 1,
+    xMax = Math.max.apply(Math, xs) + 1;
+  var yMin = Math.min.apply(Math, ys) - 5,
+    yMax = Math.max.apply(Math, ys) + 5;
+  var html = '';
+  // 网格
+  for (var i = 0; i <= 5; i++) {
+    var y = mT + ch * i / 5;
+    var v = (yMax - (yMax - yMin) * i / 5).toFixed(0);
+    html += "<line x1=\"" + mL + "\" y1=\"" + y + "\" x2=\"" + (W - mR) + "\" y2=\"" + y + "\" stroke=\"#e5e7eb\"/>";
+    html += "<text x=\"" + (mL - 8) + "\" y=\"" + (y + 4) + "\" font-size=\"11\" fill=\"#94a3b8\" text-anchor=\"end\">" + v + "</text>";
+  }
+  for (var _i = 0; _i <= 5; _i++) {
+    var x = mL + cw * _i / 5;
+    var _v = (xMin + (xMax - xMin) * _i / 5).toFixed(0);
+    html += "<line x1=\"" + x + "\" y1=\"" + mT + "\" x2=\"" + x + "\" y2=\"" + (H - mB) + "\" stroke=\"#e5e7eb\"/>";
+    html += "<text x=\"" + x + "\" y=\"" + (H - mB + 18) + "\" font-size=\"11\" fill=\"#5a6577\" text-anchor=\"middle\">" + _v + "</text>";
+  }
+  // 散点
+  d.points.forEach(function (p, i) {
+    var x = mL + cw * (p[0] - xMin) / (xMax - xMin);
+    var y = mT + ch * (1 - (p[1] - yMin) / (yMax - yMin));
+    html += "<circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"6\" fill=\"" + d.color + "\" opacity=\"0.65\" stroke=\"#fff\" stroke-width=\"1.5\"><animate attributeName=\"r\" from=\"0\" to=\"6\" dur=\"0.5s\" begin=\"" + i * 0.03 + "s\" fill=\"freeze\"/></circle>";
+  });
+  // 坐标轴标签
+  html += "<text x=\"" + W / 2 + "\" y=\"" + (H - 8) + "\" font-size=\"12\" fill=\"#1a2332\" text-anchor=\"middle\" font-weight=\"600\">" + d.xLabel + "</text>";
+  html += "<text x=\"14\" y=\"" + H / 2 + "\" font-size=\"12\" fill=\"#1a2332\" text-anchor=\"middle\" font-weight=\"600\" transform=\"rotate(-90 14 " + H / 2 + ")\">" + d.yLabel + "</text>";
+  svg.innerHTML = html;
+}
+
+// 初始化
+renderDatasetPills();
+render();
+
+</script>
+</body>
+</html>

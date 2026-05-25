@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第8课 · 路由路径靠算法</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第2单元 · 第8课</span>
+    <span class="title">路由路径靠算法</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>路由路径<br>靠算法</h1>
+<p class="subtitle">第二单元 · 第8课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>路由原理</strong></span>
+<span>💡 关键词：<strong>路由器 · 路由表</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🧭</span><div class="card-title">认识路由器</div><div class="card-desc">了解路由器在网络中扮演的角色。</div></div><div class="card"><span class="card-icon">📊</span><div class="card-title">理解路由表</div><div class="card-desc">知道路由器如何根据"路由表"做转发决策。</div></div><div class="card"><span class="card-icon">🔍</span><div class="card-title">体验路由算法</div><div class="card-desc">通过演示理解"最短路径"思想。</div></div></div></section>
+<section class="slide"><h2>什么是路由？</h2>
+<div class="highlight">📦 <strong>核心问题：</strong>当你的数据包要从北京去上海，互联网上有千千万万条线路，<strong>该走哪条？</strong></div>
+<p><strong>路由 (Routing)</strong> 就是<strong>为数据包选择最佳传输路径</strong>的过程。这个工作由<strong>路由器 (Router)</strong>完成。</p>
+<h3>🚦 类比：城市交通</h3>
+<ul>
+<li><strong>数据包</strong> = 一辆从家开往学校的汽车</li>
+<li><strong>路由器</strong> = 路口的交通指挥员</li>
+<li><strong>路由表</strong> = 指挥员的"地图册"，告诉他每个目的地该往哪个方向走</li>
+<li><strong>路由算法</strong> = 怎么选择最佳路线（最短？最快？避开堵车？）</li>
+</ul></section>
+<section class="slide"><h2>路由器在哪里？</h2>
+<div class="cards">
+<div class="card"><span class="card-icon">🏠</span><div class="card-title">家庭路由器</div><div class="card-desc">家里的小白盒子，把你家几台设备连接到互联网。</div></div>
+<div class="card"><span class="card-icon">🏢</span><div class="card-title">企业路由器</div><div class="card-desc">公司、学校用，连接的设备多，性能更强。</div></div>
+<div class="card"><span class="card-icon">🌍</span><div class="card-title">运营商核心路由器</div><div class="card-desc">中国移动、电信、联通的骨干路由器，每秒处理数 TB 流量。</div></div>
+<div class="card"><span class="card-icon">🛰</span><div class="card-title">国际出口路由器</div><div class="card-desc">连接中国和外国的关键节点，全国只有少数几个。</div></div>
+</div>
+<div class="highlight">🌐 <strong>整个互联网</strong>，就是由数百万台路由器组成的"<strong>包裹中转站网络</strong>"。每个数据包要经过几跳、几十跳路由器才能到达目的地。</div></section>
+<section class="slide"><h2>路由表 (Routing Table)</h2>
+<p>每台路由器都保存一张"<strong>路由表</strong>"——记录着<strong>到各个目的网络要从哪个出口走</strong>。</p>
+<table class="tbl">
+<tr><th>目的网络</th><th>下一跳 (Next Hop)</th><th>出口接口</th><th>跳数</th></tr>
+<tr><td>192.168.1.0/24</td><td>直接连接</td><td>eth0</td><td>0</td></tr>
+<tr><td>10.0.0.0/8</td><td>192.168.1.1</td><td>eth0</td><td>1</td></tr>
+<tr><td>172.16.0.0/16</td><td>192.168.1.1</td><td>eth0</td><td>2</td></tr>
+<tr><td>0.0.0.0/0 (默认)</td><td>192.168.1.1</td><td>eth0</td><td>—</td></tr>
+</table>
+<div class="highlight">📌 <strong>工作流程：</strong>路由器收到一个数据包 → 看目的 IP → 在路由表里查 → 决定从哪个口转发 → 转发！整个过程<strong>毫秒级</strong>完成。</div></section>
+<section class="slide"><h2>🧪 互动演示：模拟路由</h2>
+<p>下面是一个简化的"城市路由网"，每个节点是一个路由器，连线上的数字代表"跳数代价"。</p>
+<div class="diagram-box">
+<svg viewBox="0 0 700 320" style="width:100%;max-width:700px;display:block;margin:0 auto;">
+<line x1="100" y1="160" x2="250" y2="80" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="100" y1="160" x2="250" y2="240" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="250" y1="80" x2="400" y2="80" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="250" y1="240" x2="400" y2="240" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="400" y1="80" x2="550" y2="160" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="400" y1="240" x2="550" y2="160" stroke="#4ed1b8" stroke-width="2"/>
+<line x1="250" y1="80" x2="250" y2="240" stroke="#4ed1b8" stroke-width="2"/>
+<text x="160" y="105" fill="#ffb347" font-size="13" font-weight="700">2</text>
+<text x="160" y="220" fill="#ffb347" font-size="13" font-weight="700">5</text>
+<text x="320" y="70" fill="#ffb347" font-size="13" font-weight="700">3</text>
+<text x="320" y="260" fill="#ffb347" font-size="13" font-weight="700">2</text>
+<text x="470" y="105" fill="#ffb347" font-size="13" font-weight="700">2</text>
+<text x="470" y="220" fill="#ffb347" font-size="13" font-weight="700">3</text>
+<text x="265" y="165" fill="#ffb347" font-size="13" font-weight="700">4</text>
+<circle cx="100" cy="160" r="26" fill="#1a2340" stroke="#4ed1b8" stroke-width="2"/><text x="100" y="166" fill="#4ed1b8" font-size="16" font-weight="700" text-anchor="middle">A</text>
+<circle cx="250" cy="80" r="26" fill="#1a2340" stroke="#4ed1b8" stroke-width="2"/><text x="250" y="86" fill="#4ed1b8" font-size="16" font-weight="700" text-anchor="middle">B</text>
+<circle cx="250" cy="240" r="26" fill="#1a2340" stroke="#4ed1b8" stroke-width="2"/><text x="250" y="246" fill="#4ed1b8" font-size="16" font-weight="700" text-anchor="middle">C</text>
+<circle cx="400" cy="80" r="26" fill="#1a2340" stroke="#4ed1b8" stroke-width="2"/><text x="400" y="86" fill="#4ed1b8" font-size="16" font-weight="700" text-anchor="middle">D</text>
+<circle cx="400" cy="240" r="26" fill="#1a2340" stroke="#4ed1b8" stroke-width="2"/><text x="400" y="246" fill="#4ed1b8" font-size="16" font-weight="700" text-anchor="middle">E</text>
+<circle cx="550" cy="160" r="26" fill="#1a2340" stroke="#4ed1b8" stroke-width="2"/><text x="550" y="166" fill="#4ed1b8" font-size="16" font-weight="700" text-anchor="middle">F</text>
+<circle id="packet" cx="100" cy="160" r="8" fill="#ffb347" style="opacity:0;"/>
+</svg>
+<div style="text-align:center;margin-top:12px;">
+<button id="btnRoute" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;color:#0f1729;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 演示：从 A 到 F 的最短路径</button>
+<button id="btnReset" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:10px 22px;border-radius:8px;cursor:pointer;margin-left:8px;font-family:inherit;">重置</button>
+<div id="routeResult" style="margin-top:12px;font-size:14px;color:var(--muted);min-height:24px;"></div>
+</div>
+</div>
+<div class="highlight">💡 <strong>最短路径算法 (如 Dijkstra)：</strong>从起点开始，逐步向外探索，记录到每个节点的最小代价，最终得到全图最优路径。A→F 最短路径 = <strong>A→B→D→F</strong>，总代价 7。</div></section>
+<section class="slide"><h2>静态路由 vs 动态路由</h2>
+<div class="compare-row">
+<div class="compare-col"><h3>📌 静态路由</h3>
+<ul><li>管理员手动配置路由表</li><li>不会自动变化</li><li>适合小型、固定网络</li><li>简单、可控</li><li>缺点：网络故障时不能自动绕路</li></ul></div>
+<div class="compare-col"><h3>🔄 动态路由</h3>
+<ul><li>路由器之间互相交换信息</li><li>路由表自动更新</li><li>适合大型、复杂网络</li><li>智能、灵活</li><li>常见协议：OSPF、BGP、RIP</li></ul></div>
+</div>
+<div class="highlight">🌍 <strong>互联网</strong>使用<strong>BGP</strong>(边界网关协议)在全球范围内动态选路；一个城市里通常用 <strong>OSPF</strong>。如果某条海底光缆被切断，路由会自动绕行，几秒内恢复通信。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 互联网中负责"选择数据包传输路径"的设备是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">交换机</div>
+<div class="quiz-opt" data-correct="true">路由器</div>
+<div class="quiz-opt" data-correct="false">集线器</div>
+<div class="quiz-opt" data-correct="false">网卡</div></div>
+<div class="quiz-feedback">✅ 路由器（Router）是专门负责路由选择的网络设备。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 路由器做出转发决策的主要依据是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">数据包大小</div>
+<div class="quiz-opt" data-correct="false">数据包颜色</div>
+<div class="quiz-opt" data-correct="true">路由表</div>
+<div class="quiz-opt" data-correct="false">用户名</div></div>
+<div class="quiz-feedback">✅ 路由器查询路由表，根据目的IP找到对应的出口接口和下一跳。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 当某条网络线路突然故障，最能体现"动态路由"价值的现象是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">网络立即崩溃</div>
+<div class="quiz-opt" data-correct="true">数据包自动绕道</div>
+<div class="quiz-opt" data-correct="false">用户需要手动重启</div>
+<div class="quiz-opt" data-correct="false">IP地址改变</div></div>
+<div class="quiz-feedback">✅ 动态路由协议(如 BGP、OSPF)会自动发现故障并重新计算路径，让数据包绕开故障节点。这正是互联网"自愈能力"的体现。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>路由</strong>：为数据包选择传输路径的过程</li>
+<li><strong>路由器</strong>：执行路由功能的网络设备，"包裹中转站"</li>
+<li><strong>路由表</strong>：路由器的"地图册"，告诉它每个目的地从哪个口走</li>
+<li><strong>路由算法</strong>：如最短路径(Dijkstra)，找到代价最低的路径</li>
+<li><strong>动态路由</strong>：让互联网具备<strong>自愈能力</strong>，故障时自动绕路</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>如果你家附近的一条主干光缆被挖断，为什么微信几秒后还能正常用？背后是哪种技术在起作用？</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "什么是路由", "路由器在哪", "路由表", "互动演示", "静态/动态路由", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+const btnRoute = document.getElementById('btnRoute');
+const btnReset = document.getElementById('btnReset');
+const pkt = document.getElementById('packet');
+const routeResult = document.getElementById('routeResult');
+const nodes = { A:[100,160], B:[250,80], C:[250,240], D:[400,80], E:[400,240], F:[550,160] };
+const path = ['A','B','D','F'];
+function animate() {
+  if (!btnRoute || !pkt) return;
+  btnRoute.disabled = true;
+  pkt.style.opacity = 1;
+  let i = 0;
+  routeResult.textContent = '🚀 数据包出发，目的地：F';
+  function step() {
+    if (i >= path.length) {
+      routeResult.innerHTML = '✅ 到达 F！路径：' + path.join(' → ') + '，总代价 = <strong style="color:var(--accent)">7</strong> （A→B:2 + B→D:3 + D→F:2）';
+      btnRoute.disabled = false;
+      return;
+    }
+    const [x,y] = nodes[path[i]];
+    pkt.animate([{cx: pkt.getAttribute('cx'), cy: pkt.getAttribute('cy')},{cx:x,cy:y}], {duration:600,fill:'forwards'});
+    pkt.setAttribute('cx', x); pkt.setAttribute('cy', y);
+    if (i > 0) routeResult.innerHTML = '🚀 经过节点 <strong style="color:var(--accent)">' + path[i] + '</strong>...';
+    i++;
+    setTimeout(step, 700);
+  }
+  step();
+}
+if (btnRoute) btnRoute.onclick = animate;
+if (btnReset) btnReset.onclick = () => { pkt.setAttribute('cx',100); pkt.setAttribute('cy',160); pkt.style.opacity=0; routeResult.textContent=''; btnRoute.disabled = false; };
+
+updateUI();
+</script>
+</body>
+</html>

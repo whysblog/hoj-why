@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第14课 · 互联网搜索新发展</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第3单元 · 第14课</span>
+    <span class="title">互联网搜索新发展</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>互联网搜索<br>新发展</h1>
+<p class="subtitle">第三单元 · 第14课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>搜索原理 · 技巧</strong></span>
+<span>💡 关键词：<strong>爬虫 · AI 搜索</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🔍</span><div class="card-title">理解原理</div><div class="card-desc">知道搜索引擎是怎么工作的。</div></div><div class="card"><span class="card-icon">🎯</span><div class="card-title">掌握技巧</div><div class="card-desc">学会精准搜索的几个常用技巧。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">认识 AI 搜索</div><div class="card-desc">了解 AI 搜索的新模式。</div></div></div></section>
+<section class="slide"><h2>搜索引擎的三大环节</h2><div class="cards"><div class="card"><span class="card-icon">🕷️</span><div class="card-title">① 爬取 (Crawl)</div><div class="card-desc">搜索引擎派出"<strong>爬虫程序</strong>"，从一个网页出发，沿着链接不断访问新页面，把内容下载回来。</div></div><div class="card"><span class="card-icon">📚</span><div class="card-title">② 索引 (Index)</div><div class="card-desc">把抓回来的网页内容做"<strong>倒排索引</strong>"——记住每个词出现在哪些网页上，便于快速查找。</div></div><div class="card"><span class="card-icon">📊</span><div class="card-title">③ 排名 (Rank)</div><div class="card-desc">用户搜索时，从索引中找出相关网页，按"<strong>相关度</strong>"和"<strong>权威度</strong>"排序，给出结果。</div></div></div><div class="highlight">🌐 <strong>规模：</strong>Google 索引了万亿级网页，百度索引了千亿级中文网页。爬虫每天 24 小时不停工作。</div></section>
+<section class="slide"><h2>排名是怎么算的？</h2>
+<p>不同搜索引擎用不同算法，但核心思路相似：</p>
+<table class="tbl">
+<tr><th>因素</th><th>含义</th></tr>
+<tr><td>关键词匹配度</td><td>页面是否出现你搜的词、出现频率、出现位置</td></tr>
+<tr><td>页面权威度</td><td>被多少其他网站链接、是否官方/权威媒体</td></tr>
+<tr><td>用户体验</td><td>页面打开速度、是否适配手机、广告是否过多</td></tr>
+<tr><td>内容质量</td><td>原创性、信息完整度、更新时效</td></tr>
+<tr><td>用户行为</td><td>点击率、停留时间</td></tr>
+<tr><td>地理位置</td><td>本地化结果（如搜"附近餐馆"）</td></tr>
+</table>
+<div class="highlight">🏆 <strong>经典算法 PageRank：</strong>Google 创始人 Larry Page 提出，被很多优质网站链接的网页，本身也更可能是优质的——类似"<strong>学术论文被引用越多越权威</strong>"。</div></section>
+<section class="slide"><h2>实用搜索技巧</h2><div class="cards"><div class="card"><span class="card-icon">"</span><div class="card-title">精确匹配</div><div class="card-desc">用双引号包起来：<code>"信息科技课程"</code>，只显示完全包含这个短语的结果。</div></div><div class="card"><span class="card-icon">−</span><div class="card-title">排除关键词</div><div class="card-desc">减号前置：<code>苹果 -水果</code>，搜苹果公司但排除水果相关结果。</div></div><div class="card"><span class="card-icon">🌐</span><div class="card-title">限定网站</div><div class="card-desc"><code>site:</code> 操作符：<code>人工智能 site:edu.cn</code>，只在 .edu.cn 域名内搜索。</div></div><div class="card"><span class="card-icon">📄</span><div class="card-title">限定文件类型</div><div class="card-desc"><code>filetype:</code>：<code>初中数学 filetype:pdf</code>，只找 PDF 文档。</div></div><div class="card"><span class="card-icon">⏰</span><div class="card-title">限定时间</div><div class="card-desc">使用"工具"或"搜索设置"按时间筛选最近一周/一月。</div></div><div class="card"><span class="card-icon">🏷️</span><div class="card-title">使用专业术语</div><div class="card-desc">搜"咳嗽不停"不如搜"持续性干咳"，专业术语能获得更精准的结果。</div></div></div></section>
+<section class="slide"><h2>AI 搜索：搜索的新形态</h2>
+<p>2023 年起，<strong>AI 搜索</strong>颠覆了传统搜索体验：不再是返回"<strong>一堆链接</strong>"，而是直接给出"<strong>整合答案</strong>"。</p>
+<div class="compare-row">
+<div class="compare-col"><h3>🔍 传统搜索</h3>
+<ul><li>输入关键词</li><li>返回 10 条结果链接</li><li>用户需要点开多个链接</li><li>自己整合信息</li></ul></div>
+<div class="compare-col good"><h3>🤖 AI 搜索</h3>
+<ul><li>可以用自然语言提问</li><li>AI 阅读多个网页并总结</li><li>直接给出整合答案</li><li>附带信息来源链接</li></ul></div>
+</div>
+<h3>常见 AI 搜索产品</h3>
+<ul>
+<li>🇨🇳 <strong>百度 AI 搜索</strong>、夸克 AI 搜索、秘塔搜索</li>
+<li>🌍 <strong>Perplexity AI</strong>、Google Gemini、Microsoft Copilot</li>
+<li>💬 <strong>聊天式</strong>：ChatGPT 联网搜索、文心一言、通义千问、Kimi</li>
+</ul></section>
+<section class="slide"><h2>搜索的"坑"与"道"</h2>
+<div class="compare-row">
+<div class="compare-col bad"><h3>⚠️ 常见陷阱</h3>
+<ul>
+<li>误把广告当结果（注意"广告"标签）</li>
+<li>把营销软文当真实评测</li>
+<li>看到一两条就轻信结论</li>
+<li>AI 搜索"幻觉"——编造不存在的资料</li>
+<li>"信息茧房"——只看符合自己想法的结果</li>
+</ul></div>
+<div class="compare-col good"><h3>✅ 正确姿势</h3>
+<ul>
+<li>识别广告位</li>
+<li>多源核实信息</li>
+<li>看权威来源（官方、学术）</li>
+<li>看 AI 提供的<strong>引用链接</strong>，回溯原文</li>
+<li>培养独立思考能力</li>
+</ul></div>
+</div>
+<div class="highlight">🎓 <strong>核心素养：</strong>搜索引擎是工具，不是答案。<strong>会搜索 ≠ 真理解</strong>。培养"对信息源的批判性思维"，才能不被互联网误导。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 搜索引擎中负责"收集网页"的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">索引</div>
+<div class="quiz-opt" data-correct="true">爬虫</div>
+<div class="quiz-opt" data-correct="false">排名算法</div>
+<div class="quiz-opt" data-correct="false">用户</div></div>
+<div class="quiz-feedback">✅ 爬虫（Spider/Crawler）程序从已知网页出发，沿链接抓取新页面。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 要在百度上只搜.gov.cn 网站，应该用？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">"gov.cn"</div>
+<div class="quiz-opt" data-correct="true">site:gov.cn</div>
+<div class="quiz-opt" data-correct="false">-gov.cn</div>
+<div class="quiz-opt" data-correct="false">filetype:gov</div></div>
+<div class="quiz-feedback">✅ <code>site:</code> 操作符可以限定搜索范围在指定域名。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 关于 AI 搜索，下列说法<strong>不正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">能整合多源信息</div>
+<div class="quiz-opt" data-correct="true">回答永远准确无误</div>
+<div class="quiz-opt" data-correct="false">用自然语言提问</div>
+<div class="quiz-opt" data-correct="false">需要核实引用来源</div></div>
+<div class="quiz-feedback">✅ AI 搜索可能存在"幻觉"——编造看似合理但实际错误的信息。必须核实它给出的引用来源。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>搜索三环节</strong>：爬取(Crawl) → 索引(Index) → 排名(Rank)</li>
+<li><strong>排名因素</strong>：相关度、权威度、用户体验、新鲜度</li>
+<li><strong>实用技巧</strong>：双引号、减号、site:、filetype:、时间筛选</li>
+<li><strong>AI 搜索</strong>：自然语言提问，直接给出整合答案</li>
+<li><strong>核心素养</strong>：识别广告、多源核实、批判性思维</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>选一个你最近想了解的话题（如"5G 对生活的影响"），分别用传统搜索和 AI 搜索查询，对比结果质量。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "三大环节", "排名算法", "实用技巧", "AI 搜索", "坑与道", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

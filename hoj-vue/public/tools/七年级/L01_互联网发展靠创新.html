@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第1课 · 互联网发展靠创新</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第1单元 · 第1课</span>
+    <span class="title">互联网发展靠创新</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>互联网发展<br>靠创新</h1>
+<p class="subtitle">第一单元 · 探寻互联网新世界 · 第1课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>网络发展历史</strong></span>
+<span>💡 关键词：<strong>创新 · ARPANET · WWW</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">📜</span><div class="card-title">了解发展历程</div><div class="card-desc">知道互联网从 ARPANET 到今天的关键发展节点。</div></div><div class="card"><span class="card-icon">💡</span><div class="card-title">认识创新驱动</div><div class="card-desc">理解技术创新是互联网持续发展的根本动力。</div></div><div class="card"><span class="card-icon">🇨🇳</span><div class="card-title">看到中国成就</div><div class="card-desc">了解我国互联网建设的发展与成就。</div></div></div><h3 style="margin-top:30px;">💬 课前思考</h3>
+<div class="highlight">想一想：如果没有互联网，<strong>你今天会失去哪些功能</strong>？写下三个最受影响的方面。</div></section>
+<section class="slide"><h2>什么是互联网？</h2>
+<p>互联网（<strong style="color:var(--accent)">Internet</strong>）是由全球数以亿计的计算机、服务器、移动设备通过<strong>统一的协议</strong>连接起来的庞大网络系统。</p>
+<div class="highlight">🌐 <strong>核心思想：</strong>"Inter" + "net" = <strong>网络之间的网络</strong>（network of networks）—— 将世界上各种各样的小网络互相连接，形成一个全球性的信息高速公路。</div>
+<div class="stats">
+<div class="stat"><div class="stat-num">54亿+</div><div class="stat-label">全球网民</div></div>
+<div class="stat"><div class="stat-num">10.92亿</div><div class="stat-label">中国网民</div></div>
+<div class="stat"><div class="stat-num">77.5%</div><div class="stat-label">中国普及率</div></div>
+<div class="stat"><div class="stat-num">200+</div><div class="stat-label">覆盖国家</div></div>
+</div>
+<p style="font-size:12px;color:var(--muted);">📊 数据来源：CNNIC 第53次《中国互联网络发展状况统计报告》</p></section>
+<section class="slide"><h2>发展时间线 · 1960s—1990s</h2>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">1969 · ARPANET 诞生</div><div class="tl-title">互联网的"鼻祖"</div><div class="tl-desc">美国国防部高级研究计划局（ARPA）建立 ARPANET，最初只连接了 4 个节点的实验性网络，被公认为互联网的雏形。</div></div>
+<div class="tl-item"><div class="tl-year">1983 · TCP/IP 标准化</div><div class="tl-title">奠定互联网技术基础</div><div class="tl-desc">ARPANET 全面采用 TCP/IP 协议，标志着"互联网"作为统一标准网络的真正诞生。各种异构网络可以互联互通。</div></div>
+<div class="tl-item"><div class="tl-year">1989-1991 · 万维网 (WWW)</div><div class="tl-title">Tim Berners-Lee 的伟大创新</div><div class="tl-desc">英国科学家蒂姆·伯纳斯-李在欧洲核子研究中心（CERN）发明万维网，提出 HTTP、HTML、URL 三大核心技术，让普通人可以方便地浏览信息。</div></div>
+<div class="tl-item"><div class="tl-year">1994 · 中国全功能接入互联网</div><div class="tl-title">中国正式接入国际互联网</div><div class="tl-desc">1994 年 4 月 20 日，通过中科院高能所 64K 国际专线，中国实现全功能接入国际互联网，成为第 77 个国家级接入互联网的国家。</div></div>
+</div></section>
+<section class="slide"><h2>发展时间线 · 2000s—至今</h2>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">2000s · Web 2.0 时代</div><div class="tl-title">用户成为内容创造者</div><div class="tl-desc">博客、维基百科、社交网络兴起。互联网从"只读"变成"读写"。中国出现 QQ、新浪博客、人人网等。</div></div>
+<div class="tl-item"><div class="tl-year">2010s · 移动互联网爆发</div><div class="tl-title">智能手机改变一切</div><div class="tl-desc">4G 普及，智能手机大众化。微信、淘宝、抖音、滴滴等"超级 APP"出现。</div></div>
+<div class="tl-item"><div class="tl-year">2019- · 5G + AI + IoT</div><div class="tl-title">智能万物互联</div><div class="tl-desc">5G 商用、人工智能爆发、物联网普及。智能家居、无人驾驶、AIGC 开启新一轮变革。</div></div>
+<div class="tl-item"><div class="tl-year">未来 · 6G + 元宇宙 + 算力网</div><div class="tl-title">下一代互联网</div><div class="tl-desc">中国正在推进 IPv6 规模部署、东数西算工程、卫星互联网，构建天地一体的下一代信息基础设施。</div></div>
+</div></section>
+<section class="slide"><h2>关键创新者 · 站在巨人的肩膀上</h2>
+<div class="cards">
+<div class="card hover"><span class="card-icon">👨‍🔬</span><div class="card-title">Vinton Cerf · 鲍勃·卡恩</div><div class="card-desc">TCP/IP 协议的共同发明人，被誉为"<strong>互联网之父</strong>"。1974 年发表 TCP/IP 论文奠定互联网基础。</div></div>
+<div class="card hover"><span class="card-icon">🌐</span><div class="card-title">Tim Berners-Lee</div><div class="card-desc">英国科学家，1989 年发明<strong>万维网（WWW）</strong>，提出 HTTP、HTML、URL，并坚持将其免费开放给全人类。</div></div>
+<div class="card hover"><span class="card-icon">🇨🇳</span><div class="card-title">钱天白</div><div class="card-desc">1987 年，钱天白教授从北京向德国发出中国第一封电子邮件"<em>Across the Great Wall we can reach every corner in the world</em>"。</div></div>
+<div class="card hover"><span class="card-icon">🇨🇳</span><div class="card-title">胡启恒</div><div class="card-desc">"中国互联网之母"，1994 年代表中方与美国 NSF 谈判，推动中国全功能接入国际互联网。</div></div>
+</div></section>
+<section class="slide"><h2>中国互联网的发展成就</h2>
+<div class="cards">
+<div class="card"><span class="card-icon">🌐</span><div class="card-title">基础设施领先</div><div class="card-desc">建成全球最大的<strong>光纤宽带网络和 5G 网络</strong>，行政村光纤通达率 100%，5G 基站超 400 万个。</div></div>
+<div class="card"><span class="card-icon">📱</span><div class="card-title">应用规模庞大</div><div class="card-desc">移动支付、电子商务、共享经济等领域形成全球领先优势，<strong>移动支付普及率世界第一</strong>。</div></div>
+<div class="card"><span class="card-icon">🔬</span><div class="card-title">关键技术突破</div><div class="card-desc">在<strong>北斗卫星导航、量子通信、超级计算机、IPv6</strong>等领域取得重大突破。</div></div>
+<div class="card"><span class="card-icon">🚀</span><div class="card-title">创新企业涌现</div><div class="card-desc">华为、腾讯、阿里巴巴、字节跳动等一批<strong>世界级互联网科技企业</strong>走向全球。</div></div>
+</div>
+<div class="highlight" style="margin-top:24px;">🏆 <strong>核心启示：</strong>中国互联网的快速发展，离不开<strong>持续的技术创新</strong>、<strong>巨大的市场规模</strong>和<strong>开放的合作精神</strong>。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 公认的"互联网雏形"诞生于哪一年？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">1957 年</div>
+<div class="quiz-opt" data-correct="true">1969 年</div>
+<div class="quiz-opt" data-correct="false">1989 年</div>
+<div class="quiz-opt" data-correct="false">1994 年</div></div>
+<div class="quiz-feedback">✅ 1969 年，美国 ARPANET 诞生，首次实现 4 个节点的远程连接，被视为互联网雏形。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 万维网（WWW）的发明人是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">比尔·盖茨</div>
+<div class="quiz-opt" data-correct="false">史蒂夫·乔布斯</div>
+<div class="quiz-opt" data-correct="true">蒂姆·伯纳斯-李</div>
+<div class="quiz-opt" data-correct="false">马克·扎克伯格</div></div>
+<div class="quiz-feedback">✅ 蒂姆·伯纳斯-李 (Tim Berners-Lee) 1989 年在 CERN 发明 WWW，提出 HTTP/HTML/URL 三大核心技术。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 中国全功能接入国际互联网是哪一年？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">1987 年</div>
+<div class="quiz-opt" data-correct="false">1990 年</div>
+<div class="quiz-opt" data-correct="true">1994 年</div>
+<div class="quiz-opt" data-correct="false">2000 年</div></div>
+<div class="quiz-feedback">✅ 1994 年 4 月 20 日，中国通过 64K 国际专线全功能接入互联网，成为第 77 个互联网国家。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>互联网 = 网络的网络</strong>：通过统一协议把世界上分散的网络连成一张全球性大网</li>
+<li><strong>关键节点</strong>：ARPANET (1969) → TCP/IP (1983) → WWW (1989) → 中国 (1994) → 移动互联 (2010s) → AI+5G (2019-)</li>
+<li><strong>创新是根本动力</strong>：每一次跨越都源于关键技术创新</li>
+<li><strong>中国正在引领</strong>：从"跟跑"到"并跑"再到部分领域"领跑"</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>选一项你最常用的互联网服务（如外卖、网课、支付宝），追溯它依赖了哪些技术创新？</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面 · 互联网发展靠创新", "学习目标", "什么是互联网", "发展历程 1960-1990s", "发展历程 2000s-至今", "关键创新者", "中国互联网成就", "📝 课堂小测", "🎓 课堂总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

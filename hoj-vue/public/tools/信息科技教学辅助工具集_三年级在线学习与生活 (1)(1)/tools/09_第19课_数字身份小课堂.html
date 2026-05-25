@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>数字身份小课堂 — 第19课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #6d28d9; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  flex: 1; min-width: 130px; padding: 12px 16px; background: white;
+  border-radius: 10px; cursor: pointer; transition: all .2s;
+  font-size: 14px; font-weight: 600; text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  border: 2px solid transparent;
+}
+.tab:hover { background: #f5f3ff; }
+.tab.active { background: #8b5cf6; color: white; border-color: #6d28d9; }
+.tab .icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+.panel { background: white; border-radius: 14px; padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05); display: none; }
+.panel.active { display: block; }
+.panel h2 { color: #6d28d9; font-size: 20px; margin-bottom: 12px; }
+
+/* ===== 注册模拟器 ===== */
+.register-form { background: #faf9ff; padding: 20px; border-radius: 12px; }
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: 13px; color: #475569; margin-bottom: 4px; font-weight: 500; }
+.form-row input, .form-row select {
+  width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px;
+  outline: none; transition: border .2s;
+}
+.form-row input:focus { border-color: #8b5cf6; }
+.form-row .hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.btn-primary {
+  padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+  font-size: 14px;
+}
+.btn-primary:hover { opacity: .92; }
+.btn-secondary {
+  padding: 8px 16px; background: white; color: #6d28d9;
+  border: 1.5px solid #c4b5fd; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 13px;
+}
+
+.id-card {
+  margin-top: 20px; background: linear-gradient(135deg, #6d28d9, #4c1d95);
+  color: white; padding: 24px; border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(109,40,217,.3);
+}
+.id-card .id-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+.id-card .id-row .label { opacity: .8; }
+.id-card .id-row .val { font-weight: 600; }
+.id-card .uid { font-family: 'SF Mono', monospace; font-size: 12px; letter-spacing: 1px; opacity: .85; }
+.id-card .verified {
+  display: inline-block; padding: 3px 10px; background: rgba(34,197,94,.25);
+  border: 1px solid #22c55e; border-radius: 14px; font-size: 12px; margin-top: 8px;
+}
+
+/* ===== 唯一性演示 ===== */
+.uniqueness-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .uniqueness-demo { grid-template-columns: 1fr; } }
+.demo-card {
+  background: #faf9ff; padding: 16px; border-radius: 10px;
+  border-left: 4px solid #8b5cf6;
+}
+.demo-card h4 { color: #6d28d9; margin-bottom: 8px; font-size: 15px; }
+.real-id, .digital-id {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: white; border-radius: 8px; margin-bottom: 8px;
+}
+.real-id .avatar, .digital-id .avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+  display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;
+}
+.real-id .info, .digital-id .info { flex: 1; }
+.real-id .name { font-weight: 600; color: #1e293b; font-size: 14px; }
+.real-id .desc { font-size: 12px; color: #94a3b8; }
+.digital-id .nick { font-weight: 600; color: #6d28d9; font-size: 14px; }
+.digital-id .platform { font-size: 12px; color: #94a3b8; }
+
+.link-btn {
+  background: #fef3c7; color: #92400e; padding: 8px 14px; border-radius: 8px;
+  text-align: center; margin: 10px 0; font-size: 13px; font-weight: 500;
+}
+.link-btn::before { content: '🔗 '; }
+
+/* ===== 信用价值 ===== */
+.credit-board { padding: 20px; background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-radius: 12px; }
+.credit-score-display {
+  text-align: center; margin-bottom: 16px;
+}
+.credit-score-display .score {
+  font-size: 56px; font-weight: 700;
+  background: linear-gradient(135deg, #6d28d9, #8b5cf6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.credit-score-display .level { color: #6d28d9; font-size: 16px; font-weight: 600; margin-top: -8px; }
+.credit-bar-wrap { background: #e2e8f0; height: 14px; border-radius: 7px; overflow: hidden; margin: 14px 0; position: relative; }
+.credit-bar {
+  height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
+  border-radius: 7px; transition: width .6s;
+}
+.credit-bar-marks { position: relative; height: 14px; font-size: 10px; color: #64748b; margin-bottom: 14px; }
+.credit-bar-marks span { position: absolute; transform: translateX(-50%); }
+
+.action-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+@media (max-width: 600px) { .action-list { grid-template-columns: 1fr; } }
+.action-btn {
+  padding: 10px 14px; background: white; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  cursor: pointer; font-size: 13px; transition: all .2s; text-align: left;
+}
+.action-btn:hover { border-color: #8b5cf6; }
+.action-btn.good:hover { background: #f0fdf4; border-color: #22c55e; }
+.action-btn.bad:hover { background: #fef2f2; border-color: #ef4444; }
+
+.privilege-row {
+  background: white; padding: 12px 16px; border-radius: 8px; margin-top: 8px;
+  display: flex; align-items: center; gap: 10px; font-size: 13px;
+}
+.privilege-row.locked { opacity: .4; }
+.privilege-row .icon { font-size: 22px; }
+
+/* ===== 测验 ===== */
+.quiz-q { background: #faf9ff; padding: 18px; border-radius: 12px; margin-bottom: 14px; }
+.quiz-q .qtxt { font-weight: 600; color: #1e293b; margin-bottom: 12px; line-height: 1.6; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+  padding: 10px 14px; background: white; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  cursor: pointer; font-size: 13px; transition: all .2s;
+}
+.quiz-opt:hover { border-color: #8b5cf6; }
+.quiz-opt.correct { background: #dcfce7; border-color: #22c55e; }
+.quiz-opt.wrong { background: #fee2e2; border-color: #ef4444; }
+.quiz-feedback { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 8px; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.right { background: #dcfce7; color: #166534; }
+.quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+
+.knowledge {
+  background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b;
+  border-radius: 10px; padding: 16px 20px; margin-top: 18px;
+}
+.knowledge h3 { color: #92400e; margin-bottom: 8px; font-size: 16px; }
+.knowledge p { color: #78350f; font-size: 13px; line-height: 1.7; }
+
+.activity-log {
+  margin-top: 14px; max-height: 180px; overflow-y: auto;
+  background: white; border-radius: 8px; padding: 10px 14px; font-size: 13px;
+}
+.log-item { padding: 6px 0; border-bottom: 1px dashed #f1f5f9; display: flex; justify-content: space-between; }
+.log-item:last-child { border: none; }
+.log-item.gain { color: #166534; }
+.log-item.lose { color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🆔 数字身份小课堂</h1>
+    <div class="subtitle">配套课时：第19课 认识数字身份 · 体验数字身份的注册过程、唯一性和信用价值</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="register"><span class="icon">📝</span>注册体验</div>
+    <div class="tab" data-tab="unique"><span class="icon">🔍</span>唯一性</div>
+    <div class="tab" data-tab="credit"><span class="icon">💎</span>信用价值</div>
+    <div class="tab" data-tab="quiz"><span class="icon">❓</span>知识小测</div>
+  </div>
+
+  <!-- 注册体验 -->
+  <div class="panel active" id="panel-register">
+    <h2>📝 体验注册数字身份</h2>
+    <p style="color:#475569;margin-bottom:16px;font-size:14px;">
+      数字身份就像我们在网络世界的"通行证"。下面模拟在"国家中小学智慧教育平台"注册账号的过程：
+    </p>
+    <div class="register-form">
+      <div class="form-row">
+        <label>👤 真实姓名（实名认证）</label>
+        <input type="text" id="realName" placeholder="例：张小明">
+        <div class="hint">现实身份信息会与数字身份关联，所以要填写真实姓名</div>
+      </div>
+      <div class="form-row">
+        <label>🎂 出生年份</label>
+        <select id="birthYear">
+          <option value="2014">2014</option>
+          <option value="2015">2015</option>
+          <option value="2016" selected>2016</option>
+          <option value="2017">2017</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>📱 手机号（用于实名认证）</label>
+        <input type="text" id="phone" placeholder="例：138****5678" maxlength="11">
+        <div class="hint">手机号要与本人姓名实名绑定。每张身份证只能注册有限的手机号。</div>
+      </div>
+      <div class="form-row">
+        <label>✏️ 给自己起一个昵称</label>
+        <input type="text" id="nickname" placeholder="例：阳光小明">
+        <div class="hint">昵称是你在网络上的"名字"，可以个性化，但不要包含真实信息</div>
+      </div>
+      <div class="form-row">
+        <label>🔐 设置登录密码</label>
+        <input type="password" id="pwd" placeholder="至少 8 位">
+      </div>
+      <button class="btn-primary" onclick="register()">📨 完成注册</button>
+    </div>
+    <div id="idCardArea"></div>
+    <div class="knowledge">
+      <h3>💡 注册过程的科学原理</h3>
+      <p>注册时<b>实名认证</b>的作用：把"现实中的你"和"网络中的你"关联起来。这样：① 出现违法行为时能追责到人；② 防止小学生绕过家长监管使用不适合的内容；③ 保护账号被盗后能找回。</p>
+    </div>
+  </div>
+
+  <!-- 唯一性 -->
+  <div class="panel" id="panel-unique">
+    <h2>🔍 数字身份的唯一性</h2>
+    <p style="color:#475569;margin-bottom:16px;font-size:14px;">
+      一个真实的人，在不同平台可能有<b>不同的昵称和头像</b>，但他们都对应<b>同一个真实身份</b>（同一张身份证、同一个手机号）。
+    </p>
+    <div class="uniqueness-demo">
+      <div class="demo-card">
+        <h4>👤 现实中的小华</h4>
+        <div class="real-id">
+          <div class="avatar">华</div>
+          <div class="info">
+            <div class="name">王小华</div>
+            <div class="desc">身份证：110***********234</div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-card">
+        <h4>🌐 网络中的多个昵称</h4>
+        <div class="digital-id">
+          <div class="avatar" style="background:#f59e0b;">😊</div>
+          <div class="info">
+            <div class="nick">阳光小华</div>
+            <div class="platform">国家智慧教育平台</div>
+          </div>
+        </div>
+        <div class="digital-id">
+          <div class="avatar" style="background:#ec4899;">🐱</div>
+          <div class="info">
+            <div class="nick">爱猫的小朋友</div>
+            <div class="platform">动物科普网站</div>
+          </div>
+        </div>
+        <div class="digital-id">
+          <div class="avatar" style="background:#10b981;">📚</div>
+          <div class="info">
+            <div class="nick">华华读书</div>
+            <div class="platform">少儿阅读 App</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="link-btn" style="text-align:center;">这三个不同的昵称，背后都是同一个 王小华 同学</div>
+    <div class="knowledge">
+      <h3>💡 科学原理 · 数字身份的"映射关系"</h3>
+      <p>一个现实身份 → 可以有 N 个数字身份（不同平台、不同昵称）；但是反过来，一个数字身份 → 只能映射到一个现实身份。</p>
+      <p style="margin-top:8px;"><b>所以：</b>表面上"网上没人知道你是谁"，但实际上<b>实名认证后的数字身份是可以追溯到现实人的</b>。这就是"<b>数字身份的唯一性</b>"。一旦在网络上发布违法内容，公安机关可以通过手机号、IP 地址等线索快速锁定到个人。</p>
+    </div>
+  </div>
+
+  <!-- 信用价值 -->
+  <div class="panel" id="panel-credit">
+    <h2>💎 数字身份的信用价值</h2>
+    <p style="color:#475569;margin-bottom:16px;font-size:14px;">
+      你在网络上的每一个行为，都会影响你的"<b>信用分</b>"。点击不同的行为，看看信用分会怎样变化：
+    </p>
+    <div class="credit-board">
+      <div class="credit-score-display">
+        <div class="score" id="creditScore">600</div>
+        <div class="level" id="creditLevel">良好</div>
+      </div>
+      <div class="credit-bar-wrap">
+        <div class="credit-bar" id="creditBar" style="width:60%"></div>
+      </div>
+      <div class="credit-bar-marks">
+        <span style="left:0%">0</span>
+        <span style="left:35%">350 较低</span>
+        <span style="left:55%">550 中等</span>
+        <span style="left:70%">700 良好</span>
+        <span style="left:90%">900 极佳</span>
+        <span style="left:100%">1000</span>
+      </div>
+
+      <div style="font-weight:600;color:#6d28d9;margin-top:14px;">✅ 良好行为（提升信用）</div>
+      <div class="action-list">
+        <button class="action-btn good" onclick="updateCredit(15, '按时归还借阅的电子书')">📚 按时归还电子书 +15</button>
+        <button class="action-btn good" onclick="updateCredit(10, '及时支付订单')">💰 及时支付订单 +10</button>
+        <button class="action-btn good" onclick="updateCredit(20, '坚持完成在线学习课程')">🎓 完成在线课程 +20</button>
+        <button class="action-btn good" onclick="updateCredit(8, '友善回答他人提问')">💬 友善回答提问 +8</button>
+      </div>
+
+      <div style="font-weight:600;color:#dc2626;margin-top:16px;">❌ 不良行为（降低信用）</div>
+      <div class="action-list">
+        <button class="action-btn bad" onclick="updateCredit(-30, '发布不实信息')">📢 发布不实信息 -30</button>
+        <button class="action-btn bad" onclick="updateCredit(-50, '在网络上欺凌同学')">😡 网络欺凌他人 -50</button>
+        <button class="action-btn bad" onclick="updateCredit(-25, '随意转发未经核实的消息')">🔄 转发未核实消息 -25</button>
+        <button class="action-btn bad" onclick="updateCredit(-100, '使用虚假身份注册')">🎭 使用虚假身份 -100</button>
+      </div>
+
+      <div style="font-weight:600;margin-top:16px;color:#1e293b;">🎁 当前信用可享受的特权：</div>
+      <div id="privilegesArea"></div>
+      
+      <div style="font-weight:600;margin-top:14px;color:#475569;font-size:13px;">📜 行为日志：</div>
+      <div class="activity-log" id="activityLog"><div style="color:#94a3b8;text-align:center;padding:10px;">暂无记录</div></div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学原理 · 信用值是如何计算的</h3>
+      <p>支付宝的"芝麻信用分"、微信的"微信支付分"，都是用算法综合分析你的<b>身份特征、履约能力、信用历史、人脉关系、行为偏好</b>这 5 个维度后给出的分数。<br>
+      <b>分数高的好处：</b>免押金租用充电宝、共享单车；优先退款；先用后付等。<br>
+      <b>分数低的代价：</b>无法贷款、无法进入某些场所、商家不愿意交易。<br>
+      所以——<b>"诚信"在网络世界同样重要，甚至更重要</b>，因为一切行为都被记录下来了。</p>
+    </div>
+  </div>
+
+  <!-- 测验 -->
+  <div class="panel" id="panel-quiz">
+    <h2>❓ 数字身份知识小测</h2>
+    <div id="quizArea"></div>
+    <button class="btn-primary" style="margin-top:14px;" onclick="resetQuiz()">🔁 重新开始</button>
+  </div>
+</div>
+
+<script>
+// 标签切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== 注册 =====
+function register() {
+  const name = document.getElementById('realName').value.trim();
+  const year = document.getElementById('birthYear').value;
+  const phone = document.getElementById('phone').value.trim();
+  const nick = document.getElementById('nickname').value.trim();
+  const pwd = document.getElementById('pwd').value;
+  
+  if (!name || !phone || !nick || !pwd) {
+    alert('⚠️ 请填写完整的注册信息');
+    return;
+  }
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    alert('⚠️ 手机号格式不正确（应该是 11 位，以 1 开头）');
+    return;
+  }
+  if (pwd.length < 8) {
+    alert('⚠️ 密码至少 8 位');
+    return;
+  }
+  
+  // 生成 UID
+  const uid = 'UID-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+  const maskedPhone = phone.slice(0,3) + '****' + phone.slice(7);
+  
+  document.getElementById('idCardArea').innerHTML = `
+    <div class="id-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:18px;font-weight:700;">🌐 我的数字身份</div>
+        <div class="verified">✓ 已实名认证</div>
+      </div>
+      <div class="id-row"><span class="label">网络昵称</span><span class="val">${escapeHtml(nick)}</span></div>
+      <div class="id-row"><span class="label">真实姓名</span><span class="val">${escapeHtml(name.charAt(0))}**</span></div>
+      <div class="id-row"><span class="label">出生年份</span><span class="val">${year}年</span></div>
+      <div class="id-row"><span class="label">手机号</span><span class="val">${maskedPhone}</span></div>
+      <div class="id-row"><span class="label">身份编号</span><span class="val uid">${uid}</span></div>
+      <div style="margin-top:12px;font-size:12px;opacity:.85;line-height:1.6;">
+        🔒 你的真实信息已加密保存。<br>
+        网络上其他人只能看到你的昵称，但平台知道你的真实身份。
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ===== 信用值 =====
+let credit = 600;
+const privileges = [
+  { score: 350, icon: '📖', text: '基础浏览：可以浏览网络资源', always: true },
+  { score: 500, icon: '💬', text: '可在班级群发言、回答问题' },
+  { score: 600, icon: '📚', text: '可借阅电子书' },
+  { score: 700, icon: '🎁', text: '免押金租用学习设备' },
+  { score: 800, icon: '⚡', text: '优先退款、先用后付' },
+  { score: 900, icon: '⭐', text: '专属客服、参与新品体验' },
+];
+
+function updateCredit(delta, action) {
+  credit = Math.max(0, Math.min(1000, credit + delta));
+  
+  // 添加日志
+  const log = document.getElementById('activityLog');
+  if (log.children[0] && log.children[0].textContent.includes('暂无')) log.innerHTML = '';
+  const item = document.createElement('div');
+  item.className = 'log-item ' + (delta > 0 ? 'gain' : 'lose');
+  const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  item.innerHTML = `<span>${time} · ${action}</span><span>${delta > 0 ? '+' : ''}${delta}</span>`;
+  log.insertBefore(item, log.firstChild);
+  
+  renderCredit();
+}
+
+function renderCredit() {
+  document.getElementById('creditScore').textContent = credit;
+  document.getElementById('creditBar').style.width = (credit / 10) + '%';
+  
+  let level;
+  if (credit >= 900) level = '极佳 ⭐⭐⭐⭐⭐';
+  else if (credit >= 700) level = '良好 ⭐⭐⭐⭐';
+  else if (credit >= 550) level = '中等 ⭐⭐⭐';
+  else if (credit >= 350) level = '较低 ⭐⭐';
+  else level = '很差 ⭐';
+  document.getElementById('creditLevel').textContent = level;
+  
+  // 渲染特权
+  const pArea = document.getElementById('privilegesArea');
+  pArea.innerHTML = privileges.map(p => {
+    const unlocked = p.always || credit >= p.score;
+    return `<div class="privilege-row ${unlocked ? '' : 'locked'}">
+      <span class="icon">${p.icon}</span>
+      <span style="flex:1;">${p.text}</span>
+      <span style="color:${unlocked ? '#22c55e' : '#94a3b8'};font-weight:600;">${unlocked ? '✓ 已解锁' : '🔒 ' + p.score + '+'}</span>
+    </div>`;
+  }).join('');
+}
+renderCredit();
+
+// ===== 测验 =====
+const quizQuestions = [
+  {
+    q: '在网络上，"数字身份"是什么？',
+    options: [
+      { text: '我们的银行卡号', correct: false },
+      { text: '我们在网络上的"通行证"，比如账号', correct: true },
+      { text: '我们用的电脑型号', correct: false },
+    ],
+    explain: '数字身份是个人在网络上的在线身份，就像现实生活中的身份证，开展在线活动需要它。'
+  },
+  {
+    q: '为什么注册账号时需要"实名认证"？',
+    options: [
+      { text: '让平台收集我们的隐私信息卖钱', correct: false },
+      { text: '关联到现实身份，规范网络行为，防止违法', correct: true },
+      { text: '完全没有意义，只是麻烦', correct: false },
+    ],
+    explain: '实名认证把数字身份和现实身份关联，既能追责违法行为，也能在账号被盗时帮助找回。'
+  },
+  {
+    q: '在网络上发布谣言会怎样？',
+    options: [
+      { text: '没人知道我是谁，不会有任何后果', correct: false },
+      { text: '通过实名认证的数字身份能追溯到我，会承担法律责任', correct: true },
+      { text: '只要换个昵称就没事了', correct: false },
+    ],
+    explain: '虽然昵称可以变化，但每个数字身份都唯一对应一个现实身份，公安机关可以通过手机号、IP 地址锁定到人。'
+  },
+  {
+    q: '小学生使用爸爸妈妈的身份证注册社交账号，对吗？',
+    options: [
+      { text: '可以，反正是家里人', correct: false },
+      { text: '不对，这违反了实名制规定，且容易让小学生接触不适合的内容', correct: true },
+      { text: '只要不违法就可以', correct: false },
+    ],
+    explain: '私自使用他人身份信息注册是违法行为。未成年人应该使用青少年模式，让监护人陪同管理。'
+  },
+  {
+    q: '怎样让自己的数字身份"信用价值"更高？',
+    options: [
+      { text: '尽量多发各种消息，刷存在感', correct: false },
+      { text: '诚实守信，按时履约，文明交流，不传谣不欺凌', correct: true },
+      { text: '在不同平台用不同的真实身份', correct: false },
+    ],
+    explain: '信用是日积月累的——按时归还、文明交流、不发谣言，每一个良好行为都会提升你的信用价值。'
+  },
+];
+
+let quizState = quizQuestions.map(() => null);
+
+function renderQuiz() {
+  const area = document.getElementById('quizArea');
+  area.innerHTML = quizQuestions.map((q, qi) => {
+    const answered = quizState[qi] !== null;
+    return `<div class="quiz-q">
+      <div class="qtxt">${qi + 1}. ${q.q}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt, oi) => {
+          let cls = '';
+          if (answered) {
+            if (opt.correct) cls = 'correct';
+            else if (quizState[qi] === oi) cls = 'wrong';
+          }
+          return `<button class="quiz-opt ${cls}" ${answered ? 'disabled' : ''} onclick="answerQuiz(${qi}, ${oi})">${String.fromCharCode(65+oi)}. ${opt.text}</button>`;
+        }).join('')}
+      </div>
+      ${answered ? `<div class="quiz-feedback show ${q.options[quizState[qi]].correct ? 'right' : 'wrong'}">
+        ${q.options[quizState[qi]].correct ? '✅ 回答正确！' : '❌ 不太对'}：${q.explain}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function answerQuiz(qi, oi) {
+  quizState[qi] = oi;
+  renderQuiz();
+}
+
+function resetQuiz() {
+  quizState = quizQuestions.map(() => null);
+  renderQuiz();
+}
+
+renderQuiz();
+</script>
+</body>
+</html>

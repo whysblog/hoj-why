@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>顺序结构流程图 - 第5课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.symbol-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.sym-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sym-shape {
+  width: 80px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sym-rounded { background: var(--primary); border-radius: 25px; }
+.sym-rect { background: var(--primary); border-radius: 4px; }
+.sym-parallelogram {
+  background: var(--warning);
+  transform: skewX(-18deg);
+  border-radius: 0;
+}
+.sym-parallelogram span { transform: skewX(18deg); }
+.sym-diamond {
+  background: var(--danger);
+  width: 60px; height: 60px;
+  transform: rotate(45deg);
+  border-radius: 4px;
+}
+.sym-diamond span { transform: rotate(-45deg); display: block; }
+.sym-info { flex: 1; }
+.sym-info strong { color: var(--primary-dark); display: block; font-size: 14px; }
+.sym-info span { font-size: 12.5px; color: var(--text-light); }
+
+.temp-converter {
+  background: linear-gradient(135deg, #FFF4E6, #FFE5D4);
+  border-radius: 14px;
+  padding: 24px;
+}
+.temp-input-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.temp-input-row input {
+  width: 100px;
+  font-size: 22px;
+  text-align: center;
+  font-weight: 700;
+}
+.temp-formula {
+  font-family: 'Cambria Math', serif;
+  font-size: 18px;
+  background: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  display: inline-block;
+  margin: 10px 0;
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+.temp-result {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 10px 0;
+}
+.temp-result small { font-size: 16px; color: var(--text-light); margin-left: 4px; }
+
+.exec-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 14px 0;
+}
+.exec-log {
+  background: #1a1f2e;
+  color: #A8E6CF;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  min-height: 80px;
+  line-height: 1.8;
+  margin-top: 12px;
+}
+.exec-log .log-line { animation: typeIn 0.3s ease; }
+@keyframes typeIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.exec-log .log-input { color: #FFE082; }
+.exec-log .log-proc { color: #81D4FA; }
+.exec-log .log-output { color: #C8E6C9; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📐 顺序结构流程图</h1>
+    <div class="subtitle">用流程图描述算法的"一步一步"</div>
+    <span class="lesson-tag">第5课 · 数学运算讲方法</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="slide-subtitle">学会用流程图描述"顺序结构"</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识算法的<strong>顺序结构</strong>(按步骤依次执行)</li>
+            <li>了解<strong>流程图</strong>中常用的图框含义</li>
+            <li>学会画简单的顺序结构流程图</li>
+            <li>从数学计算的角度,体会算法是<strong>"解决问题的方法"</strong></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="slide" data-title="情境引入">
+        <div class="slide-title"><span class="num">2</span>情境:友好学校的温度</div>
+        <div class="slide-subtitle">华氏温度 → 摄氏温度,我们要怎么算?</div>
+        <div class="scenario-box">
+          <span class="label">📰 校园记者站</span>
+          <p style="margin-top:6px;">你正在写一篇关于友好学校的报道。这所学校所在地 2 月的平均气温是 <strong>50°F (华氏度)</strong>,你要告诉同学这相当于多少 <strong>°C (摄氏度)</strong>。</p>
+        </div>
+        <div class="concept-card" style="margin:14px 0;">
+          <h4>📘 转换公式</h4>
+          <p>已知公式: <span class="temp-formula" style="font-size:15px;">摄氏温度 = 5 × (华氏温度 − 32) ÷ 9</span></p>
+          <p style="margin-top:8px;">用算法的角度,这个公式就是一种<strong>"输入—处理—输出"</strong>的过程。</p>
+        </div>
+        <div class="info-panel">
+          <strong>🤔 想一想:</strong>这个计算可以拆成几步?每一步要做什么?
+        </div>
+      </div>
+
+      <div class="slide" data-title="流程图符号">
+        <div class="slide-title"><span class="num">3</span>认识流程图的"图框"</div>
+        <div class="slide-subtitle">流程图用 4 种基本图框来表示不同的操作</div>
+        <div class="symbol-legend">
+          <div class="sym-card">
+            <div class="sym-shape sym-rounded">圆角矩形</div>
+            <div class="sym-info"><strong>开始 / 结束</strong><span>算法的入口和出口</span></div>
+          </div>
+          <div class="sym-card">
+            <div class="sym-shape sym-parallelogram"><span>平行四边形</span></div>
+            <div class="sym-info"><strong>输入 / 输出</strong><span>数据的进或出</span></div>
+          </div>
+          <div class="sym-card">
+            <div class="sym-shape sym-rect">直角矩形</div>
+            <div class="sym-info"><strong>处理</strong><span>执行计算或操作</span></div>
+          </div>
+          <div class="sym-card">
+            <div class="sym-shape sym-diamond"><span>菱形</span></div>
+            <div class="sym-info"><strong>判断</strong><span>分支结构用(下一课学)</span></div>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>➡️ 流程线:</strong>带箭头的连接线,表示算法<strong>从哪一步走到哪一步</strong>。顺序结构里,流程线总是<strong>自上而下</strong>。
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:温度转换">
+        <div class="slide-title"><span class="num">4</span>🌡️ 互动:温度转换流程图</div>
+        <div class="slide-subtitle">输入一个华氏温度,看算法如何逐步执行</div>
+        <div class="temp-converter">
+          <div class="temp-input-row">
+            <label style="font-size:16px;">华氏温度:</label>
+            <input type="number" id="tempF" value="50"> °F
+            <button class="btn-success" onclick="runTempConverter()">▶ 执行算法</button>
+            <button class="btn-secondary" onclick="resetTemp()">⏹ 重置</button>
+          </div>
+          <div style="text-align:center;">
+            <span class="temp-formula">摄氏温度 = 5 × (华氏 − 32) ÷ 9</span>
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+            摄氏温度: <span class="temp-result" id="tempC">—</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:20px; margin-top:16px;">
+          <div class="flowchart" id="tempFlow">
+            <div class="flow-node start" data-step="0">开始</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node io" data-step="1">输入华氏温度</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-step="2">计算摄氏温度<br><small>5×(华氏−32)÷9</small></div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node io" data-step="3">输出摄氏温度</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node end" data-step="4">结束</div>
+          </div>
+          <div>
+            <h4 style="color:var(--primary-dark); margin-bottom:10px;">💻 算法执行日志</h4>
+            <div class="exec-log" id="tempLog">点击"执行算法"开始...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="顺序结构特点">
+        <div class="slide-title"><span class="num">5</span>顺序结构的特点</div>
+        <div class="slide-subtitle">最基本、最简单的算法结构</div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>1️⃣ 按顺序执行</h4>
+            <p>算法<strong>自上而下</strong>,一步一步执行,前一步完成才能进入下一步。</p>
+          </div>
+          <div class="concept-card">
+            <h4>2️⃣ 无分支无循环</h4>
+            <p>没有"如果……就……",也没有"重复做……"。<strong>路径只有一条</strong>。</p>
+          </div>
+          <div class="concept-card">
+            <h4>3️⃣ 步骤数固定</h4>
+            <p>不管输入是什么,执行的步骤数<strong>都是一样的</strong>。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🍅 回想一下:</strong>做西红柿炒鸡蛋的菜谱,1-7 步严格按顺序做下来,中间没有"如果……"也没有"反复做",这就是典型的顺序结构。
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li><strong>顺序结构</strong> — 自上而下、一步一步执行的算法</li>
+            <li>流程图的 4 种基本图框:开始/结束、输入/输出、处理、判断</li>
+            <li>用流程图可以让算法<strong>看得见、想得清楚</strong></li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后练习</h3>
+          <p>试着画一个流程图,描述<strong>"计算一个长方形的周长"</strong>(已知长和宽)。</p>
+          <p style="margin-top:6px;">提示:输入长 → 输入宽 → 计算 → 输出。下节课我们会学习<strong>分支结构</strong>(如果……就……)!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+function runTempConverter() {
+  const f = parseFloat(document.getElementById('tempF').value);
+  if (isNaN(f)) return;
+  const log = document.getElementById('tempLog');
+  log.innerHTML = '';
+  const nodes = document.querySelectorAll('#tempFlow .flow-node');
+  nodes.forEach(n => n.classList.remove('active'));
+
+  const messages = [
+    { step: 0, html: '<span class="log-line">📍 算法启动...</span>' },
+    { step: 1, html: '<span class="log-line log-input">📥 输入华氏温度: ' + f + ' °F</span>' },
+    { step: 2, html: '<span class="log-line log-proc">⚙️ 计算: 5 × (' + f + ' − 32) ÷ 9</span>' },
+    { step: 2, html: '<span class="log-line log-proc">⚙️ = 5 × ' + (f - 32) + ' ÷ 9</span>' },
+    { step: 2, html: '<span class="log-line log-proc">⚙️ = ' + Math.round(5 * (f - 32) / 9 * 100) / 100 + '</span>' },
+    { step: 3, html: '<span class="log-line log-output">📤 输出摄氏温度: ' + (Math.round(5 * (f - 32) / 9 * 100) / 100) + ' °C</span>' },
+    { step: 4, html: '<span class="log-line">✅ 算法执行完毕</span>' }
+  ];
+
+  messages.forEach((msg, i) => {
+    setTimeout(() => {
+      // 高亮对应节点
+      nodes.forEach(n => n.classList.remove('active'));
+      const target = document.querySelector('#tempFlow .flow-node[data-step="' + msg.step + '"]');
+      if (target) target.classList.add('active');
+      // 显示日志
+      log.innerHTML += msg.html + '<br>';
+      log.scrollTop = log.scrollHeight;
+      // 最后一步显示结果
+      if (i === messages.length - 1) {
+        const c = Math.round(5 * (f - 32) / 9 * 100) / 100;
+        document.getElementById('tempC').innerHTML = c + '<small>°C</small>';
+      }
+    }, i * 700);
+  });
+}
+
+function resetTemp() {
+  document.querySelectorAll('#tempFlow .flow-node').forEach(n => n.classList.remove('active'));
+  document.getElementById('tempLog').textContent = '点击"执行算法"开始...';
+  document.getElementById('tempC').textContent = '—';
+}
+</script>
+</body>
+</html>

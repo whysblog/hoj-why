@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>合作制作作品 — 第25课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#ecfeff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#0e7490,#06b6d4);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#0e7490;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#06b6d4;color:white;border-color:#0e7490}
+.intro{background:linear-gradient(135deg,#cffafe,#a5f3fc);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#0e7490;margin-bottom:8px;font-size:20px}.intro p{color:#0c4a6e;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:36px}.tool-card h4{color:#0e7490;margin:6px 0 4px;font-size:14px}.tool-card p{color:#475569;font-size:12px;line-height:1.5}
+
+/* 软件对比 */
+.compare-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06);margin:14px 0}
+.compare-table table{width:100%;border-collapse:collapse}
+.compare-table th{background:#cffafe;color:#0e7490;padding:10px;font-weight:600;font-size:13px;text-align:left}
+.compare-table td{padding:10px;border-top:1px solid #cffafe;font-size:13px;color:#475569}
+.compare-table td.tool-name{font-weight:700;color:#0e7490}
+.recommend-yes{color:#15803d}
+.recommend-no{color:#b91c1c}
+
+/* 软件选择器 */
+.task-selector{background:white;border-radius:12px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.task-q{font-weight:600;color:#0e7490;font-size:14px;margin-bottom:10px}
+.task-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.task-option{padding:14px;background:white;border:1.5px solid #a5f3fc;border-radius:10px;cursor:pointer;text-align:center;transition:all .2s}
+.task-option:hover{background:#cffafe}
+.task-option.selected{background:#06b6d4;color:white;border-color:#0e7490}
+.task-option .icon{font-size:30px;display:block;margin-bottom:6px}
+.task-option .name{font-size:12px;font-weight:600}
+.recommend-display{background:#dcfce7;padding:14px 18px;border-radius:10px;margin-top:14px;display:none}
+.recommend-display.show{display:block}
+.recommend-display h4{color:#15803d;margin-bottom:6px;font-size:15px}
+.recommend-display p{color:#166534;font-size:13px;line-height:1.7}
+
+/* 素材清单 */
+.material-list{background:white;border-radius:12px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.material-row{display:flex;align-items:center;gap:10px;padding:8px;background:#ecfeff;border-radius:8px;margin-bottom:6px}
+.material-row .who{padding:3px 10px;background:#06b6d4;color:white;border-radius:12px;font-size:11px;flex-shrink:0}
+.material-row .name{font-weight:600;color:#0e7490;font-size:13px;min-width:80px}
+.material-row .status-tag{padding:3px 8px;border-radius:10px;font-size:11px;font-weight:600;flex-shrink:0}
+.status-done{background:#dcfce7;color:#15803d}
+.status-doing{background:#fef3c7;color:#92400e}
+.status-todo{background:#e2e8f0;color:#475569}
+.material-row .info{flex:1;font-size:12px;color:#475569;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🛠️ 合作制作作品</h1>
+    <div class="lesson">第 25 课 · 第七单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>制作前的准备</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>素材整理清单</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>常用软件对比</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>软件选择助手</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>合作小贴士</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🛠️ 制作前的准备</h2>
+      <div class="lead">磨刀不误砍柴工，做好准备才能合作高效</div>
+      <div class="intro">
+        <h3>📋 三个准备</h3>
+        <p>分组完成后，开始动手做之前还要做好<b>三件事</b>：① 收集素材，② 选好工具，③ 约定时间。这些做好了，合作才能顺利。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">📦</div><h4>① 收集素材</h4><p>图片、文字、音频、视频都准备好</p></div>
+        <div class="tool-card"><div class="icon">🛠️</div><h4>② 选好工具</h4><p>选择最适合任务的软件</p></div>
+        <div class="tool-card"><div class="icon">⏰</div><h4>③ 约定时间</h4><p>什么时候完成、什么时候汇总</p></div>
+        <div class="tool-card"><div class="icon">📤</div><h4>④ 共享平台</h4><p>用云盘、群文件共享</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📦 素材整理清单</h2>
+      <div class="lead">小组分工后，整理一份素材清单（示例：制作"传统节日"小报）</div>
+      <div class="material-list">
+        <div class="material-row">
+          <span class="who">小华</span>
+          <span class="name">📷 图片</span>
+          <span class="info">春节、端午、中秋等节日的图片，每个节日 3 张</span>
+          <span class="status-tag status-done">✅ 已完成</span>
+        </div>
+        <div class="material-row">
+          <span class="who">小红</span>
+          <span class="name">📝 文字</span>
+          <span class="info">每个节日的来历、习俗简介，每个 100 字左右</span>
+          <span class="status-tag status-done">✅ 已完成</span>
+        </div>
+        <div class="material-row">
+          <span class="who">小明</span>
+          <span class="name">🎵 音频</span>
+          <span class="info">节日歌曲、传统民乐片段，每首 30 秒</span>
+          <span class="status-tag status-doing">🔄 进行中</span>
+        </div>
+        <div class="material-row">
+          <span class="who">小亮</span>
+          <span class="name">🎬 视频</span>
+          <span class="info">节日民俗活动视频片段，每个 1 分钟</span>
+          <span class="status-tag status-doing">🔄 进行中</span>
+        </div>
+        <div class="material-row">
+          <span class="who">小娟</span>
+          <span class="name">✨ 装饰素材</span>
+          <span class="info">中国结、灯笼、福字等装饰元素</span>
+          <span class="status-tag status-todo">⏳ 待开始</span>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 素材整理小窍门</h3>
+        <p>① <b>分文件夹</b>：按"图片"、"文字"、"音频"、"视频"分类放好；<br>② <b>命名规范</b>：文件名用"主题-内容"格式（如：春节-1.jpg）；<br>③ <b>上传云盘</b>：所有素材统一传到群云盘，方便所有组员使用；<br>④ <b>素材来源</b>：优先用<b>原创内容</b>，使用网络素材要注明出处。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>💻 常用软件对比</h2>
+      <div class="lead">不同的作品类型，适合不同的软件</div>
+      <div class="compare-table">
+        <table>
+          <thead>
+            <tr><th>软件名称</th><th>适合的作品</th><th>三年级推荐度</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="tool-name">📝 Word / WPS 文字</td><td>文档、电子小报、读书报告</td><td class="recommend-yes">⭐⭐⭐⭐⭐ 强烈推荐</td></tr>
+            <tr><td class="tool-name">📊 PowerPoint / WPS 演示</td><td>演示文稿、数字相册</td><td class="recommend-yes">⭐⭐⭐⭐⭐ 强烈推荐</td></tr>
+            <tr><td class="tool-name">🎨 画图（Windows 自带）</td><td>简单绘画、图形拼贴</td><td class="recommend-yes">⭐⭐⭐⭐ 推荐</td></tr>
+            <tr><td class="tool-name">🎬 剪映 / 必剪</td><td>短视频剪辑</td><td class="recommend-yes">⭐⭐⭐⭐ 推荐（家长辅助）</td></tr>
+            <tr><td class="tool-name">🎵 浏览器录音</td><td>简单音频录制</td><td class="recommend-yes">⭐⭐⭐⭐ 推荐</td></tr>
+            <tr><td class="tool-name">🌐 腾讯文档 / 石墨文档</td><td>多人协作编辑</td><td class="recommend-yes">⭐⭐⭐⭐⭐ 强烈推荐</td></tr>
+            <tr><td class="tool-name">🎨 Photoshop</td><td>专业图像处理</td><td class="recommend-no">⭐⭐ 太难，不推荐</td></tr>
+            <tr><td class="tool-name">🎬 Premiere</td><td>专业视频剪辑</td><td class="recommend-no">⭐ 太复杂，不推荐</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎯 软件选择助手</h2>
+      <div class="lead">告诉我你要做什么作品，我帮你选合适的软件</div>
+      <div class="task-selector">
+        <div class="task-q">📝 你要做什么类型的作品？</div>
+        <div class="task-options">
+          <div class="task-option" data-type="newspaper" onclick="selectType(this)">
+            <span class="icon">📰</span>
+            <span class="name">电子小报</span>
+          </div>
+          <div class="task-option" data-type="album" onclick="selectType(this)">
+            <span class="icon">📸</span>
+            <span class="name">数字相册</span>
+          </div>
+          <div class="task-option" data-type="ppt" onclick="selectType(this)">
+            <span class="icon">📊</span>
+            <span class="name">演示文稿</span>
+          </div>
+          <div class="task-option" data-type="video" onclick="selectType(this)">
+            <span class="icon">🎬</span>
+            <span class="name">短视频</span>
+          </div>
+          <div class="task-option" data-type="audio" onclick="selectType(this)">
+            <span class="icon">🎵</span>
+            <span class="name">音频作品</span>
+          </div>
+          <div class="task-option" data-type="paint" onclick="selectType(this)">
+            <span class="icon">🎨</span>
+            <span class="name">数字绘画</span>
+          </div>
+          <div class="task-option" data-type="doc" onclick="selectType(this)">
+            <span class="icon">📝</span>
+            <span class="name">长文档</span>
+          </div>
+          <div class="task-option" data-type="collab" onclick="selectType(this)">
+            <span class="icon">👥</span>
+            <span class="name">多人协作</span>
+          </div>
+        </div>
+        <div class="recommend-display" id="rec">
+          <h4 id="recTitle">💡 推荐工具</h4>
+          <p id="recText"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🤝 合作小贴士</h2>
+      <div class="lead">怎样让合作更顺利？记住这些黄金法则</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">📞</div><h4>保持联系</h4><p>用群组随时沟通</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">⏰</div><h4>按时完成</h4><p>不拖延自己的部分</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🤝</div><h4>互相帮助</h4><p>提前完成可以帮别人</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">💬</div><h4>有事提前说</h4><p>遇到困难及时反馈</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">👂</div><h4>尊重意见</h4><p>认真听别人的想法</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🌟</div><h4>赞美他人</h4><p>多说鼓励的话</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 合作中遇到的常见问题</h3>
+        <p>① <b>有人不干活怎么办</b>？组长提醒并鼓励他，找到他擅长的事让他做；<br>② <b>意见分歧怎么办</b>？投票决定或听老师建议；<br>③ <b>有人完不成怎么办</b>？大家一起帮他完成，而不是抱怨；<br>④ <b>有人闹脾气怎么办</b>？冷静一下再沟通，必要时找老师协调。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const recommendations = {
+  newspaper: {
+    title: '💡 推荐工具：WPS 文字 / Word',
+    text: '电子小报推荐用 <b>WPS 文字 或 Word</b>。原因：可以方便地<b>插入文本框、图片、艺术字</b>，调整版面。多人协作可以用 <b>腾讯文档</b>，每人编辑不同的部分。'
+  },
+  album: {
+    title: '💡 推荐工具：WPS 演示 / PowerPoint',
+    text: '数字相册推荐用 <b>WPS 演示 或 PowerPoint</b>。原因：每张幻灯片放一张照片，可以设置<b>自动播放、过渡效果、背景音乐</b>，制作出生动的相册。'
+  },
+  ppt: {
+    title: '💡 推荐工具：WPS 演示 / PowerPoint',
+    text: '演示文稿推荐用 <b>WPS 演示 或 PowerPoint</b>。原因：专门为演讲设计，可以<b>分页展示、添加动画、做笔记</b>。多人协作可以用 <b>腾讯文档 → 在线幻灯片</b>。'
+  },
+  video: {
+    title: '💡 推荐工具：剪映 / 必剪',
+    text: '短视频推荐用 <b>剪映（手机）或 必剪</b>。原因：界面友好、模板丰富、自带音乐和滤镜。<b>建议在家长辅导下使用</b>。剪辑完成后导出 MP4 格式。'
+  },
+  audio: {
+    title: '💡 推荐工具：录音软件 + 在线音频处理',
+    text: '音频作品推荐用 <b>系统自带录音机 + Audacity</b>。原因：录音简单，Audacity 可以<b>剪切、合并、加背景音乐</b>。也可以直接用浏览器在线录音。'
+  },
+  paint: {
+    title: '💡 推荐工具：画图 / WPS Office 绘图',
+    text: '数字绘画推荐用 <b>Windows 自带的"画图"</b>。原因：操作简单，三年级学生易上手。可以画<b>基本图形、上色、加文字</b>。进阶可以尝试"画图 3D"。'
+  },
+  doc: {
+    title: '💡 推荐工具：WPS 文字 / Word',
+    text: '长文档推荐用 <b>WPS 文字 或 Word</b>。原因：可以方便地<b>设置标题、段落、目录、插入图片</b>。打字也比手写快很多。'
+  },
+  collab: {
+    title: '💡 推荐工具：腾讯文档 / 石墨文档',
+    text: '多人协作推荐用 <b>腾讯文档 或 石墨文档</b>。原因：<b>多人可以同时在线编辑</b>，自动保存、可看到谁在编辑、可评论讨论。比传统方式效率高很多。'
+  },
+};
+
+function selectType(el) {
+  document.querySelectorAll('.task-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const type = el.dataset.type;
+  const rec = recommendations[type];
+  document.getElementById('recTitle').textContent = rec.title;
+  document.getElementById('recText').innerHTML = rec.text;
+  document.getElementById('rec').classList.add('show');
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

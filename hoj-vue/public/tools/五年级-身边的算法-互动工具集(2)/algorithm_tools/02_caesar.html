@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>凯撒密码 - 第9课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.cipher-table {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 4px;
+  margin: 18px 0;
+}
+.cipher-cell {
+  text-align: center;
+  padding: 8px 0;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.cipher-cell.plain { background: #F0F7FF; color: var(--primary-dark); }
+.cipher-cell.cipher { background: #FFF4E6; color: var(--accent); }
+.cipher-cell.highlight {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(74,144,226,0.3);
+  z-index: 2;
+}
+.text-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+.text-box {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.text-box-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+textarea {
+  width: 100%;
+  min-height: 100px;
+  border: none;
+  resize: vertical;
+  font-size: 15px;
+  font-family: 'Courier New', monospace;
+  outline: none;
+}
+.shift-display {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  display: inline-block;
+  margin: 0 6px;
+}
+@media (max-width: 700px) {
+  .text-area { grid-template-columns: 1fr; }
+  .cipher-table { grid-template-columns: repeat(7, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔐 凯撒密码加解密器</h1>
+    <div class="subtitle">通过移位加密算法保护信息安全</div>
+    <span class="lesson-tag">第9课 · 互传密信有诀窍</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>凯撒密码：</strong>把明文中的每个字母按一定规则向后移动几位生成密文。例如向右移动3位时，A→D，B→E，依此类推；如果超过Z就回到字母表开头继续移位。
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>移位数：</label>
+        <input type="range" id="shift" min="1" max="25" value="3" style="width:180px;">
+        <span class="shift-display" id="shiftValue">3</span>
+      </div>
+      <button onclick="encrypt()">🔒 加密</button>
+      <button class="btn-warning" onclick="decrypt()">🔓 解密</button>
+      <button class="btn-secondary" onclick="swapText()">⇄ 交换</button>
+    </div>
+
+    <div class="text-area">
+      <div class="text-box">
+        <div class="text-box-header">
+          <span>📝 明文（输入）</span>
+          <span class="badge" id="plainCount">0 字符</span>
+        </div>
+        <textarea id="plaintext" placeholder="输入英文文本，例如：HELLO WORLD" oninput="updateCount()">HELLO WORLD</textarea>
+      </div>
+      <div class="text-box">
+        <div class="text-box-header">
+          <span>🔐 密文（输出）</span>
+          <span class="badge" id="cipherCount">0 字符</span>
+        </div>
+        <textarea id="ciphertext" placeholder="加密结果将显示在这里" oninput="updateCount()"></textarea>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <strong>💡 字母对应关系（移位 <span id="shiftDisplay">3</span>）：</strong>下方第一行是明文字母，第二行是对应的密文字母。
+    </div>
+
+    <h3 style="margin:14px 0 10px;font-size:15px;color:var(--text-light);">🔤 明文 → 密文对应表</h3>
+    <div class="cipher-table" id="plainRow"></div>
+    <div class="cipher-table" id="cipherRow"></div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>历史故事：</strong>凯撒密码因古罗马军事家凯撒大帝在战争中使用而得名。当年它保护了重要的军情信息。</p>
+      <p><strong>算法步骤（自然语言描述）：</strong></p>
+      <ul>
+        <li>第1步：输入要传送的明文。</li>
+        <li>第2步：取一个字母，将它向右移动指定位数，并输出对应的密文字母。</li>
+        <li>第3步：重复第2步，直到处理完所有字母。</li>
+      </ul>
+      <p><strong>这是一个典型的循环结构算法。</strong>解密只需把"向右移动"改为"向左移动"即可。</p>
+      <p><strong>⚠️ 安全性思考：</strong>移位密码只有26种可能（移位1~25加移位0），现代计算机可在瞬间破解，因此早已不能直接用于保护重要信息。但它的思想被融入到许多现代加密方法中。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const shift = document.getElementById('shift');
+const shiftValue = document.getElementById('shiftValue');
+const shiftDisplay = document.getElementById('shiftDisplay');
+
+function buildTable() {
+  const s = parseInt(shift.value);
+  const plainRow = document.getElementById('plainRow');
+  const cipherRow = document.getElementById('cipherRow');
+  plainRow.innerHTML = '';
+  cipherRow.innerHTML = '';
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement('div');
+    p.className = 'cipher-cell plain';
+    p.textContent = String.fromCharCode(65 + i);
+    plainRow.appendChild(p);
+    const c = document.createElement('div');
+    c.className = 'cipher-cell cipher';
+    c.textContent = String.fromCharCode(65 + (i + s) % 26);
+    cipherRow.appendChild(c);
+  }
+}
+
+function caesarShift(text, s) {
+  return text.split('').map(ch => {
+    const code = ch.charCodeAt(0);
+    if (code >= 65 && code <= 90) return String.fromCharCode((code - 65 + s + 26) % 26 + 65);
+    if (code >= 97 && code <= 122) return String.fromCharCode((code - 97 + s + 26) % 26 + 97);
+    return ch;
+  }).join('');
+}
+
+function encrypt() {
+  const s = parseInt(shift.value);
+  const text = document.getElementById('plaintext').value.toUpperCase();
+  document.getElementById('plaintext').value = text;
+  document.getElementById('ciphertext').value = caesarShift(text, s);
+  updateCount();
+  highlightDemo();
+}
+
+function decrypt() {
+  const s = parseInt(shift.value);
+  const text = document.getElementById('ciphertext').value.toUpperCase();
+  document.getElementById('ciphertext').value = text;
+  document.getElementById('plaintext').value = caesarShift(text, -s);
+  updateCount();
+}
+
+function swapText() {
+  const p = document.getElementById('plaintext');
+  const c = document.getElementById('ciphertext');
+  [p.value, c.value] = [c.value, p.value];
+  updateCount();
+}
+
+function updateCount() {
+  document.getElementById('plainCount').textContent = document.getElementById('plaintext').value.length + ' 字符';
+  document.getElementById('cipherCount').textContent = document.getElementById('ciphertext').value.length + ' 字符';
+}
+
+function highlightDemo() {
+  const text = document.getElementById('plaintext').value.toUpperCase();
+  const plainCells = document.querySelectorAll('#plainRow .cipher-cell');
+  const cipherCells = document.querySelectorAll('#cipherRow .cipher-cell');
+  plainCells.forEach(c => c.classList.remove('highlight'));
+  cipherCells.forEach(c => c.classList.remove('highlight'));
+  for (let i = 0; i < text.length && i < 5; i++) {
+    const code = text.charCodeAt(i) - 65;
+    if (code >= 0 && code < 26) {
+      setTimeout(() => {
+        plainCells[code].classList.add('highlight');
+        cipherCells[code].classList.add('highlight');
+        setTimeout(() => {
+          plainCells[code].classList.remove('highlight');
+          cipherCells[code].classList.remove('highlight');
+        }, 800);
+      }, i * 200);
+    }
+  }
+}
+
+shift.addEventListener('input', () => {
+  shiftValue.textContent = shift.value;
+  shiftDisplay.textContent = shift.value;
+  buildTable();
+});
+
+buildTable();
+encrypt();
+</script>
+</body>
+</html>

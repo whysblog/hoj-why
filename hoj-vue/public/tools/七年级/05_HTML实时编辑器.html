@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>HTML 实时编辑器 · 第16-17课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;--panel:#1a2340;--panel2:#222d50;
+  --line:#2d3a63;--text:#e6eaf5;--muted:#8a96b8;
+  --accent:#4ed1b8;--accent2:#ffb347;--code:#ff8fb3;
+  --shadow:0 8px 30px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 50% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:20px;height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+h1{font-size:24px;margin:0;font-weight:700;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.lesson-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.02);}
+.subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+
+.toolbar{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:10px 14px;background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:12px;margin-bottom:12px;
+}
+.tag-btn{
+  background:transparent;border:1px solid var(--line);color:var(--text);
+  padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;
+  font-size:12px;cursor:pointer;transition:all .2s;
+}
+.tag-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tag-btn .desc{color:var(--muted);font-family:'Noto Sans SC',sans-serif;font-size:11px;margin-left:4px}
+.divider{width:1px;height:20px;background:var(--line);margin:0 4px}
+.toolbar-label{font-size:12px;color:var(--muted);margin-right:4px}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:0}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+
+.panel-block{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:12px;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--line);
+}
+.panel-head h2{margin:0;font-size:13px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.panel-head .actions{display:flex;gap:6px}
+.panel-head button{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:4px 10px;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;
+}
+.panel-head button:hover{border-color:var(--accent);color:var(--accent)}
+.panel-head button.primary{background:var(--accent);color:#0a1226;border-color:transparent;font-weight:700}
+
+.editor-wrap{
+  flex:1;position:relative;display:flex;
+}
+#code{
+  flex:1;background:#0a1226;color:var(--text);
+  border:0;padding:14px;
+  font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.6;
+  resize:none;outline:none;tab-size:2;
+}
+#code::placeholder{color:var(--muted)}
+
+.preview-wrap{flex:1;background:#fff;overflow:auto}
+#preview{width:100%;height:100%;border:0;background:#fff}
+
+.examples-row{
+  display:flex;gap:6px;flex-wrap:wrap;
+  padding:10px 14px;border-top:1px solid var(--line);
+  background:rgba(0,0,0,.15);
+}
+.eg{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;
+}
+.eg:hover{border-color:var(--accent2);color:var(--accent2)}
+
+.tags-popup{
+  position:absolute;background:#0c1426;border:1px solid var(--line);
+  border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  padding:6px;display:none;z-index:100;max-height:300px;overflow-y:auto;
+}
+.tags-popup.show{display:block}
+.tags-popup .tag-item{
+  padding:6px 10px;cursor:pointer;border-radius:4px;font-size:12px;
+  font-family:'JetBrains Mono',monospace;color:var(--text);
+}
+.tags-popup .tag-item:hover{background:rgba(78,209,184,.1);color:var(--accent)}
+.tags-popup .tag-item .info{font-family:'Noto Sans SC',sans-serif;color:var(--muted);font-size:11px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>HTML 实时编辑器</h1>
+      <div class="subtitle">编写 HTML 代码 → 立即查看网页效果（左侧改代码，右侧自动刷新）</div>
+    </div>
+    <span class="lesson-tag">第四单元 · 第16-17课《探秘网页与代码 · 制作网页展活动》</span>
+  </header>
+
+  <div class="toolbar">
+    <span class="toolbar-label">常用标签：</span>
+    <button class="tag-btn" data-insert="<h1>一级标题</h1>">&lt;h1&gt;<span class="desc">一级标题</span></button>
+    <button class="tag-btn" data-insert="<h2>二级标题</h2>">&lt;h2&gt;<span class="desc">二级标题</span></button>
+    <button class="tag-btn" data-insert="<p>这里是一个段落。</p>">&lt;p&gt;<span class="desc">段落</span></button>
+    <button class="tag-btn" data-insert="<a href='https://example.com'>链接文字</a>">&lt;a&gt;<span class="desc">超链接</span></button>
+    <button class="tag-btn" data-insert='<img src="https://placehold.co/300x180/4ed1b8/fff?text=Image" alt="说明文字">'>&lt;img&gt;<span class="desc">图片</span></button>
+    <div class="divider"></div>
+    <button class="tag-btn" data-insert="<ul>\n  <li>列表项 1</li>\n  <li>列表项 2</li>\n</ul>">&lt;ul/li&gt;<span class="desc">无序列表</span></button>
+    <button class="tag-btn" data-insert="<b>粗体文字</b>">&lt;b&gt;<span class="desc">粗体</span></button>
+    <button class="tag-btn" data-insert="<i>斜体文字</i>">&lt;i&gt;<span class="desc">斜体</span></button>
+    <button class="tag-btn" data-insert="<br>">&lt;br&gt;<span class="desc">换行</span></button>
+    <button class="tag-btn" data-insert="<hr>">&lt;hr&gt;<span class="desc">分割线</span></button>
+  </div>
+
+  <div class="split">
+    <div class="panel-block">
+      <div class="panel-head">
+        <h2>📝 HTML 源代码</h2>
+        <div class="actions">
+          <button id="btnFormat">格式</button>
+          <button id="btnDownload" class="primary">⬇ 下载 HTML</button>
+        </div>
+      </div>
+      <div class="editor-wrap">
+        <textarea id="code" spellcheck="false"></textarea>
+      </div>
+      <div class="examples-row">
+        <span style="color:var(--muted);font-size:11px;margin-right:4px;align-self:center">示例：</span>
+        <button class="eg" data-eg="basic">基础页面</button>
+        <button class="eg" data-eg="science">科技节子页（教材范例）</button>
+        <button class="eg" data-eg="poem">古诗展示</button>
+        <button class="eg" data-eg="album">图片展览</button>
+        <button class="eg" data-eg="empty">清空</button>
+      </div>
+    </div>
+
+    <div class="panel-block">
+      <div class="panel-head">
+        <h2>🌐 网页预览</h2>
+        <div class="actions">
+          <button id="btnRefresh">↻ 刷新</button>
+          <button id="btnNew">在新窗口打开</button>
+        </div>
+      </div>
+      <div class="preview-wrap">
+        <iframe id="preview"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const code = document.getElementById('code');
+const preview = document.getElementById('preview');
+
+const examples = {
+  'basic': `<html>
+<head>
+  <title>我的第一个网页</title>
+</head>
+<body>
+  <h1>欢迎来到我的网页！</h1>
+  <p>这是我用 HTML 写的第一个网页。</p>
+  <p>HTML 标签都有 <b>开始标签</b> 和 <b>结束标签</b>。</p>
+  <hr>
+  <h2>我喜欢的事</h2>
+  <ul>
+    <li>编程</li>
+    <li>读书</li>
+    <li>运动</li>
+  </ul>
+</body>
+</html>`,
+  'science': `<html>
+<head>
+  <title>科技节—人工智能绘画</title>
+</head>
+<body>
+  <h1>飞驰的火车</h1>
+  <p>这是我用人工智能模型生成的作品，主题是"飞驰的火车"。</p>
+  <img src="https://placehold.co/400x240/5b9cff/fff?text=AI+Art:+Train" alt="AI绘画作品">
+  <p>我们小组的科技项目：<b>人工智能绘画</b></p>
+  <h2>项目介绍</h2>
+  <ul>
+    <li>使用工具：在线人工智能模型</li>
+    <li>创作主题：未来交通</li>
+    <li>组员分工：3 人协作完成</li>
+  </ul>
+  <hr>
+  <a href="https://example.com">查看更多 AI 绘画作品</a>
+</body>
+</html>`,
+  'poem': `<html>
+<head>
+  <title>赏花归去</title>
+</head>
+<body>
+  <h1>赏花归去</h1>
+  <h2>—— 苏轼</h2>
+  <p>赏花归去马如飞，</p>
+  <p>去马如飞酒力微。</p>
+  <p>酒力微醒时已暮，</p>
+  <p>醒时已暮赏花归。</p>
+  <hr>
+  <p><i>这首诗是回文诗，按 ①②③④ 或 ③④①② 顺序皆可成篇。</i></p>
+</body>
+</html>`,
+  'album': `<html>
+<head><title>我的相册</title></head>
+<body>
+  <h1>我的相册</h1>
+  <p>用 HTML 标签 <b>&lt;img&gt;</b> 显示图片。</p>
+  <h2>风景</h2>
+  <img src="https://placehold.co/280x180/4ed1b8/fff?text=Mountain" alt="山">
+  <img src="https://placehold.co/280x180/ffb347/fff?text=Ocean" alt="海">
+  <img src="https://placehold.co/280x180/9d7bff/fff?text=Forest" alt="林">
+  <h2>动物</h2>
+  <img src="https://placehold.co/280x180/ff6b81/fff?text=Cat" alt="猫">
+  <img src="https://placehold.co/280x180/5b9cff/fff?text=Dog" alt="狗">
+</body>
+</html>`,
+  'empty': ''
+};
+
+function render(){
+  // Use srcdoc - same-origin replacement
+  const html = code.value;
+  preview.srcdoc = html;
+}
+
+let timer;
+code.oninput = ()=>{
+  clearTimeout(timer);
+  timer = setTimeout(render, 250);
+};
+
+document.querySelectorAll('.tag-btn').forEach(b=>{
+  b.onclick = ()=>{
+    const text = b.dataset.insert.replace(/\\n/g,'\n');
+    insertAtCursor(code, text);
+    render();
+  };
+});
+
+document.querySelectorAll('.eg').forEach(b=>{
+  b.onclick = ()=>{
+    code.value = examples[b.dataset.eg];
+    render();
+  };
+});
+
+function insertAtCursor(el, text){
+  const start = el.selectionStart, end = el.selectionEnd;
+  const v = el.value;
+  el.value = v.slice(0,start) + text + v.slice(end);
+  el.focus();
+  el.selectionStart = el.selectionEnd = start + text.length;
+}
+
+document.getElementById('btnRefresh').onclick = render;
+document.getElementById('btnDownload').onclick = ()=>{
+  const blob = new Blob([code.value], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'mypage.html';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+};
+document.getElementById('btnNew').onclick = ()=>{
+  const w = window.open();
+  w.document.open(); w.document.write(code.value); w.document.close();
+};
+
+// simple format: indent based on tag nesting
+document.getElementById('btnFormat').onclick = ()=>{
+  const src = code.value;
+  // very simple formatter
+  let out = '';
+  let depth = 0;
+  const tokens = src.replace(/>\s*</g,'>\n<').split('\n');
+  tokens.forEach(line=>{
+    line = line.trim();
+    if(!line) return;
+    if(/^<\/[\w-]+/.test(line)) depth = Math.max(0,depth-1);
+    out += '  '.repeat(depth) + line + '\n';
+    if(/^<[\w-]+(?:\s[^>]*)?>(?!.*<\/)/.test(line) && !/^<(br|hr|img|input|meta|link)/.test(line) && !/\/>$/.test(line)) depth++;
+  });
+  code.value = out.trim();
+  render();
+};
+
+// init
+code.value = examples.basic;
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校验码计算器 · 第10课</title>
+<style>
+:root {
+  --c-primary: #43a047;
+  --c-primary-dark: #2e7d32;
+  --c-primary-soft: #e8f5e9;
+  --c-accent: #ff7043;
+  --c-warn: #ff9800;
+  --c-ink: #1a2e22;
+  --c-ink-soft: #5a6b5e;
+  --c-line: #e1ede4;
+  --c-card: #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #f1f8f2 0%, #f7faf3 100%);
+  color: var(--c-ink);
+  min-height: 100vh;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-ink-soft);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--c-primary); }
+
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.header .lesson-tag {
+  display: inline-block;
+  padding: 4px 14px;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-dark);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  margin-bottom: 8px;
+}
+.header p {
+  font-size: 15px;
+  color: var(--c-ink-soft);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.app {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--c-card);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 8px 32px rgba(67, 160, 71, 0.08);
+  border: 1px solid var(--c-line);
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  background: #eef5ef;
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.tab {
+  flex: 1;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.tab.active {
+  background: var(--c-primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(67, 160, 71, 0.4);
+}
+
+.input-section {
+  margin-bottom: 20px;
+}
+.input-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-ink);
+  margin-bottom: 8px;
+  display: block;
+}
+.input-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.code-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 14px 16px;
+  border: 2px solid var(--c-line);
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+}
+.code-input:focus {
+  outline: none;
+  border-color: var(--c-primary);
+}
+
+.btn {
+  padding: 14px 22px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--c-primary);
+  color: white;
+}
+.btn-primary:hover { background: var(--c-primary-dark); }
+.btn-ghost {
+  background: white;
+  color: var(--c-ink-soft);
+  border: 1px solid var(--c-line);
+}
+.btn-ghost:hover { border-color: var(--c-primary); color: var(--c-primary); }
+
+.examples {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.example {
+  padding: 6px 12px;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-dark);
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: 'Courier New', monospace;
+  transition: all 0.2s;
+}
+.example:hover {
+  border-color: var(--c-primary);
+  background: white;
+}
+
+/* 步骤展示 */
+.steps {
+  margin-top: 24px;
+}
+.step {
+  margin-bottom: 18px;
+  padding: 18px;
+  background: #f9fbf9;
+  border-radius: 12px;
+  border-left: 4px solid var(--c-primary);
+  opacity: 0;
+  animation: slideIn 0.4s forwards;
+}
+.step:nth-child(1) { animation-delay: 0.05s; }
+.step:nth-child(2) { animation-delay: 0.4s; }
+.step:nth-child(3) { animation-delay: 0.8s; }
+.step:nth-child(4) { animation-delay: 1.2s; }
+.step:nth-child(5) { animation-delay: 1.6s; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step .step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-primary-dark);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.step .step-num {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  background: var(--c-primary);
+  color: white;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.step .step-content {
+  font-size: 14px;
+  color: var(--c-ink);
+}
+.step .formula {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  background: white;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-top: 8px;
+  word-break: break-all;
+  line-height: 1.8;
+  border: 1px solid var(--c-line);
+}
+
+/* 数字单元格 */
+.digit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+.digit-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  background: white;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  min-width: 32px;
+}
+.digit-cell .pos {
+  font-size: 10px;
+  color: var(--c-ink-soft);
+}
+.digit-cell .val {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+.digit-cell .coef {
+  font-size: 11px;
+  color: var(--c-accent);
+  margin-top: 2px;
+  font-weight: 600;
+}
+.digit-cell.check {
+  background: #fff8e1;
+  border-color: var(--c-warn);
+  border-width: 2px;
+}
+
+/* 结果展示 */
+.result-card {
+  margin-top: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--c-primary-soft), #d8f0db);
+  border-radius: 16px;
+  text-align: center;
+}
+.result-card.error {
+  background: linear-gradient(135deg, #ffebee, #ffcdd2);
+}
+.result-card .result-label {
+  font-size: 14px;
+  color: var(--c-ink-soft);
+  margin-bottom: 8px;
+}
+.result-card .result-value {
+  font-size: 48px;
+  font-weight: 800;
+  font-family: 'Courier New', monospace;
+  color: var(--c-primary-dark);
+  margin-bottom: 8px;
+}
+.result-card.error .result-value { color: #c62828; }
+.result-card .result-msg {
+  font-size: 15px;
+  color: var(--c-ink);
+}
+.result-card .result-msg.match {
+  color: var(--c-primary-dark);
+  font-weight: 700;
+}
+.result-card .result-msg.mismatch {
+  color: #c62828;
+  font-weight: 700;
+}
+
+/* 余数对应表 */
+.lookup-table {
+  display: grid;
+  grid-template-columns: auto repeat(11, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+.lookup-table > div {
+  padding: 8px 4px;
+  text-align: center;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid var(--c-line);
+}
+.lookup-table .label-cell {
+  background: #f0f0f0;
+  font-weight: 700;
+  font-family: inherit;
+}
+.lookup-table .highlight {
+  background: #fff8e1;
+  border-color: var(--c-warn);
+  font-weight: 700;
+  color: var(--c-warn);
+}
+
+.theory-card {
+  background: linear-gradient(135deg, #fff8e1, #fff3c4);
+  border-left: 4px solid var(--c-warn);
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #6b4e00;
+  margin-bottom: 0;
+}
+.theory-card strong { color: #8a5d00; }
+
+@media (max-width: 720px) {
+  .header h1 { font-size: 24px; }
+  .digit-cell { min-width: 28px; }
+  .digit-cell .val { font-size: 14px; }
+  .lookup-table { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← 返回工具集</a>
+
+<div class="header">
+  <span class="lesson-tag">第 10 课 · 数据错误及时验</span>
+  <h1>校验码计算器</h1>
+  <p>校验码就像数据的"守门员",通过既定规则计算出来,能验证编码输入是否正确。让我们一步步看看它是怎么计算的!</p>
+</div>
+
+<div class="app">
+
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" data-mode="id">🆔 身份证号校验码</button>
+    <button class="tab" data-mode="isbn">📚 ISBN 图书号校验码</button>
+  </div>
+
+  <!-- 身份证号 -->
+  <div id="panel-id">
+    <div class="theory-card" style="margin-bottom:20px;">
+      <strong>📖 计算方法</strong> (依据国标 GB 11643-1999):
+      <br>① 前 17 位数字 × 对应系数 <code>7 9 10 5 8 4 2 1 6 3 7 9 10 5 8 4 2</code>
+      <br>② 把 17 个乘积加起来
+      <br>③ 总和 ÷ 11,得到余数
+      <br>④ 用余数查表 → 得到校验码 (注意:余数 2 时校验码为字母 X)
+    </div>
+
+    <div class="input-section">
+      <label class="input-label">输入完整的 18 位身份证号 (或前 17 位让我帮你算最后一位):</label>
+      <div class="input-row">
+        <input type="text" class="code-input" id="id-input" placeholder="例如: 11010519491231002X" maxlength="18">
+        <button class="btn btn-primary" id="id-calc-btn">开始计算</button>
+      </div>
+      <div class="examples">
+        <span style="font-size:13px;color:var(--c-ink-soft);">试试看 →</span>
+        <span class="example" data-id="11010519491231002">11010519491231002 (前17位)</span>
+        <span class="example" data-id="11010519491231002X">11010519491231002X (完整)</span>
+        <span class="example" data-id="44030120000101001">44030120000101001 (深圳)</span>
+      </div>
+      <p style="font-size:12px;color:var(--c-ink-soft);margin-top:10px;">
+        ⚠ 提示:这些示例号码是国标文档中的演示号码,不属于真实公民。请同学们不要在网络上随意输入或分享真实身份证号。
+      </p>
+    </div>
+
+    <div id="id-steps"></div>
+  </div>
+
+  <!-- ISBN -->
+  <div id="panel-isbn" style="display:none;">
+    <div class="theory-card" style="margin-bottom:20px;">
+      <strong>📖 计算方法</strong> (13 位 ISBN-13 校验):
+      <br>① 前 12 位数字按位置乘以系数 <code>1, 3</code> (奇数位 × 1,偶数位 × 3) 
+      <br>② 把 12 个乘积加起来
+      <br>③ 用 10 减去 (总和 ÷ 10 的余数)
+      <br>④ 如果结果是 10,则校验码记为 0
+    </div>
+
+    <div class="input-section">
+      <label class="input-label">输入 13 位 ISBN 号 (或前 12 位让我帮你算最后一位):</label>
+      <div class="input-row">
+        <input type="text" class="code-input" id="isbn-input" placeholder="例如: 9787107359750" maxlength="17">
+        <button class="btn btn-primary" id="isbn-calc-btn">开始计算</button>
+      </div>
+      <div class="examples">
+        <span style="font-size:13px;color:var(--c-ink-soft);">试试看 →</span>
+        <span class="example" data-isbn="978710735975">978710735975 (前12位)</span>
+        <span class="example" data-isbn="9787107359750">9787107359750 (完整)</span>
+        <span class="example" data-isbn="978-7-115-12345">支持带横杠</span>
+      </div>
+    </div>
+
+    <div id="isbn-steps"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:17px;font-weight:700;margin-bottom:12px;">🤔 为什么需要校验码?</div>
+  <p style="font-size:14px;color:var(--c-ink);">
+    在使用电脑录入像身份证号、ISBN 这样的长串编码时,很容易把数字打错或者多打、漏打。
+    如果有了校验码,电脑收到编码后会重新计算一遍校验码,比对一下是否一致 —
+    一致则说明输入正确,不一致就提示输入有误,从而避免错误数据进入系统。
+  </p>
+  <p style="font-size:14px;color:var(--c-ink);margin-top:10px;">
+    <strong style="color:var(--c-primary-dark);">生活中还有很多地方都用到校验码:</strong> 银行卡号、商品条形码、车牌的部分字段、二维码等等。
+    它们用不同的规则,但都起着"自我检验"的作用。
+  </p>
+</div>
+
+</div>
+
+<script>
+// === 身份证号校验码 ===
+const ID_COEFS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+const ID_LOOKUP = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+function calcIDCheck(first17) {
+  let sum = 0;
+  const products = [];
+  for (let i = 0; i < 17; i++) {
+    const digit = +first17[i];
+    const coef = ID_COEFS[i];
+    products.push({ digit, coef, product: digit * coef });
+    sum += digit * coef;
+  }
+  const remainder = sum % 11;
+  const checkCode = ID_LOOKUP[remainder];
+  return { products, sum, remainder, checkCode };
+}
+
+function renderIDSteps(input) {
+  const stepsContainer = document.getElementById('id-steps');
+  const cleaned = input.replace(/[^0-9Xx]/g, '');
+
+  // 检查长度
+  if (cleaned.length !== 17 && cleaned.length !== 18) {
+    stepsContainer.innerHTML = `<div class="result-card error">
+      <div class="result-value">❌</div>
+      <div class="result-msg">请输入 17 位 (前 17 位) 或 18 位 (完整) 身份证号。当前输入: ${cleaned.length} 位</div>
+    </div>`;
+    return;
+  }
+
+  const first17 = cleaned.slice(0, 17);
+  if (!/^\d{17}$/.test(first17)) {
+    stepsContainer.innerHTML = `<div class="result-card error">
+      <div class="result-value">❌</div>
+      <div class="result-msg">前 17 位必须全部是数字</div>
+    </div>`;
+    return;
+  }
+
+  const result = calcIDCheck(first17);
+
+  let html = '';
+
+  // 步骤 1: 列出数字与系数
+  let row1 = '<div class="digit-row">';
+  for (let i = 0; i < 17; i++) {
+    row1 += `<div class="digit-cell">
+      <span class="pos">第${i+1}位</span>
+      <span class="val">${first17[i]}</span>
+      <span class="coef">×${ID_COEFS[i]}</span>
+    </div>`;
+  }
+  row1 += '</div>';
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">1</span>把前 17 位数字 × 对应系数</div>
+    ${row1}
+  </div>`;
+
+  // 步骤 2: 求和
+  const sumExpr = result.products.map(p => `${p.digit}×${p.coef}`).join(' + ');
+  const productsExpr = result.products.map(p => p.product).join(' + ');
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">2</span>把 17 个乘积加起来</div>
+    <div class="formula">
+      = ${sumExpr}<br>
+      = ${productsExpr}<br>
+      = <strong style="color:var(--c-primary-dark);font-size:18px;">${result.sum}</strong>
+    </div>
+  </div>`;
+
+  // 步骤 3: 求余数
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">3</span>总和 ÷ 11,求余数</div>
+    <div class="formula">
+      ${result.sum} ÷ 11 = ${Math.floor(result.sum/11)} 余 <strong style="color:var(--c-primary-dark);font-size:18px;">${result.remainder}</strong>
+    </div>
+  </div>`;
+
+  // 步骤 4: 查表
+  let lookupHtml = '<div class="lookup-table"><div class="label-cell">余数</div>';
+  for (let i = 0; i <= 10; i++) {
+    lookupHtml += `<div class="${i === result.remainder ? 'highlight' : ''}">${i}</div>`;
+  }
+  lookupHtml += '<div class="label-cell">校验码</div>';
+  for (let i = 0; i <= 10; i++) {
+    lookupHtml += `<div class="${i === result.remainder ? 'highlight' : ''}">${ID_LOOKUP[i]}</div>`;
+  }
+  lookupHtml += '</div>';
+
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">4</span>用余数查校验码对应表</div>
+    ${lookupHtml}
+    <div style="margin-top:12px;font-size:14px;">
+      余数为 <strong>${result.remainder}</strong>,对应的校验码是 <strong style="color:var(--c-primary-dark);font-size:18px;">${result.checkCode}</strong>
+    </div>
+  </div>`;
+
+  // 最终结果
+  let resultMsg = '';
+  if (cleaned.length === 18) {
+    const userCheck = cleaned[17].toUpperCase();
+    if (userCheck === result.checkCode) {
+      resultMsg = `<div class="result-msg match">✅ 你输入的校验码 <strong>${userCheck}</strong> 正确!说明前面 17 位编码无误。</div>`;
+    } else {
+      resultMsg = `<div class="result-msg mismatch">⚠ 你输入的校验码是 <strong>${userCheck}</strong>,但正确的应该是 <strong>${result.checkCode}</strong>。前面 17 位可能有输入错误!</div>`;
+    }
+  } else {
+    resultMsg = `<div class="result-msg match">完整的 18 位身份证号应为: <strong style="font-family:'Courier New',monospace;">${first17}${result.checkCode}</strong></div>`;
+  }
+
+  html += `<div class="result-card ${cleaned.length === 18 && cleaned[17].toUpperCase() !== result.checkCode ? 'error' : ''}">
+    <div class="result-label">校验码 (第 18 位)</div>
+    <div class="result-value">${result.checkCode}</div>
+    ${resultMsg}
+  </div>`;
+
+  stepsContainer.innerHTML = html;
+}
+
+document.getElementById('id-calc-btn').addEventListener('click', () => {
+  renderIDSteps(document.getElementById('id-input').value.trim());
+});
+document.getElementById('id-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('id-calc-btn').click();
+});
+document.querySelectorAll('.example[data-id]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.getElementById('id-input').value = el.dataset.id;
+    renderIDSteps(el.dataset.id);
+  });
+});
+
+// === ISBN 校验码 ===
+function calcISBNCheck(first12) {
+  let sum = 0;
+  const products = [];
+  for (let i = 0; i < 12; i++) {
+    const digit = +first12[i];
+    const coef = (i % 2 === 0) ? 1 : 3;
+    products.push({ digit, coef, product: digit * coef });
+    sum += digit * coef;
+  }
+  const remainder = sum % 10;
+  let checkCode = (10 - remainder) % 10;
+  return { products, sum, remainder, checkCode };
+}
+
+function renderISBNSteps(input) {
+  const stepsContainer = document.getElementById('isbn-steps');
+  const cleaned = input.replace(/[^0-9]/g, '');
+
+  if (cleaned.length !== 12 && cleaned.length !== 13) {
+    stepsContainer.innerHTML = `<div class="result-card error">
+      <div class="result-value">❌</div>
+      <div class="result-msg">请输入 12 位 (前 12 位) 或 13 位 (完整) ISBN。当前输入: ${cleaned.length} 位</div>
+    </div>`;
+    return;
+  }
+
+  const first12 = cleaned.slice(0, 12);
+  const result = calcISBNCheck(first12);
+
+  let html = '';
+
+  // 步骤 1
+  let row1 = '<div class="digit-row">';
+  for (let i = 0; i < 12; i++) {
+    const coef = (i % 2 === 0) ? 1 : 3;
+    row1 += `<div class="digit-cell">
+      <span class="pos">第${i+1}位</span>
+      <span class="val">${first12[i]}</span>
+      <span class="coef">×${coef}</span>
+    </div>`;
+  }
+  row1 += '</div>';
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">1</span>前 12 位数字按位置 × 系数 (奇位×1,偶位×3)</div>
+    ${row1}
+  </div>`;
+
+  // 步骤 2
+  const sumExpr = result.products.map(p => `${p.digit}×${p.coef}`).join(' + ');
+  const productsExpr = result.products.map(p => p.product).join(' + ');
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">2</span>把 12 个乘积加起来</div>
+    <div class="formula">
+      = ${sumExpr}<br>
+      = ${productsExpr}<br>
+      = <strong style="color:var(--c-primary-dark);font-size:18px;">${result.sum}</strong>
+    </div>
+  </div>`;
+
+  // 步骤 3
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">3</span>总和 ÷ 10,求余数</div>
+    <div class="formula">
+      ${result.sum} ÷ 10 = ${Math.floor(result.sum/10)} 余 <strong style="color:var(--c-primary-dark);font-size:18px;">${result.remainder}</strong>
+    </div>
+  </div>`;
+
+  // 步骤 4
+  const subResult = 10 - result.remainder;
+  html += `<div class="step">
+    <div class="step-title"><span class="step-num">4</span>用 10 减去余数,得到校验码</div>
+    <div class="formula">
+      10 - ${result.remainder} = ${subResult}
+      ${subResult === 10 ? `<br>当结果为 10 时,校验码记为 <strong>0</strong>` : ''}
+      <br>👉 校验码 = <strong style="color:var(--c-primary-dark);font-size:18px;">${result.checkCode}</strong>
+    </div>
+  </div>`;
+
+  let resultMsg = '';
+  if (cleaned.length === 13) {
+    const userCheck = +cleaned[12];
+    if (userCheck === result.checkCode) {
+      resultMsg = `<div class="result-msg match">✅ 你输入的校验码 <strong>${userCheck}</strong> 正确!说明前面 12 位编码无误。</div>`;
+    } else {
+      resultMsg = `<div class="result-msg mismatch">⚠ 你输入的校验码是 <strong>${userCheck}</strong>,但正确的应该是 <strong>${result.checkCode}</strong>。前面 12 位可能有输入错误!</div>`;
+    }
+  } else {
+    resultMsg = `<div class="result-msg match">完整的 13 位 ISBN 应为: <strong style="font-family:'Courier New',monospace;">${first12}${result.checkCode}</strong></div>`;
+  }
+
+  html += `<div class="result-card ${cleaned.length === 13 && +cleaned[12] !== result.checkCode ? 'error' : ''}">
+    <div class="result-label">校验码 (第 13 位)</div>
+    <div class="result-value">${result.checkCode}</div>
+    ${resultMsg}
+  </div>`;
+
+  stepsContainer.innerHTML = html;
+}
+
+document.getElementById('isbn-calc-btn').addEventListener('click', () => {
+  renderISBNSteps(document.getElementById('isbn-input').value.trim());
+});
+document.getElementById('isbn-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('isbn-calc-btn').click();
+});
+document.querySelectorAll('.example[data-isbn]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.getElementById('isbn-input').value = el.dataset.isbn;
+    renderISBNSteps(el.dataset.isbn);
+  });
+});
+
+// 模式切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const mode = tab.dataset.mode;
+    document.getElementById('panel-id').style.display = mode === 'id' ? '' : 'none';
+    document.getElementById('panel-isbn').style.display = mode === 'isbn' ? '' : 'none';
+  });
+});
+</script>
+
+</body>
+</html>

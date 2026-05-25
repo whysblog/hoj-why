@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第3课 寻找可靠数据源 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#00897b;
+  --theme-dark:#00695c;
+  --theme-light:#e0f2f1;
+  --bg:#f0f7f6;
+}
+.source-judge{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin:14px 0;
+}
+.source-card{
+  background:#fff;
+  border:3px solid #e0e0e0;
+  border-radius:14px;
+  padding:16px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.source-card:hover{transform:translateY(-2px)}
+.source-card.reliable{
+  border-color:#43a047;background:#e8f5e9;
+}
+.source-card.unreliable{
+  border-color:#e53935;background:#ffebee;
+}
+.source-card .src-icon{font-size:32px;margin-bottom:6px;display:block}
+.source-card h4{font-size:15px;margin-bottom:4px;color:#263238}
+.source-card .src-desc{font-size:12px;color:#607d8b;line-height:1.5}
+.source-card .verdict{
+  margin-top:8px;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:bold;
+  display:none;
+}
+.source-card.reliable .verdict{
+  display:block;background:#43a047;color:#fff;
+}
+.source-card.unreliable .verdict{
+  display:block;background:#e53935;color:#fff;
+}
+.check-list{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.check-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;
+  border-bottom:1px dashed #eceff1;
+}
+.check-item:last-child{border-bottom:none}
+.check-item .ck-num{
+  width:28px;height:28px;
+  background:var(--theme);
+  color:#fff;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:bold;
+  flex-shrink:0;
+}
+.check-item .ck-text{flex:1;font-size:14px}
+.check-item .ck-text b{color:var(--theme-dark)}
+.cn-domain{
+  background:linear-gradient(135deg,#fff3e0 0%,#ffe0b2 100%);
+  border-radius:12px;
+  padding:18px;
+  margin:14px 0;
+  border-left:5px solid #e65100;
+}
+.cn-domain h4{color:#bf360c;margin-bottom:8px;font-size:16px}
+.cn-domain .url-tag{
+  display:inline-block;
+  background:#fff;
+  padding:4px 10px;
+  border-radius:6px;
+  font-family:"Courier New",monospace;
+  font-size:13px;
+  color:#bf360c;
+  margin:2px 4px;
+  border:1px solid #ffcc80;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第一单元 · 第3课</span>
+    <h1>🛡️ 寻找可靠数据源</h1>
+    <p>学会辨别真假数据，找到权威可信的数据来源</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前思考</button>
+    <button class="nav-btn" data-slide="1">⚠️ 假数据真危险</button>
+    <button class="nav-btn" data-slide="2">✅ 可靠的数据源</button>
+    <button class="nav-btn" data-slide="3">🇨🇳 自主可控很重要</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前思考</h2>
+
+    <div class="info-box warn">
+      <h4>⚠️ 真实场景</h4>
+      小明上网搜"中国有多少种动物"，看到一个网站说"38 种"，另一个网站说"6266 种"，还有一个写着"几百万种"——<b>到底哪个是对的？</b>
+    </div>
+
+    <p>这就是<b>不可靠数据源</b>带来的麻烦。如果数据是错的，后面所有的分析、判断都会跟着出错。</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>认识<b>不可靠数据</b>的危害</li>
+      <li>知道哪些是<b>权威、可信</b>的数据来源</li>
+      <li>掌握判断数据可靠性的<b>四个方法</b></li>
+      <li>理解"<b>自主可控</b>"对数据安全的重要意义</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>假数据，真危险</h2>
+
+    <div class="info-box warn">
+      <h4>🚨 假数据可能导致：</h4>
+      <ul>
+        <li>📝 写作业、做调查得到<b>错误结论</b></li>
+        <li>📰 传播给同学，造成<b>错误观念</b></li>
+        <li>💊 医生用错数据，可能<b>耽误病人</b></li>
+        <li>🚀 科学家用错数据，<b>实验失败</b></li>
+        <li>🏛️ 政府用错数据，<b>决策出错</b></li>
+      </ul>
+    </div>
+
+    <h3>🔍 谁可能制造假数据？</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🤖</span>
+        <h4>自动生成</h4>
+        <p>某些 AI 或程序会编造看似合理的数据</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💰</span>
+        <h4>商业利益</h4>
+        <p>有的网站为了卖货，夸大效果</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">😨</span>
+        <h4>故意造谣</h4>
+        <p>有人故意散布假消息，制造混乱</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">⏰</span>
+        <h4>过时数据</h4>
+        <p>数据是十年前的，早就变了</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>可靠的数据源</h2>
+    <p>下面哪些是可靠的数据源？点击每张卡片来判断 ↓</p>
+
+    <div class="source-judge" id="sourceJudge">
+      <div class="source-card" data-type="reliable">
+        <span class="src-icon">🏛️</span>
+        <h4>国家统计局官网</h4>
+        <div class="src-desc">stats.gov.cn — 国家发布的人口、经济等权威数据</div>
+        <div class="verdict">✓ 可靠</div>
+      </div>
+      <div class="source-card" data-type="reliable">
+        <span class="src-icon">🌤️</span>
+        <h4>中国气象局</h4>
+        <div class="src-desc">cma.gov.cn — 全国天气预报的官方源头</div>
+        <div class="verdict">✓ 可靠</div>
+      </div>
+      <div class="source-card" data-type="unreliable">
+        <span class="src-icon">💬</span>
+        <h4>朋友圈转发的消息</h4>
+        <div class="src-desc">"震惊！吃西瓜会..."这种夸张标题的帖子</div>
+        <div class="verdict">✗ 不可靠</div>
+      </div>
+      <div class="source-card" data-type="reliable">
+        <span class="src-icon">📚</span>
+        <h4>国家图书馆</h4>
+        <div class="src-desc">nlc.cn — 海量图书和学术资料</div>
+        <div class="verdict">✓ 可靠</div>
+      </div>
+      <div class="source-card" data-type="unreliable">
+        <span class="src-icon">🎮</span>
+        <h4>个人游戏论坛留言</h4>
+        <div class="src-desc">"我听说全世界有 10 亿人玩这个游戏..."</div>
+        <div class="verdict">✗ 不可靠</div>
+      </div>
+      <div class="source-card" data-type="reliable">
+        <span class="src-icon">📖</span>
+        <h4>百科全书（纸质或权威网站）</h4>
+        <div class="src-desc">中国大百科全书等经过编辑审核的内容</div>
+        <div class="verdict">✓ 可靠</div>
+      </div>
+    </div>
+
+    <h3>🔑 判断数据可靠性的"四问"</h3>
+    <div class="check-list">
+      <div class="check-item">
+        <span class="ck-num">1</span>
+        <div class="ck-text">数据是谁发布的？<b>权威机构（政府、学校、研究所）</b>发布的更可靠</div>
+      </div>
+      <div class="check-item">
+        <span class="ck-num">2</span>
+        <div class="ck-text">数据是<b>什么时候</b>的？过期太久的数据可能已经不准了</div>
+      </div>
+      <div class="check-item">
+        <span class="ck-num">3</span>
+        <div class="ck-text">有没有<b>其他来源</b>能验证？多个权威来源都说一样，可信度更高</div>
+      </div>
+      <div class="check-item">
+        <span class="ck-num">4</span>
+        <div class="ck-text">数据有没有<b>具体来源</b>？写明"来源：xx 部门 xx 年报告"的更可信</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>自主可控很重要</h2>
+
+    <p>为什么我们要重视使用<b>中国自己的</b>数据源和工具？</p>
+
+    <div class="info-box">
+      <h4>💡 什么是"自主可控"</h4>
+      "自主"就是<b>自己做主</b>，"可控"就是<b>能掌控</b>。
+      自主可控的数据源，就是<b>由我们国家自己掌握</b>的，不会因为别国限制就用不了的数据源。
+    </div>
+
+    <div class="cn-domain">
+      <h4>🇨🇳 中国自己的数据源（推荐使用）</h4>
+      <span class="url-tag">stats.gov.cn 国家统计局</span>
+      <span class="url-tag">cma.gov.cn 中国气象局</span>
+      <span class="url-tag">moe.gov.cn 教育部</span>
+      <span class="url-tag">moh.gov.cn 卫健委</span>
+      <span class="url-tag">people.com.cn 人民网</span>
+      <span class="url-tag">xinhuanet.com 新华网</span>
+      <span class="url-tag">cnki.net 知网</span>
+      <span class="url-tag">baidu.com 百度</span>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 为什么要"自主可控"？</h4>
+      <ul>
+        <li>📌 <b>不被卡脖子</b>：万一国外网站打不开，我们还能正常使用</li>
+        <li>🔒 <b>数据安全</b>：自己的数据不会被别国偷走</li>
+        <li>🎯 <b>更贴近实际</b>：中国的数据，中国机构最了解</li>
+        <li>📜 <b>遵守法律</b>：符合我国的数据安全相关法律</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">⚠️</span>
+        <h4>不可靠的</h4>
+        <p>朋友圈、论坛留言、匿名网站</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">✅</span>
+        <h4>可靠的</h4>
+        <p>政府官网、权威机构、正规图书</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔍</span>
+        <h4>判断方法</h4>
+        <p>看发布者、看时间、对比验证、查来源</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🇨🇳</span>
+        <h4>自主可控</h4>
+        <p>优先用我国自己的权威数据源</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      请去 <b>stats.gov.cn</b>（国家统计局）网站，找一个你感兴趣的数据，比如：
+      <ul style="margin-top:6px">
+        <li>中国一共有多少个小学生？</li>
+        <li>全国有多少所小学？</li>
+        <li>去年我们国家生产了多少粮食？</li>
+      </ul>
+      把它写下来，并标明<b>数据来源</b>和<b>发布时间</b>！
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      找到了好数据，怎么<b>记录</b>下来才方便以后使用？
+      下节课《记录数据讲诀窍》，教你做数据记录小达人！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.source-card').forEach(card=>{
+  card.addEventListener('click',()=>{
+    card.classList.add(card.dataset.type);
+  });
+});
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

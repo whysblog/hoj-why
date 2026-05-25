@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>数字小报布局设计器 — 第14课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1300px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #be185d; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.toolbar {
+  background: white; border-radius: 12px; padding: 12px 18px; margin-bottom: 16px;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.btn {
+  padding: 8px 14px; border: 1.5px solid #fbcfe8; border-radius: 8px;
+  background: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s;
+}
+.btn:hover { background: #fdf2f8; border-color: #ec4899; }
+.btn.primary { background: #ec4899; color: white; border-color: #be185d; }
+.btn.primary:hover { background: #db2777; }
+.btn.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+.workspace { display: grid; grid-template-columns: 240px 1fr 240px; gap: 16px; }
+@media (max-width: 1100px) { .workspace { grid-template-columns: 1fr; } }
+
+.panel {
+  background: white; border-radius: 14px; padding: 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.panel h3 { color: #be185d; font-size: 15px; margin-bottom: 12px; }
+
+.element-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.element-card {
+  padding: 10px 6px; background: #fdf2f8; border: 1.5px solid #fbcfe8;
+  border-radius: 8px; text-align: center; cursor: grab; transition: all .2s;
+  font-size: 12px; user-select: none;
+}
+.element-card:hover { background: #fce7f3; border-color: #ec4899; transform: translateY(-2px); }
+.element-card .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+
+.canvas-wrap {
+  background: white; border-radius: 14px; padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05); overflow: auto;
+}
+.canvas {
+  width: 100%; aspect-ratio: 210/297; max-width: 600px; margin: 0 auto;
+  background: white; border: 2px dashed #fbcfe8; border-radius: 8px;
+  position: relative; overflow: hidden;
+}
+.canvas.has-bg-1 { background: linear-gradient(135deg, #fce7f3 0%, #ffffff 100%); }
+.canvas.has-bg-2 { background: linear-gradient(135deg, #dbeafe 0%, #ffffff 100%); }
+.canvas.has-bg-3 { background: linear-gradient(135deg, #fef3c7 0%, #ffffff 100%); }
+.canvas.has-bg-4 { background: linear-gradient(135deg, #d1fae5 0%, #ffffff 100%); }
+.canvas.has-bg-pattern {
+  background-color: #fff;
+  background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.element {
+  position: absolute; cursor: move; user-select: none;
+  border: 2px solid transparent; padding: 6px;
+  min-width: 60px; min-height: 30px;
+}
+.element.selected { border: 2px dashed #ec4899; background: rgba(252,231,243,.3); }
+.element.title { font-weight: 700; color: #be185d; font-family: 'Ma Shan Zheng', '楷体', cursive; }
+.element.subtitle { font-weight: 600; color: #ec4899; }
+.element.text { color: #475569; line-height: 1.5; }
+.element.image { background: #fdf2f8; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 8px; }
+.element.shape-circle { background: #fbcfe8; border-radius: 50%; }
+.element.shape-rect { background: linear-gradient(135deg, #fbcfe8, #f9a8d4); border-radius: 8px; }
+.element.shape-star { font-size: 36px; color: #f59e0b; background: transparent; }
+.element-handle {
+  position: absolute; bottom: -6px; right: -6px; width: 14px; height: 14px;
+  background: #ec4899; border: 2px solid white; border-radius: 50%; cursor: nwse-resize;
+}
+.element.selected .element-handle { display: block; }
+.element:not(.selected) .element-handle { display: none; }
+
+.props-row { margin-bottom: 12px; }
+.props-row label { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; }
+.props-row input, .props-row textarea, .props-row select {
+  width: 100%; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px;
+  font-size: 13px; font-family: inherit;
+}
+.props-row textarea { resize: vertical; min-height: 50px; }
+.color-row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 0 1.5px #cbd5e1; }
+.color-swatch.active { box-shadow: 0 0 0 2px #ec4899; }
+
+.knowledge {
+  background: white; border-radius: 14px; padding: 20px; margin-top: 16px;
+  border-left: 5px solid #ec4899; box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.knowledge h3 { color: #be185d; margin-bottom: 10px; font-size: 16px; }
+.knowledge p { color: #475569; font-size: 14px; line-height: 1.7; }
+.knowledge .tags { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.knowledge .tag { padding: 3px 10px; background: #fce7f3; color: #be185d; border-radius: 12px; font-size: 12px; }
+
+.empty-canvas-tip {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  color: #f9a8d4; font-size: 14px; text-align: center; pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📰 数字小报布局设计器</h1>
+    <div class="subtitle">配套课时：第14课 制作数字小报 · 拖拽元素设计版面，体验图文混排和小报制作流程</div>
+  </header>
+
+  <div class="toolbar">
+    <span style="font-size:13px;color:#64748b;">小报主题：</span>
+    <input type="text" id="newsTitle" value="春节" style="padding:6px 12px;border:1.5px solid #fbcfe8;border-radius:6px;font-size:14px;width:160px;">
+    <span style="margin-left:14px;font-size:13px;color:#64748b;">背景：</span>
+    <button class="btn" onclick="setBg('')">无</button>
+    <button class="btn" onclick="setBg('has-bg-1')">粉色</button>
+    <button class="btn" onclick="setBg('has-bg-2')">蓝色</button>
+    <button class="btn" onclick="setBg('has-bg-3')">黄色</button>
+    <button class="btn" onclick="setBg('has-bg-4')">绿色</button>
+    <button class="btn" onclick="setBg('has-bg-pattern')">圆点</button>
+    <button class="btn primary" onclick="loadDemo()" style="margin-left:auto;">📋 加载示例</button>
+    <button class="btn danger" onclick="clearAll()">🗑 清空</button>
+  </div>
+
+  <div class="workspace">
+    <!-- 左侧：素材库 -->
+    <div class="panel">
+      <h3>📦 元素素材库</h3>
+      <p style="font-size:12px;color:#64748b;margin-bottom:10px;">点击添加到小报：</p>
+      <div class="element-grid">
+        <div class="element-card" onclick="addElement('title')"><span class="icon">📝</span>艺术标题</div>
+        <div class="element-card" onclick="addElement('subtitle')"><span class="icon">📑</span>副标题</div>
+        <div class="element-card" onclick="addElement('text')"><span class="icon">📄</span>正文文字</div>
+        <div class="element-card" onclick="addElement('image')"><span class="icon">🖼️</span>图片框</div>
+        <div class="element-card" onclick="addElement('shape-rect')"><span class="icon">▭</span>矩形</div>
+        <div class="element-card" onclick="addElement('shape-circle')"><span class="icon">●</span>圆形</div>
+        <div class="element-card" onclick="addElement('shape-star')"><span class="icon">⭐</span>装饰</div>
+      </div>
+      <div style="margin-top:14px;padding:10px;background:#fef3c7;border-radius:8px;font-size:12px;color:#78350f;line-height:1.6;">
+        💡 <b>设计步骤：</b><br>
+        ① 确定主题<br>
+        ② 添加标题<br>
+        ③ 插入图片框<br>
+        ④ 添加正文<br>
+        ⑤ 用形状装饰
+      </div>
+    </div>
+
+    <!-- 中间：画布 -->
+    <div class="canvas-wrap">
+      <div class="canvas" id="canvas">
+        <div class="empty-canvas-tip" id="emptyTip">
+          📐<br>从左侧素材库点击添加元素<br>拖动可移动位置
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：属性面板 -->
+    <div class="panel" id="propsPanel">
+      <h3>🔧 属性设置</h3>
+      <div id="propsContent">
+        <p style="font-size:13px;color:#94a3b8;text-align:center;padding:30px 0;">
+          点击中间画布上的元素<br>来编辑它的属性
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="knowledge">
+    <h3>💡 科学小知识 · 数字小报的版面设计</h3>
+    <p>
+    <b>📐 版面三要素：</b>主题鲜明的<b>标题</b>、图文并茂的<b>正文</b>、突出主题的<b>插图</b>。三者比例要协调。<br>
+    <b>🎨 排版法则：</b>
+    </p>
+    <div class="tags">
+      <span class="tag">F 型布局：从上到下、从左到右阅读</span>
+      <span class="tag">分栏：把长文字分成 2-3 栏</span>
+      <span class="tag">对齐：左对齐 / 居中</span>
+      <span class="tag">留白：不要塞满画面</span>
+      <span class="tag">主次：标题最大，正文最小</span>
+      <span class="tag">配色：不要超过 3 种主色</span>
+    </div>
+    <p style="margin-top:10px;">
+    <b>🔬 文字处理软件中常用的图文环绕方式：</b>四周环绕、上下环绕、紧密环绕、嵌入型、衬于文字下方等。本工具采用最灵活的"浮于文字上方"方式。
+    </p>
+  </div>
+</div>
+
+<script>
+let elementIdSeq = 0;
+let selectedEl = null;
+const canvas = document.getElementById('canvas');
+
+const presets = {
+  title: { content: '春节', w: 200, h: 60, fontSize: 36, color: '#be185d' },
+  subtitle: { content: '中华民族的传统节日', w: 240, h: 36, fontSize: 18, color: '#ec4899' },
+  text: { content: '春节，是农历新年，是中国最重要的传统节日。人们贴春联、放鞭炮、吃团圆饭、走亲访友，欢度佳节。', w: 240, h: 100, fontSize: 13, color: '#475569' },
+  image: { content: '🏮', w: 130, h: 130, fontSize: 60 },
+  'shape-rect': { content: '', w: 120, h: 60 },
+  'shape-circle': { content: '', w: 80, h: 80 },
+  'shape-star': { content: '⭐', w: 50, h: 50, fontSize: 36 },
+};
+
+function setBg(cls) {
+  canvas.className = 'canvas ' + cls;
+}
+
+function addElement(type) {
+  const preset = presets[type];
+  const el = document.createElement('div');
+  el.className = 'element ' + type;
+  const id = 'el-' + (++elementIdSeq);
+  el.id = id;
+  el.dataset.type = type;
+  
+  const offset = (elementIdSeq % 5) * 20;
+  el.style.left = (40 + offset) + 'px';
+  el.style.top = (40 + offset) + 'px';
+  el.style.width = preset.w + 'px';
+  el.style.height = preset.h + 'px';
+  if (preset.fontSize) el.style.fontSize = preset.fontSize + 'px';
+  if (preset.color) el.style.color = preset.color;
+  el.textContent = preset.content;
+  
+  if (type === 'image') el.style.fontSize = '60px';
+  
+  // resize handle
+  const handle = document.createElement('div');
+  handle.className = 'element-handle';
+  el.appendChild(handle);
+  
+  canvas.appendChild(el);
+  document.getElementById('emptyTip').style.display = 'none';
+  
+  attachInteraction(el);
+  selectElement(el);
+}
+
+function attachInteraction(el) {
+  let isDragging = false, isResizing = false;
+  let startX, startY, startLeft, startTop, startW, startH;
+  
+  el.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('element-handle')) {
+      isResizing = true;
+      startX = e.clientX; startY = e.clientY;
+      startW = el.offsetWidth; startH = el.offsetHeight;
+    } else {
+      isDragging = true;
+      startX = e.clientX; startY = e.clientY;
+      startLeft = el.offsetLeft; startTop = el.offsetTop;
+    }
+    selectElement(el);
+    e.preventDefault();
+  });
+  
+  // touch
+  el.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    if (e.target.classList.contains('element-handle')) {
+      isResizing = true;
+      startX = t.clientX; startY = t.clientY;
+      startW = el.offsetWidth; startH = el.offsetHeight;
+    } else {
+      isDragging = true;
+      startX = t.clientX; startY = t.clientY;
+      startLeft = el.offsetLeft; startTop = el.offsetTop;
+    }
+    selectElement(el);
+    e.preventDefault();
+  }, { passive: false });
+  
+  function move(clientX, clientY) {
+    if (isDragging) {
+      const newLeft = startLeft + (clientX - startX);
+      const newTop = startTop + (clientY - startY);
+      el.style.left = newLeft + 'px';
+      el.style.top = newTop + 'px';
+    } else if (isResizing) {
+      el.style.width = Math.max(40, startW + (clientX - startX)) + 'px';
+      el.style.height = Math.max(20, startH + (clientY - startY)) + 'px';
+    }
+  }
+  
+  document.addEventListener('mousemove', e => { if (isDragging || isResizing) move(e.clientX, e.clientY); });
+  document.addEventListener('touchmove', e => { 
+    if (isDragging || isResizing) { 
+      const t = e.touches[0]; move(t.clientX, t.clientY); e.preventDefault(); 
+    }
+  }, { passive: false });
+  document.addEventListener('mouseup', () => { isDragging = false; isResizing = false; });
+  document.addEventListener('touchend', () => { isDragging = false; isResizing = false; });
+}
+
+function selectElement(el) {
+  if (selectedEl) selectedEl.classList.remove('selected');
+  selectedEl = el;
+  el.classList.add('selected');
+  showProps(el);
+}
+
+canvas.addEventListener('click', e => {
+  if (e.target === canvas || e.target.id === 'emptyTip') {
+    if (selectedEl) selectedEl.classList.remove('selected');
+    selectedEl = null;
+    showProps(null);
+  }
+});
+
+function showProps(el) {
+  const box = document.getElementById('propsContent');
+  if (!el) {
+    box.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:30px 0;">点击中间画布上的元素<br>来编辑它的属性</p>';
+    return;
+  }
+  const type = el.dataset.type;
+  const isText = type === 'title' || type === 'subtitle' || type === 'text';
+  const isImage = type === 'image';
+  const isShape = type.startsWith('shape');
+  
+  let html = `<div class="props-row"><label>类型</label><div style="font-size:13px;color:#be185d;font-weight:600;">${getTypeName(type)}</div></div>`;
+  
+  if (isText) {
+    html += `<div class="props-row"><label>文字内容</label><textarea oninput="updateContent(this.value)">${el.textContent.replace('','')}</textarea></div>`;
+    html += `<div class="props-row"><label>字号 <span id="fsVal">${parseInt(el.style.fontSize)||16}</span>px</label>
+              <input type="range" min="12" max="60" value="${parseInt(el.style.fontSize)||16}" oninput="updateFontSize(this.value)"></div>`;
+    html += `<div class="props-row"><label>字体颜色</label><div class="color-row">
+              ${['#be185d','#ec4899','#1e40af','#16a34a','#ca8a04','#475569','#000000'].map(c => 
+                `<div class="color-swatch ${el.style.color===c?'active':''}" style="background:${c}" onclick="updateColor('${c}')"></div>`
+              ).join('')}</div></div>`;
+  }
+  if (isImage) {
+    html += `<div class="props-row"><label>选择图标 / Emoji</label>
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;">
+              ${['🏮','🎆','🐲','🥟','🥮','🌸','🎋','🎍','🎎','🎏','🌅','🏯','🐉','🐯','🐰'].map(em=>
+                `<button class="btn" style="padding:6px;font-size:18px;" onclick="updateContent('${em}')">${em}</button>`).join('')}
+              </div></div>`;
+  }
+  if (isShape) {
+    const colors = type === 'shape-star' 
+      ? ['#f59e0b','#ec4899','#8b5cf6','#3b82f6','#16a34a','#ef4444']
+      : ['#fbcfe8','#fde68a','#bbf7d0','#bfdbfe','#ddd6fe','#fecaca'];
+    html += `<div class="props-row"><label>颜色</label><div class="color-row">
+              ${colors.map(c => `<div class="color-swatch" style="background:${c}" onclick="updateShapeColor('${c}')"></div>`).join('')}</div></div>`;
+  }
+  
+  html += `<div class="props-row" style="margin-top:14px;">
+    <button class="btn danger" style="width:100%;" onclick="deleteSelected()">🗑 删除此元素</button>
+   </div>`;
+  
+  box.innerHTML = html;
+}
+
+function getTypeName(t) {
+  return ({title:'艺术标题',subtitle:'副标题',text:'正文文字',image:'图片框','shape-rect':'矩形','shape-circle':'圆形','shape-star':'装饰星'})[t]||t;
+}
+
+function updateContent(v) {
+  if (!selectedEl) return;
+  // 保留 handle
+  const handle = selectedEl.querySelector('.element-handle');
+  selectedEl.textContent = v;
+  if (handle) selectedEl.appendChild(handle);
+}
+function updateFontSize(v) {
+  if (!selectedEl) return;
+  selectedEl.style.fontSize = v + 'px';
+  document.getElementById('fsVal').textContent = v;
+}
+function updateColor(c) {
+  if (!selectedEl) return;
+  selectedEl.style.color = c;
+  showProps(selectedEl);
+}
+function updateShapeColor(c) {
+  if (!selectedEl) return;
+  if (selectedEl.dataset.type === 'shape-star') selectedEl.style.color = c;
+  else selectedEl.style.background = c;
+}
+function deleteSelected() {
+  if (!selectedEl) return;
+  selectedEl.remove();
+  selectedEl = null;
+  showProps(null);
+  if (canvas.querySelectorAll('.element').length === 0) {
+    document.getElementById('emptyTip').style.display = 'block';
+  }
+}
+
+function clearAll() {
+  if (!confirm('确定清空整张小报吗？')) return;
+  canvas.querySelectorAll('.element').forEach(e => e.remove());
+  selectedEl = null;
+  showProps(null);
+  document.getElementById('emptyTip').style.display = 'block';
+}
+
+function loadDemo() {
+  clearAllSilent();
+  setBg('has-bg-1');
+  // 标题
+  addElementAt('title', 100, 30, { content: '春节', fontSize: 56, color: '#be185d', w: 220, h: 80 });
+  // 副标题
+  addElementAt('subtitle', 100, 110, { content: '— 中华民族最重要的传统节日 —', fontSize: 16, color: '#ec4899', w: 320, h: 30 });
+  // 装饰
+  addElementAt('shape-star', 30, 40, { content: '⭐', fontSize: 30, w: 40, h: 40 });
+  addElementAt('shape-star', 510, 40, { content: '⭐', fontSize: 30, w: 40, h: 40 });
+  // 图片
+  addElementAt('image', 30, 160, { content: '🏮', fontSize: 70, w: 130, h: 130 });
+  addElementAt('image', 410, 160, { content: '🥟', fontSize: 70, w: 130, h: 130 });
+  // 圆形装饰
+  addElementAt('shape-circle', 180, 180, { content: '', w: 200, h: 90, bg: '#fde68a' });
+  addElementAt('subtitle', 200, 195, { content: '春节由来', fontSize: 22, color: '#92400e', w: 160, h: 30 });
+  addElementAt('text', 200, 230, { content: '农历正月初一 万象更新', fontSize: 14, color: '#92400e', w: 180, h: 30 });
+  // 正文
+  addElementAt('text', 30, 320, { content: '🎆 贴春联、放鞭炮：表达对新年的祝福', fontSize: 14, color: '#475569', w: 250, h: 30 });
+  addElementAt('text', 30, 360, { content: '🥟 吃饺子、年夜饭：阖家团圆', fontSize: 14, color: '#475569', w: 250, h: 30 });
+  addElementAt('text', 30, 400, { content: '🧧 收红包、拜大年：长辈祝福晚辈', fontSize: 14, color: '#475569', w: 250, h: 30 });
+  addElementAt('text', 30, 440, { content: '🐉 舞龙舞狮：祈求新年风调雨顺', fontSize: 14, color: '#475569', w: 250, h: 30 });
+  addElementAt('text', 300, 320, { content: '🌸 春节是农历新年，又称"过年"，是中华民族最隆重的传统佳节，承载着人们对美好生活的向往。', fontSize: 13, color: '#475569', w: 250, h: 100 });
+}
+
+function addElementAt(type, x, y, opts) {
+  const el = document.createElement('div');
+  el.className = 'element ' + type;
+  const id = 'el-' + (++elementIdSeq);
+  el.id = id;
+  el.dataset.type = type;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.width = (opts.w || presets[type].w) + 'px';
+  el.style.height = (opts.h || presets[type].h) + 'px';
+  if (opts.fontSize) el.style.fontSize = opts.fontSize + 'px';
+  if (opts.color) el.style.color = opts.color;
+  if (opts.bg) el.style.background = opts.bg;
+  el.textContent = opts.content || '';
+  
+  const handle = document.createElement('div');
+  handle.className = 'element-handle';
+  el.appendChild(handle);
+  
+  canvas.appendChild(el);
+  document.getElementById('emptyTip').style.display = 'none';
+  attachInteraction(el);
+}
+
+function clearAllSilent() {
+  canvas.querySelectorAll('.element').forEach(e => e.remove());
+  selectedEl = null;
+  showProps(null);
+}
+</script>
+</body>
+</html>

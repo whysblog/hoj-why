@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第3课 · 环境数据要感知 — 传感器实践工具</title>
+<style>
+  :root {
+    --bg: #fdf8f0;
+    --bg-2: #f5ead8;
+    --ink: #2a1f12;
+    --ink-soft: #6b5a44;
+    --primary: #d97706;
+    --primary-2: #f59e0b;
+    --green: #059669;
+    --red: #dc2626;
+    --blue: #2563eb;
+    --line: #e7d8b8;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(120,80,20,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image: radial-gradient(circle at 90% 0%, rgba(245,158,11,.06), transparent 50%);
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--primary); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 三种实践方式 */
+  .methods { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .method-card {
+    background: var(--card); padding: 22px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    border-top: 4px solid var(--primary);
+  }
+  .method-card h3 { font-size: 16px; margin-bottom: 10px; }
+  .method-card .ic { font-size: 36px; margin-bottom: 8px; }
+  .method-card p { font-size: 12px; line-height: 1.7; color: var(--ink-soft); }
+  .method-card ul { margin-top: 10px; padding-left: 18px; font-size: 12px; color: var(--ink-soft); }
+  .method-card li { margin: 4px 0; line-height: 1.6; }
+
+  /* 分贝尺 */
+  .db-tool { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .db-scale { position: relative; height: 70px; margin: 26px 0 20px; }
+  .db-bar {
+    position: absolute; top: 25px; left: 0; right: 0; height: 20px; border-radius: 10px;
+    background: linear-gradient(90deg, #34d399 0%, #fbbf24 35%, #f97316 60%, #dc2626 85%, #7f1d1d 100%);
+  }
+  .db-marker {
+    position: absolute; top: 18px; width: 4px; height: 34px;
+    background: var(--ink); border-radius: 2px;
+    transition: left .4s ease;
+  }
+  .db-marker .lbl {
+    position: absolute; top: -32px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 4px;
+    font-size: 13px; font-weight: 700; white-space: nowrap;
+  }
+  .db-marker .lbl::after {
+    content: ""; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid var(--ink);
+  }
+  .db-ticks { position: absolute; top: 50px; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-soft); }
+  .db-scenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .db-btn {
+    padding: 10px 6px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; transition: all .15s; font-family: inherit; text-align: center;
+    color: var(--ink);
+  }
+  .db-btn:hover { transform: translateY(-2px); border-color: var(--primary); }
+  .db-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .db-info {
+    margin-top: 14px; padding: 14px 18px; background: var(--bg-2); border-radius: 6px;
+    font-size: 13px; line-height: 1.7; color: var(--ink);
+  }
+  .db-info.danger { background: rgba(220,38,38,.1); color: var(--red); }
+  .db-info.warn { background: rgba(245,158,11,.15); }
+
+  /* 匹配题 */
+  .match-tool { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .match-q {
+    background: var(--bg-2); padding: 16px 20px; border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .match-q .desc { font-size: 14px; line-height: 1.7; }
+  .match-q .desc .key { background: rgba(217,119,6,.15); padding: 2px 6px; border-radius: 4px; }
+  .match-options { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .match-opt {
+    padding: 8px 14px; background: var(--card); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; transition: all .15s; font-family: inherit;
+  }
+  .match-opt:hover { border-color: var(--primary); }
+  .match-opt.correct { background: rgba(5,150,105,.15); border-color: var(--green); color: var(--green); font-weight: 700; }
+  .match-opt.wrong { background: rgba(220,38,38,.1); border-color: var(--red); color: var(--red); }
+  .match-feedback { margin-top: 8px; padding: 8px 12px; font-size: 12px; border-radius: 4px; line-height: 1.6; }
+  .match-feedback.ok { background: rgba(5,150,105,.1); color: var(--green); }
+  .match-feedback.no { background: rgba(220,38,38,.08); color: var(--red); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .methods { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 3 课</span>环境数据要感知</h1>
+  <p class="lead">传感器是物联网获取环境数据的"前哨"。本课带你了解三种利用传感器开展实践的方式，认识声音强度（分贝）的概念，并通过场景匹配练习掌握"用什么传感器解决什么问题"的判断方法。</p>
+</header>
+
+<main>
+
+  <!-- 三种实践方式 -->
+  <section class="section">
+    <div class="section-title">一、三种传感器实践方式</div>
+    <div class="methods">
+      <div class="method-card">
+        <div class="ic">📱</div>
+        <h3>① 使用智能终端</h3>
+        <p>智能手机/平板内置多种传感器，通过应用商店下载"分贝仪""光照计""指南针"等软件即可使用。</p>
+        <ul>
+          <li>声音传感器（麦克风）</li>
+          <li>光敏传感器（前置自动亮度）</li>
+          <li>加速度传感器、陀螺仪</li>
+          <li>磁力传感器（指南针）</li>
+          <li>GPS、压力、温度</li>
+        </ul>
+      </div>
+      <div class="method-card">
+        <div class="ic">📟</div>
+        <h3>② 使用传感器产品</h3>
+        <p>生活中很多产品本身就是传感器的应用，可直接测量并显示数值。</p>
+        <ul>
+          <li>噪声测试仪</li>
+          <li>气体/甲醛测试仪</li>
+          <li>水质测试笔</li>
+          <li>亮度计、湿度计</li>
+          <li>红外测温枪</li>
+        </ul>
+      </div>
+      <div class="method-card">
+        <div class="ic">🔧</div>
+        <h3>③ 使用物联实验设备</h3>
+        <p>主控板 + 外接传感器 + 执行器，通过编程实现自定义功能。</p>
+        <ul>
+          <li>主控板（含 OLED 显示屏）</li>
+          <li>多种可外接传感器</li>
+          <li>程序读取并处理数据</li>
+          <li>可外接电机、灯、蜂鸣器</li>
+          <li>本教材推荐使用方式</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 分贝尺 -->
+  <section class="section">
+    <div class="section-title">二、声音强度对比（分贝 dB）</div>
+    <div class="db-tool">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;">分贝（decibel, dB）是衡量声音强度的单位。<strong>0 dB 是人耳能听到的最小声音</strong>，每增加 10 dB，声音强度约为原来的 10 倍。<strong>长期处于 85 dB 以上环境会损伤听力</strong>。试着选择不同场景，观察声音强度的差异：</p>
+      <div class="db-scale">
+        <div class="db-bar"></div>
+        <div class="db-marker" id="dbMarker" style="left:30%;">
+          <div class="lbl"><span id="dbValue">40</span> dB</div>
+        </div>
+        <div class="db-ticks">
+          <span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span><span>120</span><span>140</span>
+        </div>
+      </div>
+      <div class="db-scenarios" id="scenarios"></div>
+      <div class="db-info" id="dbInfo">点击上方按钮，对比不同场景的声音强度。</div>
+    </div>
+  </section>
+
+  <!-- 匹配题 -->
+  <section class="section">
+    <div class="section-title">三、传感器选择练习</div>
+    <div class="match-tool">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;">面对不同的实践任务，要选择合适的传感器。请尝试给以下场景匹配最合适的传感器：</p>
+      <div id="quizBox"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 3 课配套交互工具</footer>
+
+<script>
+// ============ 分贝场景 ============
+var scenarios = [
+  { name: '安静卧室（夜间）', db: 25, info: '非常安静，适合睡眠和学习', tone: '' },
+  { name: '图书馆阅览室',     db: 35, info: '安静环境，几乎不会干扰阅读', tone: '' },
+  { name: '正常说话（1米）', db: 50, info: '日常对话音量，听感舒适', tone: '' },
+  { name: '教室上课',         db: 60, info: '稍有热闹但仍可正常听课', tone: '' },
+  { name: '繁忙街道',         db: 75, info: '长时间暴露可能引起疲劳', tone: 'warn' },
+  { name: '吸尘器工作',       db: 80, info: '接近警戒线，长时间使用建议佩戴耳塞', tone: 'warn' },
+  { name: '汽车鸣笛（近）',   db: 90, info: '⚠ 长时间暴露可能损伤听力', tone: 'warn' },
+  { name: '装修电钻',         db: 100, info: '⚠ 短时间接触应使用护耳设备', tone: 'danger' },
+  { name: '摇滚演唱会',       db: 115, info: '⚠ 极易造成听力损伤！', tone: 'danger' },
+  { name: '飞机起飞（近距离）', db: 130, info: '⚠⚠ 接近痛阈，必须佩戴专业护耳设备', tone: 'danger' }
+];
+
+function renderScenarios() {
+  var box = document.getElementById('scenarios');
+  var html = '';
+  for (var i = 0; i < scenarios.length; i++) {
+    html += '<div class="db-btn" onclick="pickScenario(' + i + ')">' + scenarios[i].name + '<br><strong>' + scenarios[i].db + ' dB</strong></div>';
+  }
+  box.innerHTML = html;
+}
+
+function pickScenario(i) {
+  var btns = document.querySelectorAll('.db-btn');
+  for (var k = 0; k < btns.length; k++) btns[k].className = 'db-btn';
+  btns[i].className = 'db-btn active';
+  var s = scenarios[i];
+  document.getElementById('dbValue').textContent = s.db;
+  var pct = Math.min(100, s.db / 140 * 100);
+  document.getElementById('dbMarker').style.left = pct + '%';
+  var info = document.getElementById('dbInfo');
+  info.className = 'db-info ' + (s.tone || '');
+  info.innerHTML = '<strong>' + s.name + '</strong>（' + s.db + ' dB）：' + s.info;
+}
+renderScenarios();
+window.pickScenario = pickScenario;
+
+// ============ 传感器选择题 ============
+var questions = [
+  {
+    desc: '想了解教室里<span class="key">空气质量</span>是否良好，应该选择哪种传感器？',
+    options: ['声音传感器', '温度传感器', 'PM2.5/CO₂ 传感器', '光敏传感器'],
+    answer: 2,
+    explain: 'PM2.5 和 CO₂ 浓度是反映空气质量的两个关键指标，应优先选用对应的气体/颗粒物传感器。'
+  },
+  {
+    desc: '想监测<span class="key">学生书桌的姿势</span>（如桌面是否被遮挡），可以使用？',
+    options: ['距离/红外传感器', '湿度传感器', '声音传感器', '磁场传感器'],
+    answer: 0,
+    explain: '红外或超声波距离传感器可以检测桌面上是否有物体、距离多远，从而推断学生的坐姿或专注情况。'
+  },
+  {
+    desc: '判断<span class="key">教室是否有人走动</span>，应该用哪种传感器？',
+    options: ['温度传感器', '人体红外（PIR）传感器', '光敏传感器', '湿度传感器'],
+    answer: 1,
+    explain: 'PIR（被动红外）传感器能检测人体散发的红外线，是最常用的人体存在/移动检测器。'
+  },
+  {
+    desc: '智能花盆需要判断<span class="key">是否需要浇水</span>，关键传感器是？',
+    options: ['光敏传感器', '土壤湿度传感器', '空气湿度传感器', '温度传感器'],
+    answer: 1,
+    explain: '土壤湿度直接决定植物是否缺水。空气湿度和温度只是辅助参考，光照影响蒸发但不直接反映土壤状态。'
+  },
+  {
+    desc: '想让窗帘在<span class="key">早上太阳升起时自动打开</span>，需要？',
+    options: ['光敏传感器', '声音传感器', '湿度传感器', '气压传感器'],
+    answer: 0,
+    explain: '光敏传感器（光照强度计）能感应日出时光照变化，触发窗帘电机打开。'
+  },
+  {
+    desc: '检测<span class="key">水管是否漏水</span>，最直接的传感器是？',
+    options: ['温度传感器', '声音传感器', '水浸/湿度传感器', '光敏传感器'],
+    answer: 2,
+    explain: '水浸传感器（基于两个电极间电阻变化）放在管道下方，一旦有水就立刻报警。'
+  }
+];
+
+function renderQuiz() {
+  var box = document.getElementById('quizBox');
+  var html = '';
+  for (var i = 0; i < questions.length; i++) {
+    var q = questions[i];
+    html += '<div class="match-q"><div class="desc">' + (i+1) + '. ' + q.desc + '</div><div class="match-options">';
+    for (var j = 0; j < q.options.length; j++) {
+      html += '<div class="match-opt" onclick="answerQuiz(' + i + ',' + j + ')">' + q.options[j] + '</div>';
+    }
+    html += '</div><div id="fb-' + i + '"></div></div>';
+  }
+  box.innerHTML = html;
+}
+
+function answerQuiz(qi, oi) {
+  var q = questions[qi];
+  // Find the question's match-q container
+  var fbs = document.querySelectorAll('.match-q');
+  var container = fbs[qi];
+  var opts = container.querySelectorAll('.match-opt');
+  for (var k = 0; k < opts.length; k++) {
+    opts[k].className = 'match-opt';
+    if (k === q.answer) opts[k].className = 'match-opt correct';
+    if (k === oi && oi !== q.answer) opts[k].className = 'match-opt wrong';
+    opts[k].onclick = null;
+  }
+  var fb = document.getElementById('fb-' + qi);
+  if (oi === q.answer) {
+    fb.className = 'match-feedback ok';
+    fb.innerHTML = '✓ 正确！' + q.explain;
+  } else {
+    fb.className = 'match-feedback no';
+    fb.innerHTML = '✗ 应选 <strong>' + q.options[q.answer] + '</strong>。' + q.explain;
+  }
+}
+
+renderQuiz();
+window.answerQuiz = answerQuiz;
+</script>
+</body>
+</html>

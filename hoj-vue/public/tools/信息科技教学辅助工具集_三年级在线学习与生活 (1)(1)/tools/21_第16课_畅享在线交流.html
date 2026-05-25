@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>畅享在线交流 — 第16课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3ff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#5b21b6,#7c3aed);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#5b21b6;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#7c3aed;color:white;border-color:#5b21b6}
+.intro{background:linear-gradient(135deg,#ede9fe,#ddd6fe);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#5b21b6;margin-bottom:8px;font-size:20px}.intro p{color:#4c1d95;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:42px}.tool-card h4{color:#5b21b6;margin:8px 0 4px;font-size:14px}.tool-card p{color:#4c1d95;font-size:12px;line-height:1.5}
+
+/* 聊天模拟 */
+.chat-window{background:white;border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.08);max-width:480px;margin:14px auto}
+.chat-header{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;padding:14px 18px;display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:18px}
+.chat-name{font-size:15px;font-weight:600}
+.chat-status{font-size:11px;opacity:.85}
+.chat-body{padding:14px;background:#faf5ff;min-height:320px;max-height:380px;overflow-y:auto}
+.msg{display:flex;gap:8px;margin-bottom:12px;animation:f .3s}
+.msg.left{justify-content:flex-start}.msg.right{justify-content:flex-end}
+.msg .bubble{max-width:75%;padding:8px 14px;border-radius:14px;font-size:13px;line-height:1.5}
+.msg.left .bubble{background:white;border:1px solid #ede9fe}
+.msg.right .bubble{background:#7c3aed;color:white}
+.msg-time{font-size:10px;color:#94a3b8;margin-top:2px}
+.chat-input-row{display:flex;gap:8px;padding:10px 14px;background:white;border-top:1px solid #ede9fe;align-items:center}
+.chat-input{flex:1;padding:8px 12px;border:1.5px solid #ddd6fe;border-radius:18px;font-size:13px}
+.chat-input:focus{outline:none;border-color:#7c3aed}
+.send-btn{padding:8px 16px;background:#7c3aed;color:white;border:none;border-radius:18px;cursor:pointer;font-size:13px}
+
+.preset-btns{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px;background:#faf5ff}
+.preset-btn{padding:4px 10px;background:white;border:1px solid #ddd6fe;border-radius:14px;cursor:pointer;font-size:11px;color:#5b21b6}
+.preset-btn:hover{background:#ede9fe}
+
+/* 礼仪情景 */
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.scenario-grid{grid-template-columns:1fr}}
+.scenario{background:white;padding:16px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);border-left:4px solid}
+.scenario.good{border-color:#22c55e}
+.scenario.bad{border-color:#ef4444}
+.scenario .icon{font-size:30px}
+.scenario .quote{background:#faf5ff;padding:10px 14px;border-radius:8px;font-style:italic;color:#475569;font-size:13px;margin:8px 0}
+.scenario .verdict{font-weight:600;font-size:13px}
+.scenario.good .verdict{color:#15803d}
+.scenario.bad .verdict{color:#b91c1c}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>💬 畅享在线交流</h1>
+    <div class="lesson">第 16 课 · 第五单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>在线交流的便利</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>多样的交流工具</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>在线交流体验</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>交流礼仪情景</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>💬 在线交流的便利</h2>
+      <div class="lead">网络让千里之外的人也能"面对面"交流</div>
+      <div class="intro">
+        <h3>🌍 缩小了世界</h3>
+        <p>以前给爷爷奶奶写信要 1 周才到；现在视频通话<b>瞬间就到</b>。同学远游可以和家人随时联系；远房亲戚再也不会失联。在线交流让<b>沟通变得即时、生动、丰富</b>。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">⚡</div><h4>即时性</h4><p>实时收到对方信息</p></div>
+        <div class="tool-card"><div class="icon">🌍</div><h4>无地域</h4><p>千里之外也能交流</p></div>
+        <div class="tool-card"><div class="icon">🎨</div><h4>多媒体</h4><p>文字图片视频都行</p></div>
+        <div class="tool-card"><div class="icon">👥</div><h4>多人共聊</h4><p>群组可以多人讨论</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🛠️ 多样的交流工具</h2>
+      <div class="lead">不同场合用不同的工具</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">📧</div><h4>电子邮件</h4><p>正式、长篇内容</p></div>
+        <div class="tool-card"><div class="icon">💬</div><h4>即时通讯</h4><p>QQ、微信日常聊天</p></div>
+        <div class="tool-card"><div class="icon">📞</div><h4>视频通话</h4><p>面对面交流</p></div>
+        <div class="tool-card"><div class="icon">🎓</div><h4>在线课堂</h4><p>多人学习讨论</p></div>
+        <div class="tool-card"><div class="icon">👥</div><h4>交流群</h4><p>班级群、家庭群</p></div>
+        <div class="tool-card"><div class="icon">📝</div><h4>论坛留言</h4><p>主题讨论、长内容</p></div>
+        <div class="tool-card"><div class="icon">📢</div><h4>公告通知</h4><p>群发消息、家校联系</p></div>
+        <div class="tool-card"><div class="icon">📨</div><h4>电子贺卡</h4><p>节日祝福</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 怎么选择合适的工具？</h3>
+        <p>① <b>正式 / 长内容</b>：选电子邮件<br>② <b>日常聊天</b>：选即时通讯<br>③ <b>需要看人</b>：选视频通话<br>④ <b>多人讨论</b>：选群组或在线会议</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>👨‍👩‍👧 在线交流体验</h2>
+      <div class="lead">模拟和家人在群里聊天，注意礼貌用语</div>
+      <div class="chat-window">
+        <div class="chat-header">
+          <div class="avatar">👨‍👩‍👧</div>
+          <div>
+            <div class="chat-name">温馨之家</div>
+            <div class="chat-status">3 人在线 · 爸爸 · 妈妈 · 爷爷</div>
+          </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="msg left">
+            <div class="avatar" style="background:#fef3c7;color:#92400e;">👨</div>
+            <div>
+              <div class="bubble">小明，你今天放学早点回来呀</div>
+              <div class="msg-time">爸爸 · 14:30</div>
+            </div>
+          </div>
+          <div class="msg left">
+            <div class="avatar" style="background:#fce7f3;color:#be185d;">👩</div>
+            <div>
+              <div class="bubble">妈妈给你做了你最爱吃的红烧排骨～</div>
+              <div class="msg-time">妈妈 · 14:31</div>
+            </div>
+          </div>
+          <div class="msg left">
+            <div class="avatar" style="background:#e0e7ff;color:#3730a3;">👴</div>
+            <div>
+              <div class="bubble">爷爷想你了，今天来家里坐坐？</div>
+              <div class="msg-time">爷爷 · 14:35</div>
+            </div>
+          </div>
+        </div>
+        <div class="preset-btns">
+          <span class="preset-btn" onclick="quickSend('好的，谢谢爸爸妈妈！')">好的，谢谢爸妈！</span>
+          <span class="preset-btn" onclick="quickSend('爷爷我也想您！今天一定去！')">想爷爷！</span>
+          <span class="preset-btn" onclick="quickSend('知道啦～')">知道啦</span>
+          <span class="preset-btn" onclick="quickSend('🥰❤️')">表情</span>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" placeholder="说点什么..." onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="send-btn" onclick="sendMsg()">发送</button>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 网络发言要文明</h3>
+        <p>① 使用<b>礼貌用语</b>：请、谢谢、对不起；<br>② 不发<b>不文明的话</b>；<br>③ 表情符号<b>不要过度使用</b>；<br>④ 不要刷屏，<b>说话简短清晰</b>。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📜 交流礼仪情景</h2>
+      <div class="lead">判断下面这些做法对不对</div>
+      <div class="scenario-grid">
+        <div class="scenario good">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="icon">👋</span>
+            <strong style="color:#15803d;">情景一：礼貌问候</strong>
+          </div>
+          <div class="quote">"老师好！我是小明，请问明天的作业是什么？"</div>
+          <div class="verdict">✓ 对：开头问候，称呼明确</div>
+        </div>
+        <div class="scenario bad">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="icon">❓</span>
+            <strong style="color:#b91c1c;">情景二：突兀提问</strong>
+          </div>
+          <div class="quote">"作业。"</div>
+          <div class="verdict">✗ 错：没有称呼、没有礼貌</div>
+        </div>
+        <div class="scenario bad">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="icon">💤</span>
+            <strong style="color:#b91c1c;">情景三：深夜打扰</strong>
+          </div>
+          <div class="quote">凌晨 1 点给同学发消息，要求立刻回复</div>
+          <div class="verdict">✗ 错：深夜打扰他人休息</div>
+        </div>
+        <div class="scenario good">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="icon">👍</span>
+            <strong style="color:#15803d;">情景四：积极反馈</strong>
+          </div>
+          <div class="quote">"小红，你的小报做得真棒，配色我特别喜欢！"</div>
+          <div class="verdict">✓ 对：具体的赞美、温暖的鼓励</div>
+        </div>
+        <div class="scenario bad">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="icon">📢</span>
+            <strong style="color:#b91c1c;">情景五：刷屏轰炸</strong>
+          </div>
+          <div class="quote">连续发 20 条消息：在吗？在吗？在吗？……</div>
+          <div class="verdict">✗ 错：让人感到不舒服</div>
+        </div>
+        <div class="scenario good">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="icon">🙏</span>
+            <strong style="color:#15803d;">情景六：道谢致歉</strong>
+          </div>
+          <div class="quote">"谢谢你今天帮我，下次我请你喝奶茶～"</div>
+          <div class="verdict">✓ 对：感恩的心、真诚表达</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">💬</div><h4>即时方便</h4><p>消息、图片、视频通话</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🛠️</div><h4>选对工具</h4><p>根据场合选合适的</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">📜</div><h4>讲究礼仪</h4><p>礼貌、简明、有分寸</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">⏰</div><h4>注意时间</h4><p>不深夜打扰他人</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 网络交流"三不"</h3>
+        <p>① <b>不说脏话</b>：保持文明用语；<br>② <b>不传谣言</b>：未经证实的消息不转发；<br>③ <b>不打扰他人</b>：不发垃圾信息、不刷屏。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+function getTime() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function sendMsg() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg('right', text, '我', '🧒');
+  input.value = '';
+  // 模拟回复
+  setTimeout(() => {
+    const replies = ['好的，期待你回来～', '太懂事啦！', '嗯嗯，慢慢来不着急', '收到，等你回家', '👍'];
+    const senders = [['👨','爸爸','#fef3c7','#92400e'],['👩','妈妈','#fce7f3','#be185d'],['👴','爷爷','#e0e7ff','#3730a3']];
+    const s = senders[Math.floor(Math.random()*senders.length)];
+    addMsg('left', replies[Math.floor(Math.random()*replies.length)], s[1], s[0], s[2], s[3]);
+  }, 800);
+}
+
+function quickSend(text) {
+  document.getElementById('chatInput').value = text;
+  sendMsg();
+}
+
+function addMsg(side, text, name, emoji, avBg, avColor) {
+  const body = document.getElementById('chatBody');
+  const div = document.createElement('div');
+  div.className = 'msg ' + side;
+  if (side === 'left') {
+    div.innerHTML = `<div class="avatar" style="background:${avBg};color:${avColor};">${emoji}</div>
+      <div><div class="bubble">${text}</div><div class="msg-time">${name} · ${getTime()}</div></div>`;
+  } else {
+    div.innerHTML = `<div><div class="bubble">${text}</div><div class="msg-time" style="text-align:right;">${getTime()} · ${name}</div></div>
+      <div class="avatar" style="background:#a78bfa;color:white;">${emoji}</div>`;
+  }
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT') p();
+});
+</script>
+</body>
+</html>

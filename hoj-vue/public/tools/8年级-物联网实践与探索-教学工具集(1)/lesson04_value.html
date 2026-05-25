@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第4课 · 物物相连有价值 — IoT 价值发现</title>
+<style>
+  :root {
+    --bg: #fdf8f0;
+    --bg-2: #f5ead8;
+    --ink: #2a1f12;
+    --ink-soft: #6b5a44;
+    --primary: #d97706;
+    --primary-2: #f59e0b;
+    --green: #059669;
+    --blue: #2563eb;
+    --gray: #94a3b8;
+    --line: #e7d8b8;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(120,80,20,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image: radial-gradient(circle at 50% 0%, rgba(217,119,6,.05), transparent 50%);
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--primary); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* Before/After 对比 */
+  .ba-grid {
+    background: var(--card); padding: 0; border-radius: 12px; box-shadow: var(--shadow);
+    border: 1px solid var(--line); overflow: hidden;
+  }
+  .ba-tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .ba-tab {
+    padding: 14px 24px; cursor: pointer; font-size: 14px; font-weight: 600;
+    border-bottom: 3px solid transparent; transition: all .15s; flex: 1; text-align: center;
+    color: var(--ink-soft);
+  }
+  .ba-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--bg-2); }
+  .ba-content { display: none; padding: 28px; }
+  .ba-content.active { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .ba-side h3 { font-size: 16px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+  .ba-side.trad h3 { color: var(--gray); }
+  .ba-side.iot h3 { color: var(--primary); }
+  .ba-side .scene {
+    background: var(--bg-2); padding: 18px; border-radius: 8px; min-height: 220px;
+    font-size: 13px; line-height: 1.8;
+  }
+  .ba-side.iot .scene { background: linear-gradient(160deg, #fef3c7, #fed7aa); }
+  .ba-side .scene strong { color: var(--ink); }
+  .ba-side ul { margin-top: 10px; padding-left: 18px; }
+  .ba-side li { margin: 4px 0; font-size: 12px; line-height: 1.7; }
+
+  /* 价值链 */
+  .vc-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .vc-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr; align-items: center; gap: 8px; margin: 20px 0; }
+  .vc-step {
+    text-align: center; padding: 14px 8px; background: var(--bg-2); border-radius: 8px;
+    border: 2px solid var(--line); transition: all .2s;
+  }
+  .vc-step .ic { font-size: 28px; display: block; margin-bottom: 4px; }
+  .vc-step h4 { font-size: 13px; margin-bottom: 2px; }
+  .vc-step p { font-size: 10px; color: var(--ink-soft); line-height: 1.4; }
+  .vc-arrow { font-size: 18px; color: var(--primary); font-weight: 700; }
+
+  /* 学校物联灯光案例 */
+  .case {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .case-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; }
+  .case-visual {
+    background: linear-gradient(180deg, #fef3c7 0%, #fed7aa 100%);
+    border-radius: 10px; padding: 24px; position: relative; overflow: hidden;
+    min-height: 280px;
+  }
+  .case-visual svg { width: 100%; height: 280px; }
+  .case-stats { display: flex; flex-direction: column; gap: 12px; }
+  .stat-card {
+    background: var(--bg-2); padding: 16px; border-radius: 8px;
+  }
+  .stat-card h4 { font-size: 12px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 4px; }
+  .stat-card .num {
+    font-size: 28px; font-weight: 700; color: var(--primary); font-family: "JetBrains Mono",monospace;
+  }
+  .stat-card .desc { font-size: 11px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+
+  .toggle-row { display: flex; gap: 10px; margin-top: 18px; }
+  .toggle-btn {
+    padding: 10px 20px; background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-family: inherit; flex: 1; color: var(--ink);
+  }
+  .toggle-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .ba-content.active { grid-template-columns: 1fr; }
+    .vc-flow { grid-template-columns: 1fr; }
+    .vc-arrow { display: none; }
+    .case-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 4 课</span>物物相连有价值</h1>
+  <p class="lead">物联网的价值不仅是"让物品上网"，更在于让物品<strong>自主感知、传输数据、形成智能服务</strong>。本课通过传统场景 vs 物联场景的对比，帮你发现物联网如何让"物"产生新的价值。</p>
+</header>
+
+<main>
+
+  <!-- 对比 -->
+  <section class="section">
+    <div class="section-title">一、传统 vs 物联：发现差异</div>
+    <div class="ba-grid">
+      <div class="ba-tabs">
+        <div class="ba-tab active" onclick="switchTab('home')">🏠 智能家居</div>
+        <div class="ba-tab" onclick="switchTab('park')">🅿 智能停车</div>
+        <div class="ba-tab" onclick="switchTab('repair')">🔧 家电报修</div>
+        <div class="ba-tab" onclick="switchTab('farm')">🌾 农业灌溉</div>
+      </div>
+
+      <!-- 智能家居 -->
+      <div class="ba-content active" id="tab-home">
+        <div class="ba-side trad">
+          <h3>📺 传统家电</h3>
+          <div class="scene">
+            <p>下班回家前，<strong>无法提前知道</strong>家里温度。</p>
+            <ul>
+              <li>电器是"哑"设备 —— 各自独立运行</li>
+              <li>开关靠人手动操作</li>
+              <li>不能远程控制</li>
+              <li>没有数据反馈（如用电量）</li>
+              <li>故障后才发现，维修要等师傅上门</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ba-side iot">
+          <h3>📡 物联家居</h3>
+          <div class="scene">
+            <p>下班路上，手机 APP 显示家里温度 32℃，<strong>一键提前开启空调</strong>。回家时已凉爽。</p>
+            <ul>
+              <li>所有电器接入统一平台</li>
+              <li>定时、场景化联动（"睡眠模式"全屋调节）</li>
+              <li>手机/语音远程控制</li>
+              <li>实时数据统计（用电曲线、最耗电设备）</li>
+              <li>故障自动诊断，主动报修</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 停车 -->
+      <div class="ba-content" id="tab-park">
+        <div class="ba-side trad">
+          <h3>🅿 传统停车场</h3>
+          <div class="scene">
+            <p>开车进入商场，<strong>不知道哪里有空位</strong>，盘旋几圈才能找到。</p>
+            <ul>
+              <li>入口靠人工发卡或取卡</li>
+              <li>出口排队人工缴费</li>
+              <li>容易忘记车停在哪一层</li>
+              <li>不知道哪些车位空闲</li>
+              <li>晚高峰拥堵严重</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ba-side iot">
+          <h3>📡 物联停车</h3>
+          <div class="scene">
+            <p>导航 APP 显示"3 楼 B 区有空位"，进入车牌识别<strong>自动抬杆</strong>，出去扣费<strong>0 秒通过</strong>。</p>
+            <ul>
+              <li>地磁传感器实时检测每个车位</li>
+              <li>车牌识别摄像头自动通行</li>
+              <li>APP 查询空位、导航至车位</li>
+              <li>电子支付自动扣费</li>
+              <li>反向寻车（输入车牌定位）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 家电报修 -->
+      <div class="ba-content" id="tab-repair">
+        <div class="ba-side trad">
+          <h3>🛠 传统报修</h3>
+          <div class="scene">
+            <p>电视突然不能开机。<strong>打客服热线</strong>，等师傅 3 天后上门。</p>
+            <ul>
+              <li>故障发生时才发现</li>
+              <li>人工电话报修</li>
+              <li>师傅上门前不知道是什么问题</li>
+              <li>可能要带零件二次上门</li>
+              <li>整个流程需要多天</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ba-side iot">
+          <h3>📡 物联报修</h3>
+          <div class="scene">
+            <p>电器内部传感器检测到<strong>异常温升</strong>，<strong>主动推送报修</strong>到厂家后台。家用机器人/快递员把电器取走，同时安装备用机。</p>
+            <ul>
+              <li>故障预测（监测温度/振动/电流）</li>
+              <li>主动报修，不需用户操作</li>
+              <li>厂家提前备好零件</li>
+              <li>无人化取件 + 替换流程</li>
+              <li>用户几乎"无感"完成维修</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 农业 -->
+      <div class="ba-content" id="tab-farm">
+        <div class="ba-side trad">
+          <h3>🚜 传统农业</h3>
+          <div class="scene">
+            <p>农民根据经验决定<strong>什么时候浇水</strong>。大水漫灌，浪费严重。</p>
+            <ul>
+              <li>靠经验、看天吃饭</li>
+              <li>大田统一浇水（不分区域）</li>
+              <li>水肥消耗大、效率低</li>
+              <li>无法精准应对极端天气</li>
+              <li>劳动力密集</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ba-side iot">
+          <h3>📡 智慧农业</h3>
+          <div class="scene">
+            <p>每块田都布置传感器，系统判断<strong>哪里缺水</strong>，自动开启相应区域的滴灌阀门。</p>
+            <ul>
+              <li>土壤湿度传感器分区采集</li>
+              <li>结合天气预报智能决策</li>
+              <li>精准滴灌（节水 50% 以上）</li>
+              <li>无人机/机器人巡查作物长势</li>
+              <li>大数据分析最佳种植时间</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 价值链 -->
+  <section class="section">
+    <div class="section-title">二、物联网价值产生的链条</div>
+    <div class="vc-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.8;margin-bottom:10px;">物联网通过<strong>"感知 → 传输 → 处理 → 决策 → 反馈"</strong>的闭环创造价值。每一步都需要不同的技术支持，缺一不可：</p>
+      <div class="vc-flow">
+        <div class="vc-step"><span class="ic">👁</span><h4>感知</h4><p>传感器采集数据</p></div>
+        <div class="vc-arrow">→</div>
+        <div class="vc-step"><span class="ic">📡</span><h4>传输</h4><p>Wi-Fi/5G/MQTT</p></div>
+        <div class="vc-arrow">→</div>
+        <div class="vc-step"><span class="ic">💻</span><h4>处理</h4><p>云端存储分析</p></div>
+        <div class="vc-arrow">→</div>
+        <div class="vc-step"><span class="ic">🤖</span><h4>决策</h4><p>算法判断</p></div>
+        <div class="vc-arrow">→</div>
+        <div class="vc-step"><span class="ic">⚙</span><h4>反馈</h4><p>执行器动作</p></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:12px;">
+        💡 <strong>关键洞察：</strong>互联网"连接人和信息"；而物联网"连接物和服务"。物联网中产生的<strong>数据本身就是价值</strong>—— 通过大数据分析可以发现新规律、改善决策、降低成本。
+      </p>
+    </div>
+  </section>
+
+  <!-- 物联灯光案例 -->
+  <section class="section">
+    <div class="section-title">三、案例：学校物联灯光系统</div>
+    <div class="case">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px;">假设我们学校的所有教室都安装了"物联灯光系统"。点击下方对比按钮，观察传统灯光和物联灯光的差异：</p>
+      <div class="case-grid">
+        <div class="case-visual">
+          <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+            <!-- 教室简图 -->
+            <rect x="40" y="60" width="320" height="180" fill="rgba(255,255,255,.6)" stroke="#a37315" stroke-width="2" rx="6"/>
+            <!-- 灯 -->
+            <g id="lights">
+              <circle id="lt1" cx="120" cy="100" r="14" fill="#fbbf24" opacity="1"/>
+              <circle id="lt2" cx="200" cy="100" r="14" fill="#fbbf24" opacity="1"/>
+              <circle id="lt3" cx="280" cy="100" r="14" fill="#fbbf24" opacity="1"/>
+            </g>
+            <!-- 学生 -->
+            <g id="students">
+              <circle cx="120" cy="180" r="10" fill="#7c3aed"/>
+              <rect x="115" y="190" width="10" height="20" fill="#7c3aed" rx="2"/>
+              <circle cx="200" cy="180" r="10" fill="#7c3aed" opacity="0.3" id="stu2"/>
+              <rect x="195" y="190" width="10" height="20" fill="#7c3aed" rx="2" opacity="0.3" id="stu2b"/>
+              <circle cx="280" cy="180" r="10" fill="#7c3aed" opacity="0.3" id="stu3"/>
+              <rect x="275" y="190" width="10" height="20" fill="#7c3aed" rx="2" opacity="0.3" id="stu3b"/>
+            </g>
+            <!-- 状态 -->
+            <text id="caseLabel" x="200" y="40" font-size="14" fill="#2a1f12" text-anchor="middle" font-weight="700">传统模式：全部灯亮（即使没人）</text>
+            <!-- 窗户：表示自然光 -->
+            <rect x="60" y="70" width="40" height="50" fill="#fef9c3" stroke="#a37315" stroke-width="1.5"/>
+            <text id="sunIcon" x="80" y="100" font-size="20" text-anchor="middle">☀</text>
+          </svg>
+        </div>
+        <div class="case-stats">
+          <div class="stat-card">
+            <h4>📊 用电量</h4>
+            <div class="num" id="stPower">100<span style="font-size:14px;">%</span></div>
+            <div class="desc" id="dPower">参考用电量</div>
+          </div>
+          <div class="stat-card">
+            <h4>💡 智能联动</h4>
+            <div class="num" id="stAuto" style="font-size:20px;color:var(--gray);">无</div>
+            <div class="desc" id="dAuto">需要手动开关</div>
+          </div>
+          <div class="stat-card">
+            <h4>🎯 自然光感应</h4>
+            <div class="num" id="stLight" style="font-size:20px;color:var(--gray);">无</div>
+            <div class="desc" id="dLight">不会根据光照自动调节</div>
+          </div>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="b_trad" onclick="setMode('trad')">传统灯光</button>
+        <button class="toggle-btn" id="b_iot" onclick="setMode('iot')">物联灯光</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 4 课配套交互工具</footer>
+
+<script>
+// ============ tabs ============
+function switchTab(name) {
+  var tabs = document.querySelectorAll('.ba-tab');
+  var contents = document.querySelectorAll('.ba-content');
+  for (var i = 0; i < tabs.length; i++) tabs[i].className = 'ba-tab';
+  for (var j = 0; j < contents.length; j++) contents[j].className = 'ba-content';
+  // Find clicked tab
+  var idx = ['home','park','repair','farm'].indexOf(name);
+  tabs[idx].className = 'ba-tab active';
+  document.getElementById('tab-' + name).className = 'ba-content active';
+}
+window.switchTab = switchTab;
+
+// ============ case toggle ============
+function setMode(mode) {
+  document.getElementById('b_trad').className = 'toggle-btn' + (mode==='trad' ? ' active' : '');
+  document.getElementById('b_iot').className  = 'toggle-btn' + (mode==='iot'  ? ' active' : '');
+  if (mode === 'trad') {
+    document.getElementById('caseLabel').textContent = '传统模式：全部灯亮（即使没人）';
+    document.getElementById('lt1').setAttribute('opacity', 1);
+    document.getElementById('lt2').setAttribute('opacity', 1);
+    document.getElementById('lt3').setAttribute('opacity', 1);
+    document.getElementById('stPower').innerHTML = '100<span style="font-size:14px;">%</span>';
+    document.getElementById('stPower').style.color = '#94a3b8';
+    document.getElementById('dPower').textContent = '所有灯长时间开启，能耗高';
+    document.getElementById('stAuto').textContent = '无';
+    document.getElementById('stAuto').style.color = '#94a3b8';
+    document.getElementById('dAuto').textContent = '需要手动开关';
+    document.getElementById('stLight').textContent = '无';
+    document.getElementById('stLight').style.color = '#94a3b8';
+    document.getElementById('dLight').textContent = '不会根据光照自动调节';
+  } else {
+    document.getElementById('caseLabel').textContent = '物联模式：仅有人区域亮灯，按光照调节';
+    document.getElementById('lt1').setAttribute('opacity', 1);     // 学生1所在
+    document.getElementById('lt2').setAttribute('opacity', 0.25);  // 无人
+    document.getElementById('lt3').setAttribute('opacity', 0.25);  // 无人
+    document.getElementById('stPower').innerHTML = '38<span style="font-size:14px;">%</span>';
+    document.getElementById('stPower').style.color = '#059669';
+    document.getElementById('dPower').textContent = '相比传统节能约 62%';
+    document.getElementById('stAuto').textContent = '有';
+    document.getElementById('stAuto').style.color = '#059669';
+    document.getElementById('dAuto').textContent = '人体红外感应自动开关';
+    document.getElementById('stLight').textContent = '有';
+    document.getElementById('stLight').style.color = '#059669';
+    document.getElementById('dLight').textContent = '光敏传感器调节亮度';
+  }
+}
+window.setMode = setMode;
+</script>
+</body>
+</html>

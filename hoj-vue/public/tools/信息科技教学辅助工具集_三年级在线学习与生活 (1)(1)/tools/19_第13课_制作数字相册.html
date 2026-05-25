@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>制作数字相册 — 第13课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#fdf2f8;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#be185d,#ec4899);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#be185d;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#ec4899;color:white;border-color:#be185d}
+.intro{background:linear-gradient(135deg,#fce7f3,#fbcfe8);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#be185d;margin-bottom:8px;font-size:20px}.intro p{color:#831843;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+
+/* 相册制作器 */
+.album-maker{background:white;border-radius:12px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.tab-row{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid #fce7f3;padding-bottom:8px}
+.tab{padding:6px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:#64748b;border-radius:6px;font-weight:500}
+.tab.active{background:#fce7f3;color:#be185d}
+.template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+.tpl{padding:14px 8px;text-align:center;border-radius:8px;cursor:pointer;border:2px solid transparent;font-size:12px;transition:all .2s}
+.tpl:hover{border-color:#ec4899}
+.tpl.active{background:#fce7f3;border-color:#be185d}
+.tpl .thumb{width:100%;aspect-ratio:4/3;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.tpl.t1 .thumb{background:linear-gradient(135deg,#fef3c7,#fde68a)}
+.tpl.t2 .thumb{background:linear-gradient(135deg,#dbeafe,#bfdbfe)}
+.tpl.t3 .thumb{background:linear-gradient(135deg,#d1fae5,#a7f3d0)}
+.tpl.t4 .thumb{background:linear-gradient(135deg,#fce7f3,#fbcfe8)}
+.tpl.t5 .thumb{background:linear-gradient(135deg,#1e293b,#475569);color:white}
+
+.pics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;max-height:200px;overflow-y:auto;padding:6px;background:#fdf2f8;border-radius:8px}
+.pic-add{aspect-ratio:1;background:#fce7f3;border:2px dashed #f9a8d4;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#be185d}
+.pic-item{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer;position:relative;transition:all .2s}
+.pic-item:hover{transform:scale(1.05);box-shadow:0 4px 10px rgba(0,0,0,.15)}
+.pic-item.selected{border:3px solid #be185d}
+.pic-item .del{position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(239,68,68,.9);color:white;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:12px;cursor:pointer}
+.pic-item:hover .del{display:flex}
+
+/* 相册预览 */
+.album-preview{margin-top:14px;background:#1e293b;border-radius:12px;padding:18px;min-height:300px;position:relative;color:white;overflow:hidden}
+.album-preview.tpl-t1{background:linear-gradient(135deg,#fef9c3,#fbbf24)}
+.album-preview.tpl-t2{background:linear-gradient(135deg,#bfdbfe,#3b82f6)}
+.album-preview.tpl-t3{background:linear-gradient(135deg,#a7f3d0,#10b981)}
+.album-preview.tpl-t4{background:linear-gradient(135deg,#fbcfe8,#ec4899)}
+.album-preview.tpl-t5{background:linear-gradient(135deg,#1e293b,#0f172a)}
+.album-title{text-align:center;font-size:24px;font-weight:700;margin-bottom:14px;padding:8px;background:rgba(0,0,0,.2);border-radius:8px;color:white}
+.album-pic{width:100%;aspect-ratio:4/3;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:120px;margin-bottom:10px;transition:opacity .4s}
+.album-text{text-align:center;font-size:15px;font-style:italic;color:white;padding:6px}
+.album-nav{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:white}
+.album-nav button{background:rgba(255,255,255,.2);border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+.dots{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer}
+.dot.active{background:white}
+
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+.step-card{background:white;padding:14px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);position:relative}
+.step-card .n{position:absolute;top:-8px;left:10px;width:26px;height:26px;border-radius:50%;background:#ec4899;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.step-card .icon{font-size:32px;margin:8px 0}
+.step-card h4{color:#be185d;font-size:14px;margin-bottom:4px}
+.step-card p{color:#475569;font-size:12px;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>📷 制作数字相册</h1>
+    <div class="lesson">第 13 课 · 第四单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>什么是数字相册</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>制作步骤</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>相册制作器</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>美化技巧</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>📷 什么是数字相册</h2>
+      <div class="lead">把照片按主题整理在一起，加上文字、音乐、动画的电子作品</div>
+      <div class="intro">
+        <h3>📸 数字相册 vs 传统相册</h3>
+        <p>传统相册：洗印照片，贴在本子上。<br>
+        数字相册：电子文件，可以加文字、加音乐、加动画切换效果，<b>更生动、更省钱、更易分享</b>。</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">🎵</div>
+          <h4>有背景音乐</h4>
+          <p>配上合适的音乐，气氛更好</p>
+        </div>
+        <div class="step-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">✨</div>
+          <h4>有切换效果</h4>
+          <p>淡入淡出、轮播展示</p>
+        </div>
+        <div class="step-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">📝</div>
+          <h4>有文字说明</h4>
+          <p>记录时间、地点、心情</p>
+        </div>
+        <div class="step-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">📤</div>
+          <h4>易分享传播</h4>
+          <p>发给亲友共同欣赏</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 制作数字相册的步骤</h2>
+      <div class="lead">六个步骤，做一本属于自己的相册</div>
+      <div class="steps-grid">
+        <div class="step-card"><div class="n">1</div><div class="icon">🎯</div><h4>定主题</h4><p>"我的家乡""校园四季""生日聚会"</p></div>
+        <div class="step-card"><div class="n">2</div><div class="icon">📸</div><h4>选照片</h4><p>挑出 8-15 张最有代表性的</p></div>
+        <div class="step-card"><div class="n">3</div><div class="icon">🎨</div><h4>选模板</h4><p>选择风格匹配的相册模板</p></div>
+        <div class="step-card"><div class="n">4</div><div class="icon">📝</div><h4>加文字</h4><p>给每张照片配上文字说明</p></div>
+        <div class="step-card"><div class="n">5</div><div class="icon">🎵</div><h4>加音乐</h4><p>选一首合适的背景音乐</p></div>
+        <div class="step-card"><div class="n">6</div><div class="icon">💾</div><h4>导出分享</h4><p>保存成视频或图片格式</p></div>
+      </div>
+      <div class="know">
+        <h3>📌 三年级常用工具</h3>
+        <p>① <b>PPT 演示文稿</b>：把每张照片放在一张幻灯片上，可以自动切换<br>② <b>WPS 演示</b>：和 PPT 类似，免费易用<br>③ <b>手机相册自带功能</b>：选定多张照片→选"创建回忆"</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎨 相册制作器</h2>
+      <div class="lead">下面是一个简单的相册制作器，请试一试</div>
+      <div class="album-maker">
+        <div class="tab-row">
+          <button class="tab active" onclick="switchTab(this,0)">① 设置主题</button>
+          <button class="tab" onclick="switchTab(this,1)">② 选模板</button>
+          <button class="tab" onclick="switchTab(this,2)">③ 添加照片</button>
+        </div>
+        
+        <div class="tab-panel active" id="tabPanel0">
+          <label style="font-size:13px;color:#475569;">📝 相册标题：</label>
+          <input type="text" id="albumTitle" value="校园美好回忆" style="width:100%;padding:8px 12px;border:1.5px solid #f9a8d4;border-radius:6px;margin-top:6px;font-size:14px;">
+          <label style="font-size:13px;color:#475569;margin-top:14px;display:block;">💬 相册描述：</label>
+          <textarea id="albumDesc" style="width:100%;padding:8px 12px;border:1.5px solid #f9a8d4;border-radius:6px;margin-top:6px;font-size:14px;min-height:60px;resize:vertical;">记录在校园里度过的美好时光</textarea>
+        </div>
+        
+        <div class="tab-panel" id="tabPanel1" style="display:none;">
+          <p style="font-size:13px;color:#475569;margin-bottom:10px;">选择相册风格：</p>
+          <div class="template-grid">
+            <div class="tpl t1 active" onclick="selTpl(this,'t1')"><div class="thumb">☀️</div>温馨黄</div>
+            <div class="tpl t2" onclick="selTpl(this,'t2')"><div class="thumb">🌊</div>清新蓝</div>
+            <div class="tpl t3" onclick="selTpl(this,'t3')"><div class="thumb">🌿</div>自然绿</div>
+            <div class="tpl t4" onclick="selTpl(this,'t4')"><div class="thumb">🌸</div>温馨粉</div>
+            <div class="tpl t5" onclick="selTpl(this,'t5')"><div class="thumb">🌃</div>典雅黑</div>
+          </div>
+        </div>
+        
+        <div class="tab-panel" id="tabPanel2" style="display:none;">
+          <p style="font-size:13px;color:#475569;margin-bottom:10px;">点击 + 添加照片：</p>
+          <div class="pics-row" id="picsRow"></div>
+        </div>
+        
+        <!-- 预览 -->
+        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+          <button class="ctrl-btn primary" onclick="startPreview()">▶ 预览相册</button>
+          <button class="ctrl-btn" onclick="togglePlay()" id="playBtn">⏯ 自动播放</button>
+          <span style="font-size:12px;color:#94a3b8;margin-left:auto;">📷 已添加 <span id="picCount">0</span> 张照片</span>
+        </div>
+        
+        <div class="album-preview tpl-t1" id="albumPreview">
+          <div class="album-title" id="previewTitle">校园美好回忆</div>
+          <div class="album-pic" id="previewPic">📷</div>
+          <div class="album-text" id="previewText">— 请添加照片 —</div>
+          <div class="album-nav">
+            <button onclick="prevPic()">← 上一张</button>
+            <span id="picIdx" style="font-size:12px;">0 / 0</span>
+            <button onclick="nextPic()">下一张 →</button>
+          </div>
+          <div class="dots" id="dots"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>✨ 相册美化技巧</h2>
+      <div class="lead">让你的相册更有质感</div>
+      <div class="steps-grid">
+        <div class="step-card"><div class="icon">🎨</div><h4>色彩统一</h4><p>主色调不超过 3 种</p></div>
+        <div class="step-card"><div class="icon">🔤</div><h4>字体得体</h4><p>不要用太花的字体</p></div>
+        <div class="step-card"><div class="icon">🖼️</div><h4>图片有序</h4><p>按时间或主题排列</p></div>
+        <div class="step-card"><div class="icon">📐</div><h4>留白适度</h4><p>不要塞满每张幻灯片</p></div>
+        <div class="step-card"><div class="icon">🎭</div><h4>过渡平缓</h4><p>切换动画不要太花哨</p></div>
+        <div class="step-card"><div class="icon">🎵</div><h4>音乐匹配</h4><p>欢快主题配明快音乐</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 完成清单</h3>
+        <p>检查相册是否做到：① 主题鲜明 ② 照片清晰 ③ 文字简洁 ④ 排版整齐 ⑤ 音乐合适 ⑥ 切换流畅。全部 ✅，就是一本好相册！</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="steps-grid">
+        <div class="step-card" style="border-top:4px solid #ec4899;"><div class="icon">📷</div><h4>相册的特点</h4><p>多媒体、可分享、有特效</p></div>
+        <div class="step-card" style="border-top:4px solid #ec4899;"><div class="icon">📋</div><h4>制作流程</h4><p>定主题→选照片→选模板→加文字→加音乐→导出</p></div>
+        <div class="step-card" style="border-top:4px solid #ec4899;"><div class="icon">✨</div><h4>美化原则</h4><p>色彩、字体、排版统一协调</p></div>
+        <div class="step-card" style="border-top:4px solid #ec4899;"><div class="icon">🌟</div><h4>用心创作</h4><p>每张照片都是一个故事</p></div>
+      </div>
+      <div class="know">
+        <h3>🎯 课后任务</h3>
+        <p>请回家用 PPT 或 WPS 演示，制作一个 8 页的数字相册，主题"我的家人"或"我的家乡"。下节课上来分享你的作品！</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const samplePics = ['🏫','🌳','📚','✏️','🎒','🏀','🎨','📖','🌷','☀️','🌈','🎵'];
+let albumPics = ['🏫','🌳','📚','✏️'];
+let curTpl = 't1';
+let curIdx = 0;
+let autoPlay = false;
+let playTimer = null;
+
+function switchTab(btn, i) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach((p, idx) => p.style.display = idx === i ? 'block' : 'none');
+}
+
+function selTpl(el, t) {
+  document.querySelectorAll('.tpl').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  curTpl = t;
+  updatePreview();
+}
+
+function renderPics() {
+  const row = document.getElementById('picsRow');
+  let html = albumPics.map((p, i) => `<div class="pic-item" style="background:linear-gradient(135deg,#fce7f3,#fbcfe8);" onclick="setIdx(${i})">${p}<span class="del" onclick="event.stopPropagation();delPic(${i})">×</span></div>`).join('');
+  html += `<div class="pic-add" onclick="addPic()">+</div>`;
+  row.innerHTML = html;
+  document.getElementById('picCount').textContent = albumPics.length;
+  updatePreview();
+}
+
+function addPic() {
+  const avail = samplePics.filter(p => !albumPics.includes(p));
+  if (avail.length === 0) { alert('已经把所有示例照片添加完了！'); return; }
+  albumPics.push(avail[0]);
+  renderPics();
+}
+
+function delPic(i) {
+  albumPics.splice(i, 1);
+  if (curIdx >= albumPics.length) curIdx = Math.max(0, albumPics.length - 1);
+  renderPics();
+}
+
+function setIdx(i) { curIdx = i; updatePreview(); }
+
+function updatePreview() {
+  const title = document.getElementById('albumTitle').value || '我的相册';
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('albumPreview').className = 'album-preview tpl-' + curTpl;
+  if (albumPics.length === 0) {
+    document.getElementById('previewPic').textContent = '📷';
+    document.getElementById('previewText').textContent = '— 请添加照片 —';
+    document.getElementById('picIdx').textContent = '0 / 0';
+    document.getElementById('dots').innerHTML = '';
+    return;
+  }
+  document.getElementById('previewPic').textContent = albumPics[curIdx];
+  const descArr = ['美好的开始','快乐的时光','难忘的瞬间','温馨的画面','美丽的风景','开心的笑脸','童年的回忆','成长的足迹'];
+  document.getElementById('previewText').textContent = descArr[curIdx % descArr.length];
+  document.getElementById('picIdx').textContent = (curIdx+1) + ' / ' + albumPics.length;
+  document.getElementById('dots').innerHTML = albumPics.map((_, i) => `<div class="dot ${i===curIdx?'active':''}" onclick="setIdx(${i})"></div>`).join('');
+}
+
+function nextPic() {
+  if (albumPics.length === 0) return;
+  curIdx = (curIdx + 1) % albumPics.length;
+  updatePreview();
+}
+function prevPic() {
+  if (albumPics.length === 0) return;
+  curIdx = (curIdx - 1 + albumPics.length) % albumPics.length;
+  updatePreview();
+}
+
+function togglePlay() {
+  autoPlay = !autoPlay;
+  document.getElementById('playBtn').textContent = autoPlay ? '⏸ 暂停' : '⏯ 自动播放';
+  if (autoPlay) { playTimer = setInterval(nextPic, 1500); }
+  else { clearInterval(playTimer); }
+}
+
+function startPreview() { document.getElementById('albumPreview').scrollIntoView({ behavior: 'smooth' }); }
+
+document.getElementById('albumTitle').addEventListener('input', updatePreview);
+renderPics();
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') p();
+});
+</script>
+</body>
+</html>

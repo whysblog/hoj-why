@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能种植初探秘 · 第16-17课</title>
+<style>
+  :root {
+    --primary: #65a30d;
+    --primary-dark: #4d7c0f;
+    --bg: #f7fee7;
+    --card: #ffffff;
+    --text: #1a2e05;
+    --muted: #6b7280;
+    --border: #d9f99d;
+    --ok: #16a34a;
+    --warn: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(101, 163, 13, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .lesson-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .lesson-nav button {
+    flex: 1;
+    padding: 10px 14px;
+    background: white;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .lesson-nav button:hover { background: var(--bg); }
+  .lesson-nav button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .lesson-nav button .lesson-num { display: block; font-size: 11px; opacity: 0.7; margin-bottom: 2px; }
+
+  .lesson { display: none; }
+  .lesson.active { display: block; }
+
+  .slide-nav {
+    display: flex; gap: 6px; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap;
+  }
+  .slide-dot {
+    width: 32px; height: 32px; border-radius: 50%; background: white; border: 2px solid var(--border); cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--muted); transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; font-family: inherit;
+  }
+  .slide-dot.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.1); }
+  .slide-dot.done { background: var(--ok); border-color: var(--ok); color: white; }
+  .slide-arrow {
+    background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+    cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s;
+  }
+  .slide-arrow:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+  .slide-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .slide {
+    display: none; background: white; border-radius: 16px; padding: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border);
+    min-height: 480px; animation: slideIn 0.3s ease-out;
+  }
+  .slide.active { display: block; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide-type {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px;
+    background: var(--bg); color: var(--primary-dark); margin-bottom: 10px; font-weight: 600;
+  }
+  .slide h2 { font-size: 22px; margin-bottom: 14px; }
+  .slide h2::before {
+    content: ""; display: inline-block; width: 5px; height: 22px; background: var(--primary);
+    border-radius: 3px; margin-right: 10px; vertical-align: middle;
+  }
+  .slide h3 { font-size: 17px; margin: 18px 0 10px; color: var(--primary-dark); }
+  .slide p { font-size: 15px; margin-bottom: 12px; }
+  .slide ul { padding-left: 22px; margin-bottom: 16px; }
+  .slide li { font-size: 15px; margin-bottom: 8px; }
+
+  .goals-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0;
+  }
+  .goal-card { padding: 18px; background: var(--bg); border-radius: 12px; border-left: 4px solid var(--primary); }
+  .goal-card .num { color: var(--primary); font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+  .goal-card .text { font-size: 14px; line-height: 1.6; }
+
+  .info-card {
+    background: var(--bg); border-left: 4px solid var(--primary); padding: 14px 18px;
+    border-radius: 8px; margin: 16px 0;
+  }
+  .info-card .title { font-weight: 700; color: var(--primary-dark); margin-bottom: 6px; }
+  .info-card .body { font-size: 14px; }
+
+  /* 大棚总览 */
+  .greenhouse-overview {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+  }
+  .greenhouse-svg {
+    width: 100%;
+    height: auto;
+    max-height: 360px;
+    display: block;
+  }
+  .clickable-sub {
+    cursor: pointer;
+    transition: filter 0.2s;
+  }
+  .clickable-sub:hover { filter: brightness(1.2); }
+  .clickable-sub.selected { filter: drop-shadow(0 0 8px var(--primary)); }
+
+  .sub-info-box {
+    background: white;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 14px;
+    min-height: 60px;
+  }
+  .sub-info-box strong { color: var(--primary-dark); }
+
+  /* 第17课：设计种植园 */
+  .designer {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+  }
+  .designer-step {
+    margin-bottom: 22px;
+  }
+  .designer-step .step-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .designer-step .step-num {
+    background: var(--primary);
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  /* 第17课：作物选择 */
+  .crop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .crop-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .crop-card:hover { border-color: var(--primary); }
+  .crop-card.selected {
+    background: var(--bg);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .crop-icon { width: 48px; height: 48px; margin: 0 auto 6px; display: block; }
+  .crop-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .crop-spec { font-size: 11px; color: var(--muted); }
+
+  /* 阈值设置 */
+  .threshold-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .threshold-row label { font-size: 13px; color: var(--muted); }
+  .threshold-row input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, #fef3c7, var(--primary));
+    border-radius: 3px;
+  }
+  .threshold-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+  }
+  .threshold-row .val {
+    background: #1f2937;
+    color: #d9f99d;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* 配置卡 */
+  .config-summary {
+    background: var(--bg);
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-top: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  .config-summary h4 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--primary-dark);
+  }
+  .config-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    font-size: 13px;
+  }
+  .config-row:last-child { border-bottom: none; }
+  .config-row .key { color: var(--muted); }
+  .config-row .value { font-weight: 600; }
+
+  /* 测验 */
+  .quiz {
+    background: #fef3c7; border-radius: 12px; padding: 22px; margin: 16px 0; border: 1.5px solid #fcd34d;
+  }
+  .quiz-question { font-weight: 700; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    background: white; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 10px 16px; cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 14px; transition: all 0.2s;
+  }
+  .quiz-option:hover { background: var(--bg); }
+  .quiz-option.correct { background: #dcfce7; border-color: var(--ok); color: #166534; font-weight: 600; }
+  .quiz-option.wrong { background: #fee2e2; border-color: var(--warn); color: #991b1b; }
+  .quiz-feedback {
+    margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #dcfce7; color: #166534; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第五单元 · 2课时综合课件</span>
+    <h1>智能种植初探秘</h1>
+    <p>认识智能种植大棚的智能化体现，亲手规划设计一个种植控制系统</p>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="active" data-lesson="16"><span class="lesson-num">第16课</span>智能种植初探秘</button>
+    <button data-lesson="17"><span class="lesson-num">第17课</span>设计我的种植园</button>
+  </div>
+
+  <!-- ============== 第16课 ============== -->
+  <div class="lesson active" id="lesson-16">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(16)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(16)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">了解智能种植大棚的工作原理</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">能识别大棚中的主要子系统</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">体会"智能化"给现代农业带来的变革</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">古时候的农民"看天吃饭"——下雨多浇水难，干旱多浇水难，温度太低也愁，太高也愁。今天，<strong>智能种植大棚</strong>让蔬果可以一年四季稳定生长。这背后的秘密是什么？</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🏠 大棚总览</span>
+      <h2>智能大棚里有什么？</h2>
+      <p>点击大棚里的不同部分，看看它们各自负责什么。</p>
+
+      <div class="greenhouse-overview">
+        <svg class="greenhouse-svg" viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#bae6fd"/>
+              <stop offset="100%" stop-color="#e0f2fe"/>
+            </linearGradient>
+          </defs>
+          <rect width="800" height="350" fill="url(#skyGrad)"/>
+
+          <!-- 大棚结构 -->
+          <path d="M 80 240 L 80 130 Q 80 80 130 80 L 670 80 Q 720 80 720 130 L 720 240 Z"
+                fill="rgba(255,255,255,0.4)" stroke="#1e40af" stroke-width="2.5"/>
+          <line x1="80" y1="240" x2="720" y2="240" stroke="#78350f" stroke-width="2"/>
+          <!-- 棚顶骨架 -->
+          <path d="M 80 130 Q 80 80 130 80 L 670 80 Q 720 80 720 130"
+                fill="none" stroke="#475569" stroke-width="1" stroke-dasharray="4 3"/>
+
+          <!-- 太阳 -->
+          <circle cx="730" cy="50" r="22" fill="#fde047" stroke="#facc15" stroke-width="2"/>
+          <g stroke="#fbbf24" stroke-width="2" stroke-linecap="round">
+            <line x1="730" y1="20" x2="730" y2="14"/>
+            <line x1="760" y1="50" x2="766" y2="50"/>
+            <line x1="751" y1="29" x2="755" y2="25"/>
+            <line x1="751" y1="71" x2="755" y2="75"/>
+            <line x1="700" y1="50" x2="694" y2="50"/>
+          </g>
+
+          <!-- 子系统 1: 补光灯 -->
+          <g class="clickable-sub" data-key="light" onclick="selectSub('light', this)">
+            <line x1="200" y1="80" x2="200" y2="110" stroke="#475569" stroke-width="2.5"/>
+            <path d="M 184 110 L 216 110 L 212 122 L 188 122 Z" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/>
+            <ellipse cx="200" cy="115" rx="8" ry="5" fill="#fde047"/>
+            <text x="200" y="142" text-anchor="middle" font-size="11" fill="#1e40af">补光灯</text>
+          </g>
+
+          <!-- 子系统 2: 喷灌器 -->
+          <g class="clickable-sub" data-key="water" onclick="selectSub('water', this)">
+            <line x1="400" y1="80" x2="400" y2="120" stroke="#475569" stroke-width="3"/>
+            <circle cx="400" cy="124" r="7" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
+            <ellipse cx="396" cy="138" rx="2" ry="3" fill="#0ea5e9"/>
+            <ellipse cx="400" cy="142" rx="2" ry="3" fill="#0ea5e9"/>
+            <ellipse cx="404" cy="138" rx="2" ry="3" fill="#0ea5e9"/>
+            <text x="400" y="160" text-anchor="middle" font-size="11" fill="#1e40af">喷灌系统</text>
+          </g>
+
+          <!-- 子系统 3: 通风风扇 -->
+          <g class="clickable-sub" data-key="vent" onclick="selectSub('vent', this)">
+            <circle cx="630" cy="135" r="16" fill="white" stroke="#475569" stroke-width="2"/>
+            <ellipse cx="630" cy="121" rx="3" ry="9" fill="#94a3b8"/>
+            <ellipse cx="643" cy="135" rx="9" ry="3" fill="#94a3b8"/>
+            <ellipse cx="630" cy="149" rx="3" ry="9" fill="#94a3b8"/>
+            <ellipse cx="617" cy="135" rx="9" ry="3" fill="#94a3b8"/>
+            <circle cx="630" cy="135" r="3" fill="#475569"/>
+            <text x="630" y="167" text-anchor="middle" font-size="11" fill="#1e40af">通风系统</text>
+          </g>
+
+          <!-- 子系统 4: 暖风机 -->
+          <g class="clickable-sub" data-key="heat" onclick="selectSub('heat', this)">
+            <rect x="135" y="200" width="34" height="26" rx="3" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
+            <line x1="139" y1="206" x2="165" y2="206" stroke="#7f1d1d" stroke-width="1"/>
+            <line x1="139" y1="212" x2="165" y2="212" stroke="#7f1d1d" stroke-width="1"/>
+            <line x1="139" y1="218" x2="165" y2="218" stroke="#7f1d1d" stroke-width="1"/>
+            <text x="152" y="244" text-anchor="middle" font-size="11" fill="#1e40af">温度控制</text>
+          </g>
+
+          <!-- 子系统 5: 传感器 -->
+          <g class="clickable-sub" data-key="sensor" onclick="selectSub('sensor', this)">
+            <rect x="290" y="195" width="30" height="22" rx="2" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+            <line x1="295" y1="200" x2="315" y2="200" stroke="#6ee7b7" stroke-width="1"/>
+            <line x1="295" y1="205" x2="315" y2="205" stroke="#6ee7b7" stroke-width="1"/>
+            <line x1="295" y1="210" x2="315" y2="210" stroke="#6ee7b7" stroke-width="1"/>
+            <line x1="305" y1="217" x2="305" y2="232" stroke="#1e293b" stroke-width="2"/>
+            <text x="305" y="245" text-anchor="middle" font-size="11" fill="#1e40af">传感器组</text>
+          </g>
+
+          <!-- 子系统 6: 控制器 -->
+          <g class="clickable-sub" data-key="control" onclick="selectSub('control', this)">
+            <rect x="490" y="195" width="50" height="32" rx="3" fill="white" stroke="#15803d" stroke-width="2"/>
+            <text x="515" y="207" text-anchor="middle" font-size="9" fill="#15803d" font-weight="700">控制器</text>
+            <text x="515" y="220" text-anchor="middle" font-size="8" fill="#15803d">运行中</text>
+            <circle cx="498" cy="206" r="2" fill="#22c55e"/>
+            <text x="515" y="244" text-anchor="middle" font-size="11" fill="#1e40af">中央控制</text>
+          </g>
+
+          <!-- 子系统 7: 监控显示 -->
+          <g class="clickable-sub" data-key="monitor" onclick="selectSub('monitor', this)">
+            <rect x="600" y="195" width="60" height="35" rx="3" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+            <rect x="604" y="199" width="52" height="27" fill="#0ea5e9"/>
+            <text x="630" y="217" text-anchor="middle" font-size="8" fill="white">实时数据</text>
+            <text x="630" y="245" text-anchor="middle" font-size="11" fill="#1e40af">远程监控</text>
+          </g>
+
+          <!-- 植物排 -->
+          <g transform="translate(220, 240)">
+            <line x1="0" y1="0" x2="0" y2="-15" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-5" cy="-10" rx="5" ry="2.5" fill="#22c55e" transform="rotate(-30 -5 -10)"/>
+            <ellipse cx="5" cy="-8" rx="5" ry="2.5" fill="#16a34a" transform="rotate(30 5 -8)"/>
+          </g>
+          <g transform="translate(360, 240)">
+            <line x1="0" y1="0" x2="0" y2="-18" stroke="#166534" stroke-width="2"/>
+            <circle cx="0" cy="-18" r="7" fill="#16a34a"/>
+            <circle cx="-5" cy="-15" r="4" fill="#22c55e"/>
+          </g>
+          <g transform="translate(440, 240)">
+            <line x1="0" y1="0" x2="0" y2="-15" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-5" cy="-10" rx="5" ry="2.5" fill="#22c55e" transform="rotate(-30 -5 -10)"/>
+            <ellipse cx="5" cy="-8" rx="5" ry="2.5" fill="#16a34a" transform="rotate(30 5 -8)"/>
+            <circle cx="0" cy="-15" r="3" fill="#f87171"/>
+          </g>
+
+          <!-- 土壤 -->
+          <rect x="80" y="240" width="640" height="20" fill="#78350f" opacity="0.4"/>
+
+          <text x="400" y="320" text-anchor="middle" font-size="13" fill="var(--muted)">👆 点击各个标注查看子系统说明</text>
+        </svg>
+
+        <div class="sub-info-box" id="subInfoBox">
+          <strong>📌 提示：</strong>智能种植大棚是一个由多个子系统协同工作的复杂控制系统。点击图中的不同组件，了解它们的作用。
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 知识小结</span>
+      <h2>"智能"体现在哪里？</h2>
+
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">智能 1</div>
+          <div class="text"><strong>自动感知</strong><br>各种传感器实时获取湿度、光照、温度数据，不需要人去测量</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">智能 2</div>
+          <div class="text"><strong>自动判断</strong><br>控制器根据数据自动决定开启或关闭设备</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">智能 3</div>
+          <div class="text"><strong>自动执行</strong><br>无需人为操作，喷灌、补光、加热都能自主完成</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">智能 4</div>
+          <div class="text"><strong>远程管理</strong><br>农民坐在办公室，用手机就能查看和调控大棚</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">🌾 智能大棚的好处</div>
+        <div class="body">
+          ✓ 反季节种植：冬天也能吃到新鲜蔬果<br>
+          ✓ 节水节肥：精准管理，不浪费<br>
+          ✓ 产量稳定：不受天气影响<br>
+          ✓ 解放劳力：一个人就能管理大面积大棚<br>
+          ✓ 品质提升：温度湿度始终保持在最佳范围
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 智能种植大棚相比传统大棚，<u>最关键</u>的区别是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q16_1')">A. 大棚更大、更高</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q16_1')">B. 能自动感知环境并自主调控</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q16_1')">C. 用的塑料膜更厚</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q16_1')">D. 种植的植物更值钱</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q16_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 下面哪个 <u>不属于</u> 智能种植大棚的子系统？</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q16_2')">A. 土壤湿度控制子系统</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q16_2')">B. 光照控制子系统</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q16_2')">C. 温度控制子系统</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q16_2')">D. 教室照明子系统</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q16_2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 第17课：设计我的种植园 ============== -->
+  <div class="lesson" id="lesson-17">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(17)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <button class="slide-arrow" onclick="nextSlide(17)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">能为不同作物设计合适的种植控制方案</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">了解不同作物对环境条件的需求差异</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">体验"分析需求→规划方案"的设计思维</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">不同的作物对水、光、温度的需求差异很大。如果你是大棚设计师，要怎样为你选的作物量身定制控制方案呢？这节课让你来当总设计师！</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🛠 设计我的种植园</span>
+      <h2>三步搭建你的智能种植方案</h2>
+
+      <div class="designer">
+        <!-- 步骤 1: 选择作物 -->
+        <div class="designer-step">
+          <div class="step-title">
+            <span class="step-num">1</span>
+            <span>选择要种植的作物</span>
+          </div>
+          <div class="crop-grid">
+            <div class="crop-card" onclick="selectCrop('tomato')" data-crop="tomato">
+              <svg class="crop-icon" viewBox="0 0 48 48">
+                <circle cx="24" cy="28" r="14" fill="#ef4444"/>
+                <path d="M 18 14 L 24 18 L 30 14 Q 28 22 24 22 Q 20 22 18 14 Z" fill="#15803d"/>
+              </svg>
+              <div class="crop-name">番茄</div>
+              <div class="crop-spec">湿度 60-70%</div>
+            </div>
+            <div class="crop-card" onclick="selectCrop('cucumber')" data-crop="cucumber">
+              <svg class="crop-icon" viewBox="0 0 48 48">
+                <ellipse cx="24" cy="24" rx="6" ry="18" fill="#16a34a" transform="rotate(20 24 24)"/>
+                <path d="M 18 12 L 14 8 M 30 36 L 34 40" stroke="#15803d" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <div class="crop-name">黄瓜</div>
+              <div class="crop-spec">湿度 70-80%</div>
+            </div>
+            <div class="crop-card" onclick="selectCrop('lettuce')" data-crop="lettuce">
+              <svg class="crop-icon" viewBox="0 0 48 48">
+                <ellipse cx="24" cy="30" rx="16" ry="10" fill="#22c55e"/>
+                <ellipse cx="18" cy="22" rx="10" ry="8" fill="#16a34a"/>
+                <ellipse cx="30" cy="22" rx="10" ry="8" fill="#16a34a"/>
+                <ellipse cx="24" cy="16" rx="10" ry="8" fill="#22c55e"/>
+              </svg>
+              <div class="crop-name">生菜</div>
+              <div class="crop-spec">湿度 65-75%</div>
+            </div>
+            <div class="crop-card" onclick="selectCrop('strawberry')" data-crop="strawberry">
+              <svg class="crop-icon" viewBox="0 0 48 48">
+                <path d="M 14 22 Q 24 14 34 22 L 28 38 Q 24 42 20 38 Z" fill="#dc2626"/>
+                <circle cx="20" cy="28" r="1.5" fill="#fef9c3"/>
+                <circle cx="26" cy="32" r="1.5" fill="#fef9c3"/>
+                <circle cx="24" cy="24" r="1.5" fill="#fef9c3"/>
+                <path d="M 16 18 L 24 14 L 32 18 Q 28 22 24 22 Q 20 22 16 18 Z" fill="#15803d"/>
+              </svg>
+              <div class="crop-name">草莓</div>
+              <div class="crop-spec">湿度 65-75%</div>
+            </div>
+            <div class="crop-card" onclick="selectCrop('pepper')" data-crop="pepper">
+              <svg class="crop-icon" viewBox="0 0 48 48">
+                <path d="M 22 14 Q 30 16 32 26 Q 32 36 24 38 Q 16 36 16 26 Q 18 16 22 14 Z" fill="#dc2626"/>
+                <path d="M 22 14 L 22 8 L 26 12 Z" fill="#15803d"/>
+              </svg>
+              <div class="crop-name">辣椒</div>
+              <div class="crop-spec">湿度 55-65%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步骤 2: 设定阈值 -->
+        <div class="designer-step">
+          <div class="step-title">
+            <span class="step-num">2</span>
+            <span>设定环境参数的阈值</span>
+          </div>
+          <div id="thresholdArea">
+            <div class="threshold-row">
+              <label>土壤湿度下限</label>
+              <input type="range" min="20" max="80" value="50" id="thr-moisture" oninput="updateThresholds()">
+              <div class="val"><span id="val-moisture">50</span>%</div>
+            </div>
+            <div class="threshold-row">
+              <label>光照下限</label>
+              <input type="range" min="5" max="80" value="30" id="thr-light" oninput="updateThresholds()" step="5">
+              <div class="val"><span id="val-light">30</span>k lx</div>
+            </div>
+            <div class="threshold-row">
+              <label>温度下限</label>
+              <input type="range" min="5" max="30" value="15" id="thr-temp" oninput="updateThresholds()">
+              <div class="val"><span id="val-temp">15</span>°C</div>
+            </div>
+            <div class="threshold-row">
+              <label>温度上限</label>
+              <input type="range" min="20" max="45" value="32" id="thr-temp-max" oninput="updateThresholds()">
+              <div class="val"><span id="val-temp-max">32</span>°C</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步骤 3: 查看方案 -->
+        <div class="designer-step">
+          <div class="step-title">
+            <span class="step-num">3</span>
+            <span>查看你的设计方案</span>
+          </div>
+          <div class="config-summary">
+            <h4>📋 我的种植控制方案</h4>
+            <div class="config-row"><span class="key">种植作物</span><span class="value" id="sum-crop">未选择</span></div>
+            <div class="config-row"><span class="key">湿度控制</span><span class="value" id="sum-moisture">低于 50% 启动喷灌</span></div>
+            <div class="config-row"><span class="key">光照控制</span><span class="value" id="sum-light">低于 30k lx 开补光灯</span></div>
+            <div class="config-row"><span class="key">温度控制</span><span class="value" id="sum-temp">低于 15°C 启动暖风，高于 32°C 启动通风</span></div>
+            <div class="config-row"><span class="key">合理性评估</span><span class="value" id="sum-eval" style="color: var(--muted);">请先选择作物</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">✓ 课堂检测 & 拓展</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 不同作物的环境需求<u>不同</u>，这意味着大棚控制系统应该：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q17_1')">A. 都用相同的参数</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q17_1')">B. 阈值要根据所种作物的需求来设定</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q17_1')">C. 不需要考虑作物种类</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q17_1')">D. 每天都要重新设置</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q17_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. <strong>开放拓展：</strong>除了水、光、温度，你觉得还有什么因素也可能影响作物生长？应该再加什么传感器？</div>
+        <p style="font-size:13px; color:var(--muted); margin-top: 8px;">
+          参考：<br>
+          🔹 <strong>空气湿度</strong>（不同于土壤湿度）→ 空气湿度传感器<br>
+          🔹 <strong>二氧化碳浓度</strong>（影响光合作用）→ CO₂ 传感器<br>
+          🔹 <strong>土壤养分</strong>（氮磷钾）→ 土壤养分传感器<br>
+          🔹 <strong>土壤酸碱度（pH）</strong> → pH 传感器<br>
+          智能大棚可以是越来越"聪明"的！
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 课时切换 ===
+document.querySelectorAll('.lesson-nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lesson-nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('lesson-' + btn.dataset.lesson).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// === 幻灯片导航 ===
+function showSlide(lesson, index) {
+  const lessonEl = document.getElementById('lesson-' + lesson);
+  const slides = lessonEl.querySelectorAll('.slide');
+  const dots = lessonEl.querySelectorAll('.slide-dot');
+  slides.forEach(s => s.classList.remove('active'));
+  dots.forEach((d, i) => {
+    d.classList.remove('active');
+    if (i < index) d.classList.add('done'); else d.classList.remove('done');
+  });
+  slides[index].classList.add('active');
+  dots[index].classList.add('active');
+}
+function getCurrentSlideIndex(lesson) {
+  const slides = Array.from(document.getElementById('lesson-' + lesson).querySelectorAll('.slide'));
+  return slides.findIndex(s => s.classList.contains('active'));
+}
+function nextSlide(lesson) {
+  const idx = getCurrentSlideIndex(lesson);
+  const total = document.getElementById('lesson-' + lesson).querySelectorAll('.slide').length;
+  if (idx < total - 1) showSlide(lesson, idx + 1);
+}
+function prevSlide(lesson) {
+  const idx = getCurrentSlideIndex(lesson);
+  if (idx > 0) showSlide(lesson, idx - 1);
+}
+document.querySelectorAll('.slide-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    const lesson = d.closest('.lesson').id.split('-')[1];
+    showSlide(lesson, +d.dataset.i);
+  });
+});
+
+// === 第16课：大棚子系统 ===
+const subDescriptions = {
+  light: { title: '💡 补光子系统', body: '由光照传感器、控制器、LED 补光灯组成。当自然光不足时，自动开启补光灯，确保作物每天获得足够光合作用所需的光照。' },
+  water: { title: '💧 喷灌子系统', body: '由土壤湿度传感器、控制器、电磁阀和喷灌头组成。土壤过干时自动喷水，过湿时停止，保持作物根部的最佳含水量。' },
+  vent: { title: '🌬️ 通风子系统', body: '由温度/CO₂ 传感器、控制器、通风风扇组成。温度过高或空气过闷时自动启动，把热空气排出，引入新鲜空气。' },
+  heat: { title: '🔥 加热子系统', body: '由温度传感器、控制器、暖风机或暖气片组成。在寒冷季节自动加热，维持大棚内的适宜温度。' },
+  sensor: { title: '📡 传感器组', body: '包括温度、湿度、光照、CO₂ 等多种传感器，是大棚的"感官"。它们持续采集环境数据，传给中央控制器。' },
+  control: { title: '⚙️ 中央控制器', body: '大棚的"大脑"。接收所有传感器数据，按预设规则进行计算和判断，向各执行设备发出指令。也称为"控制系统的核心"。' },
+  monitor: { title: '📊 远程监控子系统', body: '通过网络把大棚数据上传到云端，农民用手机或电脑就能随时查看，并远程调整阈值。是现代智能农业的重要部分。' }
+};
+function selectSub(key, el) {
+  document.querySelectorAll('.clickable-sub').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  const info = subDescriptions[key];
+  document.getElementById('subInfoBox').innerHTML = `<strong>${info.title}</strong><br>${info.body}`;
+}
+
+// === 第17课：设计种植园 ===
+let selectedCrop = null;
+const cropSpecs = {
+  tomato:     { name: '番茄', moisture: [60, 70], light: [30, 80], temp: [18, 28], desc: '番茄喜温暖、阳光充足，土壤湿度中等。' },
+  cucumber:   { name: '黄瓜', moisture: [70, 80], light: [25, 70], temp: [20, 30], desc: '黄瓜喜湿润、温暖，土壤要保持较高湿度。' },
+  lettuce:    { name: '生菜', moisture: [65, 75], light: [20, 50], temp: [15, 22], desc: '生菜喜冷凉、湿润，温度过高会苦化。' },
+  strawberry: { name: '草莓', moisture: [65, 75], light: [30, 70], temp: [15, 25], desc: '草莓喜阳光，需要适中温度和湿度。' },
+  pepper:     { name: '辣椒', moisture: [55, 65], light: [35, 80], temp: [22, 32], desc: '辣椒喜温暖、阳光充足，需要较干燥的土壤。' }
+};
+
+function selectCrop(key) {
+  selectedCrop = key;
+  document.querySelectorAll('.crop-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`.crop-card[data-crop="${key}"]`).classList.add('selected');
+  // 自动建议合适的初始阈值
+  const spec = cropSpecs[key];
+  document.getElementById('thr-moisture').value = spec.moisture[0];
+  document.getElementById('thr-temp').value = spec.temp[0];
+  document.getElementById('thr-temp-max').value = spec.temp[1];
+  updateThresholds();
+  document.getElementById('sum-crop').textContent = spec.name + ' —— ' + spec.desc;
+}
+
+function updateThresholds() {
+  const m = +document.getElementById('thr-moisture').value;
+  const l = +document.getElementById('thr-light').value;
+  const t = +document.getElementById('thr-temp').value;
+  const tMax = +document.getElementById('thr-temp-max').value;
+  document.getElementById('val-moisture').textContent = m;
+  document.getElementById('val-light').textContent = l;
+  document.getElementById('val-temp').textContent = t;
+  document.getElementById('val-temp-max').textContent = tMax;
+
+  document.getElementById('sum-moisture').textContent = `低于 ${m}% 启动喷灌`;
+  document.getElementById('sum-light').textContent = `低于 ${l}k lx 开补光灯`;
+  document.getElementById('sum-temp').textContent = `低于 ${t}°C 启动暖风，高于 ${tMax}°C 启动通风`;
+
+  // 合理性评估
+  const evalEl = document.getElementById('sum-eval');
+  if (!selectedCrop) {
+    evalEl.textContent = '请先选择作物';
+    evalEl.style.color = 'var(--muted)';
+    return;
+  }
+  const spec = cropSpecs[selectedCrop];
+  const issues = [];
+  if (m < spec.moisture[0] - 10) issues.push('湿度阈值偏低，作物可能干旱');
+  if (m > spec.moisture[1]) issues.push('湿度阈值偏高，作物可能烂根');
+  if (t < spec.temp[0] - 3) issues.push('温度下限偏低，作物可能冻害');
+  if (t > spec.temp[0] + 5) issues.push('温度下限偏高，能耗较大');
+  if (tMax < spec.temp[1] - 3) issues.push('温度上限偏低，通风过于频繁');
+  if (tMax > spec.temp[1] + 5) issues.push('温度上限偏高，作物可能烫伤');
+
+  if (tMax <= t) {
+    evalEl.textContent = '⚠ 温度上限不应小于下限！';
+    evalEl.style.color = '#dc2626';
+  } else if (issues.length === 0) {
+    evalEl.innerHTML = '<span style="color: #16a34a;">✓ 方案合理，适合 ' + spec.name + ' 的生长需求</span>';
+  } else if (issues.length === 1) {
+    evalEl.innerHTML = '<span style="color: #ca8a04;">△ 基本可用，但：' + issues[0] + '</span>';
+  } else {
+    evalEl.innerHTML = '<span style="color: #dc2626;">⚠ 需要调整：' + issues.join('、') + '</span>';
+  }
+}
+updateThresholds();
+
+// === 测验 ===
+const explanations = {
+  q16_1: '✓ 智能化的核心就是"自动感知 + 自主决策"，这是与传统大棚最本质的区别。',
+  q16_2: '✓ 教室照明与大棚没有关系。其他三项是大棚最核心的三大子系统。',
+  q17_1: '✓ 不同作物适宜的环境差异很大，控制系统的阈值必须因作物而异，否则可能损害作物生长。'
+};
+function answer(btn, isCorrect, qid) {
+  const options = btn.parentElement.querySelectorAll('.quiz-option');
+  options.forEach(o => o.disabled = true);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'quiz-feedback show correct';
+    fb.innerHTML = '<strong>回答正确！</strong> ' + (explanations[qid] || '');
+  } else {
+    btn.classList.add('wrong');
+    options.forEach(o => {
+      if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+    });
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'quiz-feedback show wrong';
+    fb.innerHTML = '<strong>再想想~</strong> ' + (explanations[qid] || '');
+  }
+}
+</script>
+</body>
+</html>

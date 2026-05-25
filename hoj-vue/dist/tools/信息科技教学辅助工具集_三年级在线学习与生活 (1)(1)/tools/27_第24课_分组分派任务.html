@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>分组分派任务 — 第24课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#ecfeff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#0e7490,#06b6d4);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#0e7490;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#06b6d4;color:white;border-color:#0e7490}
+.intro{background:linear-gradient(135deg,#cffafe,#a5f3fc);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#0e7490;margin-bottom:8px;font-size:20px}.intro p{color:#0c4a6e;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:36px}.tool-card h4{color:#0e7490;margin:6px 0 4px;font-size:14px}.tool-card p{color:#475569;font-size:12px;line-height:1.5}
+
+/* 分组器 */
+.grouping{background:white;border-radius:12px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.member-input{display:flex;gap:8px;margin-bottom:12px}
+.member-input input{flex:1;padding:8px 12px;border:1.5px solid #a5f3fc;border-radius:6px;font-size:14px}
+.member-input input:focus{outline:none;border-color:#06b6d4}
+.member-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding:10px;background:#ecfeff;border-radius:8px;min-height:50px}
+.member-tag{padding:5px 12px;background:white;border:1.5px solid #06b6d4;color:#0e7490;border-radius:14px;font-size:13px;display:flex;align-items:center;gap:6px}
+.member-tag .x{cursor:pointer;color:#94a3b8}
+.member-tag .x:hover{color:#ef4444}
+.grp-controls{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.grp-controls label{font-size:13px;color:#475569}
+.grp-controls input[type=number]{width:60px;padding:6px;border:1.5px solid #a5f3fc;border-radius:6px;font-size:13px}
+.groups-display{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.group-card{background:#ecfeff;border-radius:10px;padding:14px;border:2px solid #a5f3fc}
+.group-card.color-1{border-color:#06b6d4;background:linear-gradient(135deg,#ecfeff,#cffafe)}
+.group-card.color-2{border-color:#ec4899;background:linear-gradient(135deg,#fdf2f8,#fce7f3)}
+.group-card.color-3{border-color:#22c55e;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
+.group-card.color-4{border-color:#f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7)}
+.group-card.color-5{border-color:#8b5cf6;background:linear-gradient(135deg,#f5f3ff,#ede9fe)}
+.group-card.color-6{border-color:#ef4444;background:linear-gradient(135deg,#fef2f2,#fee2e2)}
+.group-title{font-weight:700;color:#0e7490;font-size:14px;margin-bottom:8px}
+.group-card.color-2 .group-title{color:#be185d}
+.group-card.color-3 .group-title{color:#15803d}
+.group-card.color-4 .group-title{color:#b45309}
+.group-card.color-5 .group-title{color:#6d28d9}
+.group-card.color-6 .group-title{color:#b91c1c}
+.group-members{font-size:13px;color:#475569;line-height:1.7}
+
+/* 任务分派表 */
+.task-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.task-table table{width:100%;border-collapse:collapse}
+.task-table th{background:#cffafe;color:#0e7490;padding:10px;font-weight:600;font-size:13px;text-align:left}
+.task-table td{padding:8px;border-top:1px solid #cffafe;font-size:13px}
+.task-table input,.task-table select{width:100%;padding:6px 8px;border:1px solid #cffafe;border-radius:4px;font-size:12px}
+.task-table input:focus{outline:none;border-color:#06b6d4}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>👥 分组分派任务</h1>
+    <div class="lesson">第 24 课 · 第七单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>为什么要分组</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>分组的原则</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>分组小工具</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>任务分派表</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>👥 为什么要分组</h2>
+      <div class="lead">一个人做不了的事，一组人合作可以完成</div>
+      <div class="intro">
+        <h3>🤝 团队的力量</h3>
+        <p>"独行快，众行远"。同学之间各有优点：有人擅长画画、有人擅长写文字、有人擅长讲故事——<b>分组合作</b>就是把这些优点结合起来，做出更好的作品。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">⚡</div><h4>提高效率</h4><p>大事化小，分头进行</p></div>
+        <div class="tool-card"><div class="icon">🎨</div><h4>发挥专长</h4><p>各显其能，扬长避短</p></div>
+        <div class="tool-card"><div class="icon">💡</div><h4>碰撞灵感</h4><p>多人思考，想得周全</p></div>
+        <div class="tool-card"><div class="icon">🤝</div><h4>培养合作</h4><p>学习沟通与协作</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📐 分组的原则</h2>
+      <div class="lead">怎样分组才合理？</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #06b6d4;">
+          <div class="icon">📊</div>
+          <h4>人数适中</h4>
+          <p>一般 3-6 人为宜<br>太少做不完，太多协调难</p>
+        </div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;">
+          <div class="icon">🌈</div>
+          <h4>能力互补</h4>
+          <p>让擅长不同方面的同学在一组<br>取长补短，事半功倍</p>
+        </div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;">
+          <div class="icon">⚖️</div>
+          <h4>男女均衡</h4>
+          <p>男女搭配，干活不累<br>视角更多元</p>
+        </div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;">
+          <div class="icon">🎯</div>
+          <h4>有"组长"</h4>
+          <p>选一位负责任的同学<br>担任组长协调</p>
+        </div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;">
+          <div class="icon">🤝</div>
+          <h4>团结友爱</h4>
+          <p>不挑剔队友<br>积极配合</p>
+        </div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;">
+          <div class="icon">📋</div>
+          <h4>明确任务</h4>
+          <p>每人都有自己的工作<br>不要"搭便车"</p>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 三种常用的分组方法</h3>
+        <p>① <b>自由组队</b>：同学自己组合，关系好的一组（要避免谁都不要的同学）；<br>② <b>老师指定</b>：按学习成绩、性格、特长均衡分组；<br>③ <b>随机分组</b>：用工具随机抽取，公平公正。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎲 分组小工具</h2>
+      <div class="lead">输入全班同学名单，自动随机分组</div>
+      <div class="grouping">
+        <div class="member-input">
+          <input id="memInput" placeholder="输入同学姓名，按回车" onkeydown="if(event.key==='Enter')addMember()">
+          <button class="ctrl-btn primary" onclick="addMember()">➕ 添加</button>
+          <button class="ctrl-btn" onclick="loadSample()">📋 示例</button>
+        </div>
+        <div class="member-list" id="memberList"></div>
+        <div class="grp-controls">
+          <label>每组人数：</label>
+          <input type="number" id="grpSize" value="4" min="2" max="10">
+          <button class="ctrl-btn primary" onclick="randomGroup()">🎲 随机分组</button>
+          <button class="ctrl-btn" onclick="clearMembers()">🗑️ 清空</button>
+          <span style="font-size:12px;color:#94a3b8;margin-left:auto;">📌 共 <span id="memCount">0</span> 人</span>
+        </div>
+        <div class="groups-display" id="groupsDisplay"></div>
+      </div>
+      <div class="know">
+        <h3>💡 在线分组工具的好处</h3>
+        <p>用工具随机分组，<b>公平公正、效率高</b>。还可以让组长在线录入任务分工，全班同学都能看到。常用的工具有：腾讯文档、问卷星、班级小管家等。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 任务分派表</h2>
+      <div class="lead">分好组后，明确每个人做什么</div>
+      <p style="font-size:13px;color:#475569;margin-bottom:10px;">📌 主题示例：<b>制作《我爱我的家乡》数字小报</b></p>
+      <div class="task-table">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px;">同学</th>
+              <th>负责任务</th>
+              <th style="width:120px;">完成时间</th>
+              <th style="width:80px;">状态</th>
+            </tr>
+          </thead>
+          <tbody id="taskTbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="ctrl-btn primary" onclick="addTaskRow()">➕ 添加任务</button>
+        <button class="ctrl-btn" onclick="exportTasks()">💾 保存导出</button>
+        <span style="font-size:12px;color:#94a3b8;margin-left:auto;">💡 实际使用时可以用 <b>腾讯文档</b> 多人同时编辑</span>
+      </div>
+      <div class="know">
+        <h3>📌 任务分派的要点</h3>
+        <p>① <b>每人都有任务</b>：不能有"打酱油"的；<br>② <b>任务清晰</b>：写明白具体做什么；<br>③ <b>难度合适</b>：根据各自能力分配；<br>④ <b>时间明确</b>：每个任务都有截止时间；<br>⑤ <b>互相帮助</b>：完成任务的可以帮没完成的。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">👥</div><h4>合理分组</h4><p>3-6 人，能力互补</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🎯</div><h4>明确分工</h4><p>每人都有任务</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🛠️</div><h4>用好工具</h4><p>在线表单帮助协作</p></div>
+        <div class="tool-card" style="border-top:4px solid #06b6d4;"><div class="icon">🤝</div><h4>团结协作</h4><p>互相帮助、共同进步</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 团结合作的力量</h3>
+        <p>"一根筷子容易折，一把筷子折不断。"小组合作不是为了让一个人做所有事，<b>而是发挥每个人的优点，共同完成一件大事</b>。要珍惜每位组员，互相鼓励。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+let members = [];
+const sampleNames = ['小明','小红','小华','小亮','小芳','小军','小娟','小慧','小宇','小辉','小贝','小芯'];
+
+function addMember() {
+  const input = document.getElementById('memInput');
+  const name = input.value.trim();
+  if (!name) return;
+  members.push(name);
+  input.value = '';
+  renderMembers();
+}
+
+function removeMember(i) {
+  members.splice(i, 1);
+  renderMembers();
+}
+
+function renderMembers() {
+  document.getElementById('memberList').innerHTML = members.length === 0
+    ? '<span style="font-size:12px;color:#94a3b8;">📝 还没有同学，请添加</span>'
+    : members.map((m, i) => `<div class="member-tag">${m} <span class="x" onclick="removeMember(${i})">×</span></div>`).join('');
+  document.getElementById('memCount').textContent = members.length;
+}
+
+function loadSample() {
+  members = [...sampleNames];
+  renderMembers();
+}
+
+function clearMembers() {
+  if (members.length > 0 && !confirm('确定清空所有同学吗？')) return;
+  members = [];
+  document.getElementById('groupsDisplay').innerHTML = '';
+  renderMembers();
+}
+
+function randomGroup() {
+  if (members.length < 2) { alert('请先添加至少 2 位同学'); return; }
+  const size = Math.max(2, Math.min(10, parseInt(document.getElementById('grpSize').value) || 4));
+  const shuffled = [...members].sort(() => Math.random() - 0.5);
+  const groups = [];
+  for (let i = 0; i < shuffled.length; i += size) {
+    groups.push(shuffled.slice(i, i + size));
+  }
+  document.getElementById('groupsDisplay').innerHTML = groups.map((g, i) => `
+    <div class="group-card color-${(i % 6) + 1}">
+      <div class="group-title">🎯 第 ${i+1} 组 · ${g.length} 人</div>
+      <div class="group-members">${g.join(' · ')}</div>
+    </div>
+  `).join('');
+}
+
+renderMembers();
+
+// 任务分派表
+let taskRows = [
+  { who: '组长', task: '统筹协调，制定计划，分配任务', time: '第 1 天', status: 'doing' },
+  { who: '小华', task: '收集家乡的图片和视频素材', time: '第 2 天', status: 'todo' },
+  { who: '小红', task: '撰写家乡介绍的文字内容', time: '第 3 天', status: 'todo' },
+  { who: '小明', task: '使用 PPT 制作小报版面', time: '第 4 天', status: 'todo' },
+  { who: '小亮', task: '美化排版，添加装饰元素', time: '第 5 天', status: 'todo' },
+];
+
+function renderTasks() {
+  const statusMap = { todo: '⏳ 待做', doing: '🔄 进行', done: '✅ 完成' };
+  document.getElementById('taskTbody').innerHTML = taskRows.map((r, i) => `
+    <tr>
+      <td><input value="${r.who}" onchange="taskRows[${i}].who=this.value"></td>
+      <td><input value="${r.task}" onchange="taskRows[${i}].task=this.value"></td>
+      <td><input value="${r.time}" onchange="taskRows[${i}].time=this.value"></td>
+      <td>
+        <select onchange="taskRows[${i}].status=this.value">
+          <option value="todo" ${r.status==='todo'?'selected':''}>⏳ 待做</option>
+          <option value="doing" ${r.status==='doing'?'selected':''}>🔄 进行</option>
+          <option value="done" ${r.status==='done'?'selected':''}>✅ 完成</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+renderTasks();
+
+function addTaskRow() {
+  taskRows.push({ who: '', task: '', time: '', status: 'todo' });
+  renderTasks();
+}
+
+function exportTasks() {
+  alert('💾 已保存（演示）！\n💡 实际使用时建议用腾讯文档、石墨文档等在线协作工具，组员可以同时编辑、自动保存。');
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') p();
+});
+</script>
+</body>
+</html>

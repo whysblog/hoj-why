@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第30课 应对智能新挑战 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#ec407a;
+  --theme-dark:#ad1457;
+  --theme-light:#fce4ec;
+  --bg:#fff5f8;
+}
+.challenge-card{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:10px 0;
+  border-left:5px solid #ef5350;
+  display:flex;gap:14px;
+}
+.challenge-card .c-icon{
+  font-size:36px;flex-shrink:0;
+}
+.challenge-card h4{
+  color:#c62828;font-size:15px;
+  margin-bottom:6px;
+}
+.challenge-card p{
+  font-size:13px;color:#37474f;
+  line-height:1.6;
+  margin-bottom:6px;
+}
+.challenge-card .example{
+  background:#ffebee;
+  border-radius:6px;
+  padding:6px 10px;
+  font-size:12px;
+  color:#c62828;
+}
+.principle-card{
+  background:linear-gradient(135deg,var(--theme-light),#f8bbd0);
+  border-radius:12px;
+  padding:16px;margin:10px 0;
+  border-left:5px solid var(--theme);
+}
+.principle-card h4{
+  color:var(--theme-dark);
+  font-size:15px;margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.principle-card .num{
+  background:var(--theme);color:#fff;
+  width:28px;height:28px;
+  border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:13px;
+}
+.principle-card p{font-size:14px;color:#37474f;margin:0}
+.farewell-box{
+  background:linear-gradient(135deg,#fff5f8 0%,#fce4ec 50%,#f8bbd0 100%);
+  border-radius:18px;
+  padding:24px 28px;
+  margin:18px 0;
+  text-align:center;
+  border:2px solid var(--theme);
+}
+.farewell-box h3{
+  color:var(--theme-dark);
+  font-size:22px;margin-bottom:10px;
+}
+.farewell-box p{
+  font-size:14px;color:#37474f;
+  margin-bottom:8px;
+}
+.unit-summary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:10px;margin:10px 0;
+}
+.unit-summary-item{
+  background:#fff;border-radius:8px;
+  padding:10px;text-align:center;
+  border:1px solid var(--theme-light);
+  font-size:12px;
+}
+.unit-summary-item .u-num{
+  display:block;
+  font-size:20px;
+  color:var(--theme-dark);
+  font-weight:bold;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第六单元 · 第30课 · 最后一课</span>
+    <h1>⚖️ 应对智能新挑战</h1>
+    <p>理性认识 AI 的局限和风险，做智能时代的小主人</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">⚠️ AI 的挑战</button>
+    <button class="nav-btn" data-slide="2">🛡️ 应对原则</button>
+    <button class="nav-btn" data-slide="3">🎮 情景应对</button>
+    <button class="nav-btn" data-slide="4">🎓 全册总结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 真实场景</h4>
+      小明用 AI 写了一篇作文，结果老师发现里面把"<b>李白</b>"写成了"<b>唐朝建立者</b>"——
+      李白只是唐朝的诗人，并不是开国皇帝！
+      <br><br>
+      AI 这么聪明，为什么会犯这种错？这就是今天要讨论的——
+      <b>AI 也有局限性</b>，我们要<b>理性使用</b>它。
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>认识 AI 带来的<b>新挑战和风险</b></li>
+      <li>掌握<b>理性使用 AI</b> 的原则</li>
+      <li>培养独立思考、明辨真伪的能力</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>AI 带来的新挑战</h2>
+
+    <div class="challenge-card">
+      <span class="c-icon">🤥</span>
+      <div>
+        <h4>① AI 会"一本正经地胡说"</h4>
+        <p>AI 不是真的<b>"懂"</b>，它只是从数据中找规律。有时它会编造看似合理但<b>完全错误</b>的内容。</p>
+        <div class="example">
+          ❌ "李白是唐朝的开国皇帝" → 错！李白只是诗人
+        </div>
+      </div>
+    </div>
+
+    <div class="challenge-card">
+      <span class="c-icon">🎭</span>
+      <div>
+        <h4>② 深度伪造（Deepfake）</h4>
+        <p>AI 能<b>伪造</b>逼真的视频和声音，让人说出"从来没说过的话"。坏人可能用它<b>骗钱</b>或<b>造谣</b>。</p>
+        <div class="example">
+          ⚠️ 假视频："明星说××产品很好"——可能是 AI 伪造的！
+        </div>
+      </div>
+    </div>
+
+    <div class="challenge-card">
+      <span class="c-icon">📋</span>
+      <div>
+        <h4>③ 抄袭与作弊</h4>
+        <p>用 AI 写作业、写论文——这<b>不是自己的作品</b>！会让我们失去<b>独立思考</b>和<b>真才实学</b>的能力。</p>
+        <div class="example">
+          🚫 直接交 AI 写的作业，违反了学习的本意
+        </div>
+      </div>
+    </div>
+
+    <div class="challenge-card">
+      <span class="c-icon">🔒</span>
+      <div>
+        <h4>④ 隐私泄露</h4>
+        <p>和 AI 对话时，你输入的信息可能被<b>保存和分析</b>。隐私数据交给 AI，等于交给所有人。</p>
+        <div class="example">
+          ❌ 把妈妈的银行卡号告诉 AI 帮忙查询 → 危险!
+        </div>
+      </div>
+    </div>
+
+    <div class="challenge-card">
+      <span class="c-icon">🧠</span>
+      <div>
+        <h4>⑤ 过度依赖</h4>
+        <p>什么都问 AI，自己<b>不思考</b>了——大脑会"懒"！长期下去，你的思维能力会退化。</p>
+        <div class="example">
+          ⚠️ 数学题都让 AI 算，自己反而不会做了
+        </div>
+      </div>
+    </div>
+
+    <div class="challenge-card">
+      <span class="c-icon">👥</span>
+      <div>
+        <h4>⑥ 不公平和偏见</h4>
+        <p>如果训练数据有<b>偏见</b>，AI 也会有偏见。比如某些 AI 可能不擅长识别少数族裔的人脸。</p>
+        <div class="example">
+          ⚠️ AI 招聘时若数据有偏见，可能不公平对待某些人
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>应对原则：六个"要"</h2>
+
+    <div class="principle-card">
+      <h4><span class="num">1</span>要核实信息</h4>
+      <p>AI 给的答案<b>不一定对</b>。重要的事情要用<b>权威来源</b>（书、官方网站）核实！</p>
+    </div>
+
+    <div class="principle-card">
+      <h4><span class="num">2</span>要独立思考</h4>
+      <p>AI 是<b>助手</b>不是<b>替身</b>。作业自己写、问题自己想，AI 只能<b>启发</b>你！</p>
+    </div>
+
+    <div class="principle-card">
+      <h4><span class="num">3</span>要保护隐私</h4>
+      <p>不告诉 AI：身份证号、家庭地址、密码、银行信息。<b>陌生的网站和 AI 一视同仁</b>！</p>
+    </div>
+
+    <div class="principle-card">
+      <h4><span class="num">4</span>要辨别真假</h4>
+      <p>看到神奇的视频、图片，先问自己："<b>这是真的还是 AI 做的</b>？" 不轻信、不转发！</p>
+    </div>
+
+    <div class="principle-card">
+      <h4><span class="num">5</span>要负起责任</h4>
+      <p>用 AI 写的东西、做的事，<b>责任在你</b>。不能说"是 AI 让我这么做的"——你要为自己负责。</p>
+    </div>
+
+    <div class="principle-card">
+      <h4><span class="num">6</span>要遵守法律</h4>
+      <p>我国有《<b>生成式人工智能服务管理暂行办法</b>》等法律。不能用 AI 做<b>违法</b>的事！</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>情景应对</h2>
+
+    <p>下面这些情况，你会怎么做？</p>
+
+    <div class="info-box tip">
+      <h4>🎬 情景一</h4>
+      <p>同学给你发了一段"<b>明星跳舞</b>"的奇怪视频，让你转发给班级群，怎么办？</p>
+      <p style="margin-top:6px;font-size:13px;color:var(--theme-dark)">
+        💡 <b>正确做法</b>：可能是 AI 伪造的<b>深度伪造</b>视频。
+        不转发！告诉同学这可能是假的，先在<b>权威平台</b>核实再说。
+      </p>
+    </div>
+
+    <div class="info-box tip">
+      <h4>🎬 情景二</h4>
+      <p>明天要交一篇 500 字的作文，时间不够，你想让 AI 帮你写一篇直接交，可以吗？</p>
+      <p style="margin-top:6px;font-size:13px;color:var(--theme-dark)">
+        💡 <b>正确做法</b>：不可以！这是<b>作弊</b>。
+        正确的用法是：让 AI 给你<b>提建议</b>，比如"我想写关于秋天的作文，有什么角度可以入手？"
+        然后自己思考、自己写作。
+      </p>
+    </div>
+
+    <div class="info-box tip">
+      <h4>🎬 情景三</h4>
+      <p>奶奶收到一个"<b>孙子的语音</b>"，说"奶奶，我急用 5000 块"，奶奶想转账。你怎么办？</p>
+      <p style="margin-top:6px;font-size:13px;color:var(--theme-dark)">
+        💡 <b>正确做法</b>：可能是 AI 伪造的<b>语音诈骗</b>！
+        立刻提醒奶奶：先<b>打电话给真孙子</b>确认！很多老人就是这样被骗的。
+      </p>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 一句话总结</h4>
+      <b>AI 是工具，关键在人</b>。
+      用 AI 帮自己学习成长 ✅；
+      用 AI 帮自己作弊作假 ❌。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>🎓 全册总结</h2>
+
+    <div class="farewell-box">
+      <h3>🎉 恭喜你完成了"数据与编码"全部学习！</h3>
+      <p>从第 1 课"数据宝藏在身边"到今天的第 30 课，<b>30 节课，6 大单元</b>，你已经成为了真正的<b>数字小达人</b>！</p>
+    </div>
+
+    <h3>📚 回顾 6 个单元</h3>
+
+    <div class="unit-summary">
+      <div class="unit-summary-item">
+        <span class="u-num">1</span>
+        奇妙的数据世界
+        <br><span style="color:#90a4ae">认识 / 获取 / 记录数据</span>
+      </div>
+      <div class="unit-summary-item">
+        <span class="u-num">2</span>
+        用编码描绘世界
+        <br><span style="color:#90a4ae">编码历史 / 生活编码</span>
+      </div>
+      <div class="unit-summary-item">
+        <span class="u-num">3</span>
+        有趣的编码应用
+        <br><span style="color:#90a4ae">摩斯 / 像素 / RGB</span>
+      </div>
+      <div class="unit-summary-item">
+        <span class="u-num">4</span>
+        数据管理与安全
+        <br><span style="color:#90a4ae">管理 / 查找 / 保护</span>
+      </div>
+      <div class="unit-summary-item">
+        <span class="u-num">5</span>
+        数据表达我做主
+        <br><span style="color:#90a4ae">图表 / 词云 / 图谱</span>
+      </div>
+      <div class="unit-summary-item">
+        <span class="u-num">6</span>
+        人工智能耀未来
+        <br><span style="color:#90a4ae">大数据 / AI / 挑战</span>
+      </div>
+    </div>
+
+    <h3>🌟 你已经掌握的核心能力</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🔍</span>
+        <h4>数据思维</h4>
+        <p>用数据看世界、做决策</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔐</span>
+        <h4>编码能力</h4>
+        <p>理解编码规则与原理</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🛡️</span>
+        <h4>安全意识</h4>
+        <p>保护数据、识别风险</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🤖</span>
+        <h4>AI 素养</h4>
+        <p>会用 AI、能辨真假</p>
+      </div>
+    </div>
+
+    <div class="farewell-box" style="margin-top:14px">
+      <h3>🚀 未来在等你！</h3>
+      <p>数据时代和 AI 时代刚刚开始，你的下一站是<b>更大的世界</b>。</p>
+      <p>愿你<b>带着数据的智慧</b>、<b>编码的思维</b>、<b>安全的意识</b>、<b>理性的判断</b>，</p>
+      <p>勇敢拥抱属于你们的<b>数字未来</b>！🌟</p>
+      <p style="margin-top:14px;color:var(--theme-dark);font-weight:bold;font-size:16px">
+        — 完 —
+      </p>
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

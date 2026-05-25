@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第13课 · 万维网安全新协议</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第3单元 · 第13课</span>
+    <span class="title">万维网安全新协议</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>万维网安全<br>新协议</h1>
+<p class="subtitle">第三单元 · 第13课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>HTTPS · TLS</strong></span>
+<span>💡 关键词：<strong>加密 · 证书</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🔒</span><div class="card-title">认识 HTTPS</div><div class="card-desc">理解 HTTP 与 HTTPS 的区别。</div></div><div class="card"><span class="card-icon">🔑</span><div class="card-title">理解加密</div><div class="card-desc">知道为什么传输数据需要加密。</div></div><div class="card"><span class="card-icon">📜</span><div class="card-title">信任证书</div><div class="card-desc">认识"数字证书"的作用。</div></div></div></section>
+<section class="slide"><h2>HTTP 为什么不安全？</h2>
+<p>HTTP 协议设计于 1990 年代，最初只为"传递学术论文"。它的内容<strong>完全是明文</strong>——就像寄一张<strong>明信片</strong>。</p>
+<div class="diagram-box">
+<svg viewBox="0 0 700 220" style="width:100%;display:block;">
+<rect x="40" y="80" width="100" height="60" fill="#1a2340" stroke="#4ed1b8" stroke-width="2" rx="8"/>
+<text x="90" y="115" fill="#4ed1b8" font-size="13" text-anchor="middle">👤 你</text>
+<rect x="560" y="80" width="100" height="60" fill="#1a2340" stroke="#ffb347" stroke-width="2" rx="8"/>
+<text x="610" y="115" fill="#ffb347" font-size="13" text-anchor="middle">🖥 网站</text>
+<line x1="140" y1="110" x2="560" y2="110" stroke="#ff6b81" stroke-width="2.5"/>
+<text x="350" y="100" fill="#ff6b81" font-size="14" font-weight="600" text-anchor="middle">明文："密码=123456"</text>
+<rect x="280" y="140" width="140" height="45" fill="rgba(255,107,129,.15)" stroke="#ff6b81" stroke-width="2" rx="6"/>
+<text x="350" y="160" fill="#ff6b81" font-size="13" font-weight="700" text-anchor="middle">😈 中间人</text>
+<text x="350" y="175" fill="#ff6b81" font-size="11" text-anchor="middle">能看到一切！</text>
+</svg>
+</div>
+<p>使用 HTTP 时，任何能截获网络通信的人（黑客、运营商、公共 WiFi 提供者）都能看到你的<strong>账号密码、聊天内容、银行卡号</strong>。</p></section>
+<section class="slide"><h2>HTTPS = HTTP + 加密</h2>
+<p><strong>HTTPS</strong> = HTTP over <strong>TLS/SSL</strong>。在 HTTP 之下加一层"加密信封"。</p>
+<div class="compare-row">
+<div class="compare-col bad"><h3>📮 HTTP（明信片）</h3>
+<ul><li>明文传输</li><li>容易被监听</li><li>容易被篡改</li><li>无法确认对方身份</li><li>浏览器显示"不安全" ⚠️</li></ul>
+</div>
+<div class="compare-col good"><h3>🔒 HTTPS（加密信封）</h3>
+<ul><li>加密传输</li><li>监听到的是乱码</li><li>篡改会被发现</li><li>能验证对方身份</li><li>浏览器显示"🔒 锁标"</li></ul>
+</div>
+</div>
+<div class="highlight">📌 <strong>注意：</strong>HTTPS 不是新协议，本质还是 HTTP，只是在底层加了 <strong>TLS（Transport Layer Security）</strong>加密层。所有应用代码完全不用改。</div></section>
+<section class="slide"><h2>HTTPS 怎么做到加密？</h2>
+<p>核心是<strong>"非对称加密 + 对称加密"</strong>的巧妙组合。</p>
+<div class="cards"><div class="card"><span class="card-icon">🔑</span><div class="card-title">对称加密</div><div class="card-desc">加密和解密用<strong>同一把钥匙</strong>。速度快，但钥匙怎么安全送给对方？</div></div><div class="card"><span class="card-icon">🗝️</span><div class="card-title">非对称加密</div><div class="card-desc">用<strong>公钥</strong>加密、<strong>私钥</strong>解密。公钥可以公开，私钥只服务器自己有。</div></div><div class="card"><span class="card-icon">🤝</span><div class="card-title">混合方案</div><div class="card-desc">用<strong>非对称</strong>安全地交换一把<strong>对称密钥</strong>，之后用对称加密快速通信。</div></div></div><h3>简化版 TLS 握手</h3>
+<ol>
+<li>浏览器：你好服务器，我想建立加密连接 🙋</li>
+<li>服务器：发送<strong>数字证书</strong>（含公钥）+ 我的身份信息 📜</li>
+<li>浏览器：验证证书→生成一个对称密钥→用服务器公钥加密发回 🔐</li>
+<li>服务器：用自己的私钥解密，得到对称密钥 🔓</li>
+<li>双方：从此用对称密钥加密通信 ✅</li>
+</ol></section>
+<section class="slide"><h2>数字证书 = 网站的身份证</h2>
+<p>怎么证明这台服务器真的是 "www.taobao.com" 而不是黑客假冒的？答案是<strong>数字证书</strong>。</p>
+<div class="highlight">📜 <strong>数字证书</strong>由权威的<strong>证书颁发机构 (CA, Certificate Authority)</strong>签发，包含：网站域名、公钥、CA 签名、有效期等。</div>
+<h3>知名 CA 机构</h3>
+<ul>
+<li>🌍 国际：DigiCert、Let's Encrypt（免费）、Sectigo、GlobalSign</li>
+<li>🇨🇳 国内：CFCA（中国金融认证中心）、GDCA、沃通、自主可控的"国密"证书</li>
+</ul>
+<h3>如何查看证书？</h3>
+<p>浏览器地址栏点击 <strong>🔒</strong> 锁标 → "证书有效" → 可以看到颁发者、有效期、加密算法。</p>
+<div class="highlight">⚠️ <strong>警告：</strong>如果浏览器提示"证书无效"、"证书过期"、"域名不匹配"——千万<strong>不要</strong>继续访问！很可能遇到了钓鱼网站或中间人攻击。</div></section>
+<section class="slide"><h2>普及现状与意义</h2>
+<div class="stats">
+<div class="stat"><div class="stat-num">95%+</div><div class="stat-label">全球网站 HTTPS 占比</div></div>
+<div class="stat"><div class="stat-num">2014</div><div class="stat-label">Google 开始推动</div></div>
+<div class="stat"><div class="stat-num">免费</div><div class="stat-label">Let's Encrypt 让证书免费</div></div>
+</div>
+<h3>为什么 HTTPS 普及如此重要</h3>
+<ul>
+<li><strong>保护隐私：</strong>支付、登录、聊天信息不再裸奔</li>
+<li><strong>防止劫持：</strong>不会被运营商插入广告，不会被黑客篡改</li>
+<li><strong>身份确认：</strong>避免钓鱼网站冒充正规网站</li>
+<li><strong>SEO 利好：</strong>搜索引擎优先收录 HTTPS 网站</li>
+<li><strong>是法律要求：</strong>金融、政务、电商网站必须使用 HTTPS</li>
+</ul></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ HTTPS 比 HTTP 多了什么？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">更快的速度</div>
+<div class="quiz-opt" data-correct="true">加密和身份验证</div>
+<div class="quiz-opt" data-correct="false">更短的网址</div>
+<div class="quiz-opt" data-correct="false">更多的字体</div></div>
+<div class="quiz-feedback">✅ HTTPS 通过 TLS/SSL 层提供加密传输 + 数字证书身份验证。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ HTTPS 中证书的作用<strong>不</strong>包括？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">证明网站身份</div>
+<div class="quiz-opt" data-correct="false">包含网站公钥</div>
+<div class="quiz-opt" data-correct="true">加速网站打开</div>
+<div class="quiz-opt" data-correct="false">防止冒充</div></div>
+<div class="quiz-feedback">✅ 证书的作用是身份验证和提供公钥，不能加速网站。事实上，HTTPS 因为多了握手，比 HTTP 略慢一点（不过现代优化下差异极小）。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 在公共 WiFi 下登录账号，应该选择？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">随便什么 WiFi 都行</div>
+<div class="quiz-opt" data-correct="true">只用 HTTPS 网站</div>
+<div class="quiz-opt" data-correct="false">优先 HTTP 因为更快</div>
+<div class="quiz-opt" data-correct="false">断网最安全</div></div>
+<div class="quiz-feedback">✅ 公共 WiFi 容易被监听，访问 HTTPS 网站可以保证传输内容加密。注意检查浏览器地址栏的 🔒 锁标。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>HTTP 明文传输</strong>，像明信片，不安全</li>
+<li><strong>HTTPS = HTTP + TLS</strong>，加上加密保护层</li>
+<li><strong>混合加密</strong>：非对称传密钥 + 对称传数据</li>
+<li><strong>数字证书</strong>由 CA 签发，证明网站身份</li>
+<li>当今互联网 95%+ 网站已经使用 HTTPS</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>打开你常用的 3 个网站（QQ邮箱、淘宝、学校官网），点击地址栏的 🔒 查看证书颁发机构是哪家？</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "HTTP 不安全", "HTTPS=HTTP+TLS", "加密原理", "数字证书", "普及现状", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第4课 记录数据讲诀窍 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#00897b;
+  --theme-dark:#00695c;
+  --theme-light:#e0f2f1;
+  --bg:#f0f7f6;
+}
+.record-table-demo{
+  background:#fff;border-radius:10px;
+  padding:14px;overflow-x:auto;
+  margin:12px 0;
+}
+.record-table-demo table{
+  width:100%;border-collapse:collapse;
+  font-size:13px;
+}
+.record-table-demo th{
+  background:var(--theme);color:#fff;
+  padding:8px;text-align:left;
+}
+.record-table-demo td{
+  padding:8px;border-bottom:1px solid #eceff1;
+}
+.record-table-demo input{
+  width:100%;border:none;
+  background:transparent;
+  padding:4px;font-family:inherit;
+  font-size:13px;
+}
+.record-table-demo input:focus{
+  outline:none;background:#fffde7;
+}
+.record-table-demo .add-btn{
+  margin-top:10px;
+  background:var(--theme);color:#fff;
+  border:none;padding:6px 14px;
+  border-radius:6px;cursor:pointer;
+  font-family:inherit;font-size:13px;
+}
+.method-vs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin:14px 0;
+}
+.method-vs .vs-card{
+  background:#fff;border-radius:10px;
+  padding:14px;
+}
+.method-vs .vs-bad{
+  border-top:4px solid #ef5350;
+}
+.method-vs .vs-good{
+  border-top:4px solid #43a047;
+}
+.method-vs h4{
+  font-size:15px;margin-bottom:8px;
+}
+.method-vs .vs-bad h4{color:#c62828}
+.method-vs .vs-good h4{color:#2e7d32}
+.method-vs ul{font-size:13px;padding-left:20px;color:#37474f}
+.format-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;margin:14px 0;
+}
+.format-card{
+  background:#fff;border-radius:12px;
+  padding:14px;text-align:center;
+  border:2px solid var(--theme-light);
+  cursor:pointer;transition:all .2s;
+}
+.format-card:hover{
+  transform:translateY(-3px);
+  border-color:var(--theme);
+}
+.format-card .fmt-icon{font-size:36px;display:block;margin-bottom:6px}
+.format-card h4{color:var(--theme-dark);font-size:14px;margin-bottom:4px}
+.format-card p{font-size:12px;color:#607d8b;margin:0}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第一单元 · 第4课</span>
+    <h1>📝 记录数据讲诀窍</h1>
+    <p>掌握多种记录数据的方式，做高效率的数据记录员</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前思考</button>
+    <button class="nav-btn" data-slide="1">📋 记录的方法</button>
+    <button class="nav-btn" data-slide="2">✅ 好记录 vs 差记录</button>
+    <button class="nav-btn" data-slide="3">🎮 来做记录员</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前思考</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      老师让小明记录"四(1)班 30 位同学的身高"。小明用了三种方法：
+      <br><br>
+      <b>方法 A：</b>"小明 142、小红 138 、小华很高、小军 145、小李、小张 137……"
+      <br><b>方法 B：</b>把每个人的身高都画在纸上的小柱子里。
+      <br><b>方法 C：</b>做了一张表格，姓名一列、身高一列，整整齐齐。
+      <br><br>
+      <b>哪种方法最方便后续使用？</b>
+    </div>
+
+    <p>答案是 <b>方法 C 表格</b>！它最清晰、最容易查找、最适合后面分析。</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>认识记录数据的<b>多种方式</b>：表格、文字、图片、音频、视频</li>
+      <li>知道<b>什么场景</b>用什么记录方式</li>
+      <li>学会让数据记录<b>清晰、准确、可用</b>的方法</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>记录数据的多种方式</h2>
+
+    <div class="format-grid">
+      <div class="format-card">
+        <span class="fmt-icon">📊</span>
+        <h4>表格记录</h4>
+        <p>数字、姓名等结构化数据</p>
+      </div>
+      <div class="format-card">
+        <span class="fmt-icon">📝</span>
+        <h4>文字记录</h4>
+        <p>日记、观察笔记、采访记录</p>
+      </div>
+      <div class="format-card">
+        <span class="fmt-icon">📷</span>
+        <h4>照片记录</h4>
+        <p>植物生长、变化过程</p>
+      </div>
+      <div class="format-card">
+        <span class="fmt-icon">🎤</span>
+        <h4>录音记录</h4>
+        <p>采访、鸟鸣声、课堂讲解</p>
+      </div>
+      <div class="format-card">
+        <span class="fmt-icon">📹</span>
+        <h4>视频记录</h4>
+        <p>实验过程、运动动作</p>
+      </div>
+      <div class="format-card">
+        <span class="fmt-icon">📈</span>
+        <h4>图表记录</h4>
+        <p>条形图、折线图、饼图</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 怎么选记录方式？</h4>
+      <ul>
+        <li>记录<b>很多人的数据</b> → 表格</li>
+        <li>记录<b>事情经过</b> → 文字（日记）</li>
+        <li>记录<b>样子、外形</b> → 照片</li>
+        <li>记录<b>声音、对话</b> → 录音</li>
+        <li>记录<b>过程、动作</b> → 视频</li>
+        <li>展示<b>数据变化</b> → 图表</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>好记录 vs 差记录</h2>
+
+    <div class="method-vs">
+      <div class="vs-card vs-bad">
+        <h4>❌ 差的记录</h4>
+        <ul>
+          <li>"小明个子很高"</li>
+          <li>"今天有点热"</li>
+          <li>"班里大多数喜欢苹果"</li>
+          <li>"那本书挺重的"</li>
+        </ul>
+        <p style="margin-top:8px;font-size:12px;color:#c62828">
+          <b>问题：</b>太模糊，没有具体数字，没法用！
+        </p>
+      </div>
+      <div class="vs-card vs-good">
+        <h4>✅ 好的记录</h4>
+        <ul>
+          <li>"小明身高 145 cm"</li>
+          <li>"今天最高气温 28℃"</li>
+          <li>"23 人喜欢苹果，占全班 76%"</li>
+          <li>"《新华字典》重 412 g"</li>
+        </ul>
+        <p style="margin-top:8px;font-size:12px;color:#2e7d32">
+          <b>优点：</b>有数字、有单位、清晰准确！
+        </p>
+      </div>
+    </div>
+
+    <h3>📋 好记录的"五要素"</h3>
+    <div class="info-box">
+      <ol>
+        <li><b>项目清楚</b>：记录的是什么？（姓名/温度/数量）</li>
+        <li><b>数字准确</b>：用具体数字，不要"很多""比较"</li>
+        <li><b>单位齐全</b>：cm、kg、℃、元……不能漏</li>
+        <li><b>时间标明</b>：什么时候记录的？</li>
+        <li><b>来源说明</b>：数据从哪里来？</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>来做记录员</h2>
+    <p>来！动手做一个简单的表格。这是一个"四(1)班同学身高记录表"，请填一填 ↓</p>
+
+    <div class="record-table-demo">
+      <div style="font-weight:bold;color:var(--theme-dark);margin-bottom:6px">
+        📊 四(1)班同学身高记录表 &nbsp;&nbsp;
+        <span style="font-weight:normal;font-size:12px;color:#90a4ae">记录时间：2025年9月 &nbsp;|&nbsp; 单位：cm</span>
+      </div>
+      <table id="recordTable">
+        <thead>
+          <tr>
+            <th style="width:60px">学号</th>
+            <th>姓名</th>
+            <th style="width:120px">身高 (cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>01</td><td><input type="text" value="小明"></td><td><input type="number" value="142"></td></tr>
+          <tr><td>02</td><td><input type="text" value="小红"></td><td><input type="number" value="138"></td></tr>
+          <tr><td>03</td><td><input type="text" value="小华"></td><td><input type="number" value="145"></td></tr>
+          <tr><td>04</td><td><input type="text" placeholder="请填写"></td><td><input type="number" placeholder="cm"></td></tr>
+          <tr><td>05</td><td><input type="text" placeholder="请填写"></td><td><input type="number" placeholder="cm"></td></tr>
+        </tbody>
+      </table>
+      <button class="add-btn" id="addRow">+ 再添加一行</button>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 看看你的表格</h4>
+      它有：
+      <ul style="margin-top:6px">
+        <li>✓ 清晰的<b>标题</b>（说明记录什么）</li>
+        <li>✓ 明确的<b>列名</b>（学号、姓名、身高）</li>
+        <li>✓ 准确的<b>单位</b>（cm）</li>
+        <li>✓ 记录的<b>时间</b>（2025年9月）</li>
+      </ul>
+      这就是一份合格的数据记录！
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>方式</th><th>适用场景</th><th>例子</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>📊 表格</td><td>大量同类数据</td><td>同学身高、成绩单</td></tr>
+        <tr><td>📝 文字</td><td>事件、心得</td><td>观察日记、采访记录</td></tr>
+        <tr><td>📷 照片</td><td>样子、外形</td><td>植物生长、风景</td></tr>
+        <tr><td>🎤 录音</td><td>声音、对话</td><td>采访爷爷、鸟叫声</td></tr>
+        <tr><td>📹 视频</td><td>过程、动作</td><td>体育训练、实验</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box success">
+      <h4>🌟 记住三句口诀</h4>
+      <ol>
+        <li><b>类型不同方法不同</b>，选对方法效率高</li>
+        <li><b>数字单位时间</b>不能少</li>
+        <li><b>清晰准确</b>，后续才能用</li>
+      </ol>
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      数据记录得这么辛苦，到底有什么<b>用</b>呢？数据为什么这么宝贵？
+      下节课《数据价值巧发现》，带你看看数据如何改变世界！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+document.getElementById('addRow').addEventListener('click', ()=>{
+  const tbody = document.querySelector('#recordTable tbody');
+  const rowCount = tbody.querySelectorAll('tr').length;
+  const num = String(rowCount + 1).padStart(2, '0');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${num}</td><td><input type="text" placeholder="请填写"></td><td><input type="number" placeholder="cm"></td>`;
+  tbody.appendChild(tr);
+});
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

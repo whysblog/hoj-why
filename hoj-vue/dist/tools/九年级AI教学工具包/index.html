@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人工智能与智慧社会 — 交互教学工具集</title>
+<style>
+:root{
+  --bg:#0f1729; --panel:#1a2440; --panel-2:#243054;
+  --ink:#e6ecf5; --muted:#8b9bbf; --accent:#fbbf24;
+  --accent-2:#60a5fa; --good:#34d399;
+  --line:#2d3a5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#0f1729 0%,#141e3a 100%);
+  color:var(--ink);min-height:100vh;padding:40px 24px;
+}
+.container{max-width:1200px;margin:0 auto}
+header{text-align:center;margin-bottom:50px}
+.eyebrow{
+  display:inline-block;background:rgba(251,191,36,.15);
+  color:var(--accent);padding:6px 16px;border-radius:24px;
+  font-size:13px;font-weight:600;letter-spacing:.5px;margin-bottom:16px;
+  border:1px solid rgba(251,191,36,.3);
+}
+h1{font-size:36px;font-weight:700;margin-bottom:12px;background:linear-gradient(135deg,#fbbf24,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lede{color:var(--muted);font-size:15px;line-height:1.7;max-width:700px;margin:0 auto}
+.section-title{
+  font-size:13px;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--muted);margin:40px 0 18px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:22px;text-decoration:none;color:inherit;display:block;
+  transition:transform .2s,border-color .2s;
+  position:relative;overflow:hidden;
+}
+.card:hover{transform:translateY(-3px);border-color:var(--accent)}
+.card::before{
+  content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  opacity:0;transition:opacity .2s;
+}
+.card:hover::before{opacity:1}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.lesson-tag{
+  background:linear-gradient(135deg,var(--accent),#f59e0b);color:#0f1729;
+  padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;
+}
+.type-tag{
+  background:var(--panel-2);color:var(--muted);
+  padding:3px 10px;border-radius:14px;font-size:11px;
+  border:1px solid var(--line);
+}
+.type-tag.html{color:var(--accent-2);border-color:rgba(96,165,250,.3)}
+.type-tag.python{color:var(--good);border-color:rgba(52,211,153,.3)}
+.card-title{font-size:17px;font-weight:600;margin-bottom:8px}
+.card-desc{font-size:13px;color:var(--muted);line-height:1.65}
+.card-foot{margin-top:14px;font-size:12px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:5px}
+.card-foot::after{content:"→";transition:transform .2s}
+.card:hover .card-foot::after{transform:translateX(4px)}
+.unit-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.unit-tag{font-size:11px;color:var(--muted)}
+footer{text-align:center;margin-top:60px;padding-top:30px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.7}
+.note{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:10px;padding:14px 18px;margin:20px 0;font-size:13px;color:var(--muted);line-height:1.7}
+.note b{color:var(--accent-2)}
+@media(max-width:600px){h1{font-size:26px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <span class="eyebrow">义务教育信息科技 · 九年级</span>
+  <h1>人工智能与智慧社会</h1>
+  <p class="lede">基于教学指南构建的 9 个交互式学习工具，覆盖文本生成、图像识别、机器推理、规则学习等关键 AI 概念，帮助学生在动手探索中理解算法本质。</p>
+</header>
+
+<div class="note">
+<b>使用方式：</b>HTML 工具直接在浏览器中打开即可使用；Python 工具需安装 Python 3 环境（自带 tkinter，无需额外依赖），双击运行 <code>.py</code> 文件或在终端执行 <code>python3 文件名.py</code>。
+</div>
+
+<div class="section-title">第一单元：文本生成的实现 — 第 5–9 课</div>
+<div class="grid">
+
+<a class="card" href="L05_BPE词表构建器.html">
+  <div class="card-head">
+    <span class="lesson-tag">第5课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">BPE 自动构建词表器</div>
+  <div class="card-desc">交互式演示字节对编码（BPE）算法：从字符级开始，通过统计字符对频率反复合并，自动构建词表。观察"人工"、"智能"等词是如何从字符碎片中"长出来"的。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+<a class="card" href="L06_古诗共现生成器.html">
+  <div class="card-head">
+    <span class="lesson-tag">第6课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">古诗共现矩阵生成器</div>
+  <div class="card-desc">基于古诗语料库统计字词共现矩阵，使用 Bigram 概率生成新诗句。支持"最大概率"与"按概率采样"两种模式，直观展示统计语言模型的工作机理。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+<a class="card" href="L07_词向量与相似度.html">
+  <div class="card-head">
+    <span class="lesson-tag">第7课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">词向量与语义相似度</div>
+  <div class="card-desc">三合一工具：① 拖动二维词向量观察语义聚类 ② 多义词"窗口"在不同语境下的动态调整 ③ 计算欧氏距离矩阵，判断词对相似程度。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+<a class="card" href="L08_注意力观察器.html">
+  <div class="card-head">
+    <span class="lesson-tag">第8课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">注意力机制观察器</div>
+  <div class="card-desc">通过传话游戏理解注意力：滑动条调整每个词在生成下一个词时的"权重"，对比有/无注意力机制下的输出差异，附自注意力热力图。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+</div>
+
+<div class="section-title">第二单元：图像识别的实现 — 第 10–13 课</div>
+<div class="grid">
+
+<a class="card" href="L10_图像卷积特征提取器.html">
+  <div class="card-head">
+    <span class="lesson-tag">第10课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">图像卷积特征提取器</div>
+  <div class="card-desc">使用 5×5 二值数字（0–9）演示卷积过程：3×3 卷积核滑动窗口逐步可视化，含计算公式展示。也支持手工五点特征提取（横平、竖直、斜对角等），与卷积结果对照学习。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+</div>
+
+<div class="section-title">第三单元：智能推理 — 第 16–18 课</div>
+<div class="grid">
+
+<a class="card" href="L16_决策树构建器.html">
+  <div class="card-head">
+    <span class="lesson-tag">第16课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">决策树构建与推理器</div>
+  <div class="card-desc">基于"宠物领养意愿"数据集，自动构建决策树。Gini 系数衡量特征区分度，SVG 渲染树结构，支持输入新案例进行推理，并高亮决策路径。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+<a class="card" href="L17_知识图谱推理器.html">
+  <div class="card-head">
+    <span class="lesson-tag">第17课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">知识图谱推理器</div>
+  <div class="card-desc">以《红楼梦》贾家亲属关系为蓝本，从基础"父母""配偶"关系出发，通过规则组合推导"父亲"、"爷爷"、"堂兄弟"等复杂亲属关系，附 SVG 关系图可视化。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+</div>
+
+<div class="section-title">第四单元：聚类与博弈 — 第 19、25 课</div>
+<div class="grid">
+
+<a class="card" href="L19_K-Means聚类可视化.html">
+  <div class="card-head">
+    <span class="lesson-tag">第19课</span>
+    <span class="type-tag html">HTML</span>
+  </div>
+  <div class="card-title">K-Means 聚类可视化</div>
+  <div class="card-desc">星图分组演示 K-Means 算法：随机初始化中心 → 分配点 → 重算中心 → 迭代收敛。可单步执行或自动运行，中心移动轨迹实时绘制，支持自定义点击添加点。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+<a class="card" href="L25_井字棋AI.py">
+  <div class="card-head">
+    <span class="lesson-tag">第25课</span>
+    <span class="type-tag python">Python</span>
+  </div>
+  <div class="card-title">井字棋 AI 对弈系统</div>
+  <div class="card-desc">基于教材 25.3 得分表方法实现：穷举生成全部棋谱（约 25 万局），按胜负规则训练得分字典，人机对弈时实时显示 AI 思考的得分表。tkinter 图形界面。</div>
+  <div class="card-foot">打开工具</div>
+</a>
+
+</div>
+
+<footer>
+基于《义务教育信息科技教学指南 — 人工智能与智慧社会》构建<br>
+所有工具数据均来自教材原始示例，可直接用于课堂演示与学生探究
+</footer>
+
+</div>
+</body>
+</html>

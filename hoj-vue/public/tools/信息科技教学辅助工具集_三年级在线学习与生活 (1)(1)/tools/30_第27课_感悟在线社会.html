@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>感悟在线社会 — 第27课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#fef2f2;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#b91c1c,#ef4444);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#b91c1c;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#ef4444;color:white;border-color:#b91c1c}
+.intro{background:linear-gradient(135deg,#fee2e2,#fecaca);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#b91c1c;margin-bottom:8px;font-size:20px}.intro p{color:#7f1d1d;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:36px}.tool-card h4{color:#b91c1c;margin:6px 0 4px;font-size:14px}.tool-card p{color:#475569;font-size:12px;line-height:1.5}
+
+/* 场景对比 */
+.compare-section{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:700px){.compare-section{grid-template-columns:1fr}}
+.compare-box{background:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.compare-box.old{border-top:4px solid #94a3b8}
+.compare-box.new{border-top:4px solid #ef4444}
+.compare-box h3{margin-bottom:10px;font-size:15px}
+.compare-box.old h3{color:#475569}
+.compare-box.new h3{color:#b91c1c}
+.compare-box .scenario{background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13px;line-height:1.6;color:#475569}
+.compare-box.new .scenario{background:#fef2f2;color:#7f1d1d}
+
+/* 支付方式对比 */
+.pay-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.pay-card{background:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer;transition:all .2s;border:2px solid transparent}
+.pay-card:hover{transform:translateY(-3px);border-color:#ef4444}
+.pay-card.active{background:#fef2f2;border-color:#b91c1c}
+.pay-card .icon{font-size:42px;text-align:center}
+.pay-card h4{color:#b91c1c;font-size:14px;text-align:center;margin:6px 0}
+.pay-card .pros{font-size:12px;color:#15803d;line-height:1.6;margin-top:6px}
+.pay-card .cons{font-size:12px;color:#b91c1c;line-height:1.6;margin-top:4px}
+
+.experience-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.exp-card{background:white;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.exp-card .icon{font-size:40px;margin-bottom:8px}
+.exp-card h4{color:#b91c1c;font-size:15px;margin-bottom:6px}
+.exp-card p{font-size:13px;color:#475569;line-height:1.7}
+
+.warning-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:700px){.warning-list{grid-template-columns:1fr}}
+.warning{background:white;padding:14px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);border-left:4px solid #ef4444}
+.warning .icon{font-size:24px}
+.warning h4{color:#b91c1c;font-size:13px;margin:4px 0}
+.warning p{font-size:12px;color:#475569;line-height:1.6}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🌏 感悟在线社会</h1>
+    <div class="lesson">第 27 课 · 第八单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>什么是在线社会</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>生活方式的改变</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>支付方式对比</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>挑战与思考</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🌏 什么是在线社会</h2>
+      <div class="lead">互联网把全世界连了起来，形成了一个新的"网络空间"——在线社会</div>
+      <div class="intro">
+        <h3>💡 在线社会就在我们身边</h3>
+        <p>当我们在<b>网上学习、购物、看病、办事</b>，我们就在"在线社会"里活动。这是一个不需要面对面，但又无处不在的<b>新型社会</b>。</p>
+      </div>
+      <div class="experience-grid">
+        <div class="exp-card">
+          <div class="icon">🛒</div>
+          <h4>网上购物</h4>
+          <p>足不出户买遍全球。淘宝、京东、拼多多……一部手机就能让快递员把商品送到家门口。</p>
+        </div>
+        <div class="exp-card">
+          <div class="icon">🍔</div>
+          <h4>在线点餐</h4>
+          <p>美团、饿了么——动动手指，半小时后热腾腾的饭菜就送到了。</p>
+        </div>
+        <div class="exp-card">
+          <div class="icon">🏥</div>
+          <h4>在线医疗</h4>
+          <p>不用排队挂号——线上预约、线上问诊、电子处方、药品配送到家。</p>
+        </div>
+        <div class="exp-card">
+          <div class="icon">📚</div>
+          <h4>在线学习</h4>
+          <p>名校名师的课程在网上免费看，再也不用担心"教育资源不均"。</p>
+        </div>
+        <div class="exp-card">
+          <div class="icon">🚗</div>
+          <h4>共享出行</h4>
+          <p>滴滴出行、共享单车、共享电单车——按需出行，方便环保。</p>
+        </div>
+        <div class="exp-card">
+          <div class="icon">🏛️</div>
+          <h4>政务办事</h4>
+          <p>"一网通办"——办事不用跑窗口，手机上就能完成各种证件办理。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🔄 生活方式的改变</h2>
+      <div class="lead">看看"以前"和"现在"，差别有多大！</div>
+      <div class="compare-section">
+        <div class="compare-box old">
+          <h3>🕰️ 以前（爷爷奶奶那时）</h3>
+          <div class="scenario">📞 想联系亲戚要去邮局打长途，1 分钟好几块钱</div>
+          <div class="scenario">📰 想看新闻要等次日的报纸</div>
+          <div class="scenario">🛒 想买东西必须亲自跑商店</div>
+          <div class="scenario">💰 出门必须带现金，丢了麻烦</div>
+          <div class="scenario">📚 学习只能在学校，下课就没人教</div>
+        </div>
+        <div class="compare-box new">
+          <h3>🚀 现在（在线社会）</h3>
+          <div class="scenario">📱 视频通话面对面，免费畅聊几小时</div>
+          <div class="scenario">📰 新闻实时推送，秒级了解全球大事</div>
+          <div class="scenario">🛍️ 手机下单，快递员送货上门</div>
+          <div class="scenario">💳 扫码支付，一部手机走天下</div>
+          <div class="scenario">🎓 全球名师课程随时学，AI 答疑解惑</div>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 这就是"数字化"</h3>
+        <p>把传统的<b>线下活动</b>搬到<b>网上</b>进行，就是数字化。在线社会让生活更方便、更快捷、更智能。中国在<b>移动支付、电商、共享经济</b>等领域已经走在世界前列。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>💳 支付方式对比</h2>
+      <div class="lead">点击每种支付方式，看看它的特点</div>
+      <div class="pay-grid">
+        <div class="pay-card" onclick="selPay(this, 0)">
+          <div class="icon">💵</div>
+          <h4>现金支付</h4>
+          <p class="pros">✓ 不需要设备<br>✓ 不依赖网络</p>
+          <p class="cons">✗ 找零麻烦<br>✗ 携带不便<br>✗ 容易丢失</p>
+        </div>
+        <div class="pay-card" onclick="selPay(this, 1)">
+          <div class="icon">💳</div>
+          <h4>银行卡</h4>
+          <p class="pros">✓ 大额方便<br>✓ 安全可靠</p>
+          <p class="cons">✗ 需要密码<br>✗ 需要刷卡机<br>✗ 不如手机便捷</p>
+        </div>
+        <div class="pay-card" onclick="selPay(this, 2)">
+          <div class="icon">📱</div>
+          <h4>扫码支付</h4>
+          <p class="pros">✓ 速度极快<br>✓ 无需找零<br>✓ 自动记账</p>
+          <p class="cons">✗ 需要手机<br>✗ 需要网络</p>
+        </div>
+        <div class="pay-card" onclick="selPay(this, 3)">
+          <div class="icon">😊</div>
+          <h4>刷脸支付</h4>
+          <p class="pros">✓ 不用带手机<br>✓ 速度最快</p>
+          <p class="cons">✗ 需要专用设备<br>✗ 隐私顾虑</p>
+        </div>
+      </div>
+      <div id="payDetail" style="margin-top:14px;padding:14px 18px;background:white;border-radius:10px;color:#475569;font-size:14px;line-height:1.7;display:none;"></div>
+      <div class="know">
+        <h3>💡 中国移动支付世界领先</h3>
+        <p>从买早餐到坐地铁，从医院挂号到商场购物——<b>"一部手机走天下"</b>已经成为现实。这背后是<b>移动互联网、二维码、人脸识别</b>等多种信息科技的支撑。这是中国对世界的<b>科技贡献</b>！</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>⚖️ 挑战与思考</h2>
+      <div class="lead">在线社会很美好，但也带来一些挑战</div>
+      <div class="warning-list">
+        <div class="warning">
+          <div class="icon">👴</div>
+          <h4>数字鸿沟</h4>
+          <p>爷爷奶奶不会用智能手机，看病、出行、买菜都变得困难。我们要<b>主动帮助他们</b>。</p>
+        </div>
+        <div class="warning">
+          <div class="icon">🔓</div>
+          <h4>隐私安全</h4>
+          <p>个人信息可能被泄露、滥用。要<b>谨慎填写</b>，发现问题及时告诉家长。</p>
+        </div>
+        <div class="warning">
+          <div class="icon">😈</div>
+          <h4>网络诈骗</h4>
+          <p>骗子利用网络行骗：假客服、假中奖、假投资。<b>陌生链接不点，陌生电话不信</b>。</p>
+        </div>
+        <div class="warning">
+          <div class="icon">📵</div>
+          <h4>过度依赖</h4>
+          <p>没网就活不下去？沉迷电子产品？要<b>合理使用</b>，不被屏幕"绑架"。</p>
+        </div>
+        <div class="warning">
+          <div class="icon">🏪</div>
+          <h4>实体店冲击</h4>
+          <p>很多街边小店因为网购而关门。我们要<b>既享受便利，也支持身边的实体经济</b>。</p>
+        </div>
+        <div class="warning">
+          <div class="icon">📰</div>
+          <h4>信息真伪</h4>
+          <p>网络上谣言很多。学会<b>判断信息真假</b>，看权威媒体的报道。</p>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 我们能做什么？</h3>
+        <p>① <b>帮助爷爷奶奶</b>：教他们用智能手机；<br>② <b>当好"网络小卫士"</b>：不传谣不信谣；<br>③ <b>合理使用</b>：不沉迷网络；<br>④ <b>持续学习</b>：跟上时代的步伐；<br>⑤ <b>多元生活</b>：线上线下都重要。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点 · 单元总结</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #ef4444;"><div class="icon">🌏</div><h4>在线社会</h4><p>购物、医疗、学习、出行</p></div>
+        <div class="tool-card" style="border-top:4px solid #ef4444;"><div class="icon">⚡</div><h4>巨大便利</h4><p>方便、快捷、智能</p></div>
+        <div class="tool-card" style="border-top:4px solid #ef4444;"><div class="icon">⚖️</div><h4>面对挑战</h4><p>隐私、诈骗、依赖</p></div>
+        <div class="tool-card" style="border-top:4px solid #ef4444;"><div class="icon">🌟</div><h4>智慧应对</h4><p>享便利、避风险</p></div>
+      </div>
+      <div class="know">
+        <h3>🎓 三年级"在线学习与生活"全册回顾</h3>
+        <p><b>第 1-2 单元</b>：认识信息科技、数字设备、记录图音视频；<br>
+        <b>第 3-4 单元</b>：浏览网络、整理资源、创作数字作品；<br>
+        <b>第 5-6 单元</b>：在线交流、社交、规范、学习；<br>
+        <b>第 7-8 单元</b>：合作完成项目、守护在线安全。<br><br>
+        🎉 恭喜你完成了三年级所有的信息科技课程！希望你能成为一个<b>会用、爱用、慎用</b>信息科技的小公民，让科技更好地服务生活！</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const payDetails = [
+  '💵 现金支付：使用纸币和硬币。这是最传统的支付方式，依然广泛使用，尤其在小卖部、菜市场等场合。但找零、清点都比较麻烦。',
+  '💳 银行卡支付：在 ATM 取款或商场刷 POS 机。这是上一代主流的电子支付方式。需要输入密码或签名，安全性高。',
+  '📱 扫码支付（微信、支付宝）：用手机扫商家的二维码，或商家扫顾客的付款码。这是中国最普及的支付方式，2 秒钟完成。背后用到了二维码、移动互联网、加密技术等多种信息科技。',
+  '😊 刷脸支付：把脸对准摄像头，2 秒钟自动识别身份并扣款。背后用到了人脸识别（人工智能）技术。最近几年开始普及，未来可能更常见。',
+];
+
+function selPay(card, i) {
+  document.querySelectorAll('.pay-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  const d = document.getElementById('payDetail');
+  d.innerHTML = '💡 ' + payDetails[i];
+  d.style.display = 'block';
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>保存信息资源 — 第10课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3ff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#6d28d9,#8b5cf6);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#6d28d9;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#8b5cf6;color:white;border-color:#6d28d9}
+.intro{background:linear-gradient(135deg,#ede9fe,#ddd6fe);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#6d28d9;margin-bottom:8px;font-size:20px}.intro p{color:#5b21b6;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+
+/* 网页模拟 */
+.page-mock{background:white;padding:18px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.06);margin-bottom:14px}
+.demo-img{display:inline-block;width:140px;height:100px;background:linear-gradient(135deg,#fef3c7,#f59e0b);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:50px;cursor:context-menu;position:relative;margin:8px}
+.demo-img:hover{outline:2px dashed #6d28d9}
+.demo-text{display:inline-block;background:#fef3c7;padding:8px 14px;border-radius:6px;margin:4px;cursor:text;user-select:text}
+.context-menu{position:absolute;background:white;border:1px solid #c4b5fd;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.15);padding:6px;z-index:100;min-width:180px;display:none}
+.context-menu.show{display:block}
+.cm-item{padding:8px 14px;font-size:13px;cursor:pointer;border-radius:4px}
+.cm-item:hover{background:#ede9fe;color:#6d28d9}
+.cm-divider{height:1px;background:#e9d5ff;margin:4px 0}
+.save-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;padding:24px;width:90%;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,.3);z-index:200;display:none}
+.save-dialog.show{display:block}
+.save-dialog-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150;display:none}
+.save-dialog-bg.show{display:block}
+.save-dialog h3{color:#6d28d9;margin-bottom:12px}
+.save-dialog input{width:100%;padding:8px 12px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:14px;margin-top:6px}
+.folders-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fitem{padding:8px 14px;background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+.fitem.selected{background:#ede9fe;border-color:#6d28d9}
+.fitem:hover{background:#ede9fe}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.step{background:white;padding:16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);position:relative}
+.step .n{position:absolute;top:-10px;left:-10px;width:28px;height:28px;border-radius:50%;background:#8b5cf6;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.step .icon{font-size:32px;margin:6px 0}
+.step .label{color:#475569;font-size:13px;line-height:1.6}
+.law-card{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+.law-item{background:white;padding:12px 14px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);font-size:12px;line-height:1.6;color:#5b21b6;border-left:3px solid #8b5cf6}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>💾 保存信息资源</h1>
+    <div class="lesson">第 10 课 · 第三单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>为什么要保存</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>保存图片</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>保存文字</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>移动设备保存</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>合理使用</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>💾 为什么要保存信息资源</h2>
+      <div class="lead">网络资源虽多，但断网就用不了。保存到本地，随时可用</div>
+      <div class="intro">
+        <h3>🤔 想一想</h3>
+        <p>找到了一张漂亮的故宫图片，但下次打开网页可能就找不到了；下载保存到电脑里，下次直接打开。<b>保存 = 把网络资源"装进"自己的设备</b>。</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step"><div class="n">✓</div><div class="icon">⚡</div><div class="label"><b>方便快捷</b><br>不用每次都搜索</div></div>
+        <div class="step"><div class="n">✓</div><div class="icon">📵</div><div class="label"><b>断网也能用</b><br>没网的时候也能看</div></div>
+        <div class="step"><div class="n">✓</div><div class="icon">🔧</div><div class="label"><b>方便处理</b><br>可以编辑、加工资源</div></div>
+        <div class="step"><div class="n">✓</div><div class="icon">📚</div><div class="label"><b>积累素材</b><br>建立自己的资源库</div></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🖼️ 保存图片（计算机）</h2>
+      <div class="lead">右键单击图片，选择"图片另存为"</div>
+      <div class="page-mock">
+        <p style="font-weight:600;margin-bottom:10px;color:#6d28d9;">🌐 模拟网页：京剧角色介绍</p>
+        <p style="color:#475569;line-height:1.7;margin-bottom:10px;font-size:14px;">京剧是中国五大戏曲剧种之一。京剧角色行当主要分为生、旦、净、丑四大类。</p>
+        <div style="text-align:center;">
+          <div class="demo-img" oncontextmenu="showCM(event)">🎭</div>
+          <div class="demo-img" oncontextmenu="showCM(event)">👘</div>
+          <div class="demo-img" oncontextmenu="showCM(event)">🎵</div>
+        </div>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:8px;">👆 在图片上 <b>右键单击</b>，看看会出现什么</p>
+      </div>
+      <div class="context-menu" id="cm">
+        <div class="cm-item" onclick="closeCM()">🖼️ 在新标签页打开图片</div>
+        <div class="cm-item" onclick="openSaveDialog()">💾 图片另存为...</div>
+        <div class="cm-item" onclick="closeCM()">📋 复制图片</div>
+        <div class="cm-item" onclick="closeCM()">📋 复制图片地址</div>
+        <div class="cm-divider"></div>
+        <div class="cm-item" onclick="closeCM()">🔍 用搜图引擎搜索图片</div>
+      </div>
+      <div class="know">
+        <h3>📁 默认保存位置</h3>
+        <p>Windows 系统：默认保存到"<b>下载</b>"文件夹（Downloads）<br>Mac 系统：默认保存到"<b>下载</b>"位置<br>📌 老师建议：在"图片"文件夹下新建子文件夹（如"中华优秀传统文化"），分类保存</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📝 保存文字</h2>
+      <div class="lead">想保存网页上的一段文字？分三步走</div>
+      <div class="page-mock">
+        <p style="font-weight:600;margin-bottom:10px;color:#6d28d9;">🌐 模拟网页：京剧介绍</p>
+        <p class="demo-text">京剧是中国国粹之一</p>
+        <p class="demo-text">京剧的"四大功夫"：唱、念、做、打</p>
+        <p class="demo-text">京剧角色分为生、旦、净、丑四大行当</p>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:8px;">👆 用鼠标 <b>选中文字</b>，可以复制保存</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step"><div class="n">1</div><div class="icon">🖱️</div><div class="label"><b>选中文字</b><br>按住鼠标左键拖拽</div></div>
+        <div class="step"><div class="n">2</div><div class="icon">📋</div><div class="label"><b>复制</b><br>Ctrl+C 或右键"复制"</div></div>
+        <div class="step"><div class="n">3</div><div class="icon">📝</div><div class="label"><b>打开记事本</b><br>新建一个文本文件</div></div>
+        <div class="step"><div class="n">4</div><div class="icon">✂️</div><div class="label"><b>粘贴</b><br>Ctrl+V 或右键"粘贴"</div></div>
+        <div class="step"><div class="n">5</div><div class="icon">💾</div><div class="label"><b>保存</b><br>Ctrl+S 选择位置</div></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📱 在移动设备上保存</h2>
+      <div class="lead">手机和平板的操作有点不一样</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="mobile-save-grid">
+        <div style="background:white;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);">
+          <h3 style="color:#6d28d9;margin-bottom:12px;font-size:16px;">🖼️ 保存图片</h3>
+          <div class="steps-grid" style="grid-template-columns:1fr;gap:8px;">
+            <div class="step" style="padding:10px;"><div class="n">1</div><div style="font-size:13px;color:#475569;line-height:1.6;"><b>长按图片</b> 1-2 秒</div></div>
+            <div class="step" style="padding:10px;"><div class="n">2</div><div style="font-size:13px;color:#475569;line-height:1.6;">弹出菜单后选 <b>"保存到相册"</b></div></div>
+            <div class="step" style="padding:10px;"><div class="n">3</div><div style="font-size:13px;color:#475569;line-height:1.6;">在<b>"相册"</b>中查看保存的图片</div></div>
+          </div>
+        </div>
+        <div style="background:white;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);">
+          <h3 style="color:#6d28d9;margin-bottom:12px;font-size:16px;">📝 保存文字</h3>
+          <div class="steps-grid" style="grid-template-columns:1fr;gap:8px;">
+            <div class="step" style="padding:10px;"><div class="n">1</div><div style="font-size:13px;color:#475569;line-height:1.6;"><b>长按文字</b>，拖动选中范围</div></div>
+            <div class="step" style="padding:10px;"><div class="n">2</div><div style="font-size:13px;color:#475569;line-height:1.6;">点击 <b>"复制"</b></div></div>
+            <div class="step" style="padding:10px;"><div class="n">3</div><div style="font-size:13px;color:#475569;line-height:1.6;">打开<b>"备忘录"</b>，长按粘贴</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 不同设备，操作有差别</h3>
+        <p>电脑上常用<b>"右键 + 键盘快捷键"</b>，移动设备上常用<b>"长按 + 触屏选项"</b>。原理一样，操作方式不同。多动手实践，很快就会熟练。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>⚖️ 合理保存和使用</h2>
+      <div class="lead">保存资源也要遵守法律和道德</div>
+      <div class="steps-grid">
+        <div class="step" style="border-top:4px solid #22c55e;"><div class="icon">✓</div><div class="label" style="color:#15803d;"><b>用作学习参考</b><br>查阅、研究自用</div></div>
+        <div class="step" style="border-top:4px solid #22c55e;"><div class="icon">✓</div><div class="label" style="color:#15803d;"><b>注明来源出处</b><br>使用时说明引用</div></div>
+        <div class="step" style="border-top:4px solid #ef4444;"><div class="icon">✗</div><div class="label" style="color:#b91c1c;"><b>不擅自商用</b><br>不能拿别人作品赚钱</div></div>
+        <div class="step" style="border-top:4px solid #ef4444;"><div class="icon">✗</div><div class="label" style="color:#b91c1c;"><b>不照搬照抄</b><br>不利于学习进步</div></div>
+      </div>
+      <h3 style="color:#6d28d9;margin-top:18px;font-size:16px;">📜 相关法律法规</h3>
+      <div class="law-card">
+        <div class="law-item"><b>中华人民共和国网络安全法</b></div>
+        <div class="law-item"><b>中华人民共和国数据安全法</b></div>
+        <div class="law-item"><b>中华人民共和国个人信息保护法</b></div>
+        <div class="law-item"><b>中华人民共和国著作权法</b></div>
+        <div class="law-item"><b>互联网信息服务管理办法</b></div>
+      </div>
+      <div class="know">
+        <h3>💡 老师寄语</h3>
+        <p>有些图片有水印、文字无法复制、文档要付费，这都是<b>著作权保护</b>。我们要尊重创作者的劳动，下载使用要合规、合法。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="save-dialog-bg" id="dlgBg"></div>
+<div class="save-dialog" id="dlg">
+  <h3>💾 图片另存为</h3>
+  <div style="margin-top:12px;">
+    <label style="font-size:13px;color:#475569;">📂 选择保存位置：</label>
+    <div class="folders-list" id="folders">
+      <div class="fitem selected" onclick="selFolder(this)">📥 下载</div>
+      <div class="fitem" onclick="selFolder(this)">🖼️ 图片</div>
+      <div class="fitem" onclick="selFolder(this)">📂 桌面</div>
+      <div class="fitem" onclick="selFolder(this)">📁 文档</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <label style="font-size:13px;color:#475569;">📝 文件名：</label>
+    <input type="text" value="京剧角色" id="fileName">
+  </div>
+  <div style="margin-top:12px;">
+    <label style="font-size:13px;color:#475569;">📋 文件类型：</label>
+    <select style="width:100%;padding:8px 12px;border:1.5px solid #c4b5fd;border-radius:6px;margin-top:6px;font-size:14px;">
+      <option>JPEG 图像 (*.jpg)</option>
+      <option>PNG 图像 (*.png)</option>
+      <option>所有文件</option>
+    </select>
+  </div>
+  <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;">
+    <button class="ctrl-btn" onclick="closeDlg()">取消</button>
+    <button class="ctrl-btn primary" onclick="finishSave()">保存</button>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+function showCM(e) {
+  e.preventDefault();
+  const cm = document.getElementById('cm');
+  cm.classList.add('show');
+  cm.style.left = e.pageX + 'px';
+  cm.style.top = e.pageY + 'px';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.context-menu') && !e.target.closest('.demo-img')) closeCM();
+});
+function closeCM() { document.getElementById('cm').classList.remove('show'); }
+function openSaveDialog() {
+  closeCM();
+  document.getElementById('dlg').classList.add('show');
+  document.getElementById('dlgBg').classList.add('show');
+}
+function closeDlg() {
+  document.getElementById('dlg').classList.remove('show');
+  document.getElementById('dlgBg').classList.remove('show');
+}
+function selFolder(el) {
+  document.querySelectorAll('.fitem').forEach(f => f.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function finishSave() {
+  const folder = document.querySelector('.fitem.selected').textContent.trim();
+  const name = document.getElementById('fileName').value;
+  alert('✅ 保存成功！\n位置：' + folder + '\n文件名：' + name + '.jpg');
+  closeDlg();
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && e.target.tagName !== 'INPUT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT') p();
+});
+</script>
+</body>
+</html>

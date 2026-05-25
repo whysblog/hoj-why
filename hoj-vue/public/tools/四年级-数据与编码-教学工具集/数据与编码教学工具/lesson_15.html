@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第15课 自定编码讲规则 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#5e35b1;
+  --theme-dark:#4527a0;
+  --theme-light:#ede7f6;
+  --bg:#f5f3fb;
+}
+.rule-card{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:12px 0;
+  border-left:5px solid var(--theme);
+}
+.rule-card h4{
+  color:var(--theme-dark);
+  font-size:16px;margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.rule-card .rule-num{
+  background:var(--theme);color:#fff;
+  width:28px;height:28px;
+  border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+.length-demo{
+  background:#fff;border-radius:12px;
+  padding:18px;margin:14px 0;
+  text-align:center;
+}
+.length-demo .bits-row{
+  display:flex;justify-content:center;gap:12px;
+  margin:14px 0;flex-wrap:wrap;
+}
+.length-demo .bit-box{
+  background:var(--theme-light);
+  border:2px solid var(--theme);
+  border-radius:8px;
+  padding:14px 10px;
+  min-width:90px;
+}
+.length-demo .bit-box .bit-num{
+  font-size:24px;font-weight:bold;
+  color:var(--theme-dark);
+}
+.length-demo .bit-box .bit-label{
+  font-size:12px;color:#607d8b;
+  margin-top:4px;
+}
+.design-area{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.design-area .design-row{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:10px;
+}
+.design-area label{
+  min-width:90px;font-size:14px;
+  color:var(--theme-dark);font-weight:bold;
+}
+.design-area input{
+  flex:1;padding:8px 12px;
+  border:2px solid #e0e0e0;
+  border-radius:6px;font-family:inherit;
+}
+.design-area input:focus{outline:none;border-color:var(--theme)}
+.id-output{
+  background:linear-gradient(135deg,var(--theme-light),#d1c4e9);
+  border-radius:10px;
+  padding:14px;margin-top:10px;
+  font-family:"Courier New",monospace;
+  font-size:18px;font-weight:bold;
+  color:var(--theme-dark);
+  text-align:center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第三单元 · 第15课</span>
+    <h1>📏 自定编码讲规则</h1>
+    <p>学习设计自己的编码规则：唯一性、编码长度与信息量</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">📋 编码三规则</button>
+    <button class="nav-btn" data-slide="2">📏 长度的秘密</button>
+    <button class="nav-btn" data-slide="3">🎮 我来设计编码</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      学校要给四年级 5 个班共 200 个同学每人发一个<b>编号</b>，请你设计编号规则：
+      <ul style="margin-top:6px">
+        <li>方案 A：每人 1 个字 → 200 人要 200 种符号</li>
+        <li>方案 B：编 1~200 数字 → 简单清晰</li>
+        <li>方案 C：班级+学号，如 "401"、"402" → 信息更多</li>
+      </ul>
+      你觉得哪个方案<b>最好</b>？为什么？
+    </div>
+
+    <p>这一课，我们就来学习如何设计<b>合理的编码规则</b>。</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>掌握编码的<b>三大规则</b>：唯一性、简洁性、可扩展</li>
+      <li>理解<b>编码长度</b>与<b>信息量</b>的关系</li>
+      <li>能自己设计一套<b>合理</b>的编码规则</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>编码的三大规则</h2>
+
+    <div class="rule-card">
+      <h4><span class="rule-num">1</span>唯一性</h4>
+      <p>每个对象只有<b>一个</b>编码，每个编码只对应<b>一个</b>对象。绝不能两个人共用同一个学号！</p>
+      <div class="info-box" style="margin-top:8px;background:#ffebee;border-left-color:#e53935">
+        ❌ 错误：小明 = 001，小红 = 001（重复了！）
+        <br>✅ 正确：小明 = 001，小红 = 002
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <h4><span class="rule-num">2</span>简洁性</h4>
+      <p>编码越<b>短</b>越好，但不能短到不够用。要在"足够"和"简短"之间找到平衡。</p>
+      <div class="info-box" style="margin-top:8px;background:#fff8e1;border-left-color:#fb8c00">
+        🤔 200 人用 3 位数字（001~200）就够了，没必要用 6 位（000001~000200）
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <h4><span class="rule-num">3</span>可扩展</h4>
+      <p>编码规则要考虑<b>将来扩展</b>。如果以后人变多了，编码还能继续用吗？</p>
+      <div class="info-box" style="margin-top:8px;background:#e8f5e9;border-left-color:#43a047">
+        💡 设计成 3 位数字，可以容纳 999 人。即使明年人变多也够用！
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <h4><span class="rule-num">+</span>有意义（加分项）</h4>
+      <p>好的编码<b>本身就包含信息</b>。比如学号"40115"，能看出"四年级 1 班 15 号"。</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>编码长度的秘密</h2>
+
+    <p>编码越长，能表示的<b>东西就越多</b>。来看一组对比 ↓</p>
+
+    <div class="length-demo">
+      <h4 style="color:var(--theme-dark);margin-bottom:8px">用数字（0-9）编码</h4>
+      <div class="bits-row">
+        <div class="bit-box">
+          <div class="bit-num">1 位</div>
+          <div class="bit-label">10 种<br>0~9</div>
+        </div>
+        <div class="bit-box">
+          <div class="bit-num">2 位</div>
+          <div class="bit-label">100 种<br>00~99</div>
+        </div>
+        <div class="bit-box">
+          <div class="bit-num">3 位</div>
+          <div class="bit-label">1000 种<br>000~999</div>
+        </div>
+        <div class="bit-box">
+          <div class="bit-num">4 位</div>
+          <div class="bit-label">10000 种<br>0000~9999</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#607d8b">每多 <b>1 位</b>，能表示的数量就<b>多 10 倍</b>！</p>
+    </div>
+
+    <div class="length-demo">
+      <h4 style="color:var(--theme-dark);margin-bottom:8px">用二进制（0、1）编码</h4>
+      <div class="bits-row">
+        <div class="bit-box">
+          <div class="bit-num">1 位</div>
+          <div class="bit-label">2 种<br>0、1</div>
+        </div>
+        <div class="bit-box">
+          <div class="bit-num">2 位</div>
+          <div class="bit-label">4 种<br>00~11</div>
+        </div>
+        <div class="bit-box">
+          <div class="bit-num">3 位</div>
+          <div class="bit-label">8 种<br>000~111</div>
+        </div>
+        <div class="bit-box">
+          <div class="bit-num">8 位</div>
+          <div class="bit-label">256 种<br>00000000~11111111</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#607d8b">每多 <b>1 位</b>二进制，能表示的数量<b>翻一倍</b>！</p>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 核心规律</h4>
+      <b>编码越长 → 能表示的对象越多 → 但写起来越麻烦</b>。
+      <br>所以要根据需要选择：表示 100 个东西用 2 位数字就够，表示 1 亿人用 9 位（身份证里就有用到）。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>我来设计学号</h2>
+
+    <p>请你来设计 <b>四年级学生学号</b>。我们的规则是：</p>
+    <div class="info-box">
+      <b>学号 = 年级（1位）+ 班级（1位）+ 班内号（2位）</b>
+      <br>例如：<b>4 1 1 5</b> = 四年级 1 班 15 号
+    </div>
+
+    <div class="design-area">
+      <h4 style="color:var(--theme-dark);margin-bottom:10px">🎯 创建你的学号</h4>
+      <div class="design-row">
+        <label>年级</label>
+        <input type="number" id="grade" value="4" min="1" max="6">
+      </div>
+      <div class="design-row">
+        <label>班级</label>
+        <input type="number" id="class" value="1" min="1" max="9">
+      </div>
+      <div class="design-row">
+        <label>班内序号</label>
+        <input type="number" id="seq" value="15" min="1" max="99">
+      </div>
+      <div class="id-output" id="output">你的学号是：4115</div>
+      <p id="desc" style="font-size:13px;color:#607d8b;margin-top:8px;text-align:center"></p>
+    </div>
+
+    <h3>🤔 思考</h3>
+    <div class="info-box tip">
+      这个学号好在哪里？
+      <ul style="margin-top:6px">
+        <li>✅ <b>唯一</b>：每个人的学号都不一样</li>
+        <li>✅ <b>简洁</b>：只用 4 位</li>
+        <li>✅ <b>有意义</b>：一看就知道几年级几班几号</li>
+        <li>✅ <b>可扩展</b>：能容纳 6 个年级、9 个班、每班 99 人</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🔑</span>
+        <h4>唯一性</h4>
+        <p>每个编码对应一个对象，不重复</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">✨</span>
+        <h4>简洁性</h4>
+        <p>够用就行，不要太长</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📈</span>
+        <h4>可扩展</h4>
+        <p>预留空间，应对未来变化</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📏</span>
+        <h4>长度规律</h4>
+        <p>越长 = 能编码的越多</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      请为<b>家里的物品</b>设计一套编码：
+      <ul style="margin-top:6px">
+        <li>客厅 = 1，厨房 = 2，卧室 = 3</li>
+        <li>家具 = 01，电器 = 02，书 = 03</li>
+        <li>例：客厅的电视 = <b>1-02-001</b></li>
+      </ul>
+      明天来分享你家的"物品编码方案"！
+    </div>
+
+    <h3>🔮 下个单元预告</h3>
+    <div class="info-box tip">
+      编码这么有用，那一大堆数据该<b>怎么管理</b>呢？
+      <br>下个单元《数据管理与安全》，我们来学习如何高效地管理和保护数据！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const grade = document.getElementById('grade');
+const cls = document.getElementById('class');
+const seq = document.getElementById('seq');
+const out = document.getElementById('output');
+const desc = document.getElementById('desc');
+
+function update(){
+  const g = parseInt(grade.value) || 0;
+  const c = parseInt(cls.value) || 0;
+  const s = parseInt(seq.value) || 0;
+  const id = `${g}${c}${String(s).padStart(2,'0')}`;
+  out.textContent = `你的学号是：${id}`;
+  desc.textContent = `表示：${g}年级 ${c}班 ${s}号`;
+}
+[grade,cls,seq].forEach(el=>el.addEventListener('input',update));
+update();
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

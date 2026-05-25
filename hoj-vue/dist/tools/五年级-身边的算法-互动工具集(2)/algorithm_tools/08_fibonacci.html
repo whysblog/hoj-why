@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>兔子增长规律 - 第22-23课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.month-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.month-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.4s;
+}
+.month-card.active {
+  border-color: var(--accent);
+  background: #FFF4E6;
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(255,140,66,0.2);
+}
+.month-card .month-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+.month-card .rabbit-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  margin: 6px 0;
+  min-height: 36px;
+}
+.rabbit {
+  font-size: 16px;
+  display: inline-block;
+}
+.rabbit.small { opacity: 0.7; transform: scale(0.7); }
+.month-card .total {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 4px;
+}
+.month-card .breakdown {
+  font-size: 11px;
+  color: var(--text-light);
+}
+.formula-display {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  margin: 14px 0;
+  overflow-x: auto;
+}
+.formula-display .line {
+  padding: 4px 0;
+  border-bottom: 1px dashed #E0E6ED;
+}
+.formula-display .line:last-child { border-bottom: none; }
+.formula-display .highlight {
+  background: #FFF4E6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid var(--accent);
+}
+.chart-area {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 14px 0;
+  height: 240px;
+  position: relative;
+}
+.chart-bar {
+  position: absolute;
+  bottom: 28px;
+  background: linear-gradient(to top, var(--primary-dark), var(--primary));
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding-bottom: 2px;
+  transition: all 0.5s;
+}
+.chart-label {
+  position: absolute;
+  bottom: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-light);
+}
+.fib-num-list {
+  font-size: 18px;
+  letter-spacing: 6px;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  padding: 14px;
+  background: #F0F7FF;
+  border-radius: 10px;
+  margin: 12px 0;
+  font-weight: 600;
+  color: var(--primary-dark);
+  word-spacing: 4px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🐰 兔子增长规律</h1>
+    <div class="subtitle">探究斐波那契数列与递推算法</div>
+    <span class="lesson-tag">第22-23课 · 兔子增长有规律</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>兔子农场问题：</strong>1月，农场里有 1 对小兔；2月长成大兔；从3月开始，每对大兔每月生 1 对小兔，小兔下个月长成大兔。假设兔子都活着，月底兔子数量怎么变化？
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>计算月数：</label>
+        <input type="range" id="monthSlider" min="3" max="20" value="12" style="width:160px;">
+        <span id="monthDisplay" style="font-weight:700;color:var(--primary);font-size:18px;">12</span>
+      </div>
+      <button class="btn-success" onclick="animate()">▶ 演示</button>
+      <button class="btn-secondary" onclick="instantShow()">⚡ 直接显示</button>
+    </div>
+
+    <div class="info-panel">
+      <strong>📜 规律：</strong>从第3个月开始，每月兔子总数 = 前两个月之和。即 <strong>F[n] = F[n-1] + F[n-2]</strong>，这就是著名的<strong>斐波那契数列</strong>！
+    </div>
+
+    <h3 style="margin:14px 0 8px;font-size:15px;color:var(--text-light);">🐰 每月兔子情况</h3>
+    <div class="month-display" id="monthDisplay2"></div>
+
+    <h3 style="margin:14px 0 8px;font-size:15px;color:var(--text-light);">📈 兔子总数变化</h3>
+    <div class="chart-area" id="chartArea"></div>
+
+    <h3 style="margin:14px 0 8px;font-size:15px;color:var(--text-light);">🔢 斐波那契数列</h3>
+    <div class="fib-num-list" id="fibList"></div>
+
+    <h3 style="margin:14px 0 8px;font-size:15px;color:var(--text-light);">🧮 算法描述（递推公式）</h3>
+    <div class="formula-display" id="formula"></div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>递推算法：</strong>从已知的初始数据开始，通过明确的规律一步一步推导后面的数据。是一种<strong>正向思维</strong>解决问题的方式。</p>
+      <p><strong>斐波那契数列：</strong>由意大利数学家斐波那契（Fibonacci）在 1202 年提出。前两项是 1, 1，从第三项开始每项都是前两项之和：<br>
+      <code style="background:#F0F7FF;padding:2px 8px;border-radius:4px;">1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, ...</code></p>
+      <p><strong>自然界中的斐波那契数列：</strong>向日葵的种子排列、松果的螺旋、菠萝表面的纹路、鹦鹉螺壳的螺旋、植物的叶序等，都隐藏着斐波那契数列。</p>
+      <p><strong>🪜 拓展（兔子跳台阶）：</strong>每次跳1级或2级台阶，跳上 n 级台阶有几种跳法？答案也是斐波那契数列！这是<strong>逆向思维</strong>的应用——只能从前1级或前2级跳上来。</p>
+      <p><strong>对应的 Python 程序：</strong></p>
+      <div class="formula-display" style="background:#1E1E1E;color:#D4D4D4;border:none;">
+        <div class="line">F = [0, 1, 1]&nbsp;&nbsp;&nbsp;&nbsp;# 1月、2月各1对</div>
+        <div class="line">n = 3</div>
+        <div class="line">while n &lt;= 12:</div>
+        <div class="line">&nbsp;&nbsp;F.append(F[n-1] + F[n-2])</div>
+        <div class="line">&nbsp;&nbsp;n = n + 1</div>
+        <div class="line">print(F[12])&nbsp;&nbsp;&nbsp;&nbsp;# 输出 144</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const monthSlider = document.getElementById('monthSlider');
+const monthDisplay = document.getElementById('monthDisplay');
+
+function calc(months) {
+  // 返回每月的 [小兔, 大兔, 总数]
+  const result = [];
+  let small = 1, big = 0;
+  for (let m = 1; m <= months; m++) {
+    result.push([small, big, small + big]);
+    const newSmall = big;
+    const newBig = small + big;
+    small = newSmall;
+    big = newBig;
+  }
+  return result;
+}
+
+function render(activeMonth = -1) {
+  const months = parseInt(monthSlider.value);
+  const data = calc(months);
+  const display = document.getElementById('monthDisplay2');
+  display.innerHTML = '';
+  data.forEach((d, i) => {
+    const div = document.createElement('div');
+    div.className = 'month-card' + (i === activeMonth ? ' active' : '');
+    let rabbitHtml = '';
+    const showCount = Math.min(d[0], 6);
+    const showCountBig = Math.min(d[1], 6);
+    for (let k = 0; k < showCount; k++) rabbitHtml += '<span class="rabbit small">🐰</span>';
+    for (let k = 0; k < showCountBig; k++) rabbitHtml += '<span class="rabbit">🐰</span>';
+    if (d[0] > 6 || d[1] > 6) rabbitHtml += `<span style="font-size:11px;color:var(--text-light);align-self:center;">...</span>`;
+    div.innerHTML = `
+      <div class="month-name">${i+1} 月</div>
+      <div class="rabbit-area">${rabbitHtml || '🥚'}</div>
+      <div class="total">${d[2]}</div>
+      <div class="breakdown">小:${d[0]} 大:${d[1]}</div>
+    `;
+    display.appendChild(div);
+  });
+
+  // 柱状图
+  const chart = document.getElementById('chartArea');
+  chart.innerHTML = '';
+  const max = Math.max(...data.map(d => d[2]));
+  const w = 100 / data.length;
+  data.forEach((d, i) => {
+    const h = (d[2] / max) * 180 + 12;
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.style.left = `calc(${i * w}% + 2px)`;
+    bar.style.width = `calc(${w}% - 4px)`;
+    bar.style.height = h + 'px';
+    bar.textContent = d[2];
+    if (i === activeMonth) bar.style.background = 'linear-gradient(to top, #E67A2D, var(--accent))';
+    chart.appendChild(bar);
+    const lbl = document.createElement('div');
+    lbl.className = 'chart-label';
+    lbl.style.left = `calc(${i * w}% + 2px)`;
+    lbl.style.width = `calc(${w}% - 4px)`;
+    lbl.textContent = (i+1) + '月';
+    chart.appendChild(lbl);
+  });
+
+  // 数列展示
+  document.getElementById('fibList').textContent = data.map(d => d[2]).join(', ');
+
+  // 公式
+  let formula = '<div class="line">F[1] = 1，F[2] = 1（已知）</div>';
+  for (let i = 2; i < data.length; i++) {
+    const cls = (i === activeMonth) ? 'line highlight' : 'line';
+    formula += `<div class="${cls}">F[${i+1}] = F[${i}] + F[${i-1}] = ${data[i-1][2]} + ${data[i-2][2]} = <strong>${data[i][2]}</strong></div>`;
+  }
+  document.getElementById('formula').innerHTML = formula;
+}
+
+async function animate() {
+  const months = parseInt(monthSlider.value);
+  for (let i = 0; i < months; i++) {
+    render(i);
+    await new Promise(r => setTimeout(r, 600));
+  }
+  render();
+}
+
+function instantShow() {
+  render();
+}
+
+monthSlider.addEventListener('input', () => {
+  monthDisplay.textContent = monthSlider.value;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

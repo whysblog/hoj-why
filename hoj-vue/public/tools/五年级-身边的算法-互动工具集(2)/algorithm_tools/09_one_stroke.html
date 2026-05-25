@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一笔画判断器 - 第25课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.canvas-area {
+  background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+}
+#graphCanvas {
+  width: 100%;
+  height: 380px;
+  background: white;
+  border-radius: 8px;
+  cursor: crosshair;
+  display: block;
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.preset-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.preset-card:hover {
+  border-color: var(--primary);
+  background: #F0F7FF;
+}
+.preset-card svg {
+  width: 100%;
+  height: 60px;
+}
+.preset-card .name {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.analysis-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.analysis-card .num {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+.analysis-card .label {
+  font-size: 12px;
+  color: var(--text-light);
+}
+.analysis-card.even .num { color: var(--secondary); }
+.analysis-card.odd .num { color: var(--accent); }
+.verdict {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  padding: 16px;
+  border-radius: 10px;
+  margin: 14px 0;
+}
+.verdict.yes { background: #D1FAE5; color: #065F46; }
+.verdict.no { background: #FEE2E2; color: #C73E32; }
+.mode-info {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>✏️ 一笔画判断器</h1>
+    <div class="subtitle">从七桥问题到欧拉路径</div>
+    <span class="lesson-tag">第25课 · 有趣的七桥问题</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>一笔画问题：</strong>从图形的一个点出发，笔不离开纸面，连续画出整个图形，每条线只画一次，不重复。怎样的图形可以一笔画出？
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <span class="mode-info">操作：</span>
+        <button class="btn-secondary" onclick="setMode('node')">➕ 添加点</button>
+        <button class="btn-secondary" onclick="setMode('edge')">↔ 添加边</button>
+        <button class="btn-secondary" onclick="setMode('delete')">🗑 删除</button>
+      </div>
+      <button onclick="clearAll()">🔄 清空</button>
+      <button class="btn-success" onclick="analyze()">🔍 分析</button>
+    </div>
+
+    <div class="info-panel" id="modeHint">当前模式：<strong>添加点</strong>。点击空白处添加新的点。</div>
+
+    <div class="canvas-area">
+      <canvas id="graphCanvas"></canvas>
+    </div>
+
+    <h3 style="margin:18px 0 10px;font-size:15px;color:var(--text-light);">🎨 经典图形（点击载入）</h3>
+    <div class="preset-grid" id="presetGrid"></div>
+
+    <h3 style="margin:18px 0 10px;font-size:15px;color:var(--text-light);">📊 分析结果</h3>
+    <div class="analysis-grid">
+      <div class="analysis-card"><div class="num" id="nodeNum">0</div><div class="label">点的数量</div></div>
+      <div class="analysis-card"><div class="num" id="edgeNum">0</div><div class="label">边的数量</div></div>
+      <div class="analysis-card even"><div class="num" id="evenNum">0</div><div class="label">偶点（连偶数条边）</div></div>
+      <div class="analysis-card odd"><div class="num" id="oddNum">0</div><div class="label">奇点（连奇数条边）</div></div>
+    </div>
+
+    <div id="verdictArea"></div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>历史故事：</strong>1736 年，欧拉解决了著名的"哥尼斯堡七桥问题"——能不能不重复地走过城里的 7 座桥？欧拉将岛和岸抽象为<strong>点</strong>，把桥抽象为<strong>边</strong>，发明了图论。</p>
+      <p><strong>欧拉判定定理：</strong>一个连通图能否一笔画出，看奇点的数量：</p>
+      <ul>
+        <li>✅ <strong>0 个奇点</strong>：可以一笔画，起点和终点是同一个点（欧拉回路）</li>
+        <li>✅ <strong>2 个奇点</strong>：可以一笔画，从其中一个奇点出发到另一个奇点（欧拉路径）</li>
+        <li>❌ <strong>其他情况</strong>：不能一笔画</li>
+      </ul>
+      <p><strong>为什么？</strong>除了起点和终点，每经过一个点都是"进入1次+离开1次"，所以中间点连接的边数必须是偶数。</p>
+      <p><strong>实际应用：</strong>邮递员路线规划、城市道路规划、电路布线设计等场景都用到一笔画的思想。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('graphCanvas');
+const ctx = canvas.getContext('2d');
+let nodes = [];
+let edges = [];
+let mode = 'node';
+let firstNodeForEdge = -1;
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  draw();
+}
+
+function setMode(m) {
+  mode = m;
+  firstNodeForEdge = -1;
+  const hints = {
+    node: '当前模式：<strong>添加点</strong>。点击空白处添加新的点。',
+    edge: '当前模式：<strong>添加边</strong>。先点击一个点，再点击另一个点，连接它们。',
+    delete: '当前模式：<strong>删除</strong>。点击点或边来删除它。'
+  };
+  document.getElementById('modeHint').innerHTML = hints[m];
+  draw();
+}
+
+function clearAll() {
+  nodes = [];
+  edges = [];
+  firstNodeForEdge = -1;
+  document.getElementById('verdictArea').innerHTML = '';
+  draw();
+  updateStats();
+}
+
+function findNode(x, y) {
+  for (let i = 0; i < nodes.length; i++) {
+    const dx = nodes[i].x - x;
+    const dy = nodes[i].y - y;
+    if (Math.sqrt(dx*dx + dy*dy) <= 18) return i;
+  }
+  return -1;
+}
+
+function findEdge(x, y) {
+  for (let i = 0; i < edges.length; i++) {
+    const a = nodes[edges[i][0]];
+    const b = nodes[edges[i][1]];
+    if (!a || !b) continue;
+    const dist = pointToLineDist(x, y, a.x, a.y, b.x, b.y);
+    if (dist < 8) return i;
+  }
+  return -1;
+}
+
+function pointToLineDist(px, py, x1, y1, x2, y2) {
+  const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
+  const dot = A*C + B*D;
+  const lenSq = C*C + D*D;
+  let param = lenSq !== 0 ? dot / lenSq : -1;
+  let xx, yy;
+  if (param < 0) { xx = x1; yy = y1; }
+  else if (param > 1) { xx = x2; yy = y2; }
+  else { xx = x1 + param*C; yy = y1 + param*D; }
+  return Math.sqrt((px-xx)**2 + (py-yy)**2);
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const nodeIdx = findNode(x, y);
+
+  if (mode === 'node') {
+    if (nodeIdx < 0) {
+      nodes.push({ x, y, label: String.fromCharCode(65 + nodes.length % 26) + (nodes.length >= 26 ? Math.floor(nodes.length/26) : '') });
+      draw();
+      updateStats();
+    }
+  } else if (mode === 'edge') {
+    if (nodeIdx >= 0) {
+      if (firstNodeForEdge === -1) {
+        firstNodeForEdge = nodeIdx;
+      } else if (firstNodeForEdge !== nodeIdx) {
+        edges.push([firstNodeForEdge, nodeIdx]);
+        firstNodeForEdge = -1;
+        updateStats();
+      } else {
+        firstNodeForEdge = -1;
+      }
+      draw();
+    }
+  } else if (mode === 'delete') {
+    if (nodeIdx >= 0) {
+      nodes.splice(nodeIdx, 1);
+      edges = edges.filter(e => e[0] !== nodeIdx && e[1] !== nodeIdx)
+                   .map(e => [e[0] > nodeIdx ? e[0]-1 : e[0], e[1] > nodeIdx ? e[1]-1 : e[1]]);
+    } else {
+      const ei = findEdge(x, y);
+      if (ei >= 0) edges.splice(ei, 1);
+    }
+    draw();
+    updateStats();
+  }
+});
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // edges
+  ctx.strokeStyle = '#5A6B7C';
+  ctx.lineWidth = 2.5;
+  for (const e of edges) {
+    const a = nodes[e[0]];
+    const b = nodes[e[1]];
+    if (!a || !b) continue;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+  // nodes
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    const deg = edges.filter(e => e[0] === i || e[1] === i).length;
+    const isEven = deg > 0 && deg % 2 === 0;
+    const isOdd = deg > 0 && deg % 2 === 1;
+    let color = '#7F8C8D';
+    if (isEven) color = '#50C878';
+    else if (isOdd) color = '#FF8C42';
+    if (i === firstNodeForEdge) color = '#E94B3C';
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 16, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.label, n.x, n.y);
+  }
+}
+
+function updateStats() {
+  document.getElementById('nodeNum').textContent = nodes.length;
+  document.getElementById('edgeNum').textContent = edges.length;
+  let even = 0, odd = 0;
+  for (let i = 0; i < nodes.length; i++) {
+    const deg = edges.filter(e => e[0] === i || e[1] === i).length;
+    if (deg === 0) continue;
+    if (deg % 2 === 0) even++;
+    else odd++;
+  }
+  document.getElementById('evenNum').textContent = even;
+  document.getElementById('oddNum').textContent = odd;
+}
+
+function isConnected() {
+  if (nodes.length === 0) return false;
+  // 排除孤立点
+  const used = new Set();
+  edges.forEach(e => { used.add(e[0]); used.add(e[1]); });
+  if (used.size === 0) return false;
+  const start = [...used][0];
+  const visited = new Set([start]);
+  const queue = [start];
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const e of edges) {
+      let other = -1;
+      if (e[0] === cur) other = e[1];
+      else if (e[1] === cur) other = e[0];
+      if (other !== -1 && !visited.has(other)) {
+        visited.add(other);
+        queue.push(other);
+      }
+    }
+  }
+  return visited.size === used.size;
+}
+
+function analyze() {
+  if (nodes.length === 0 || edges.length === 0) {
+    document.getElementById('verdictArea').innerHTML = '<div class="info-panel">请先绘制图形（添加点和边）。</div>';
+    return;
+  }
+  let oddCount = 0;
+  for (let i = 0; i < nodes.length; i++) {
+    const deg = edges.filter(e => e[0] === i || e[1] === i).length;
+    if (deg > 0 && deg % 2 === 1) oddCount++;
+  }
+  const connected = isConnected();
+  let html = '';
+  if (!connected) {
+    html = `<div class="verdict no">❌ 这个图形不能一笔画<br><span style="font-size:14px;font-weight:400;">原因：图形不是连通的（被分成多个部分）</span></div>`;
+  } else if (oddCount === 0) {
+    html = `<div class="verdict yes">✅ 可以一笔画（欧拉回路）<br><span style="font-size:14px;font-weight:400;">奇点为 0，可以从任意点出发，最终回到起点</span></div>`;
+  } else if (oddCount === 2) {
+    html = `<div class="verdict yes">✅ 可以一笔画（欧拉路径）<br><span style="font-size:14px;font-weight:400;">奇点为 2，必须从一个奇点出发，到另一个奇点结束</span></div>`;
+  } else {
+    html = `<div class="verdict no">❌ 不能一笔画<br><span style="font-size:14px;font-weight:400;">奇点数为 ${oddCount}（要求 0 或 2 个）</span></div>`;
+  }
+  document.getElementById('verdictArea').innerHTML = html;
+}
+
+// 经典图形
+const presets = {
+  '七桥问题': {
+    nodes: [{x:200,y:80,label:'A'},{x:80,y:220,label:'B'},{x:200,y:220,label:'C'},{x:320,y:220,label:'D'}],
+    edges: [[0,1],[0,1],[0,2],[0,3],[0,3],[1,2],[2,3]]
+  },
+  '正方形': {
+    nodes: [{x:100,y:80,label:'A'},{x:300,y:80,label:'B'},{x:300,y:280,label:'C'},{x:100,y:280,label:'D'}],
+    edges: [[0,1],[1,2],[2,3],[3,0]]
+  },
+  '田字格': {
+    nodes: [{x:100,y:80,label:'A'},{x:200,y:80,label:'B'},{x:300,y:80,label:'C'},
+            {x:100,y:180,label:'D'},{x:200,y:180,label:'E'},{x:300,y:180,label:'F'},
+            {x:100,y:280,label:'G'},{x:200,y:280,label:'H'},{x:300,y:280,label:'I'}],
+    edges: [[0,1],[1,2],[3,4],[4,5],[6,7],[7,8],[0,3],[3,6],[1,4],[4,7],[2,5],[5,8]]
+  },
+  '五角星': (function() {
+    const nodes = [];
+    const cx = 200, cy = 180;
+    const r = 100;
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI/2 + i * 2*Math.PI/5;
+      nodes.push({x: cx + r*Math.cos(a), y: cy + r*Math.sin(a), label: String.fromCharCode(65+i)});
+    }
+    const edges = [];
+    for (let i = 0; i < 5; i++) edges.push([i, (i+2)%5]);
+    return { nodes, edges };
+  })(),
+  '三角': {
+    nodes: [{x:200,y:80,label:'A'},{x:100,y:280,label:'B'},{x:300,y:280,label:'C'}],
+    edges: [[0,1],[1,2],[2,0]]
+  },
+  '信封图': {
+    nodes: [{x:100,y:100,label:'A'},{x:300,y:100,label:'B'},{x:200,y:200,label:'C'},
+            {x:100,y:280,label:'D'},{x:300,y:280,label:'E'}],
+    edges: [[0,1],[0,2],[1,2],[0,3],[1,4],[3,4],[3,2],[4,2]]
+  }
+};
+
+function loadPreset(name) {
+  const p = presets[name];
+  nodes = JSON.parse(JSON.stringify(p.nodes));
+  edges = JSON.parse(JSON.stringify(p.edges));
+  draw();
+  updateStats();
+  document.getElementById('verdictArea').innerHTML = '';
+}
+
+function buildPresetThumb(p) {
+  // 缩略 SVG
+  const minX = Math.min(...p.nodes.map(n=>n.x));
+  const maxX = Math.max(...p.nodes.map(n=>n.x));
+  const minY = Math.min(...p.nodes.map(n=>n.y));
+  const maxY = Math.max(...p.nodes.map(n=>n.y));
+  const w = maxX - minX, h = maxY - minY;
+  const pad = 10;
+  let svg = `<svg viewBox="${minX-pad} ${minY-pad} ${w+2*pad} ${h+2*pad}">`;
+  for (const e of p.edges) {
+    svg += `<line x1="${p.nodes[e[0]].x}" y1="${p.nodes[e[0]].y}" x2="${p.nodes[e[1]].x}" y2="${p.nodes[e[1]].y}" stroke="#5A6B7C" stroke-width="3"/>`;
+  }
+  for (const n of p.nodes) {
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="6" fill="#4A90E2"/>`;
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+const grid = document.getElementById('presetGrid');
+Object.keys(presets).forEach(name => {
+  const card = document.createElement('div');
+  card.className = 'preset-card';
+  card.innerHTML = buildPresetThumb(presets[name]) + `<div class="name">${name}</div>`;
+  card.onclick = () => loadPreset(name);
+  grid.appendChild(card);
+});
+
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 50);
+loadPreset('七桥问题');
+</script>
+</body>
+</html>

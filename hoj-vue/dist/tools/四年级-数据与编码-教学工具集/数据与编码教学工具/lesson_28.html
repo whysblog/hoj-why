@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第28课 大数据助力智能 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#ec407a;
+  --theme-dark:#ad1457;
+  --theme-light:#fce4ec;
+  --bg:#fff5f8;
+}
+.big-num{
+  display:flex;justify-content:center;
+  gap:20px;flex-wrap:wrap;
+  margin:14px 0;
+}
+.num-card{
+  background:linear-gradient(135deg,var(--theme),var(--theme-dark));
+  color:#fff;
+  border-radius:14px;
+  padding:18px 24px;
+  text-align:center;
+  min-width:160px;
+}
+.num-card .big{
+  font-size:36px;
+  font-weight:bold;
+  display:block;
+}
+.num-card .unit{
+  font-size:13px;opacity:0.9;
+}
+.num-card .label{
+  font-size:13px;
+  margin-top:6px;
+  border-top:1px solid rgba(255,255,255,0.3);
+  padding-top:6px;
+}
+.recognize-demo{
+  display:flex;align-items:center;justify-content:center;
+  gap:16px;margin:16px 0;flex-wrap:wrap;
+}
+.cat-img{
+  width:90px;height:90px;
+  background:linear-gradient(135deg,#ffcdd2,#fce4ec);
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:46px;
+  border:2px solid var(--theme);
+}
+.arrow-big{
+  font-size:36px;color:var(--theme);
+}
+.brain-box{
+  background:linear-gradient(135deg,var(--theme),var(--theme-dark));
+  color:#fff;
+  border-radius:12px;
+  padding:16px 20px;
+  text-align:center;
+}
+.brain-box .label{
+  font-size:13px;opacity:0.9;
+  margin-bottom:4px;
+}
+.brain-box .result{
+  font-size:22px;font-weight:bold;
+}
+.tech-card{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:10px 0;
+  border-left:5px solid var(--theme);
+  display:flex;gap:12px;
+}
+.tech-card .t-icon{
+  font-size:36px;flex-shrink:0;
+}
+.tech-card h4{
+  color:var(--theme-dark);
+  font-size:15px;margin-bottom:4px;
+}
+.tech-card p{
+  font-size:13px;color:#37474f;margin:0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第六单元 · 第28课</span>
+    <h1>🤖 大数据助力智能</h1>
+    <p>认识大数据，理解 AI 智能背后的数据力量</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">📊 什么是大数据</button>
+    <button class="nav-btn" data-slide="2">🧠 大数据炼出 AI</button>
+    <button class="nav-btn" data-slide="3">🎯 应用举例</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      你给手机相册<b>说"猫"</b>，它就能找出所有有猫的照片。它怎么<b>认识猫</b>的呢？
+      <br><br>
+      答案是：科学家给电脑看了<b>几百万张猫的照片</b>，让它"自己总结"猫长什么样。
+      这就是<b>"用大数据训练 AI"</b>！
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>什么是<b>大数据</b>，"大"在哪里</li>
+      <li>理解<b>"大数据 → 人工智能"</b>的过程</li>
+      <li>看一些大数据 + AI 的<b>实际应用</b></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>什么是大数据</h2>
+
+    <p><b>大数据</b>，顾名思义就是"<b>很大很大的数据</b>"。到底有多大？</p>
+
+    <div class="big-num">
+      <div class="num-card">
+        <span class="big">14亿</span>
+        <span class="unit">人</span>
+        <div class="label">中国人口</div>
+      </div>
+      <div class="num-card">
+        <span class="big">10亿+</span>
+        <span class="unit">条/天</span>
+        <div class="label">微信消息</div>
+      </div>
+      <div class="num-card">
+        <span class="big">数十亿</span>
+        <span class="unit">次/天</span>
+        <div class="label">百度搜索</div>
+      </div>
+      <div class="num-card">
+        <span class="big">数百万</span>
+        <span class="unit">辆</span>
+        <div class="label">共享单车</div>
+      </div>
+    </div>
+
+    <h3>🌟 大数据的"4V 特点"</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📦</span>
+        <h4>Volume 量大</h4>
+        <p>数据量极其庞大，PB 级（=1024 TB）</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">⚡</span>
+        <h4>Velocity 快</h4>
+        <p>每秒钟都在产生新数据</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🌈</span>
+        <h4>Variety 多样</h4>
+        <p>文字、图片、视频、声音都有</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💎</span>
+        <h4>Value 价值</h4>
+        <p>蕴藏巨大的知识和价值</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 一个生动的比喻</h4>
+      普通数据像一本书；大数据像一个<b>图书馆</b>；超大数据像<b>整个世界的图书馆加起来</b>！
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>大数据怎么变成 AI？</h2>
+
+    <p>AI 不是天生会的，它需要"<b>学习</b>"，而它的"<b>课本</b>"就是大数据！</p>
+
+    <h3>📖 AI 学认猫的过程</h3>
+
+    <div class="recognize-demo">
+      <div class="cat-img">🐱</div>
+      <div class="cat-img">🐈</div>
+      <div class="cat-img">🐈‍⬛</div>
+      <div class="cat-img" style="font-size:36px">×1000000</div>
+    </div>
+
+    <div style="text-align:center;font-size:14px;color:var(--theme-dark);font-weight:bold">
+      ⬇️ 大数据训练 ⬇️
+    </div>
+
+    <div class="recognize-demo">
+      <div class="brain-box" style="min-width:180px">
+        <div class="label">AI 自己总结</div>
+        <div class="result">🧠 学会"猫长这样"</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:14px;color:var(--theme-dark);font-weight:bold">
+      ⬇️ 见到新图片 ⬇️
+    </div>
+
+    <div class="recognize-demo">
+      <div class="cat-img">🐈‍⬛</div>
+      <span class="arrow-big">→</span>
+      <div class="brain-box">
+        <div class="label">AI 判断</div>
+        <div class="result">"这是猫！"</div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 关键理解</h4>
+      <ul style="margin-top:4px">
+        <li>📚 <b>数据是 AI 的"营养"</b>，越多越好</li>
+        <li>🧠 AI <b>自己从大量例子中找规律</b>，不需要人一条条教</li>
+        <li>📈 数据越多越准 → 这就是"大数据助力智能"</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>大数据 + AI 的应用</h2>
+
+    <div class="tech-card">
+      <span class="t-icon">📷</span>
+      <div>
+        <h4>人脸识别</h4>
+        <p>看过几亿张人脸照片，AI 能在 1 秒内认出你 → 用于刷脸进站、解锁手机</p>
+      </div>
+    </div>
+
+    <div class="tech-card">
+      <span class="t-icon">🗣️</span>
+      <div>
+        <h4>语音识别</h4>
+        <p>听过海量普通话录音，AI 听得懂你说话 → 用于语音助手、字幕生成</p>
+      </div>
+    </div>
+
+    <div class="tech-card">
+      <span class="t-icon">🌐</span>
+      <div>
+        <h4>机器翻译</h4>
+        <p>学习了数十亿对中英文句子，AI 能翻译几百种语言</p>
+      </div>
+    </div>
+
+    <div class="tech-card">
+      <span class="t-icon">🚗</span>
+      <div>
+        <h4>自动驾驶</h4>
+        <p>分析无数小时的驾驶数据，AI 能识别红绿灯、行人、其他车辆，开车不出事</p>
+      </div>
+    </div>
+
+    <div class="tech-card">
+      <span class="t-icon">🏥</span>
+      <div>
+        <h4>智能医疗</h4>
+        <p>看过几百万张医学影像，AI 帮医生发现 X 光、CT 上的微小病变</p>
+      </div>
+    </div>
+
+    <div class="tech-card">
+      <span class="t-icon">🎨</span>
+      <div>
+        <h4>智能创作</h4>
+        <p>看过万千篇文章、画作、音乐，AI 能<b>自己创作</b>新的内容！(这是下节课的主题)</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📊</span>
+        <h4>大数据</h4>
+        <p>量大、快、多样、有价值</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📚</span>
+        <h4>训练数据</h4>
+        <p>AI 学习的"课本"</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🧠</span>
+        <h4>AI 学习</h4>
+        <p>从大量例子中自己找规律</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🚀</span>
+        <h4>应用</h4>
+        <p>识图、识语、翻译、驾驶……</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 核心公式</h4>
+      <p style="text-align:center;font-size:18px;color:var(--theme-dark);font-weight:bold;margin:10px 0">
+        大数据 + 算法 + 算力 = 人工智能
+      </p>
+      数据越多、算法越好、计算越快，AI 就越聪明！
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      最近，AI 不仅能"<b>识别</b>"东西，还能"<b>创造</b>"！它能写文章、画画、做音乐……
+      <br>
+      下节课《生成式人工智能》，认识 ChatGPT 这样的"创造型"AI 工具！✨
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

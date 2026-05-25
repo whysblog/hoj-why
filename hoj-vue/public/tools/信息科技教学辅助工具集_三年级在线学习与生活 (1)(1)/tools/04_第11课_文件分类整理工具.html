@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>文件分类整理工具 — 第11课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #047857; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+.toolbar {
+  background: white; border-radius: 12px; padding: 12px 18px; margin-bottom: 16px;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.btn {
+  padding: 8px 16px; border: 1.5px solid #d1fae5; border-radius: 8px;
+  background: white; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s;
+}
+.btn:hover { background: #ecfdf5; border-color: #10b981; }
+.btn.primary { background: #10b981; color: white; border-color: #047857; }
+.btn.primary:hover { background: #059669; }
+.score-badge {
+  margin-left: auto; padding: 6px 14px; background: #fef3c7;
+  color: #b45309; border-radius: 20px; font-weight: 600; font-size: 13px;
+}
+
+.workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
+
+.box {
+  background: white; border-radius: 16px; padding: 22px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.box h2 { color: #047857; font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* 待整理文件区 */
+.unsorted {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
+  min-height: 280px; padding: 14px; background: #f8fafc; border-radius: 10px;
+  border: 2px dashed #cbd5e1;
+}
+.file {
+  background: white; border-radius: 10px; padding: 12px 8px; cursor: grab;
+  text-align: center; border: 2px solid transparent; transition: all .2s;
+  user-select: none;
+}
+.file:active { cursor: grabbing; }
+.file:hover { border-color: #10b981; transform: translateY(-2px); }
+.file.dragging { opacity: .4; }
+.file .icon { font-size: 32px; }
+.file .name { font-size: 12px; color: #475569; margin-top: 6px; word-break: break-all; }
+.file .type { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+/* 文件夹树 */
+.tree { padding: 6px 0; }
+.folder {
+  border-radius: 8px; padding: 6px 8px; margin: 2px 0; transition: background .2s;
+}
+.folder.drag-over { background: #d1fae5; outline: 2px dashed #10b981; }
+.folder-row {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 4px 6px; border-radius: 6px;
+}
+.folder-row:hover { background: #f1f5f9; }
+.folder-icon { font-size: 18px; }
+.folder-name { font-size: 14px; color: #047857; font-weight: 600; flex: 1; }
+.folder-count { font-size: 11px; color: #94a3b8; }
+.folder-children { padding-left: 22px; border-left: 1.5px solid #e2e8f0; margin-left: 8px; }
+.folder.collapsed > .folder-children { display: none; }
+.folder.collapsed > .folder-row > .folder-icon::before { content: '▶ '; font-size: 9px; color: #64748b; }
+.folder:not(.collapsed) > .folder-row > .folder-icon::before { content: '▼ '; font-size: 9px; color: #64748b; }
+
+.folder-files { padding-left: 22px; min-height: 8px; padding-top: 4px; padding-bottom: 4px; }
+.folder-file {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; margin: 3px 4px 3px 0;
+  background: #ecfdf5; border-radius: 6px; font-size: 12px; color: #065f46;
+}
+.folder-file .icon { font-size: 14px; }
+.folder-file .x { cursor: pointer; color: #dc2626; padding: 0 2px; font-weight: bold; }
+.folder-file .x:hover { color: #991b1b; }
+
+.add-folder {
+  display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px;
+  font-size: 12px; color: #6b7280; background: #f9fafb; border: 1px dashed #d1d5db;
+  border-radius: 6px; cursor: pointer; margin-left: 22px; margin-top: 4px;
+}
+.add-folder:hover { color: #047857; border-color: #10b981; background: #ecfdf5; }
+
+.knowledge {
+  background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b;
+  border-radius: 8px; padding: 16px 20px; margin-top: 20px;
+}
+.knowledge h3 { color: #92400e; margin-bottom: 8px; font-size: 16px; }
+.knowledge p, .knowledge li { color: #78350f; line-height: 1.7; font-size: 14px; }
+.knowledge ul { padding-left: 22px; }
+
+.success-modal {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  align-items: center; justify-content: center; z-index: 100;
+}
+.success-modal.show { display: flex; }
+.modal-content {
+  background: white; border-radius: 16px; padding: 30px; max-width: 400px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.modal-content .emoji { font-size: 60px; }
+.modal-content h2 { color: #047857; margin: 12px 0; }
+.modal-content p { color: #475569; line-height: 1.6; margin-bottom: 16px; }
+.empty-msg { text-align: center; color: #94a3b8; padding: 40px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📁 文件分类整理工具</h1>
+    <div class="subtitle">配套课时：第11课 整理信息资源 · 拖动文件到合适的文件夹，体验分类整理的科学思想</div>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn" onclick="resetGame()">🔄 重新开始</button>
+    <button class="btn primary" onclick="autoSort()">✨ 自动整理示范</button>
+    <button class="btn" onclick="checkResult()">✅ 检查整理结果</button>
+    <span class="score-badge" id="scoreBadge">已整理 0/12</span>
+  </div>
+
+  <div class="workspace">
+    <div class="box">
+      <h2>📥 待整理的文件</h2>
+      <p style="color:#64748b;font-size:13px;margin-bottom:10px;">
+      把下列文件 <b>拖动</b> 到右边正确的文件夹里：
+      </p>
+      <div class="unsorted" id="unsortedBox"></div>
+    </div>
+
+    <div class="box">
+      <h2>📂 我的文件夹</h2>
+      <p style="color:#64748b;font-size:13px;margin-bottom:10px;">
+      点击文件夹展开/折叠；点击 <b>+ 新建子文件夹</b> 自定义你的分类方式。
+      </p>
+      <div class="tree" id="treeBox"></div>
+    </div>
+  </div>
+
+  <div class="knowledge">
+    <h3>💡 科学小知识 · 文件分类整理的智慧</h3>
+    <p>
+    <b>📦 文件 vs 文件夹：</b>文件是装内容的"盒子"，文件夹是装文件的"大盒子"。一个文件夹可以包含多个子文件夹和文件，形成<b>层级结构</b>。<br>
+    <b>🎯 为什么要分类？</b>当文件越来越多，不分类整理会造成混乱，找东西像大海捞针。分类后，按类查找效率大大提高（这就是计算思维中的<b>抽象与归类</b>）。<br>
+    <b>📐 分类原则：</b>① 按内容分（如"传统服饰""传统节日"）；② 按类型分（图片/视频/音频/文字）；③ 按用途分（学习/娱乐/工作）。<br>
+    <b>🌳 树形结构：</b>文件夹的层级就是计算机里最经典的"树形数据结构"，每一级都是一棵小树。
+    </p>
+  </div>
+</div>
+
+<div class="success-modal" id="successModal">
+  <div class="modal-content">
+    <div class="emoji" id="modalEmoji">🎉</div>
+    <h2 id="modalTitle">整理成功！</h2>
+    <p id="modalText"></p>
+    <button class="btn primary" onclick="closeModal()">继续</button>
+  </div>
+</div>
+
+<script>
+// ============ 数据 ============
+const initialFiles = [
+  { id: 'f1', icon: '🎭', name: '京剧角色介绍', type: '文字', cat: '传统戏曲', subType: '文字' },
+  { id: 'f2', icon: '🎬', name: '昆曲表演视频', type: '视频', cat: '传统戏曲', subType: '视频' },
+  { id: 'f3', icon: '🎵', name: '黄梅戏选段', type: '音频', cat: '传统戏曲', subType: '音频' },
+  { id: 'f4', icon: '🥟', name: '春节包饺子图片', type: '图片', cat: '传统节日', subType: '图片' },
+  { id: 'f5', icon: '🏮', name: '元宵节灯会视频', type: '视频', cat: '传统节日', subType: '视频' },
+  { id: 'f6', icon: '📜', name: '春节习俗简介', type: '文字', cat: '传统节日', subType: '文字' },
+  { id: 'f7', icon: '👘', name: '汉服展示图集', type: '图片', cat: '传统服饰', subType: '图片' },
+  { id: 'f8', icon: '📷', name: '唐装介绍文档', type: '文字', cat: '传统服饰', subType: '文字' },
+  { id: 'f9', icon: '🥮', name: '月饼制作图片', type: '图片', cat: '传统饮食', subType: '图片' },
+  { id: 'f10', icon: '🍵', name: '中国茶文化介绍', type: '文字', cat: '传统饮食', subType: '文字' },
+  { id: 'f11', icon: '🎴', name: '剪纸艺术图集', type: '图片', cat: '传统民俗', subType: '图片' },
+  { id: 'f12', icon: '🎏', name: '舞龙舞狮视频', type: '视频', cat: '传统民俗', subType: '视频' },
+];
+
+const initialTree = {
+  name: '中华优秀传统文化',
+  icon: '📁',
+  collapsed: false,
+  files: [],
+  children: [
+    { name: '传统戏曲', icon: '🎭', collapsed: false, files: [], children: [
+      { name: '文字', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '图片', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '视频', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '音频', icon: '📂', collapsed: false, files: [], children: [] },
+    ]},
+    { name: '传统节日', icon: '🎊', collapsed: false, files: [], children: [
+      { name: '文字', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '图片', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '视频', icon: '📂', collapsed: false, files: [], children: [] },
+    ]},
+    { name: '传统服饰', icon: '👔', collapsed: false, files: [], children: [
+      { name: '文字', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '图片', icon: '📂', collapsed: false, files: [], children: [] },
+    ]},
+    { name: '传统饮食', icon: '🍱', collapsed: false, files: [], children: [
+      { name: '文字', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '图片', icon: '📂', collapsed: false, files: [], children: [] },
+    ]},
+    { name: '传统民俗', icon: '🎨', collapsed: false, files: [], children: [
+      { name: '文字', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '图片', icon: '📂', collapsed: false, files: [], children: [] },
+      { name: '视频', icon: '📂', collapsed: false, files: [], children: [] },
+    ]},
+  ]
+};
+
+let unsorted = [];
+let tree = null;
+
+// ============ 渲染 ============
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function renderUnsorted() {
+  const box = document.getElementById('unsortedBox');
+  if (unsorted.length === 0) {
+    box.innerHTML = '<div class="empty-msg">🎉 全部文件都整理好啦！</div>';
+  } else {
+    box.innerHTML = unsorted.map(f => `
+      <div class="file" draggable="true" data-id="${f.id}" 
+           ondragstart="dragStart(event, '${f.id}')" 
+           ondragend="dragEnd(event)">
+        <div class="icon">${f.icon}</div>
+        <div class="name">${f.name}</div>
+        <div class="type">${f.type}文件</div>
+      </div>
+    `).join('');
+  }
+  updateScore();
+}
+
+function renderTree(node, path = []) {
+  const collapsedCls = node.collapsed ? 'collapsed' : '';
+  const fileCount = countFilesIn(node);
+  const childrenHtml = node.children.map((c, i) => renderTree(c, [...path, i])).join('');
+  const filesHtml = node.files.length === 0 
+    ? '' 
+    : `<div class="folder-files">
+        ${node.files.map(f => `<span class="folder-file"><span class="icon">${f.icon}</span>${f.name}<span class="x" onclick="removeFile('${f.id}')">×</span></span>`).join('')}
+       </div>`;
+  return `
+    <div class="folder ${collapsedCls}" 
+         ondragover="dragOver(event, this)" 
+         ondragleave="dragLeave(event, this)"
+         ondrop="drop(event, this, '${path.join('-')}')">
+      <div class="folder-row" onclick="toggleFolder(event, this)">
+        <span class="folder-icon">${node.icon}</span>
+        <span class="folder-name">${node.name}</span>
+        <span class="folder-count">${fileCount > 0 ? fileCount + ' 项' : ''}</span>
+      </div>
+      <div class="folder-children">
+        ${childrenHtml}
+        ${filesHtml}
+        <div class="add-folder" onclick="addSubfolder(event, '${path.join('-')}')">+ 新建子文件夹</div>
+      </div>
+    </div>
+  `;
+}
+
+function countFilesIn(node) {
+  let c = node.files.length;
+  node.children.forEach(ch => c += countFilesIn(ch));
+  return c;
+}
+
+function refresh() {
+  document.getElementById('treeBox').innerHTML = renderTree(tree, []);
+  renderUnsorted();
+}
+
+// ============ 交互：拖拽 ============
+let dragId = null;
+
+function dragStart(e, id) {
+  dragId = id;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragEnd(e) {
+  e.target.classList.remove('dragging');
+}
+function dragOver(e, el) {
+  e.preventDefault();
+  e.stopPropagation();
+  // 只允许最深层（叶子）文件夹高亮
+  e.dataTransfer.dropEffect = 'move';
+  // 清除所有兄弟的高亮
+  document.querySelectorAll('.folder.drag-over').forEach(f => f.classList.remove('drag-over'));
+  el.classList.add('drag-over');
+}
+function dragLeave(e, el) {
+  if (!el.contains(e.relatedTarget)) el.classList.remove('drag-over');
+}
+function drop(e, el, pathStr) {
+  e.preventDefault();
+  e.stopPropagation();
+  el.classList.remove('drag-over');
+  if (!dragId) return;
+  const fileObj = unsorted.find(f => f.id === dragId);
+  if (!fileObj) return;
+  const path = pathStr === '' ? [] : pathStr.split('-').map(Number);
+  const targetNode = pathToNode(path);
+  if (!targetNode) return;
+  targetNode.files.push(fileObj);
+  unsorted = unsorted.filter(f => f.id !== dragId);
+  dragId = null;
+  refresh();
+}
+
+function pathToNode(path) {
+  let node = tree;
+  for (let i of path) {
+    if (!node.children[i]) return null;
+    node = node.children[i];
+  }
+  return node;
+}
+
+function toggleFolder(e, el) {
+  e.stopPropagation();
+  el.parentElement.classList.toggle('collapsed');
+  // 同步到数据
+  // (不必要严格同步，UI 状态足够)
+}
+
+function removeFile(id) {
+  // 在树中移除并放回 unsorted
+  let removed = null;
+  function rm(node) {
+    const idx = node.files.findIndex(f => f.id === id);
+    if (idx >= 0) { removed = node.files.splice(idx, 1)[0]; return true; }
+    for (let c of node.children) if (rm(c)) return true;
+    return false;
+  }
+  rm(tree);
+  if (removed) { unsorted.push(removed); refresh(); }
+}
+
+function addSubfolder(e, pathStr) {
+  e.stopPropagation();
+  const name = prompt('请输入子文件夹的名字：');
+  if (!name) return;
+  const path = pathStr === '' ? [] : pathStr.split('-').map(Number);
+  const node = pathToNode(path);
+  if (!node) return;
+  node.children.push({ name, icon: '📂', collapsed: false, files: [], children: [] });
+  refresh();
+}
+
+function updateScore() {
+  const total = initialFiles.length;
+  const done = total - unsorted.length;
+  document.getElementById('scoreBadge').textContent = `已整理 ${done}/${total}`;
+}
+
+function resetGame() {
+  unsorted = deepClone(initialFiles);
+  tree = deepClone(initialTree);
+  refresh();
+}
+
+function autoSort() {
+  // 把所有 unsorted 自动放到正确的位置
+  const remaining = [...unsorted];
+  remaining.forEach(f => {
+    // 找 cat → subType
+    const cat = tree.children.find(c => c.name === f.cat);
+    if (cat) {
+      const sub = cat.children.find(c => c.name === f.subType);
+      if (sub) sub.files.push(f);
+      else cat.files.push(f);
+      unsorted = unsorted.filter(x => x.id !== f.id);
+    }
+  });
+  refresh();
+  showModal('✨', '自动整理完成', '系统按"内容→类型"两级分类整理了文件，看看每个文件都被放到了合适的文件夹中！');
+}
+
+function checkResult() {
+  const total = initialFiles.length;
+  const done = total - unsorted.length;
+  let correct = 0, wrong = 0;
+  function check(node, expectedCat, expectedSub) {
+    node.files.forEach(f => {
+      if (f.cat === expectedCat && f.subType === expectedSub) correct++;
+      else wrong++;
+    });
+    node.children.forEach(c => {
+      // 一级文件夹：节点名 = cat
+      if (expectedCat === null) check(c, c.name, null);
+      else check(c, expectedCat, c.name);
+    });
+  }
+  check(tree, null, null);
+  
+  if (done < total) {
+    showModal('⏳', '还有文件没整理', `已整理 ${done}/${total}，还剩 ${total-done} 个文件待整理。继续加油！`);
+  } else if (correct === total) {
+    showModal('🏆', '完美！全部正确！', `太棒了！${total} 个文件都被分到了正确的位置。<br>你已经掌握了"按内容+按类型"两级分类的方法。`);
+  } else {
+    showModal('🤔', '整理完成，但...', `已整理 ${total} 项，其中 ${correct} 项分类正确，${wrong} 项位置不太对。<br>提示：先按内容（如"传统戏曲"），再按类型（如"图片"）分两级。`);
+  }
+}
+
+function showModal(emoji, title, text) {
+  document.getElementById('modalEmoji').textContent = emoji;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').innerHTML = text;
+  document.getElementById('successModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('successModal').classList.remove('show');
+}
+
+// 初始化
+resetGame();
+</script>
+</body>
+</html>

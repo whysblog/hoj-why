@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>DNS 域名解析模拟器 · 第7课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;--panel:#1a2340;--panel2:#222d50;
+  --line:#2d3a63;--text:#e6eaf5;--muted:#8a96b8;
+  --accent:#4ed1b8;--accent2:#ffb347;--warn:#ff6b81;
+  --shadow:0 8px 30px rgba(0,0,0,.3);
+  --c-user:#5b9cff;--c-local:#ffb347;--c-root:#9d7bff;
+  --c-tld:#ff6b81;--c-auth:#4ed1b8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 20% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:24px}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.lesson-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.02);}
+.subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+
+.layout{display:grid;grid-template-columns:1fr 380px;gap:18px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
+
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);
+}
+.card h2{font-size:15px;margin:0 0 14px;color:var(--accent)}
+
+.input-section{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.input-section input{
+  flex:1;min-width:220px;background:#0c1426;color:var(--text);
+  border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  font-family:'JetBrains Mono',monospace;font-size:15px;outline:none;
+  transition:border-color .2s;
+}
+.input-section input:focus{border-color:var(--accent)}
+button{
+  background:linear-gradient(135deg,var(--accent),#3ab8a0);color:#0a1226;
+  border:0;border-radius:8px;padding:10px 18px;font-family:inherit;
+  font-weight:700;font-size:14px;cursor:pointer;transition:transform .1s;
+}
+button:hover{transform:translateY(-1px)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
+button.secondary:hover{border-color:var(--accent)}
+
+.examples{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.eg-btn{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:5px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;
+  font-size:12px;cursor:pointer;transition:all .2s;
+}
+.eg-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Domain breakdown */
+.domain-breakdown{
+  background:#0c1426;border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;
+}
+.domain-parts{display:flex;align-items:flex-start;justify-content:center;gap:0;flex-wrap:wrap;margin-bottom:8px}
+.dp-part{
+  padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;
+  position:relative;text-align:center;
+}
+.dp-part .meaning{
+  display:block;font-size:11px;color:rgba(255,255,255,.7);font-weight:500;margin-top:4px;font-family:'Noto Sans SC',sans-serif;
+}
+.dp-srv{background:linear-gradient(135deg,#7e57c2,#5b9cff);color:#fff;border-radius:6px 0 0 6px}
+.dp-org{background:linear-gradient(135deg,#5b9cff,#4ed1b8);color:#0a1226}
+.dp-type{background:linear-gradient(135deg,#4ed1b8,#ffb347);color:#0a1226}
+.dp-cc{background:linear-gradient(135deg,#ffb347,#ff8c42);color:#1a1208;border-radius:0 6px 6px 0}
+.dp-dot{background:transparent;color:var(--muted);font-size:18px;padding:8px 2px}
+.scope-arrow{
+  text-align:center;font-size:12px;color:var(--muted);margin-top:6px;
+  display:flex;align-items:center;gap:6px;justify-content:center;
+}
+
+/* Stage with servers */
+.stage{
+  position:relative;height:480px;background:#0a1226;border-radius:10px;border:1px solid var(--line);
+  background-image:linear-gradient(rgba(78,209,184,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(78,209,184,.04) 1px,transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
+}
+.server{
+  position:absolute;width:130px;text-align:center;transform:translate(-50%,-50%);
+}
+.server-icon{
+  width:64px;height:64px;border-radius:14px;margin:0 auto;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;background:linear-gradient(180deg,#1f2b4f,#162043);
+  border:2px solid var(--line);box-shadow:0 4px 16px rgba(0,0,0,.4);
+  position:relative;
+  transition:all .3s;
+}
+.server.s-user .server-icon{border-color:var(--c-user)}
+.server.s-local .server-icon{border-color:var(--c-local)}
+.server.s-root .server-icon{border-color:var(--c-root)}
+.server.s-tld .server-icon{border-color:var(--c-tld)}
+.server.s-auth .server-icon{border-color:var(--c-auth)}
+.server.active .server-icon{
+  transform:scale(1.1);
+  box-shadow:0 0 24px var(--accent),0 4px 16px rgba(0,0,0,.4);
+}
+.server-name{font-size:12px;font-weight:700;margin-top:8px}
+.server-detail{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+.message{
+  position:absolute;padding:6px 12px;background:linear-gradient(135deg,var(--accent2),#ff8c42);
+  color:#1a1208;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+  box-shadow:0 4px 12px rgba(255,179,71,.4);transform:translate(-50%,-50%);z-index:5;
+  white-space:nowrap;pointer-events:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;
+}
+.message.reply{background:linear-gradient(135deg,var(--accent),#3ab8a0);color:#0a1226;}
+
+.line-svg{position:absolute;inset:0;pointer-events:none;}
+
+/* Step log */
+.steps{
+  display:flex;flex-direction:column;gap:10px;
+}
+.step{
+  background:#0c1426;border:1px solid var(--line);border-radius:8px;padding:12px;
+  font-size:13px;line-height:1.6;opacity:.4;transition:all .3s;
+}
+.step.done{opacity:1;border-color:var(--accent);background:linear-gradient(90deg,rgba(78,209,184,.06),transparent)}
+.step.current{opacity:1;border-color:var(--accent2);background:linear-gradient(90deg,rgba(255,179,71,.08),transparent)}
+.step .stepnum{
+  display:inline-block;width:22px;height:22px;border-radius:50%;
+  background:var(--line);color:var(--text);text-align:center;line-height:22px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-right:8px;
+}
+.step.done .stepnum,.step.current .stepnum{background:var(--accent);color:#0a1226}
+.step b{color:var(--accent2)}
+.step code{font-family:'JetBrains Mono',monospace;background:rgba(78,209,184,.1);color:var(--accent);padding:1px 6px;border-radius:3px;font-size:12px}
+
+.note{
+  font-size:12px;color:var(--muted);background:rgba(255,179,71,.06);
+  border-left:3px solid var(--accent2);padding:12px;border-radius:6px;
+  margin-top:14px;line-height:1.7;
+}
+.note b{color:var(--accent2)}
+
+.result-box{
+  margin-top:14px;padding:14px;background:linear-gradient(135deg,rgba(78,209,184,.12),rgba(78,209,184,.04));
+  border:1px solid var(--accent);border-radius:8px;text-align:center;
+  display:none;
+}
+.result-box.show{display:block;animation:fadeIn .4s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.result-box .lbl{font-size:12px;color:var(--muted);margin-bottom:6px}
+.result-box .ip{font-family:'JetBrains Mono',monospace;font-size:22px;color:var(--accent);font-weight:700}
+.result-box .domain{font-family:'JetBrains Mono',monospace;color:var(--accent2);margin-bottom:8px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>DNS 域名解析模拟器</h1>
+      <div class="subtitle">观察"www.moe.gov.cn"是如何变成 IP 地址的</div>
+    </div>
+    <span class="lesson-tag">第二单元 · 第7课《域名解析换编码》</span>
+  </header>
+
+  <div class="card" style="margin-bottom:18px">
+    <div class="input-section">
+      <input id="domain" type="text" value="www.moe.gov.cn" placeholder="输入域名，如 www.moe.gov.cn" spellcheck="false">
+      <button id="btnGo">▶ 解析</button>
+      <button id="btnReset" class="secondary">↻ 重置</button>
+    </div>
+    <div class="examples">
+      <button class="eg-btn">www.moe.gov.cn</button>
+      <button class="eg-btn">www.tsinghua.edu.cn</button>
+      <button class="eg-btn">mail.qq.com</button>
+      <button class="eg-btn">www.baidu.com</button>
+      <button class="eg-btn">news.cctv.com</button>
+    </div>
+
+    <div class="domain-breakdown" id="breakdown"></div>
+  </div>
+
+  <div class="layout">
+    <section class="card">
+      <h2>解析过程动画演示</h2>
+      <div class="stage" id="stage">
+        <svg class="line-svg" id="lineSvg"></svg>
+        <!-- servers will be drawn here -->
+      </div>
+      <div class="result-box" id="resultBox">
+        <div class="lbl">✓ 解析成功！域名对应的 IP 地址是：</div>
+        <div class="domain" id="rDom"></div>
+        <div class="ip" id="rIP"></div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <h2>解析步骤详解</h2>
+      <div class="steps" id="steps"></div>
+      <div class="note">
+        🔐 <b>域名解析的安全性：</b><br>
+        如果 DNS 服务器中的记录被篡改（DNS 投毒），用户可能在不知不觉中访问错误的网站，导致信息泄露或财产损失。<br>
+        🇨🇳 我国持续推动域名根服务器的"自主可控"建设，是网络主权的重要体现。
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+// ============ Domain breakdown ============
+const breakdownEl = document.getElementById('breakdown');
+const domainInput = document.getElementById('domain');
+
+const meanings = {
+  'cn':'中国','us':'美国','uk':'英国','jp':'日本',
+  'gov':'政府部门','edu':'教育机构','com':'商业机构','org':'非营利组织','net':'网络服务',
+  'www':'万维网服务器','mail':'邮件服务器','news':'新闻服务器','ftp':'文件服务器'
+};
+
+function partType(idx,total,seg){
+  // typically: server.org.type.cc → from right to left: cc, type, org, server
+  if(idx===total-1) return 'cc';     // country code
+  if(idx===total-2) return 'type';   // org type
+  if(idx===0) return 'srv';          // server name
+  return 'org';                       // organization
+}
+
+function renderBreakdown(){
+  const d = domainInput.value.trim().toLowerCase();
+  const parts = d.split('.').filter(Boolean);
+  if(parts.length<2){
+    breakdownEl.innerHTML='<p style="color:var(--muted);text-align:center;font-size:13px;margin:0">请输入合法域名（含至少一个 "."）</p>';
+    return;
+  }
+  let html = '<div class="domain-parts">';
+  parts.forEach((p,i)=>{
+    const t = partType(i,parts.length);
+    const meaning = meanings[p] || (i===0?'服务器名':i===parts.length-1?'顶级域名':'子域名');
+    html += `<div class="dp-part dp-${t}">${p}<span class="meaning">${meaning}</span></div>`;
+    if(i<parts.length-1) html += '<div class="dp-part dp-dot">.</div>';
+  });
+  html += '</div>';
+  html += '<div class="scope-arrow">← 自右向左：从国家 → 机构类型 → 机构 → 服务器（描述范围依次缩小）</div>';
+  breakdownEl.innerHTML = html;
+}
+domainInput.oninput = renderBreakdown;
+document.querySelectorAll('.eg-btn').forEach(b=>b.onclick=()=>{
+  domainInput.value=b.textContent;renderBreakdown();
+});
+renderBreakdown();
+
+// ============ Server layout & resolution simulation ============
+const stage = document.getElementById('stage');
+const stepsEl = document.getElementById('steps');
+const lineSvg = document.getElementById('lineSvg');
+const resultBox = document.getElementById('resultBox');
+const rDom = document.getElementById('rDom');
+const rIP = document.getElementById('rIP');
+
+function placeServers(){
+  // positions in percentage
+  const servers = [
+    {id:'user', x:10,y:50, name:'你的电脑',icon:'💻',cls:'s-user',detail:'浏览器'},
+    {id:'local',x:30,y:50, name:'本地 DNS',icon:'🏠',cls:'s-local',detail:'ISP 服务器'},
+    {id:'root', x:55,y:18, name:'根服务器',icon:'🌐',cls:'s-root',detail:'.'},
+    {id:'tld',  x:55,y:50, name:'顶级域服务器',icon:'🏛️',cls:'s-tld',detail:'.cn'},
+    {id:'auth', x:55,y:82, name:'权威服务器',icon:'🎯',cls:'s-auth',detail:'gov.cn'},
+    {id:'web',  x:88,y:50, name:'目标网站',icon:'🖥️',cls:'s-web',detail:'IP: 待查询'}
+  ];
+  // remove existing
+  stage.querySelectorAll('.server').forEach(s=>s.remove());
+  servers.forEach(s=>{
+    const el = document.createElement('div');
+    el.className='server '+s.cls;
+    el.id='srv_'+s.id;
+    el.style.left=s.x+'%';el.style.top=s.y+'%';
+    el.innerHTML=`<div class="server-icon">${s.icon}</div>
+      <div class="server-name">${s.name}</div>
+      <div class="server-detail">${s.detail}</div>`;
+    stage.appendChild(el);
+  });
+  return servers;
+}
+
+let servers = placeServers();
+window.addEventListener('resize',()=>{servers=placeServers();});
+
+function getPos(id){
+  const el = document.getElementById('srv_'+id);
+  if(!el) return {x:0,y:0};
+  const stageRect = stage.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
+  return {
+    x: rect.left - stageRect.left + rect.width/2,
+    y: rect.top - stageRect.top + rect.height/2 - 30 // adjust for icon center
+  };
+}
+
+function clearAnim(){
+  stage.querySelectorAll('.message').forEach(m=>m.remove());
+  document.querySelectorAll('.server').forEach(s=>s.classList.remove('active'));
+  lineSvg.innerHTML='';
+  resultBox.classList.remove('show');
+  stepsEl.querySelectorAll('.step').forEach(s=>{s.classList.remove('done','current');});
+}
+
+function activate(id,on=true){
+  const el = document.getElementById('srv_'+id);
+  if(!el) return;
+  if(on) el.classList.add('active');
+  else el.classList.remove('active');
+}
+
+function sendMsg(fromId,toId,text,reply=false){
+  return new Promise(resolve=>{
+    const start = getPos(fromId);
+    const end = getPos(toId);
+    const m = document.createElement('div');
+    m.className='message'+(reply?' reply':'');
+    m.textContent=text;
+    m.style.left=start.x+'px';m.style.top=start.y+'px';
+    stage.appendChild(m);
+    activate(fromId);
+    requestAnimationFrame(()=>{
+      m.style.transition='left 1.2s ease, top 1.2s ease';
+      m.style.left=end.x+'px';m.style.top=end.y+'px';
+    });
+    setTimeout(()=>{
+      activate(fromId,false);
+      activate(toId);
+      m.remove();
+      setTimeout(()=>{activate(toId,false);resolve();},300);
+    },1300);
+  });
+}
+
+const flowSteps = [
+  {from:'user',to:'local',text:'查询 www.moe.gov.cn',
+    desc:'<span class="stepnum">1</span>浏览器把域名查询请求发送给<b>本地 DNS 服务器</b>（通常是运营商或单位提供）'},
+  {from:'local',to:'root',text:'问 .cn 在哪？',
+    desc:'<span class="stepnum">2</span>本地 DNS 没有缓存，转向<b>根服务器</b>询问"<code>.cn</code>"顶级域名服务器在哪'},
+  {from:'root',to:'local',text:'.cn 服务器地址：xxx',reply:true,
+    desc:'<span class="stepnum">3</span>根服务器返回 <code>.cn</code> 顶级域服务器的地址'},
+  {from:'local',to:'tld',text:'问 gov.cn 在哪？',
+    desc:'<span class="stepnum">4</span>本地 DNS 向<b>顶级域服务器</b>(.cn) 询问 <code>gov.cn</code> 的权威服务器地址'},
+  {from:'tld',to:'local',text:'gov.cn 服务器地址：xxx',reply:true,
+    desc:'<span class="stepnum">5</span>顶级域服务器返回 <code>gov.cn</code> 权威服务器的地址'},
+  {from:'local',to:'auth',text:'查询 www.moe.gov.cn',
+    desc:'<span class="stepnum">6</span>本地 DNS 向<b>权威服务器</b>查询完整域名对应的 IP'},
+  {from:'auth',to:'local',text:'IP = 202.205.x.x',reply:true,
+    desc:'<span class="stepnum">7</span>权威服务器返回最终的 <code>IP 地址</code>'},
+  {from:'local',to:'user',text:'IP = 202.205.x.x',reply:true,
+    desc:'<span class="stepnum">8</span>本地 DNS 把结果返回给浏览器，并<b>缓存</b>下来便于下次使用'},
+];
+
+function renderSteps(){
+  stepsEl.innerHTML = flowSteps.map((s,i)=>`<div class="step" id="step_${i}">${s.desc}</div>`).join('');
+}
+renderSteps();
+
+async function runResolution(){
+  const dom = domainInput.value.trim();
+  if(!dom){alert('请输入域名');return;}
+  const goBtn = document.getElementById('btnGo');
+  goBtn.disabled = true;
+  clearAnim();
+
+  // generate a fake but plausible IP based on domain
+  const hash = Array.from(dom).reduce((a,c)=>a+c.charCodeAt(0),0);
+  const fakeIP = `${100+(hash%150)}.${(hash*7)%256}.${(hash*13)%256}.${(hash*19)%256}`;
+  document.getElementById('srv_web').querySelector('.server-detail').textContent=`IP: ${fakeIP}`;
+
+  // update tld and auth labels based on domain
+  const parts = dom.split('.').filter(Boolean);
+  const tldLabel = parts.length>1 ? '.'+parts[parts.length-1] : '.cn';
+  const authLabel = parts.length>=2 ? parts.slice(-2).join('.') : 'auth';
+  document.getElementById('srv_tld').querySelector('.server-detail').textContent=tldLabel;
+  document.getElementById('srv_auth').querySelector('.server-detail').textContent=authLabel;
+
+  // run flow
+  for(let i=0;i<flowSteps.length;i++){
+    document.getElementById('step_'+i).classList.add('current');
+    const s = flowSteps[i];
+    let txt = s.text;
+    if(i===0||i===5) txt = `查询 ${dom}`;
+    if(i===1) txt = `问 ${tldLabel} 在哪？`;
+    if(i===2) txt = `${tldLabel} 服务器地址`;
+    if(i===3) txt = `问 ${authLabel} 在哪？`;
+    if(i===4) txt = `${authLabel} 服务器地址`;
+    if(i===6||i===7) txt = `IP = ${fakeIP}`;
+    await sendMsg(s.from,s.to,txt,s.reply);
+    document.getElementById('step_'+i).classList.remove('current');
+    document.getElementById('step_'+i).classList.add('done');
+  }
+  rDom.textContent = dom;
+  rIP.textContent = fakeIP;
+  resultBox.classList.add('show');
+  goBtn.disabled = false;
+}
+
+document.getElementById('btnGo').onclick = runResolution;
+document.getElementById('btnReset').onclick = clearAnim;
+</script>
+</body>
+</html>

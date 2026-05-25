@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第17课 查找筛选讲效率 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#7b1fa2;
+  --theme-dark:#6a1b9a;
+  --theme-light:#f3e5f5;
+  --bg:#faf5fc;
+}
+.search-demo{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.search-bar{
+  display:flex;gap:8px;
+  margin-bottom:14px;
+}
+.search-bar input,
+.search-bar select{
+  padding:10px 14px;
+  border:2px solid #e0e0e0;
+  border-radius:8px;
+  font-family:inherit;font-size:14px;
+}
+.search-bar input{flex:1}
+.search-bar input:focus,
+.search-bar select:focus{outline:none;border-color:var(--theme)}
+.result-table{
+  width:100%;border-collapse:collapse;
+  font-size:13px;
+}
+.result-table th{
+  background:var(--theme);color:#fff;
+  padding:8px 10px;text-align:left;
+  cursor:pointer;
+  user-select:none;
+}
+.result-table th:hover{background:var(--theme-dark)}
+.result-table th.sortable::after{
+  content:" ⇅";color:rgba(255,255,255,0.7);font-size:11px;
+}
+.result-table th.sort-asc::after{content:" ↑";color:#ffd54f}
+.result-table th.sort-desc::after{content:" ↓";color:#ffd54f}
+.result-table td{
+  padding:8px 10px;
+  border-bottom:1px solid #eceff1;
+}
+.result-table tr:hover{background:var(--theme-light)}
+.result-table tr.hidden{display:none}
+.stats-row{
+  display:flex;gap:10px;margin-top:10px;
+  font-size:13px;color:#607d8b;
+}
+.stats-row b{color:var(--theme-dark)}
+.method-vs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin:14px 0;
+}
+.method-vs .vs-card{
+  background:#fff;border-radius:12px;
+  padding:16px;
+}
+.method-vs .vs-slow{border-top:4px solid #ef5350}
+.method-vs .vs-fast{border-top:4px solid #43a047}
+.method-vs h4{font-size:15px;margin-bottom:8px}
+.method-vs .vs-slow h4{color:#c62828}
+.method-vs .vs-fast h4{color:#2e7d32}
+.method-vs .time-bar{
+  background:#fafafa;border-radius:6px;
+  height:24px;margin:6px 0;
+  display:flex;align-items:center;
+  font-size:12px;padding-left:8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第四单元 · 第17课</span>
+    <h1>🔎 查找筛选讲效率</h1>
+    <p>体验数字化工具在数据查找与筛选方面的强大优势</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">⏱️ 查找的对比</button>
+    <button class="nav-btn" data-slide="2">🔍 查找与筛选</button>
+    <button class="nav-btn" data-slide="3">🎮 动手查一查</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      老师让你从全班 50 位同学中：
+      <ol style="margin-top:6px">
+        <li>找出<b>身高超过 145cm</b> 的同学</li>
+        <li>找出<b>所有 5 月份过生日</b> 的同学</li>
+        <li>找出<b>名字里有"明"字</b> 的同学</li>
+      </ol>
+      用<b>纸笔</b>翻找要花多久？用<b>电脑</b>呢？
+    </div>
+
+    <p>纸笔翻找：可能要 <b>10 分钟</b>。<br>电脑筛选：只要 <b>1 秒钟</b>！</p>
+    <p>这就是数字化工具的<b>查找效率</b>优势！</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>体验数字化工具查找的<b>高效率</b></li>
+      <li>区分<b>查找</b>和<b>筛选</b>的不同</li>
+      <li>掌握常见数字化工具的<b>查找筛选功能</b></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>查找速度大对比</h2>
+
+    <div class="method-vs">
+      <div class="vs-card vs-slow">
+        <h4>📜 纸笔查找</h4>
+        <p style="font-size:13px;color:#37474f">想找 50 个人里的某一个：</p>
+        <div class="time-bar" style="background:linear-gradient(to right,#ffcdd2 100%,#fff 0%)">
+          ⏱️ 约 5 分钟
+        </div>
+        <p style="font-size:13px;color:#37474f;margin-top:8px">100 万人里找一个：</p>
+        <div class="time-bar" style="background:linear-gradient(to right,#ef5350 100%,#fff 0%);color:#fff">
+          ⏱️ 不可能完成的任务！
+        </div>
+      </div>
+      <div class="vs-card vs-fast">
+        <h4>💻 电脑查找</h4>
+        <p style="font-size:13px;color:#37474f">50 个人里找一个：</p>
+        <div class="time-bar" style="background:linear-gradient(to right,#c8e6c9 5%,#fff 5%)">
+          ⏱️ 不到 1 秒
+        </div>
+        <p style="font-size:13px;color:#37474f;margin-top:8px">100 万人里找一个：</p>
+        <div class="time-bar" style="background:linear-gradient(to right,#a5d6a7 8%,#fff 8%)">
+          ⏱️ 还是 1 秒以内！
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 厉害在哪里？</h4>
+      <ul style="margin-top:4px">
+        <li>⚡ <b>速度快</b>：每秒处理几百万条记录</li>
+        <li>🎯 <b>精确</b>：不会"看漏""看错"</li>
+        <li>🤖 <b>不疲劳</b>：连续工作多久都不烦</li>
+        <li>🔀 <b>多条件</b>：同时按几个条件筛</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>查找 vs 筛选</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🔍</span>
+        <h4>查找</h4>
+        <p>找出符合条件的<b>一条</b>或<b>少数</b>记录<br>
+        例：找学号 4115 的同学</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🪄</span>
+        <h4>筛选</h4>
+        <p>从大量数据中<b>筛出一批</b>符合条件的<br>
+        例：筛出身高 ≥ 145cm 的所有同学</p>
+      </div>
+    </div>
+
+    <h3>🛠️ 常用工具的查找功能</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>工具</th><th>快捷键</th><th>能做什么</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Word / WPS 文档</td><td>Ctrl + F</td><td>在文档里找文字</td></tr>
+        <tr><td>Excel / WPS 表格</td><td>Ctrl + F<br>筛选按钮</td><td>找单元格 / 筛选行</td></tr>
+        <tr><td>浏览器</td><td>Ctrl + F</td><td>在网页里找文字</td></tr>
+        <tr><td>百度 / 必应</td><td>—</td><td>在全网搜索资料</td></tr>
+        <tr><td>文件管理器</td><td>—</td><td>在电脑里找文件</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>动手查一查</h2>
+
+    <p>下面是模拟的"四(1)班同学信息"，请试着按条件查找和筛选 ↓</p>
+
+    <div class="search-demo">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 输入姓名关键字…">
+        <select id="filterSelect">
+          <option value="">不筛选</option>
+          <option value="height-tall">身高 ≥ 145cm</option>
+          <option value="height-short">身高 &lt; 140cm</option>
+          <option value="male">只看男生</option>
+          <option value="female">只看女生</option>
+          <option value="score-high">成绩 ≥ 90</option>
+        </select>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="result-table" id="dataTable">
+          <thead>
+            <tr>
+              <th class="sortable" data-key="id">学号</th>
+              <th>姓名</th>
+              <th>性别</th>
+              <th class="sortable" data-key="height">身高</th>
+              <th class="sortable" data-key="score">成绩</th>
+            </tr>
+          </thead>
+          <tbody id="dataBody"></tbody>
+        </table>
+      </div>
+      
+      <div class="stats-row">
+        <span>总共：<b id="totalCount">0</b> 人</span>
+        <span>显示：<b id="shownCount">0</b> 人</span>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 试试这些操作</h4>
+      <ul style="margin-top:6px">
+        <li>🔍 输入"<b>明</b>"，看看找到几个</li>
+        <li>🪄 选"<b>身高≥145cm</b>"，瞬间筛出来</li>
+        <li>📊 点击<b>表头</b>身高，可以排序</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">⚡</span>
+        <h4>效率高</h4>
+        <p>数字化工具瞬间完成查找</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔍</span>
+        <h4>查找</h4>
+        <p>找出少数符合的记录</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🪄</span>
+        <h4>筛选</h4>
+        <p>批量找出一组数据</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">⌨️</span>
+        <h4>Ctrl+F</h4>
+        <p>万能查找快捷键</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      请你打开一个文档（Word/PDF/网页），用 <b>Ctrl + F</b> 试一试：
+      <ul style="margin-top:6px">
+        <li>在课文中找到所有"<b>春</b>"字，数一数有几个</li>
+        <li>在新闻里找一个城市的名字</li>
+      </ul>
+      感受一下数字化查找的"秒速"！
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      会查找还不够！数据还要<b>排序、求和、求平均</b>……
+      下节课《排序计算有方法》，学习数据计算的高效方法！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const STUDENTS = [
+  {id:'4101',name:'小明',gender:'男',height:142,score:92},
+  {id:'4102',name:'小红',gender:'女',height:138,score:88},
+  {id:'4103',name:'小华',gender:'男',height:145,score:85},
+  {id:'4104',name:'小军',gender:'男',height:140,score:78},
+  {id:'4105',name:'小丽',gender:'女',height:135,score:95},
+  {id:'4106',name:'明明',gender:'男',height:148,score:82},
+  {id:'4107',name:'小芳',gender:'女',height:142,score:90},
+  {id:'4108',name:'小强',gender:'男',height:150,score:75},
+  {id:'4109',name:'晓明',gender:'男',height:139,score:88},
+  {id:'4110',name:'小红梅',gender:'女',height:137,score:93},
+  {id:'4111',name:'文明',gender:'男',height:144,score:80},
+  {id:'4112',name:'晓燕',gender:'女',height:141,score:91}
+];
+
+let sortKey = 'id', sortAsc = true;
+const tbody = document.getElementById('dataBody');
+const searchInput = document.getElementById('searchInput');
+const filterSelect = document.getElementById('filterSelect');
+
+function render(){
+  let data = [...STUDENTS];
+  // 筛选
+  const kw = searchInput.value.trim();
+  const filter = filterSelect.value;
+  
+  data = data.filter(s => {
+    if(kw && !s.name.includes(kw)) return false;
+    if(filter==='height-tall' && s.height<145) return false;
+    if(filter==='height-short' && s.height>=140) return false;
+    if(filter==='male' && s.gender!=='男') return false;
+    if(filter==='female' && s.gender!=='女') return false;
+    if(filter==='score-high' && s.score<90) return false;
+    return true;
+  });
+  
+  // 排序
+  data.sort((a,b)=>{
+    const va = a[sortKey], vb = b[sortKey];
+    if(typeof va==='number') return sortAsc ? va-vb : vb-va;
+    return sortAsc ? String(va).localeCompare(vb) : String(vb).localeCompare(va);
+  });
+  
+  tbody.innerHTML = data.map(s=>`
+    <tr>
+      <td>${s.id}</td>
+      <td>${s.name}</td>
+      <td>${s.gender}</td>
+      <td>${s.height} cm</td>
+      <td>${s.score}</td>
+    </tr>
+  `).join('');
+  
+  document.getElementById('totalCount').textContent = STUDENTS.length;
+  document.getElementById('shownCount').textContent = data.length;
+  
+  // 更新排序图标
+  document.querySelectorAll('.result-table th.sortable').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.key === sortKey){
+      th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+    }
+  });
+}
+
+document.querySelectorAll('.result-table th.sortable').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const k = th.dataset.key;
+    if(sortKey === k) sortAsc = !sortAsc;
+    else { sortKey = k; sortAsc = true; }
+    render();
+  });
+});
+
+searchInput.addEventListener('input', render);
+filterSelect.addEventListener('change', render);
+render();
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

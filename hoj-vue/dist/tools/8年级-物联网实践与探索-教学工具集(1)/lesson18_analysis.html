@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第18课 · 数据分析与处理 — 数据清洗与统计</title>
+<style>
+  :root {
+    --bg: #ecfeff;
+    --bg-2: #cffafe;
+    --ink: #042f2e;
+    --ink-soft: #4a6c5e;
+    --primary: #0d9488;
+    --accent: #06b6d4;
+    --warn: #f59e0b;
+    --red: #dc2626;
+    --green: #10b981;
+    --line: #bae6e6;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(13,148,136,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 处理流程 */
+  .process-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .process-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: center; margin: 14px 0; }
+  .pf-step {
+    background: var(--bg-2); padding: 12px 8px; border-radius: 8px;
+    text-align: center; border-top: 3px solid var(--primary);
+  }
+  .pf-step .ic { font-size: 24px; }
+  .pf-step h4 { font-size: 12px; margin: 4px 0 2px; }
+  .pf-step p { font-size: 10px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* 平滑演示 */
+  .smooth-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .chart { background: var(--bg-2); border-radius: 8px; padding: 16px; }
+  .chart svg { width: 100%; height: 240px; display: block; }
+  .smooth-controls {
+    display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap;
+  }
+  .smooth-btn {
+    padding: 8px 16px; background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit; color: var(--ink);
+  }
+  .smooth-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* 统计 */
+  .stats-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .stat-box {
+    background: var(--bg-2); padding: 14px; border-radius: 8px; text-align: center;
+  }
+  .stat-box .lbl { font-size: 11px; color: var(--ink-soft); letter-spacing: 1px; }
+  .stat-box .val {
+    font-size: 22px; font-weight: 700; color: var(--primary);
+    font-family: "JetBrains Mono",monospace; margin: 4px 0;
+  }
+  .stat-box .sub { font-size: 10px; color: var(--ink-soft); }
+
+  /* Code */
+  .code {
+    background: #042f2e; color: #84d2a3; padding: 18px;
+    border-radius: 8px; font-family: "JetBrains Mono",monospace; font-size: 12px;
+    line-height: 1.8; overflow-x: auto; white-space: pre;
+  }
+  .code .kw { color: #fbbf24; }
+  .code .str { color: #93c5fd; }
+  .code .com { color: #6b7280; }
+  .code .num { color: #f87171; }
+  .code .fn { color: #c4b5fd; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .process-flow { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 18 课</span>数据分析与处理</h1>
+  <p class="lead">采集到的原始数据往往含<strong>噪声、异常和冗余</strong>，需要进行清洗、平滑、统计等处理后才能为决策所用。本课通过智能花盆 24 小时土壤湿度数据，演示数据分析的核心方法。</p>
+</header>
+
+<main>
+
+  <!-- 处理流程 -->
+  <section class="section">
+    <div class="section-title">一、数据处理的标准流程</div>
+    <div class="process-card">
+      <div class="process-flow">
+        <div class="pf-step"><span class="ic">🧹</span><h4>① 清洗</h4><p>去除异常值、缺失值</p></div>
+        <div class="pf-step"><span class="ic">📈</span><h4>② 平滑</h4><p>过滤毛刺，揭示趋势</p></div>
+        <div class="pf-step"><span class="ic">📊</span><h4>③ 统计</h4><p>均值、最值、标准差</p></div>
+        <div class="pf-step"><span class="ic">🔍</span><h4>④ 发现</h4><p>异常检测、模式识别</p></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:14px;">
+        <strong>为什么需要处理？</strong>传感器本身有误差（±2%），环境干扰会带来跳变（短暂遮光、震动），网络丢包导致缺失值。如果直接用原始数据做决策，可能"瞎指挥"（如毛刺误判为缺水启动水泵）。
+      </p>
+    </div>
+  </section>
+
+  <!-- 平滑演示 -->
+  <section class="section">
+    <div class="section-title">二、数据平滑对比</div>
+    <div class="smooth-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">下图是智能花盆 24 小时土壤湿度的原始数据（含毛刺和异常点）。选择不同的平滑方法，观察曲线变化：</p>
+      <div class="chart">
+        <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" id="chartSvg">
+          <!-- 网格 -->
+          <g stroke="#bae6e6" stroke-width="1">
+            <line x1="40" y1="40"  x2="780" y2="40"/>
+            <line x1="40" y1="90"  x2="780" y2="90"/>
+            <line x1="40" y1="140" x2="780" y2="140"/>
+            <line x1="40" y1="190" x2="780" y2="190"/>
+          </g>
+          <!-- Y轴标签 -->
+          <text x="32" y="44" font-size="10" fill="#4a6c5e" text-anchor="end">3500</text>
+          <text x="32" y="94" font-size="10" fill="#4a6c5e" text-anchor="end">3000</text>
+          <text x="32" y="144" font-size="10" fill="#4a6c5e" text-anchor="end">2500</text>
+          <text x="32" y="194" font-size="10" fill="#4a6c5e" text-anchor="end">2000</text>
+          <!-- X轴标签 -->
+          <text x="40" y="218" font-size="10" fill="#4a6c5e">0时</text>
+          <text x="248" y="218" font-size="10" fill="#4a6c5e">6时</text>
+          <text x="456" y="218" font-size="10" fill="#4a6c5e">12时</text>
+          <text x="664" y="218" font-size="10" fill="#4a6c5e">18时</text>
+          <text x="772" y="218" font-size="10" fill="#4a6c5e" text-anchor="end">24时</text>
+          <!-- 数据线 -->
+          <polyline id="rawLine" fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.5"/>
+          <polyline id="smoothLine" fill="none" stroke="#0d9488" stroke-width="2.5"/>
+          <!-- 异常点 -->
+          <g id="outlierMarks"></g>
+        </svg>
+      </div>
+      <div class="smooth-controls">
+        <button class="smooth-btn active" id="b_raw" onclick="setSmooth('raw')">原始数据</button>
+        <button class="smooth-btn" id="b_avg" onclick="setSmooth('avg')">滑动平均（窗口=5）</button>
+        <button class="smooth-btn" id="b_median" onclick="setSmooth('median')">中值滤波（窗口=5）</button>
+        <button class="smooth-btn" id="b_clean" onclick="setSmooth('clean')">异常点剔除（3σ 规则）</button>
+      </div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.7;" id="explainBox">
+        <strong>原始数据：</strong>含 3 个异常跳变点（红色标记）。这些跳变可能是传感器抖动、电压波动或接触不良造成。直接用原始数据做决策可能产生误判。
+      </p>
+    </div>
+  </section>
+
+  <!-- 统计 -->
+  <section class="section">
+    <div class="section-title">三、关键统计指标</div>
+    <div class="stats-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">基于上方数据（已剔除异常点），系统会自动计算以下统计指标：</p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="lbl">📊 均值</div>
+          <div class="val" id="meanV">—</div>
+          <div class="sub">平均土壤湿度</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">⬆ 最大值</div>
+          <div class="val" id="maxV">—</div>
+          <div class="sub">最湿时段</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">⬇ 最小值</div>
+          <div class="val" id="minV">—</div>
+          <div class="sub">最干时段</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">📐 标准差</div>
+          <div class="val" id="stdV">—</div>
+          <div class="sub">波动程度</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">🎯 中位数</div>
+          <div class="val" id="medV">—</div>
+          <div class="sub">中间值（抗异常）</div>
+        </div>
+        <div class="stat-box">
+          <div class="lbl">📏 极差</div>
+          <div class="val" id="rngV">—</div>
+          <div class="sub">最大-最小</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:14px;">
+        💡 <strong>用统计结果指导决策：</strong>如果<strong>平均湿度</strong> &lt; 2000，说明持续偏干，需要增加每日浇水频次；如果<strong>标准差</strong>过大，说明读数不稳定，可能传感器有问题；如果<strong>最小值</strong>多次低于 1800，要考虑环境过于干燥。
+      </p>
+    </div>
+  </section>
+
+  <!-- 处理代码 -->
+  <section class="section">
+    <div class="section-title">四、Python 处理代码示例</div>
+    <div class="process-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">在 PC 端（或云端）使用 Python 处理花盆数据的核心代码：</p>
+      <div class="code"><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="com"># 1) 读取一天的数据（每分钟一条，共 1440 条）</span>
+df = pd.read_csv(<span class="str">"plant_data.csv"</span>)
+
+<span class="com"># 2) 异常点剔除：3σ 规则</span>
+mean = df[<span class="str">"soil"</span>].mean()
+std  = df[<span class="str">"soil"</span>].std()
+df = df[(df[<span class="str">"soil"</span>] &gt; mean - <span class="num">3</span>*std) &amp; (df[<span class="str">"soil"</span>] &lt; mean + <span class="num">3</span>*std)]
+
+<span class="com"># 3) 滑动平均：窗口大小=5</span>
+df[<span class="str">"soil_smooth"</span>] = df[<span class="str">"soil"</span>].rolling(window=<span class="num">5</span>).mean()
+
+<span class="com"># 4) 统计</span>
+stats = {
+    <span class="str">"均值"</span>: df[<span class="str">"soil"</span>].mean(),
+    <span class="str">"最大"</span>: df[<span class="str">"soil"</span>].max(),
+    <span class="str">"最小"</span>: df[<span class="str">"soil"</span>].min(),
+    <span class="str">"标准差"</span>: df[<span class="str">"soil"</span>].std(),
+    <span class="str">"中位数"</span>: df[<span class="str">"soil"</span>].median()
+}
+print(stats)
+
+<span class="com"># 5) 按小时聚合（24 个小时段）</span>
+df[<span class="str">"hour"</span>] = pd.to_datetime(df[<span class="str">"ts"</span>]).dt.hour
+hourly = df.groupby(<span class="str">"hour"</span>)[<span class="str">"soil"</span>].agg([<span class="str">"mean"</span>, <span class="str">"min"</span>, <span class="str">"max"</span>])
+print(hourly)</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 18 课配套交互工具</footer>
+
+<script>
+// 生成 24 小时的模拟土壤数据（含异常点）
+function genData() {
+  var data = [];
+  var n = 48; // 每 30 分钟一个数据点，共 48 个
+  for (var i = 0; i < n; i++) {
+    // 基本曲线：早上湿度低（夜间蒸发），中午开始浇水后回升
+    var hour = i / 2;
+    var base = 2400 + 400 * Math.sin((hour - 6) / 24 * Math.PI * 2);
+    // 加噪声
+    var noise = (Math.random() - 0.5) * 80;
+    data.push(base + noise);
+  }
+  // 注入 3 个异常点
+  data[8]  = 3800; // 早 4 点突然高
+  data[22] = 1600; // 中午 11 点突然低
+  data[36] = 3700; // 下午 6 点突然高
+  return data;
+}
+var rawData = genData();
+var outliers = [8, 22, 36];
+
+// 数据转换为屏幕坐标
+function toPath(data) {
+  var n = data.length;
+  var xLeft = 40, xRight = 780;
+  var yMin = 2000, yMax = 3500;
+  var pts = '';
+  for (var i = 0; i < n; i++) {
+    var x = xLeft + (i / (n - 1)) * (xRight - xLeft);
+    var y = 190 - ((data[i] - yMin) / (yMax - yMin)) * 150;
+    pts += x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  return pts.trim();
+}
+
+function movingAverage(data, w) {
+  var out = [];
+  for (var i = 0; i < data.length; i++) {
+    var sum = 0, cnt = 0;
+    var s = Math.max(0, i - Math.floor(w/2));
+    var e = Math.min(data.length - 1, i + Math.floor(w/2));
+    for (var j = s; j <= e; j++) { sum += data[j]; cnt++; }
+    out.push(sum / cnt);
+  }
+  return out;
+}
+
+function median5(data) {
+  var out = [];
+  for (var i = 0; i < data.length; i++) {
+    var s = Math.max(0, i - 2);
+    var e = Math.min(data.length - 1, i + 2);
+    var arr = [];
+    for (var j = s; j <= e; j++) arr.push(data[j]);
+    arr.sort(function (a, b) { return a - b; });
+    out.push(arr[Math.floor(arr.length / 2)]);
+  }
+  return out;
+}
+
+function cleanOutliers(data) {
+  var mean = 0;
+  for (var i = 0; i < data.length; i++) mean += data[i];
+  mean /= data.length;
+  var sq = 0;
+  for (var k = 0; k < data.length; k++) sq += (data[k] - mean) * (data[k] - mean);
+  var std = Math.sqrt(sq / data.length);
+  var out = data.slice();
+  for (var m = 0; m < out.length; m++) {
+    if (Math.abs(out[m] - mean) > 3 * std) {
+      // 用前后值的平均替换
+      var prev = m > 0 ? out[m-1] : mean;
+      var next = m < out.length - 1 ? data[m+1] : mean;
+      out[m] = (prev + next) / 2;
+    }
+  }
+  return out;
+}
+
+function computeStats(data) {
+  data.sort(function (a, b) { return a - b; });
+  var n = data.length;
+  var sum = 0;
+  for (var i = 0; i < n; i++) sum += data[i];
+  var mean = sum / n;
+  var sq = 0;
+  for (var k = 0; k < n; k++) sq += (data[k] - mean) * (data[k] - mean);
+  var std = Math.sqrt(sq / n);
+  return {
+    mean: Math.round(mean),
+    max: Math.round(data[n-1]),
+    min: Math.round(data[0]),
+    std: Math.round(std),
+    med: Math.round(data[Math.floor(n/2)]),
+    rng: Math.round(data[n-1] - data[0])
+  };
+}
+
+function drawOutliers() {
+  var g = document.getElementById('outlierMarks');
+  g.innerHTML = '';
+  var n = rawData.length;
+  for (var i = 0; i < outliers.length; i++) {
+    var idx = outliers[i];
+    var x = 40 + (idx / (n - 1)) * 740;
+    var y = 190 - ((rawData[idx] - 2000) / 1500) * 150;
+    g.innerHTML += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5" fill="none" stroke="#dc2626" stroke-width="2"/>';
+  }
+}
+
+function setSmooth(mode) {
+  var btns = ['raw','avg','median','clean'];
+  for (var i = 0; i < btns.length; i++) {
+    document.getElementById('b_' + btns[i]).className = 'smooth-btn' + (btns[i] === mode ? ' active' : '');
+  }
+  var processed;
+  var explain;
+  if (mode === 'raw') {
+    processed = rawData;
+    explain = '<strong>原始数据：</strong>含 3 个异常跳变点（红色标记）。这些跳变可能是传感器抖动、电压波动或接触不良造成。直接用原始数据做决策可能产生误判。';
+  } else if (mode === 'avg') {
+    processed = movingAverage(rawData, 5);
+    explain = '<strong>滑动平均：</strong>用窗口内的算术平均代替当前值，曲线变得平滑，但异常点的影响仍会"扩散"到周围几个点。<code>new[i] = (old[i-2] + old[i-1] + old[i] + old[i+1] + old[i+2]) / 5</code>';
+  } else if (mode === 'median') {
+    processed = median5(rawData);
+    explain = '<strong>中值滤波：</strong>取窗口内中位数代替当前值。<strong>能完美剔除孤立的尖峰异常点</strong>，且不会让异常影响周围值。处理脉冲噪声特别有效。';
+  } else {
+    processed = cleanOutliers(rawData);
+    explain = '<strong>3σ 异常剔除：</strong>计算均值 μ 和标准差 σ。把所有 |x − μ| &gt; 3σ 的点视为异常，用相邻点平均值替代。这是统计学中最经典的方法。';
+  }
+  document.getElementById('rawLine').setAttribute('points', toPath(rawData));
+  document.getElementById('smoothLine').setAttribute('points', toPath(processed));
+  document.getElementById('rawLine').setAttribute('opacity', mode === 'raw' ? 0 : 0.4);
+  document.getElementById('smoothLine').setAttribute('stroke', mode === 'raw' ? '#94a3b8' : '#0d9488');
+  document.getElementById('explainBox').innerHTML = explain;
+
+  // 更新统计（用处理后数据）
+  var s = computeStats(processed.slice());
+  document.getElementById('meanV').textContent = s.mean;
+  document.getElementById('maxV').textContent = s.max;
+  document.getElementById('minV').textContent = s.min;
+  document.getElementById('stdV').textContent = s.std;
+  document.getElementById('medV').textContent = s.med;
+  document.getElementById('rngV').textContent = s.rng;
+}
+
+drawOutliers();
+setSmooth('raw');
+window.setSmooth = setSmooth;
+</script>
+</body>
+</html>

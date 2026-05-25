@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python算法验证器 - 第8课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.python-ide {
+  background: #1e1e2e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.ide-header {
+  background: #2A2A3E;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #3A3A4E;
+}
+.ide-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+}
+.ide-dot.red { background: #ff5f57; }
+.ide-dot.yellow { background: #ffbd2e; }
+.ide-dot.green { background: #28c941; }
+.ide-title {
+  color: #ccc;
+  font-size: 13px;
+  margin-left: 8px;
+  font-family: monospace;
+}
+.code-block {
+  padding: 14px 18px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #d4d4d4;
+  background: #1e1e2e;
+  min-height: 220px;
+}
+.code-line {
+  white-space: pre;
+  border-left: 3px solid transparent;
+  padding-left: 8px;
+  margin-left: -8px;
+  transition: all 0.3s;
+}
+.code-line.executing {
+  background: rgba(74,144,226,0.18);
+  border-left-color: var(--primary);
+}
+.code-line.done {
+  opacity: 0.55;
+}
+.code-line .keyword { color: #c586c0; font-weight: 600; }
+.code-line .string { color: #ce9178; }
+.code-line .number { color: #b5cea8; }
+.code-line .func { color: #dcdcaa; }
+.code-line .var { color: #9cdcfe; }
+.code-line .comment { color: #6a9955; font-style: italic; }
+.code-line .op { color: #d4d4d4; }
+
+.ide-toolbar {
+  background: #2A2A3E;
+  padding: 10px 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid #3A3A4E;
+}
+.ide-toolbar button {
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+
+.repl-output {
+  background: #0e0e1a;
+  color: #00ff7f;
+  padding: 14px 18px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 100px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid #3A3A4E;
+}
+.repl-output .out-input { color: #FFE082; }
+.repl-output .out-prompt { color: #6a9955; }
+.repl-output .out-error { color: #ff6b6b; }
+
+.var-table {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  margin-top: 14px;
+}
+.var-table h4 {
+  color: var(--primary-dark);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.var-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+  font-family: monospace;
+  font-size: 13px;
+}
+.var-row:last-child { border-bottom: 0; }
+.var-name { color: var(--primary-dark); font-weight: 600; }
+.var-value {
+  color: var(--accent);
+  font-weight: 600;
+  background: #FFF4E6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.var-row.new { animation: highlightNew 1s ease; }
+@keyframes highlightNew {
+  0% { background: #FFF4D4; }
+  100% { background: transparent; }
+}
+
+.task-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.task-tab {
+  padding: 8px 14px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-light);
+  font-family: inherit;
+}
+.task-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.fn-card {
+  background: white;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border-left: 4px solid var(--primary);
+  margin-bottom: 8px;
+}
+.fn-card code {
+  background: #F0F4F8;
+  color: var(--primary-dark);
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.input-prompt-modal {
+  background: linear-gradient(135deg, #FFF9E6, #FFF4D4);
+  border: 2px solid var(--warning);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 10px 0;
+  display: none;
+}
+.input-prompt-modal.show { display: block; animation: slideDown 0.3s ease; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.input-prompt-modal label {
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+  margin-bottom: 6px;
+}
+.input-prompt-modal input {
+  font-size: 16px;
+  width: 200px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🐍 Python 算法验证器</h1>
+    <div class="subtitle">用 Python 程序把算法跑起来!</div>
+    <span class="lesson-tag">第8课 · 算法验证与实现</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="slide-subtitle">用 Python 程序"实现"我们设计的算法</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>知道为什么需要用<strong>程序</strong>来实现算法</li>
+            <li>认识 Python 中的 <code>input()</code>、<code>int()</code>、<code>float()</code>、<code>print()</code> 函数</li>
+            <li>了解<strong>变量</strong>的含义,知道赋值号 <code>=</code> 和等号 <code>==</code> 的区别</li>
+            <li>用 Python 实现简单的顺序结构与分支结构</li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>🤔 思考:</strong>我们用文字、流程图描述了那么多算法,但计算机自己看得懂吗?
+        </div>
+      </div>
+
+      <div class="slide" data-title="Python 基础">
+        <div class="slide-title"><span class="num">2</span>认识 4 个常用函数</div>
+        <div class="slide-subtitle">让计算机"读懂"算法的关键</div>
+        <div class="fn-card">
+          <h4 style="color:var(--primary-dark); margin-bottom:6px;">📥 <code>input()</code> — 输入</h4>
+          <p style="font-size:13.5px; color:#34495E;">让计算机从键盘<strong>读取</strong>用户输入的内容。<br>
+            例:<code>a = input('请输入苹果质量:')</code></p>
+        </div>
+        <div class="fn-card">
+          <h4 style="color:var(--primary-dark); margin-bottom:6px;">🔢 <code>float()</code> / <code>int()</code> — 类型转换</h4>
+          <p style="font-size:13.5px; color:#34495E;">把输入的<strong>字符</strong>(像"5")转换成<strong>数字</strong>(5)才能计算。<br>
+            <code>float()</code> 转小数,<code>int()</code> 转整数。</p>
+        </div>
+        <div class="fn-card">
+          <h4 style="color:var(--primary-dark); margin-bottom:6px;">📤 <code>print()</code> — 输出</h4>
+          <p style="font-size:13.5px; color:#34495E;">把计算结果<strong>显示</strong>到屏幕上。<br>
+            例:<code>print('总金额:', e)</code></p>
+        </div>
+        <div class="info-panel">
+          <strong>⚠️ 重要区别:</strong> <code>=</code> 是<strong>赋值号</strong>(把右边的值<strong>赋给</strong>左边变量), <code>==</code> 才是<strong>等号</strong>(判断两个值是否相等)。
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:程序运行">
+        <div class="slide-title"><span class="num">3</span>🐍 互动:Python 程序在线运行</div>
+        <div class="slide-subtitle">选择任务,逐行执行 Python 程序,观察变量变化</div>
+        <div class="task-tabs">
+          <button class="task-tab active" onclick="loadTask('fruit')">🍎 买水果计算总价</button>
+          <button class="task-tab" onclick="loadTask('ticket')">🎫 公园购票(分支)</button>
+          <button class="task-tab" onclick="loadTask('add')">➕ 两数相加(顺序)</button>
+        </div>
+
+        <div class="python-ide">
+          <div class="ide-header">
+            <span class="ide-dot red"></span>
+            <span class="ide-dot yellow"></span>
+            <span class="ide-dot green"></span>
+            <span class="ide-title" id="ideTitle">fruit.py</span>
+          </div>
+          <div class="code-block" id="codeBlock"></div>
+          <div class="ide-toolbar">
+            <button class="btn-success" onclick="runProgram()" id="runBtn">▶ 运行程序</button>
+            <button class="btn-secondary" onclick="stepProgram()" id="stepBtn">⤓ 单步执行</button>
+            <button class="btn-secondary" onclick="resetProgram()">⏹ 重置</button>
+          </div>
+          <div class="input-prompt-modal" id="inputModal">
+            <label id="inputLabel"></label>
+            <input type="text" id="inputField" onkeypress="if(event.key==='Enter') submitInput()">
+            <button onclick="submitInput()" style="margin-left:8px;">✓ 确定</button>
+          </div>
+          <div class="repl-output" id="replOutput">
+            <span class="out-prompt">>>> 点击"运行程序"开始</span>
+          </div>
+        </div>
+
+        <div class="var-table" id="varTable">
+          <h4>📊 变量表(随程序执行实时变化)</h4>
+          <div id="varList"><em style="color:var(--text-light); font-size:13px;">还没有变量,运行程序后这里会显示</em></div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="单步追踪">
+        <div class="slide-title"><span class="num">4</span>理解变量与赋值</div>
+        <div class="slide-subtitle">变量像"盒子",赋值号 = 是"把东西放进盒子"</div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>📦 变量是什么?</h4>
+            <p>变量是计算机里的<strong>"小盒子"</strong>,用来存放数据。变量有<strong>名字</strong>(如 a, b),里面装的<strong>数据</strong>可以变化。</p>
+          </div>
+          <div class="concept-card">
+            <h4>➡️ 赋值号 =</h4>
+            <p><code>a = 5</code> 的意思是:<strong>把 5 放进盒子 a</strong>。<br>注意<strong>不是</strong> "a 等于 5"!</p>
+          </div>
+          <div class="concept-card">
+            <h4>⚖️ 等号 ==</h4>
+            <p><code>a == 5</code> 才是<strong>"判断 a 是不是 5"</strong>,常用在 <code>if</code> 分支结构里。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🔍 试试看:</strong>在上一页运行 <strong>"买水果"</strong> 任务,观察 a, b, c, d, e 这几个盒子里的内容随着程序执行如何变化。
+        </div>
+        <h4 style="color:var(--primary-dark); margin:20px 0 8px;">⚠️ 常见错误</h4>
+        <div class="fn-card" style="border-left-color:var(--danger);">
+          <strong>错误:</strong> <code>a = input('质量:')</code> 然后 <code>b = a * 8.5</code>
+          <p style="margin-top:4px; font-size:13.5px;">→ 报错!因为 input 拿到的是<strong>字符</strong>,字符不能乘以数字。</p>
+          <strong style="color:var(--secondary);">正确:</strong> <code>b = float(a) * 8.5</code> &nbsp;&nbsp;<small>(先把 a 转成小数)</small>
+        </div>
+      </div>
+
+      <div class="slide" data-title="编程的意义">
+        <div class="slide-title"><span class="num">5</span>编程让算法"活"起来</div>
+        <div class="slide-subtitle">从纸上的流程图,到计算机能执行的程序</div>
+        <div class="ipo-flow" style="display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:12px; align-items:stretch; margin:20px 0;">
+          <div class="concept-card" style="text-align:center;">
+            <h4>📝 算法描述</h4>
+            <p style="font-size:13px;">自然语言、流程图<br>→ <em>人能看懂</em></p>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--primary);">→</div>
+          <div class="concept-card" style="text-align:center;">
+            <h4>💻 编写程序</h4>
+            <p style="font-size:13px;">Python 等编程语言<br>→ <em>翻译成计算机指令</em></p>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--primary);">→</div>
+          <div class="concept-card" style="text-align:center;">
+            <h4>⚡ 计算机执行</h4>
+            <p style="font-size:13px;">瞬间完成计算<br>→ <em>验证算法正确性</em></p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🚀 程序的威力:</strong>同样是计算苹果总价,人算可能要几秒,计算机<strong>百万次也只要一秒钟</strong>。这就是用程序<strong>验证与实现</strong>算法的意义。
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>Python 4 个常用函数:<code>input()</code>、<code>int()</code>、<code>float()</code>、<code>print()</code></li>
+            <li><strong>变量</strong>是存放数据的"盒子"</li>
+            <li><strong>赋值号</strong> <code>=</code> 和<strong>等号</strong> <code>==</code> 的区别</li>
+            <li>编程让我们能<strong>验证算法</strong>并<strong>处理大量数据</strong></li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后挑战</h3>
+          <p>尝试用 Python 写一个程序: 输入两个不同的自然数,输出其中<strong>较小的那个</strong>(用分支结构)。</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+// ============ Python 程序模拟器 ============
+const TASKS = {
+  fruit: {
+    title: 'fruit.py — 买水果计算总价',
+    lines: [
+      { code: '<span class="comment"># 输入水果质量</span>', skip: true },
+      { code: 'a = <span class="func">input</span>(<span class="string">\'输入苹果质量(千克):\'</span>)', action: 'input', var: 'a', prompt: '输入苹果质量(千克):', defaultVal: '2' },
+      { code: 'b = <span class="func">input</span>(<span class="string">\'输入香蕉质量(千克):\'</span>)', action: 'input', var: 'b', prompt: '输入香蕉质量(千克):', defaultVal: '1.5' },
+      { code: '<span class="comment"># 计算总价(注意 float 转换)</span>', skip: true },
+      { code: 'c = <span class="func">float</span>(a) <span class="op">*</span> <span class="number">8.5</span>', action: 'compute', var: 'c', expr: 'parseFloat(vars.a) * 8.5' },
+      { code: 'd = <span class="func">float</span>(b) <span class="op">*</span> <span class="number">12.6</span>', action: 'compute', var: 'd', expr: 'parseFloat(vars.b) * 12.6' },
+      { code: 'e = c <span class="op">+</span> d', action: 'compute', var: 'e', expr: 'vars.c + vars.d' },
+      { code: '<span class="func">print</span>(<span class="string">\'总金额:\'</span>, e)', action: 'print', expr: '"总金额: " + (Math.round(vars.e * 100) / 100)' }
+    ]
+  },
+  ticket: {
+    title: 'ticket.py — 公园购票(分支结构)',
+    lines: [
+      { code: '<span class="comment"># 输入身高(厘米)</span>', skip: true },
+      { code: 'h = <span class="func">int</span>(<span class="func">input</span>(<span class="string">\'请输入身高(厘米):\'</span>))', action: 'input', var: 'h', prompt: '请输入身高(厘米):', defaultVal: '138', cast: 'int' },
+      { code: '<span class="comment"># 根据身高判断票价</span>', skip: true },
+      { code: '<span class="keyword">if</span> h <span class="op">&lt;</span> <span class="number">120</span>:', action: 'if', expr: 'vars.h < 120' },
+      { code: '    price = <span class="number">5</span>', action: 'compute', var: 'price', expr: '5', onlyIf: true },
+      { code: '    <span class="func">print</span>(<span class="string">\'半价票:5 元\'</span>)', action: 'print', expr: '"半价票: 5 元"', onlyIf: true },
+      { code: '<span class="keyword">else</span>:', action: 'else', skip: false },
+      { code: '    price = <span class="number">10</span>', action: 'compute', var: 'price', expr: '10', onlyIfElse: true },
+      { code: '    <span class="func">print</span>(<span class="string">\'全价票:10 元\'</span>)', action: 'print', expr: '"全价票: 10 元"', onlyIfElse: true }
+    ]
+  },
+  add: {
+    title: 'add.py — 两数相加',
+    lines: [
+      { code: 'a = <span class="func">int</span>(<span class="func">input</span>(<span class="string">\'输入第一个数:\'</span>))', action: 'input', var: 'a', prompt: '输入第一个数:', defaultVal: '35', cast: 'int' },
+      { code: 'b = <span class="func">int</span>(<span class="func">input</span>(<span class="string">\'输入第二个数:\'</span>))', action: 'input', var: 'b', prompt: '输入第二个数:', defaultVal: '47', cast: 'int' },
+      { code: 's = a <span class="op">+</span> b', action: 'compute', var: 's', expr: 'vars.a + vars.b' },
+      { code: '<span class="func">print</span>(<span class="string">\'和:\'</span>, s)', action: 'print', expr: '"和: " + vars.s' }
+    ]
+  }
+};
+
+let currentTask = 'fruit';
+let curLine = 0;
+let vars = {};
+let lastIfResult = null;
+let pendingInputResolve = null;
+let stepMode = false;
+
+function loadTask(key) {
+  document.querySelectorAll('.task-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  currentTask = key;
+  resetProgram();
+}
+
+function renderCode() {
+  const task = TASKS[currentTask];
+  document.getElementById('ideTitle').textContent = task.title;
+  const block = document.getElementById('codeBlock');
+  block.innerHTML = task.lines.map((line, i) =>
+    '<div class="code-line" data-line="' + i + '">' + line.code + '</div>'
+  ).join('');
+}
+
+function renderVars() {
+  const list = document.getElementById('varList');
+  const keys = Object.keys(vars);
+  if (keys.length === 0) {
+    list.innerHTML = '<em style="color:var(--text-light); font-size:13px;">还没有变量,运行程序后这里会显示</em>';
+    return;
+  }
+  list.innerHTML = keys.map(k =>
+    '<div class="var-row"><span class="var-name">' + k + '</span><span class="var-value">' + vars[k] + '</span></div>'
+  ).join('');
+}
+
+function appendOutput(html, cls) {
+  const out = document.getElementById('replOutput');
+  out.innerHTML += '<div class="' + (cls || '') + '">' + html + '</div>';
+  out.scrollTop = out.scrollHeight;
+}
+
+function highlightLine(idx) {
+  document.querySelectorAll('.code-line').forEach((el, i) => {
+    el.classList.remove('executing');
+    if (i < idx) el.classList.add('done');
+    if (i === idx) el.classList.add('executing');
+  });
+}
+
+function askInput(prompt, defaultVal) {
+  return new Promise(resolve => {
+    document.getElementById('inputLabel').textContent = prompt;
+    document.getElementById('inputField').value = defaultVal || '';
+    document.getElementById('inputModal').classList.add('show');
+    pendingInputResolve = resolve;
+    setTimeout(() => document.getElementById('inputField').focus(), 100);
+  });
+}
+
+function submitInput() {
+  const val = document.getElementById('inputField').value;
+  document.getElementById('inputModal').classList.remove('show');
+  if (pendingInputResolve) {
+    pendingInputResolve(val);
+    pendingInputResolve = null;
+  }
+}
+
+async function executeLine(line, idx) {
+  highlightLine(idx);
+  await new Promise(r => setTimeout(r, stepMode ? 100 : 500));
+
+  if (line.skip) return;
+
+  if (line.action === 'input') {
+    appendOutput('<span class="out-prompt">>>> ' + line.prompt + '</span>');
+    const val = await askInput(line.prompt, line.defaultVal);
+    if (line.cast === 'int') vars[line.var] = parseInt(val);
+    else vars[line.var] = val;
+    appendOutput('<span class="out-input">' + val + '</span>');
+    renderVars();
+  } else if (line.action === 'compute') {
+    if (line.onlyIf && lastIfResult !== true) return;
+    if (line.onlyIfElse && lastIfResult !== false) return;
+    try {
+      vars[line.var] = eval(line.expr);
+      // 保留两位小数
+      if (typeof vars[line.var] === 'number' && !Number.isInteger(vars[line.var])) {
+        vars[line.var] = Math.round(vars[line.var] * 100) / 100;
+      }
+      renderVars();
+    } catch (e) {
+      appendOutput('<span class="out-error">错误: ' + e.message + '</span>');
+    }
+  } else if (line.action === 'print') {
+    if (line.onlyIf && lastIfResult !== true) return;
+    if (line.onlyIfElse && lastIfResult !== false) return;
+    try {
+      const output = eval(line.expr);
+      appendOutput('<span>' + output + '</span>');
+    } catch (e) {
+      appendOutput('<span class="out-error">错误: ' + e.message + '</span>');
+    }
+  } else if (line.action === 'if') {
+    lastIfResult = eval(line.expr);
+    appendOutput('<span class="out-prompt">    [判断: ' + (lastIfResult ? '✓ 条件成立' : '✗ 条件不成立') + ']</span>');
+  } else if (line.action === 'else') {
+    // 不做任何事,只是分隔
+  }
+}
+
+async function runProgram() {
+  resetProgram();
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('stepBtn').disabled = true;
+  stepMode = false;
+  const task = TASKS[currentTask];
+  for (let i = 0; i < task.lines.length; i++) {
+    await executeLine(task.lines[i], i);
+  }
+  highlightLine(-1);
+  document.querySelectorAll('.code-line').forEach(el => { el.classList.remove('executing'); el.classList.add('done'); });
+  appendOutput('<span class="out-prompt">>>> 程序执行完毕 ✓</span>');
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('stepBtn').disabled = false;
+}
+
+async function stepProgram() {
+  if (curLine === 0) {
+    document.getElementById('replOutput').innerHTML = '';
+    vars = {};
+    lastIfResult = null;
+    renderVars();
+  }
+  const task = TASKS[currentTask];
+  if (curLine >= task.lines.length) {
+    appendOutput('<span class="out-prompt">>>> 程序已结束,请点击"重置"</span>');
+    return;
+  }
+  stepMode = true;
+  await executeLine(task.lines[curLine], curLine);
+  curLine++;
+  if (curLine >= task.lines.length) {
+    appendOutput('<span class="out-prompt">>>> 程序执行完毕 ✓</span>');
+  }
+}
+
+function resetProgram() {
+  curLine = 0;
+  vars = {};
+  lastIfResult = null;
+  document.getElementById('replOutput').innerHTML = '<span class="out-prompt">>>> 点击"运行程序"开始</span>';
+  document.querySelectorAll('.code-line').forEach(el => el.classList.remove('executing', 'done'));
+  document.getElementById('inputModal').classList.remove('show');
+  renderCode();
+  renderVars();
+}
+
+renderCode();
+renderVars();
+</script>
+</body>
+</html>

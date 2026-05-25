@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI 图像识别体验台 — 第28课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #c7d2fe 0%, #e0e7ff 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #4338ca; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  flex: 1; min-width: 130px; padding: 12px 16px; background: white;
+  border-radius: 10px; cursor: pointer; transition: all .2s;
+  font-size: 14px; font-weight: 600; text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  border: 2px solid transparent;
+}
+.tab:hover { background: #eef2ff; }
+.tab.active { background: #4f46e5; color: white; border-color: #4338ca; }
+.tab .icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+.panel { background: white; border-radius: 14px; padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05); display: none; }
+.panel.active { display: block; }
+.panel h2 { color: #4338ca; font-size: 20px; margin-bottom: 12px; }
+
+/* ===== 图像识别 ===== */
+.recognize-area { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .recognize-area { grid-template-columns: 1fr; } }
+.image-zone {
+  background: #eef2ff; border: 2px dashed #818cf8; border-radius: 12px;
+  padding: 20px; text-align: center; min-height: 280px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.image-zone .img-display {
+  font-size: 120px; margin-bottom: 14px;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,.1));
+}
+.gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.gallery-item {
+  background: white; padding: 10px; border-radius: 8px; cursor: pointer;
+  font-size: 30px; text-align: center; border: 2px solid transparent; transition: all .2s;
+}
+.gallery-item:hover { border-color: #818cf8; }
+.gallery-item.active { border-color: #4338ca; background: #eef2ff; }
+
+.result-zone {
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-radius: 12px;
+  padding: 18px; min-height: 280px;
+}
+.result-zone h3 { color: #6d28d9; font-size: 15px; margin-bottom: 12px; }
+.confidence-bar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px;
+}
+.confidence-bar .label { width: 90px; font-weight: 600; color: #1e293b; }
+.confidence-bar .bar-track {
+  flex: 1; height: 18px; background: #e9d5ff; border-radius: 9px; overflow: hidden;
+}
+.confidence-bar .bar-fill {
+  height: 100%; background: linear-gradient(90deg, #8b5cf6, #6d28d9);
+  border-radius: 9px; transition: width .8s ease-out; display: flex; align-items: center;
+  justify-content: flex-end; padding-right: 8px; color: white; font-size: 11px; font-weight: 600;
+}
+.confidence-bar .pct { width: 50px; text-align: right; color: #6d28d9; font-weight: 600; }
+
+.process-steps {
+  background: white; border-radius: 8px; padding: 12px 16px; margin-top: 12px;
+  font-size: 12px; line-height: 1.6; color: #475569;
+}
+.process-steps .step { padding: 4px 0; opacity: 0; transition: opacity .3s; }
+.process-steps .step.show { opacity: 1; }
+.process-steps .step strong { color: #4338ca; }
+
+.recognize-btn {
+  margin-top: 14px; padding: 12px 28px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: white; border: none; border-radius: 10px; cursor: pointer;
+  font-size: 15px; font-weight: 600;
+}
+.recognize-btn:hover { opacity: .9; }
+.recognize-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ===== 训练演示 ===== */
+.train-area { background: #eef2ff; padding: 18px; border-radius: 12px; }
+.train-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;
+}
+.train-cat {
+  background: white; padding: 14px; border-radius: 10px;
+}
+.train-cat h4 { color: #4338ca; margin-bottom: 8px; font-size: 14px; }
+.train-samples { display: flex; gap: 6px; flex-wrap: wrap; min-height: 60px; align-items: center; }
+.train-sample {
+  width: 44px; height: 44px; background: white; border: 2px solid #c7d2fe;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; cursor: pointer;
+}
+.train-sample.added { background: #eef2ff; }
+.add-sample {
+  width: 44px; height: 44px; background: #f3f4f6; border: 2px dashed #c7d2fe;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #6366f1; font-size: 24px; font-weight: 300;
+}
+.add-sample:hover { background: #eef2ff; }
+
+.test-zone {
+  background: white; padding: 16px; border-radius: 10px; margin-top: 14px;
+  text-align: center;
+}
+.test-result {
+  margin-top: 12px; padding: 12px; background: #faf5ff; border-radius: 8px;
+  font-size: 14px; color: #6d28d9; font-weight: 600;
+}
+
+/* ===== 安全风险 ===== */
+.case-card {
+  background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px 20px;
+  border-radius: 8px; margin-bottom: 12px;
+}
+.case-card h4 { color: #b91c1c; margin-bottom: 6px; font-size: 15px; }
+.case-card p { color: #7f1d1d; font-size: 13px; line-height: 1.6; }
+.tips-list-2 {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
+  margin-top: 12px;
+}
+.tip-card-2 {
+  background: #f0fdf4; padding: 12px 14px; border-radius: 8px; border-left: 3px solid #22c55e;
+  font-size: 13px; color: #166534;
+}
+.tip-card-2 strong { display: block; margin-bottom: 4px; }
+
+.knowledge {
+  background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b;
+  border-radius: 10px; padding: 16px 20px; margin-top: 18px;
+}
+.knowledge h3 { color: #92400e; margin-bottom: 8px; font-size: 16px; }
+.knowledge p { color: #78350f; font-size: 13px; line-height: 1.7; }
+
+.feature-vector {
+  background: white; padding: 12px 14px; border-radius: 8px; margin-top: 10px;
+  font-family: 'SF Mono', monospace; font-size: 11px; color: #4338ca;
+  word-break: break-all; line-height: 1.6;
+}
+.btn-secondary {
+  padding: 8px 16px; background: white; color: #4338ca;
+  border: 1.5px solid #c7d2fe; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 13px;
+}
+.btn-secondary:hover { background: #eef2ff; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🤖 AI 图像识别体验台</h1>
+    <div class="subtitle">配套课时：第28课 初识人工智能 · 体验AI识图原理，了解人工智能的好处与风险</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="recognize"><span class="icon">🔍</span>识图体验</div>
+    <div class="tab" data-tab="train"><span class="icon">🎓</span>训练原理</div>
+    <div class="tab" data-tab="risk"><span class="icon">⚠️</span>安全风险</div>
+  </div>
+
+  <!-- 识图体验 -->
+  <div class="panel active" id="panel-recognize">
+    <h2>🔍 让 AI 识别一张图片</h2>
+    <p style="color:#475569;margin-bottom:16px;font-size:14px;">
+      选择一张图片，点击"开始识别"，看看 AI 是怎么判断的：
+    </p>
+    <div class="recognize-area">
+      <div class="image-zone">
+        <div class="img-display" id="targetImg">🐱</div>
+        <div style="font-weight:600;color:#4338ca;" id="targetName">家猫</div>
+        <div class="gallery" id="gallery"></div>
+        <button class="recognize-btn" onclick="startRecognize()">🔬 开始识别</button>
+      </div>
+      <div class="result-zone">
+        <h3>📊 AI 识别结果</h3>
+        <div id="resultBars">
+          <div style="color:#94a3b8;font-size:14px;text-align:center;padding:30px 0;">
+            点击"开始识别"<br>查看 AI 的判断
+          </div>
+        </div>
+        <div class="process-steps" id="processSteps" style="display:none;">
+          <div class="step" data-step="1"><strong>① 输入：</strong>把图片切分成许多像素点</div>
+          <div class="step" data-step="2"><strong>② 提取特征：</strong>分析颜色、形状、纹理（边缘、轮廓）</div>
+          <div class="step" data-step="3"><strong>③ 比对：</strong>把特征与训练时学过的样本比较</div>
+          <div class="step" data-step="4"><strong>④ 输出：</strong>给出每个分类的"置信度"</div>
+        </div>
+      </div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学原理 · AI 是怎么"看"图片的</h3>
+      <p>对计算机来说，每张图片都是<b>一组数字</b>（每个像素的 RGB 颜色值）。AI 通过<b>卷积神经网络（CNN）</b>逐层提取图片中的特征：第一层识别"线条边缘"，第二层识别"简单形状"，再上层识别"复杂部位"，最终判断整张图片是什么。</p>
+      <p style="margin-top:8px;"><b>"置信度"</b>表示 AI 对自己判断的有多大把握，比如"99% 是猫"意味着 AI 非常确定，"45% 是猫，40% 是狗"意味着 AI 不太确定。</p>
+    </div>
+  </div>
+
+  <!-- 训练演示 -->
+  <div class="panel" id="panel-train">
+    <h2>🎓 AI 是如何"学会"识别物体的？</h2>
+    <p style="color:#475569;margin-bottom:14px;font-size:14px;">
+      AI 不是天生就会识别物体的——它需要看<b>大量的样本</b>来学习。下面模拟一下"训练"过程：
+    </p>
+    <div class="train-area">
+      <p style="font-size:13px;color:#475569;margin-bottom:8px;">
+        步骤一：给 AI <b>"喂"训练样本</b>，告诉它"这是水果""这是动物"。点击下方"+"添加样本：
+      </p>
+      <div class="train-grid">
+        <div class="train-cat">
+          <h4>🍎 类别：水果</h4>
+          <div class="train-samples" id="fruitSamples">
+            <div class="add-sample" onclick="addSample('fruit')">+</div>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:6px;">已收集 <span id="fruitCount">0</span> 个样本</div>
+        </div>
+        <div class="train-cat">
+          <h4>🐶 类别：动物</h4>
+          <div class="train-samples" id="animalSamples">
+            <div class="add-sample" onclick="addSample('animal')">+</div>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:6px;">已收集 <span id="animalCount">0</span> 个样本</div>
+        </div>
+      </div>
+
+      <div class="test-zone">
+        <div style="font-size:13px;color:#475569;margin-bottom:10px;">
+          步骤二：训练完成后，给 AI 一张新图，让它判断属于哪一类：
+        </div>
+        <div style="font-size:60px;margin:8px 0;" id="testImg">🥕</div>
+        <div style="font-size:13px;color:#94a3b8;" id="testName">胡萝卜（蔬菜）</div>
+        <button class="btn-secondary" style="margin-top:8px;margin-right:6px;" onclick="newTest()">🔄 换一张</button>
+        <button class="btn-secondary" onclick="testAI()">🔬 让 AI 判断</button>
+        <div class="test-result" id="testResult" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学原理 · 监督学习</h3>
+      <p>这种"<b>给 AI 看带标签的样本，让它自己总结规律</b>"的方法叫做<b>监督学习</b>。<br>
+      <b>关键 1：样本越多，AI 越聪明。</b>识别一只猫，可能要看几万张猫的照片。<br>
+      <b>关键 2：样本要有代表性。</b>如果只给 AI 看橘色的猫，它可能认不出黑猫。<br>
+      <b>关键 3：会出现"不确定"的情况。</b>比如胡萝卜既不是水果也不是动物，AI 会给出"都不太像"的结果，这是 AI 的局限。</p>
+    </div>
+  </div>
+
+  <!-- 安全风险 -->
+  <div class="panel" id="panel-risk">
+    <h2>⚠️ AI 带来便利，也带来风险</h2>
+    <p style="color:#475569;margin-bottom:14px;font-size:14px;">
+      生成式人工智能（如 AI 画图、AI 配音、AI 写文章）让生活更便利，但也带来了一些值得警惕的安全问题：
+    </p>
+    
+    <div class="case-card">
+      <h4>🎤 案例 1：AI 模仿声音 — 真假难辨</h4>
+      <p>骗子收集你家人的声音，用 AI 训练后可以模仿出几乎一模一样的声音。然后冒充家人打电话借钱、骗取个人信息。</p>
+    </div>
+    
+    <div class="case-card">
+      <h4>🎭 案例 2：AI 换脸 — 视频也能造假</h4>
+      <p>骗子从社交平台收集你朋友的照片，用"AI 换脸"技术合成视频通话，让你误以为是熟人在跟你说话，骗取转账。</p>
+    </div>
+    
+    <div class="case-card">
+      <h4>📰 案例 3：AI 编造假新闻</h4>
+      <p>有人用 AI 自动生成大量看似合理的虚假新闻、虚假评论，传播谣言，制造社会恐慌。</p>
+    </div>
+    
+    <div class="case-card">
+      <h4>🖼️ 案例 4：AI 生成的图像被滥用</h4>
+      <p>AI 可以生成以假乱真的图片，可能被用于诽谤、欺诈、侵犯肖像权。</p>
+    </div>
+
+    <h3 style="color:#16a34a;margin-top:20px;font-size:17px;">✅ 该怎么应对？</h3>
+    <div class="tips-list-2">
+      <div class="tip-card-2"><strong>🛡 防"AI 诈骗"</strong>家人借钱要通过其他方式核实身份，不要只信视频和声音。</div>
+      <div class="tip-card-2"><strong>🔍 多重验证</strong>看到震惊新闻先核实来源，多看几个权威媒体。</div>
+      <div class="tip-card-2"><strong>📵 慎晒隐私</strong>不要随意在网上发布自己和家人的高清照片、声音。</div>
+      <div class="tip-card-2"><strong>📜 关注法规</strong>《生成式人工智能服务管理暂行办法》（2023年8月15日施行）规范了AI的使用。</div>
+      <div class="tip-card-2"><strong>🤝 主动学习</strong>了解 AI 的能力边界，既要会用，也要会防。</div>
+      <div class="tip-card-2"><strong>👨‍👩‍👧 家校联动</strong>把这些知识告诉家人，特别是爷爷奶奶。</div>
+    </div>
+    
+    <div class="knowledge">
+      <h3>💡 一句话总结</h3>
+      <p>AI 是工具，工具本身没有好坏，关键看怎么用。我们要做<b>主动拥抱新技术、又能识别风险的小卫士</b>。眼见不一定为实，耳听不一定为真——保持警惕，多重验证。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// 标签切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== 识图体验 =====
+const galleryItems = [
+  { emoji: '🐱', name: '家猫', truth: '动物', hints: { '猫': 92, '狗': 5, '兔子': 2, '其他': 1 } },
+  { emoji: '🐶', name: '小狗', truth: '动物', hints: { '狗': 88, '猫': 6, '狼': 4, '其他': 2 } },
+  { emoji: '🍎', name: '苹果', truth: '水果', hints: { '苹果': 94, '番茄': 3, '樱桃': 2, '其他': 1 } },
+  { emoji: '🌸', name: '樱花', truth: '植物', hints: { '樱花': 89, '桃花': 7, '梅花': 3, '其他': 1 } },
+  { emoji: '🚗', name: '小汽车', truth: '交通工具', hints: { '汽车': 95, '公交车': 3, '玩具车': 1, '其他': 1 } },
+  { emoji: '✈️', name: '飞机', truth: '交通工具', hints: { '飞机': 96, '直升机': 2, '火箭': 1, '其他': 1 } },
+  { emoji: '🐼', name: '熊猫', truth: '动物', hints: { '熊猫': 93, '熊': 4, '考拉': 2, '其他': 1 } },
+  { emoji: '🌻', name: '向日葵', truth: '植物', hints: { '向日葵': 91, '雏菊': 5, '太阳': 2, '其他': 2 } },
+];
+
+let currentImg = galleryItems[0];
+
+function renderGallery() {
+  const g = document.getElementById('gallery');
+  g.innerHTML = galleryItems.map((it, i) => 
+    `<div class="gallery-item ${it.emoji === currentImg.emoji ? 'active' : ''}" onclick="selectImg(${i})">${it.emoji}</div>`
+  ).join('');
+  document.getElementById('targetImg').textContent = currentImg.emoji;
+  document.getElementById('targetName').textContent = currentImg.name;
+}
+
+function selectImg(idx) {
+  currentImg = galleryItems[idx];
+  renderGallery();
+  document.getElementById('resultBars').innerHTML = `<div style="color:#94a3b8;font-size:14px;text-align:center;padding:30px 0;">点击"开始识别"<br>查看 AI 的判断</div>`;
+  document.getElementById('processSteps').style.display = 'none';
+}
+
+function startRecognize() {
+  const resultBox = document.getElementById('resultBars');
+  resultBox.innerHTML = '<div style="color:#6d28d9;text-align:center;padding:40px 0;">🔬 AI 正在分析图像...</div>';
+  
+  // 显示步骤
+  const steps = document.getElementById('processSteps');
+  steps.style.display = 'block';
+  steps.querySelectorAll('.step').forEach(s => s.classList.remove('show'));
+  
+  const stepsArr = steps.querySelectorAll('.step');
+  stepsArr.forEach((s, i) => setTimeout(() => s.classList.add('show'), 300 * (i + 1)));
+  
+  setTimeout(() => {
+    const hints = currentImg.hints;
+    resultBox.innerHTML = Object.entries(hints).map(([key, val], i) => {
+      return `<div class="confidence-bar">
+        <div class="label">${key}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%">${val}%</div></div>
+        <div class="pct">${val}%</div>
+      </div>`;
+    }).join('') + 
+    `<div class="feature-vector">特征向量（部分）：[${Array.from({length:8},()=>(Math.random()*2-1).toFixed(2)).join(', ')}, ...]<br>
+    <div style="margin-top:6px;color:#16a34a;">✅ 最终判断：<b>${Object.keys(hints)[0]}</b>（属于"${currentImg.truth}"类）</div></div>`;
+    
+    // 动画填充
+    setTimeout(() => {
+      resultBox.querySelectorAll('.bar-fill').forEach((bar, i) => {
+        bar.style.width = Object.values(hints)[i] + '%';
+      });
+    }, 50);
+  }, 1600);
+}
+
+renderGallery();
+
+// ===== 训练演示 =====
+const fruitOptions = ['🍎','🍌','🍊','🍇','🍓','🍑','🥝','🍍','🍒','🍐','🥭','🍉'];
+const animalOptions = ['🐶','🐱','🐰','🐯','🦊','🐼','🐨','🐮','🐷','🐸','🐵','🐔'];
+let fruitSamples = [], animalSamples = [];
+
+function addSample(cat) {
+  const opts = cat === 'fruit' ? fruitOptions : animalOptions;
+  const samples = cat === 'fruit' ? fruitSamples : animalSamples;
+  if (samples.length >= 8) {
+    alert('每类最多 8 个样本，足够 AI 学习了 :)');
+    return;
+  }
+  // 选一个未使用过的
+  const available = opts.filter(o => !samples.includes(o));
+  if (available.length === 0) return;
+  const newSample = available[Math.floor(Math.random() * available.length)];
+  samples.push(newSample);
+  
+  const container = document.getElementById(cat + 'Samples');
+  // 重新渲染
+  container.innerHTML = samples.map(s => `<div class="train-sample added">${s}</div>`).join('') +
+    '<div class="add-sample" onclick="addSample(\'' + cat + '\')">+</div>';
+  document.getElementById(cat + 'Count').textContent = samples.length;
+}
+
+const testItems = [
+  { emoji: '🥕', name: '胡萝卜（蔬菜）', truth: 'unknown' },
+  { emoji: '🍓', name: '草莓', truth: 'fruit' },
+  { emoji: '🐠', name: '热带鱼', truth: 'animal' },
+  { emoji: '🦋', name: '蝴蝶', truth: 'animal' },
+  { emoji: '🥦', name: '西兰花（蔬菜）', truth: 'unknown' },
+  { emoji: '🍌', name: '香蕉', truth: 'fruit' },
+  { emoji: '🐝', name: '蜜蜂', truth: 'animal' },
+  { emoji: '🍔', name: '汉堡（食物）', truth: 'unknown' },
+];
+let currentTest = testItems[0];
+
+function newTest() {
+  let next;
+  do { next = testItems[Math.floor(Math.random() * testItems.length)]; } while (next === currentTest);
+  currentTest = next;
+  document.getElementById('testImg').textContent = currentTest.emoji;
+  document.getElementById('testName').textContent = currentTest.name;
+  document.getElementById('testResult').style.display = 'none';
+}
+
+function testAI() {
+  const total = fruitSamples.length + animalSamples.length;
+  const result = document.getElementById('testResult');
+  result.style.display = 'block';
+  
+  if (total < 4) {
+    result.style.background = '#fef2f2';
+    result.style.color = '#991b1b';
+    result.innerHTML = `⚠️ 训练样本太少（共 ${total} 个），AI 还没学会判断！请先添加更多样本。`;
+    return;
+  }
+  
+  // 简单"识别"：根据 truth 给出概率
+  let fruitProb, animalProb;
+  if (currentTest.truth === 'fruit') {
+    fruitProb = 75 + Math.floor(Math.random() * 20);
+    animalProb = Math.floor(Math.random() * 15);
+  } else if (currentTest.truth === 'animal') {
+    animalProb = 75 + Math.floor(Math.random() * 20);
+    fruitProb = Math.floor(Math.random() * 15);
+  } else {
+    fruitProb = 25 + Math.floor(Math.random() * 25);
+    animalProb = 25 + Math.floor(Math.random() * 25);
+  }
+  
+  result.style.background = '#faf5ff';
+  result.style.color = '#6d28d9';
+  let conclusion;
+  if (Math.abs(fruitProb - animalProb) < 20) {
+    conclusion = `<div style="color:#b45309;margin-top:6px;">🤔 AI 不太确定！这张图既不太像水果也不太像动物。<br>这就是 AI 的局限——只学过水果和动物的它，遇到没见过的东西就判断不准了。</div>`;
+  } else if (fruitProb > animalProb) {
+    conclusion = `<div style="color:#16a34a;margin-top:6px;">🎯 AI 判断为 <b>水果</b> ${currentTest.truth === 'fruit' ? '✅ 正确！' : '❌ 答错了'}</div>`;
+  } else {
+    conclusion = `<div style="color:#16a34a;margin-top:6px;">🎯 AI 判断为 <b>动物</b> ${currentTest.truth === 'animal' ? '✅ 正确！' : '❌ 答错了'}</div>`;
+  }
+  
+  result.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>🍎 水果概率<br><b style="font-size:18px;color:#dc2626;">${fruitProb}%</b></div>
+      <div>🐶 动物概率<br><b style="font-size:18px;color:#16a34a;">${animalProb}%</b></div>
+    </div>
+    ${conclusion}
+  `;
+}
+</script>
+</body>
+</html>

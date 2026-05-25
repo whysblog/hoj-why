@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第26课 · 数字世界有身份 — 虚拟身份与 IP 地址</title>
+<style>
+  :root {
+    --bg: #fef2f2;
+    --bg-2: #fee2e2;
+    --ink: #450a0a;
+    --ink-soft: #7a4a4a;
+    --primary: #dc2626;
+    --primary-2: #ef4444;
+    --accent: #f97316;
+    --green: #10b981;
+    --blue: #2563eb;
+    --line: #fecaca;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(220,38,38,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 身份分类 */
+  .id-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .id-card {
+    background: var(--card); padding: 22px; border-radius: 12px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .id-card.user { border-top: 4px solid var(--blue); }
+  .id-card.device { border-top: 4px solid var(--primary); }
+  .id-card h3 { font-size: 17px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .id-card.user h3 { color: var(--blue); }
+  .id-card.device h3 { color: var(--primary); }
+  .id-list { list-style: none; }
+  .id-item {
+    padding: 10px 12px; background: var(--bg-2); border-radius: 6px; margin-bottom: 8px;
+    font-size: 13px; line-height: 1.6;
+  }
+  .id-item .label { font-weight: 700; color: var(--ink); }
+  .id-item .value {
+    font-family: "JetBrains Mono",monospace; font-size: 12px; color: var(--primary);
+    margin-left: 6px; padding: 2px 6px; background: rgba(255,255,255,.7); border-radius: 3px;
+  }
+  .id-item .desc { font-size: 11px; color: var(--ink-soft); display: block; margin-top: 4px; }
+
+  /* IPv4 vs IPv6 */
+  .ip-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .ip-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .ip-box {
+    padding: 20px; border-radius: 10px;
+  }
+  .ip-box.v4 { background: linear-gradient(160deg, #fee2e2, #fecaca); border: 1px solid #fca5a5; }
+  .ip-box.v6 { background: linear-gradient(160deg, #d1fae5, #a7f3d0); border: 1px solid #86efac; }
+  .ip-box h3 { font-size: 16px; margin-bottom: 8px; }
+  .ip-box .addr {
+    background: rgba(255,255,255,.7); padding: 10px 14px; border-radius: 6px;
+    font-family: "JetBrains Mono",monospace; font-size: 14px;
+    margin: 10px 0; font-weight: 700;
+  }
+  .ip-box ul { padding-left: 20px; font-size: 13px; line-height: 1.8; }
+  .ip-box li { margin: 4px 0; }
+  .ip-box .num {
+    font-size: 32px; font-weight: 700; margin: 8px 0;
+    font-family: "JetBrains Mono",monospace;
+  }
+
+  /* 设备身份探索 */
+  .explore { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .dev-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .dev-btn {
+    padding: 10px 16px; background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-family: inherit; color: var(--ink);
+  }
+  .dev-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .dev-info {
+    background: #0f0a0a; color: #fca5a5; padding: 16px; border-radius: 8px;
+    font-family: "JetBrains Mono",monospace; font-size: 13px;
+    line-height: 1.8;
+  }
+  .dev-info .k { color: #fbbf24; }
+  .dev-info .v { color: #6ee7b7; }
+  .dev-info .com { color: #6b7280; font-size: 11px; }
+
+  /* 重要意义 */
+  .why { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .why-list { list-style: none; counter-reset: w; }
+  .why-list li {
+    counter-increment: w;
+    padding-left: 50px; position: relative; padding-top: 6px; padding-bottom: 12px;
+    font-size: 13px; line-height: 1.8; color: var(--ink-soft);
+    border-bottom: 1px dashed var(--line);
+  }
+  .why-list li:last-child { border: none; }
+  .why-list li::before {
+    content: counter(w);
+    position: absolute; left: 0; top: 4px;
+    background: var(--primary); color: #fff;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .why-list strong { color: var(--ink); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .id-grid, .ip-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 26 课</span>数字世界有身份</h1>
+  <p class="lead">在物联网中，<strong>每一个"物"都需要一个独一无二的身份</strong>，就像每个人有身份证一样。本课带你了解数字身份的种类、表示方式，以及为什么需要从 IPv4 升级到 IPv6 来支持万物互联。</p>
+</header>
+
+<main>
+
+  <!-- 用户 vs 设备身份 -->
+  <section class="section">
+    <div class="section-title">一、虚拟身份的两大类</div>
+    <div class="id-grid">
+      <div class="id-card user">
+        <h3>👤 用户身份（人的身份）</h3>
+        <ul class="id-list">
+          <li class="id-item">
+            <span class="label">手机号：</span><span class="value">138****8888</span>
+            <span class="desc">最常用的实名身份。注册大多数 APP 都用它。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">用户名 / UID：</span><span class="value">user_abc123</span>
+            <span class="desc">在某个具体平台内的唯一标识。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">邮箱：</span><span class="value">student@example.com</span>
+            <span class="desc">国际通用，常用于登录和密码找回。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">生物特征：</span><span class="value">指纹 / 人脸 / 声纹</span>
+            <span class="desc">基于身体特征的"无密码"身份。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">微信/QQ ID：</span><span class="value">wxid_xxxxxx</span>
+            <span class="desc">第三方账号体系，可"一键登录"其他 APP。</span>
+          </li>
+        </ul>
+      </div>
+      <div class="id-card device">
+        <h3>📡 设备身份（物的身份）</h3>
+        <ul class="id-list">
+          <li class="id-item">
+            <span class="label">MAC 地址：</span><span class="value">3A:F1:CD:88:42:7E</span>
+            <span class="desc">网卡出厂时烧录的唯一物理地址，全球独一无二。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">IP 地址：</span><span class="value">192.168.1.123</span>
+            <span class="desc">设备在网络中的逻辑地址，可变（如更换 Wi-Fi）。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">IMEI：</span><span class="value">86 010234 567890 0</span>
+            <span class="desc">手机和 4G/5G 设备的全球唯一标识，相当于"身份证"。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">设备 SN：</span><span class="value">SN-2024-A8K3-001</span>
+            <span class="desc">厂家定义的产品序列号，用于售后保修。</span>
+          </li>
+          <li class="id-item">
+            <span class="label">RFID UID：</span><span class="value">001A79B56C</span>
+            <span class="desc">RFID 标签内置的唯一编号。</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- IPv4 vs IPv6 -->
+  <section class="section">
+    <div class="section-title">二、为什么需要 IPv6</div>
+    <div class="ip-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;">物联网时代<strong>设备数量爆炸</strong>—— 灯泡、摄像头、传感器都要联网。IPv4 的<strong>地址池只有 43 亿个</strong>，早已不够分。IPv6 提供了<strong>近乎无限</strong>的地址，是物联网普及的<strong>基础设施</strong>。</p>
+      <div class="ip-row">
+        <div class="ip-box v4">
+          <h3>🌐 IPv4（已耗尽）</h3>
+          <div class="addr">192.168.1.123</div>
+          <ul>
+            <li>使用 <strong>32 位</strong>地址</li>
+            <li>总容量：<strong>2³² ≈ 43 亿</strong></li>
+            <li>用 4 段十进制数表示</li>
+            <li>1980 年代设计，未考虑 IoT</li>
+            <li>2011 年地址池<strong>正式耗尽</strong></li>
+          </ul>
+          <div class="num">≈ 43 亿</div>
+          <p style="font-size:12px;color:var(--ink-soft);">够全球 60% 的人用，但<strong>远不够给每个物品分配</strong>。</p>
+        </div>
+        <div class="ip-box v6">
+          <h3>🌍 IPv6（IoT 必需）</h3>
+          <div class="addr" style="font-size:11px;">2001:db8:85a3::8a2e:370:7334</div>
+          <ul>
+            <li>使用 <strong>128 位</strong>地址</li>
+            <li>总容量：<strong>2¹²⁸ ≈ 3.4×10³⁸</strong></li>
+            <li>用 8 段十六进制表示</li>
+            <li>支持自动配置、安全协议</li>
+            <li>地球上每粒沙都能分配 IP</li>
+          </ul>
+          <div class="num">≈ 3.4 ×10³⁸</div>
+          <p style="font-size:12px;color:var(--ink-soft);">为万物互联准备的"<strong>无限地址池</strong>"。我国 IPv6 普及率全球领先。</p>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:14px;">
+        💡 <strong>有趣对比：</strong>把 IPv4 比作只有 4 位的电话号码（最多 1 万部电话），IPv6 就像 38 位的电话号码——给宇宙中每颗恒星都分配号码也用不完。
+      </p>
+    </div>
+  </section>
+
+  <!-- 设备身份探索 -->
+  <section class="section">
+    <div class="section-title">三、查看身边设备的身份</div>
+    <div class="explore">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">点击下方设备类型，查看它的关键身份标识：</p>
+      <div class="dev-row">
+        <button class="dev-btn active" id="d_phone" onclick="showDev('phone')">📱 智能手机</button>
+        <button class="dev-btn" id="d_laptop" onclick="showDev('laptop')">💻 笔记本电脑</button>
+        <button class="dev-btn" id="d_router" onclick="showDev('router')">📡 路由器</button>
+        <button class="dev-btn" id="d_camera" onclick="showDev('camera')">📷 IP 摄像头</button>
+        <button class="dev-btn" id="d_plant" onclick="showDev('plant')">🌱 智能花盆</button>
+      </div>
+      <div class="dev-info" id="devInfo"></div>
+    </div>
+  </section>
+
+  <!-- 为什么重要 -->
+  <section class="section">
+    <div class="section-title">四、为什么"数字身份"如此重要</div>
+    <div class="why">
+      <ol class="why-list">
+        <li><strong>定位与寻址。</strong>没有 IP 地址，数据包就不知道该送到哪台设备。就像没有门牌号的房子，快递员找不到。</li>
+        <li><strong>权限控制。</strong>系统根据身份判断"你能不能开这扇门、查这条数据"。在公司里，CEO 和实习生看到的内容不同。</li>
+        <li><strong>责任追溯。</strong>出了问题能查"是谁、什么时间、做了什么"。数字身份让网络空间有了"<strong>可问责性</strong>"。</li>
+        <li><strong>个性化服务。</strong>知道你是谁，才能推荐你喜欢的内容、记住你的偏好。</li>
+        <li><strong>安全保障。</strong>身份是认证的基础。指纹+人脸+短信验证码，多因素认证保护账户安全。</li>
+        <li><strong>万物互联。</strong>每件物品有了独立身份，才能在物联网中被发现、连接、协同。</li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 26 课配套交互工具</footer>
+
+<script>
+var devs = {
+  phone: {
+    name: '📱 智能手机',
+    fields: [
+      ['IMEI',     '86 010234 567890 0', '设备的全球唯一编号，写入芯片不可改'],
+      ['MAC',      '3A:F1:CD:88:42:7E',  '物理 MAC 地址，每个 Wi-Fi 模块独立'],
+      ['IPv4',     '192.168.1.105',      '连接家里 Wi-Fi 后由路由器分配'],
+      ['IPv6',     '2408:8456:32a0::5',  '运营商分配，全球唯一'],
+      ['手机号',   '138****8888',         '运营商分配，绑定 SIM 卡'],
+      ['设备型号', 'Honor Magic 6',       '产品标识'],
+      ['操作系统', 'MagicOS 8.0',         '软件版本']
+    ]
+  },
+  laptop: {
+    name: '💻 笔记本电脑',
+    fields: [
+      ['MAC',      '8C:DC:D4:42:71:A0',  '网卡硬件地址'],
+      ['IPv4',     '192.168.1.108',      '路由器分配的局域网地址'],
+      ['IPv6',     '2408:8456:32a0::8',  '运营商分配'],
+      ['主机名',   'student-laptop',      '在局域网中可见的名字'],
+      ['UUID',     'a1b2c3d4-...-89ab',  '系统生成的唯一标识符'],
+      ['序列号',   'CN1234567X',          '产品序列号，售后用']
+    ]
+  },
+  router: {
+    name: '📡 家用路由器',
+    fields: [
+      ['MAC',      '00:1A:79:B5:6C:00',  '路由器 WAN 口的 MAC'],
+      ['公网 IPv4','125.34.156.88',       '运营商分配的公网地址（家庭共用）'],
+      ['公网 IPv6','2408:8456:32a0:1::1', '为家里每台设备分配独立 IPv6'],
+      ['内网网段','192.168.1.0/24',       '内部 254 台设备共用'],
+      ['SSID',    'TPLINK_8B2A',          'Wi-Fi 网络名称'],
+      ['设备型号', 'TP-Link XDR3010',     '产品型号']
+    ]
+  },
+  camera: {
+    name: '📷 IP 摄像头',
+    fields: [
+      ['MAC',      '64:90:C1:00:A1:23',  '摄像头网卡 MAC'],
+      ['IPv4',     '192.168.1.66',       '路由器分配（最好绑定静态 IP）'],
+      ['设备 ID',  'CAM_LIVING_001',     '在云平台上的设备名'],
+      ['RTSP URL', 'rtsp://192.168.1.66:554/stream1', '视频流地址'],
+      ['序列号',   'IC2023A8B4',         '产品序列号'],
+      ['密码',     '已设强密码（隐藏）',  '默认密码必须改！否则极易被入侵']
+    ]
+  },
+  plant: {
+    name: '🌱 智能花盆',
+    fields: [
+      ['设备 ID',  'plant_xiao_zhi_01',  '设备名（自定义）'],
+      ['MAC',      'A0:F3:E9:C2:11:80',  'Wi-Fi 模块 MAC'],
+      ['IPv4',     '192.168.1.123',      '路由器分配'],
+      ['MQTT ClientID', 'plant_001_x4f',  '云平台 MQTT 连接标识'],
+      ['主题',     'home/plant/data',     '上报数据用'],
+      ['Token',    'eyJhbGc***（隐藏）',  '云端身份令牌']
+    ]
+  }
+};
+
+function showDev(key) {
+  var keys = ['phone','laptop','router','camera','plant'];
+  for (var i = 0; i < keys.length; i++) {
+    document.getElementById('d_' + keys[i]).className = 'dev-btn' + (keys[i] === key ? ' active' : '');
+  }
+  var d = devs[key];
+  var html = '<div class="com"># ' + d.name + ' 的数字身份信息</div>';
+  for (var i = 0; i < d.fields.length; i++) {
+    var f = d.fields[i];
+    html += '<div><span class="k">' + f[0].padEnd(11, ' ') + '</span> = <span class="v">' + f[1] + '</span></div>';
+    html += '<div class="com">  // ' + f[2] + '</div>';
+  }
+  document.getElementById('devInfo').innerHTML = html;
+}
+
+showDev('phone');
+window.showDev = showDev;
+</script>
+</body>
+</html>

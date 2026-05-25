@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>使用数字设备 — 第2课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f9ff; color: #1e293b; }
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 230px; background: linear-gradient(180deg, #1e40af, #3b82f6); color: white; padding: 24px 16px; flex-shrink: 0; }
+.sidebar h1 { font-size: 16px; margin-bottom: 4px; }
+.sidebar .lesson { font-size: 12px; opacity: .8; margin-bottom: 22px; }
+.nav-item { padding: 12px 14px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 14px; transition: all .2s; display: flex; align-items: center; gap: 10px; }
+.nav-item:hover { background: rgba(255,255,255,.12); }
+.nav-item.active { background: rgba(255,255,255,.22); font-weight: 600; }
+.nav-item .num { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+.slide { display: none; animation: fadeIn .4s; }
+.slide.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide h2 { color: #1e40af; font-size: 28px; margin-bottom: 8px; }
+.slide .lead { color: #64748b; margin-bottom: 24px; font-size: 15px; }
+.controls { position: fixed; bottom: 24px; right: 32px; display: flex; gap: 8px; }
+.ctrl-btn { padding: 10px 20px; background: white; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.ctrl-btn:hover { background: #f0f9ff; }
+.ctrl-btn.primary { background: #3b82f6; color: white; border-color: #1e40af; }
+.computer-anatomy { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .computer-anatomy { grid-template-columns: 1fr; } }
+.anatomy-card { background: white; border-radius: 14px; padding: 18px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+.anatomy-card h3 { color: #1e40af; margin-bottom: 12px; }
+.parts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.part { padding: 10px 12px; background: #eff6ff; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+.part:hover { background: #dbeafe; }
+.part.selected { background: #3b82f6; color: white; }
+.part .icon { display: inline-block; margin-right: 4px; }
+.drag-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.dz { min-height: 100px; padding: 12px; border-radius: 10px; border: 2px dashed; }
+.dz.hardware { background: #eff6ff; border-color: #93c5fd; }
+.dz.software { background: #faf5ff; border-color: #c4b5fd; }
+.dz h4 { font-size: 14px; margin-bottom: 8px; }
+.dz.hardware h4 { color: #1e40af; }
+.dz.software h4 { color: #6d28d9; }
+.dz .items { display: flex; flex-wrap: wrap; gap: 6px; min-height: 50px; }
+.dz-item { padding: 6px 12px; background: white; border-radius: 6px; font-size: 13px; cursor: grab; box-shadow: 0 1px 3px rgba(0,0,0,.06); user-select: none; }
+.dz-item.dragging { opacity: .4; }
+.behavior-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .behavior-list { grid-template-columns: 1fr; } }
+.beh-card { background: white; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,.04); transition: all .2s; }
+.beh-card.right { border-left: 4px solid #22c55e; }
+.beh-card.wrong { border-left: 4px solid #ef4444; }
+.beh-card.unknown { border-left: 4px solid #cbd5e1; cursor: pointer; }
+.beh-card.unknown:hover { background: #f8fafc; }
+.beh-img { font-size: 36px; margin-bottom: 6px; }
+.beh-text { font-size: 14px; color: #475569; margin-bottom: 8px; }
+.beh-judgement { display: flex; gap: 6px; }
+.beh-btn { flex: 1; padding: 6px; border: 1.5px solid #cbd5e1; background: white; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.beh-btn.right-btn:hover { background: #dcfce7; border-color: #22c55e; }
+.beh-btn.wrong-btn:hover { background: #fee2e2; border-color: #ef4444; }
+.beh-explain { display: none; padding: 8px 10px; background: #f8fafc; border-radius: 6px; margin-top: 8px; font-size: 12px; line-height: 1.6; color: #475569; }
+.beh-card.judged .beh-explain { display: block; }
+.beh-card.judged .beh-judgement { display: none; }
+.beh-card.judged .beh-img { font-size: 28px; }
+.knowledge { background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; padding: 16px 20px; border-radius: 8px; margin-top: 18px; }
+.knowledge h3 { color: #92400e; font-size: 15px; margin-bottom: 6px; }
+.knowledge p { color: #78350f; font-size: 14px; line-height: 1.7; }
+.intro-card { background: linear-gradient(135deg, #dbeafe, #bfdbfe); padding: 28px 32px; border-radius: 16px; margin-bottom: 20px; }
+.intro-card h3 { color: #1e40af; font-size: 22px; margin-bottom: 8px; }
+.intro-card p { color: #1e3a8a; line-height: 1.7; }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; }
+.step-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); text-align: center; position: relative; }
+.step-card .step-num { position: absolute; top: -10px; left: -10px; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+.step-card .icon { font-size: 36px; margin: 8px 0; }
+.step-card .label { font-size: 13px; color: #475569; line-height: 1.5; }
+.tablet-screen { background: #1e293b; padding: 16px 12px; border-radius: 18px; max-width: 320px; margin: 16px auto; }
+.tablet-screen .scr { background: #f0f9ff; border-radius: 10px; padding: 18px; min-height: 280px; }
+.tablet-screen .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+.tablet-screen .row:last-child { border: none; }
+.toggle { width: 40px; height: 22px; border-radius: 11px; background: #cbd5e1; position: relative; cursor: pointer; transition: background .2s; }
+.toggle.on { background: #22c55e; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: left .2s; }
+.toggle.on::after { left: 20px; }
+.tablet-screen .scr.eye-mode { background: #fef3c7; }
+.score-row { background: white; padding: 12px 16px; border-radius: 10px; margin-top: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.score { font-weight: 700; color: #16a34a; font-size: 16px; }
+@media (max-width: 800px) { .app { flex-direction: column; } .sidebar { width: 100%; } .main { padding: 20px; padding-bottom: 100px; } .controls { bottom: 12px; right: 12px; left: 12px; justify-content: center; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>💻 使用数字设备</h1>
+    <div class="lesson">第 2 课 · 第一单元</div>
+    <div class="nav-item active" onclick="goSlide(0)"><span class="num">1</span>本课导入</div>
+    <div class="nav-item" onclick="goSlide(1)"><span class="num">2</span>认识计算机</div>
+    <div class="nav-item" onclick="goSlide(2)"><span class="num">3</span>软件 vs 硬件</div>
+    <div class="nav-item" onclick="goSlide(3)"><span class="num">4</span>平板的护眼模式</div>
+    <div class="nav-item" onclick="goSlide(4)"><span class="num">5</span>规范使用判断</div>
+    <div class="nav-item" onclick="goSlide(5)"><span class="num">6</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>本课导入</h2>
+      <div class="lead">数字设备帮助我们更好地学习、生活和工作，但要做它的"主人"，正确、规范使用</div>
+      <div class="intro-card">
+        <h3>🤔 想一想</h3>
+        <p>你每天会用到哪些数字设备？是只会"开机—玩游戏—关机"，还是已经懂得它的硬件、软件、操作方法？让我们做一个真正"会用"数字设备的小学生。</p>
+      </div>
+      <div class="knowledge">
+        <h3>📌 本课重点</h3>
+        <p>① 计算机和平板的基础知识、基本操作；<br>② 培养良好的数字设备使用习惯（安全、健康、合理）。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🖥️ 认识计算机</h2>
+      <div class="lead">计算机由硬件和软件两部分组成，缺一不可</div>
+      <div class="computer-anatomy">
+        <div class="anatomy-card">
+          <h3>🔧 硬件（看得见摸得着）</h3>
+          <div class="parts-grid">
+            <div class="part"><span class="icon">🖥️</span>显示器</div>
+            <div class="part"><span class="icon">⌨️</span>键盘</div>
+            <div class="part"><span class="icon">🖱️</span>鼠标</div>
+            <div class="part"><span class="icon">🔊</span>音箱</div>
+            <div class="part"><span class="icon">📦</span>主机</div>
+            <div class="part"><span class="icon">🖨️</span>打印机</div>
+          </div>
+        </div>
+        <div class="anatomy-card">
+          <h3>💿 软件（看不见但很重要）</h3>
+          <div class="parts-grid">
+            <div class="part"><span class="icon">🪟</span>操作系统</div>
+            <div class="part"><span class="icon">🌐</span>浏览器</div>
+            <div class="part"><span class="icon">📝</span>文字处理</div>
+            <div class="part"><span class="icon">🎨</span>画图软件</div>
+            <div class="part"><span class="icon">🎮</span>游戏程序</div>
+            <div class="part"><span class="icon">🎬</span>视频播放器</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <h3 style="color:#1e40af;font-size:16px;margin-bottom:10px;">📝 启动计算机的基本步骤</h3>
+        <div class="steps-grid">
+          <div class="step-card"><div class="step-num">1</div><div class="icon">🔌</div><div class="label">检查电源接通</div></div>
+          <div class="step-card"><div class="step-num">2</div><div class="icon">⏻</div><div class="label">按下开机键</div></div>
+          <div class="step-card"><div class="step-num">3</div><div class="icon">🖥️</div><div class="label">等待进入桌面</div></div>
+          <div class="step-card"><div class="step-num">4</div><div class="icon">🖱️</div><div class="label">用鼠标启动软件</div></div>
+          <div class="step-card"><div class="step-num">5</div><div class="icon">❌</div><div class="label">通过开始菜单关机</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🧩 拖一拖：硬件还是软件？</h2>
+      <div class="lead">把下面的物品拖到正确的分类中</div>
+      <div style="background:white;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:14px;">
+        <div style="font-size:13px;color:#64748b;margin-bottom:10px;">📦 待分类的物品：</div>
+        <div class="items" id="pool" style="display:flex;flex-wrap:wrap;gap:8px;min-height:60px;"></div>
+      </div>
+      <div class="drag-zone">
+        <div class="dz hardware" ondragover="event.preventDefault()" ondrop="dropTo(event,'hw')">
+          <h4>🔧 硬件（摸得着）</h4>
+          <div class="items" id="hw"></div>
+        </div>
+        <div class="dz software" ondragover="event.preventDefault()" ondrop="dropTo(event,'sw')">
+          <h4>💿 软件（程序）</h4>
+          <div class="items" id="sw"></div>
+        </div>
+      </div>
+      <div class="score-row">
+        <span style="font-size:14px;color:#475569;">点击"检查"看看是否分对了</span>
+        <button class="ctrl-btn primary" onclick="checkHwSw()">✅ 检查</button>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📱 平板计算机的护眼模式</h2>
+      <div class="lead">使用平板前，记得开启护眼模式！合适的亮度可以保护视力</div>
+      <div class="tablet-screen">
+        <div class="scr" id="tabletScr">
+          <div style="font-size:13px;color:#94a3b8;text-align:center;margin-bottom:10px;">⚙️ 显示和亮度</div>
+          <div class="row">
+            <span>🌙 护眼模式</span>
+            <div class="toggle" id="eyeToggle" onclick="toggleEye()"></div>
+          </div>
+          <div class="row">
+            <span>🔆 亮度</span>
+            <input type="range" id="brightness" min="20" max="100" value="80" style="width:120px;">
+          </div>
+          <div class="row">
+            <span>🔊 音量</span>
+            <input type="range" min="0" max="100" value="60" style="width:120px;">
+          </div>
+          <div class="row">
+            <span>📅 全天开启护眼</span>
+            <div class="toggle" id="allDayToggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="margin-top:12px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.5;" id="eyeTip">
+            点击右侧开关试试 ↑
+          </div>
+        </div>
+      </div>
+      <div class="knowledge">
+        <h3>👁️ 为什么要开护眼模式</h3>
+        <p>护眼模式会过滤掉部分蓝光，让屏幕颜色更接近暖色，减少对眼睛的刺激。同时记得：<b>每用 30 分钟，要远眺 5 分钟！</b></p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>✅ 这些做法对不对？</h2>
+      <div class="lead">点击"对" 或 "错"，看看你能判断正确多少</div>
+      <div class="behavior-list" id="behList"></div>
+      <div class="score-row" style="margin-top:18px;">
+        <span style="font-size:14px;color:#475569;">已判断 <span id="judgedCount">0</span>/8 · 正确 <span class="score" id="rightCount">0</span></span>
+        <button class="ctrl-btn" onclick="resetBeh()">🔁 重新开始</button>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">使用数字设备的"三个角度"</div>
+      <div class="steps-grid">
+        <div class="step-card" style="border-top:4px solid #ef4444;">
+          <div class="icon">🛡️</div>
+          <h4 style="color:#b91c1c;margin:6px 0;">安全使用</h4>
+          <div class="label">不在马路、楼梯等危险场所使用设备；不边吃东西边操作设备</div>
+        </div>
+        <div class="step-card" style="border-top:4px solid #16a34a;">
+          <div class="icon">💚</div>
+          <h4 style="color:#15803d;margin:6px 0;">健康使用</h4>
+          <div class="label">坐姿端正、保持距离、光线充足、不长时间使用</div>
+        </div>
+        <div class="step-card" style="border-top:4px solid #f59e0b;">
+          <div class="icon">🤝</div>
+          <h4 style="color:#b45309;margin:6px 0;">合理使用</h4>
+          <div class="label">公共场所戴耳机；家庭聚会时不长时间玩手机</div>
+        </div>
+      </div>
+      <div class="knowledge">
+        <h3>💡 老师寄语</h3>
+        <p>数字设备是工具，不是玩具。要做"使用设备的主人"，而不是"被设备控制的奴隶"。掌握知识，规范使用，才能享受科技带来的真正乐趣。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="prevSlide()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="nextSlide()">下一页 →</button>
+</div>
+
+<script>
+// ====== 硬件软件分类 ======
+const hwswItems = [
+  { name: '显示器', type: 'hw' }, { name: '操作系统', type: 'sw' },
+  { name: '鼠标', type: 'hw' }, { name: '浏览器', type: 'sw' },
+  { name: '键盘', type: 'hw' }, { name: '画图软件', type: 'sw' },
+  { name: '主机', type: 'hw' }, { name: '游戏程序', type: 'sw' },
+];
+
+function renderHwSw() {
+  document.getElementById('pool').innerHTML = hwswItems.map((it, i) => 
+    `<div class="dz-item" draggable="true" data-i="${i}" ondragstart="event.dataTransfer.setData('i', '${i}')">${it.name}</div>`
+  ).join('');
+  document.getElementById('hw').innerHTML = '';
+  document.getElementById('sw').innerHTML = '';
+}
+renderHwSw();
+
+function dropTo(e, zone) {
+  e.preventDefault();
+  const i = e.dataTransfer.getData('i');
+  if (i === '') return;
+  const el = document.querySelector(`.dz-item[data-i="${i}"]`);
+  if (!el) return;
+  document.getElementById(zone).appendChild(el);
+}
+
+function checkHwSw() {
+  const hw = [...document.querySelectorAll('#hw .dz-item')];
+  const sw = [...document.querySelectorAll('#sw .dz-item')];
+  const pool = [...document.querySelectorAll('#pool .dz-item')];
+  if (pool.length > 0) { alert('还有 ' + pool.length + ' 项没分类！'); return; }
+  let correct = 0;
+  hw.forEach(el => { if (hwswItems[el.dataset.i].type === 'hw') correct++; });
+  sw.forEach(el => { if (hwswItems[el.dataset.i].type === 'sw') correct++; });
+  alert(`分类完成！正确 ${correct}/${hwswItems.length} 项。${correct === hwswItems.length ? '🎉 全对了！' : '加油，再试一次～'}`);
+}
+
+// ====== 护眼模式 ======
+function toggleEye() {
+  const t = document.getElementById('eyeToggle');
+  t.classList.toggle('on');
+  const on = t.classList.contains('on');
+  document.getElementById('tabletScr').classList.toggle('eye-mode', on);
+  document.getElementById('eyeTip').textContent = on ? '✅ 护眼模式已开启，屏幕变暖色调' : '点击右侧开关试试 ↑';
+}
+
+// ====== 行为判断 ======
+const behaviors = [
+  { img: '🚗', text: '过马路时低头看手机', right: false, explain: '❌ 错误。过马路必须专注交通，看手机会发生意外！' },
+  { img: '🍔', text: '使用计算机时吃东西', right: false, explain: '❌ 错误。食物碎屑、油渍会损坏键盘和电脑。' },
+  { img: '🌳', text: '使用电脑半小时后看远处', right: true, explain: '✅ 正确！远眺有助于缓解视疲劳。' },
+  { img: '🪑', text: '操作电脑时弯腰驼背', right: false, explain: '❌ 错误。坐姿不端正会导致驼背、近视、颈椎病。' },
+  { img: '🎧', text: '坐火车听故事时戴耳机', right: true, explain: '✅ 正确！戴耳机不打扰他人，是文明的做法。' },
+  { img: '👨‍👩‍👧', text: '家庭聚会时长时间玩手机', right: false, explain: '❌ 错误。家人团聚要注重情感交流，少看手机。' },
+  { img: '💧', text: '把水杯放在键盘旁边', right: false, explain: '❌ 错误。万一打翻，电脑和键盘可能直接报废。' },
+  { img: '☀️', text: '在光线充足的地方使用平板', right: true, explain: '✅ 正确！合适的环境光能保护视力。' },
+];
+
+function renderBeh() {
+  document.getElementById('behList').innerHTML = behaviors.map((b, i) => `
+    <div class="beh-card unknown" id="beh-${i}">
+      <div class="beh-img">${b.img}</div>
+      <div class="beh-text">${b.text}</div>
+      <div class="beh-judgement">
+        <button class="beh-btn right-btn" onclick="judgeBeh(${i}, true)">✓ 对</button>
+        <button class="beh-btn wrong-btn" onclick="judgeBeh(${i}, false)">✗ 错</button>
+      </div>
+      <div class="beh-explain">${b.explain}</div>
+    </div>
+  `).join('');
+  document.getElementById('judgedCount').textContent = '0';
+  document.getElementById('rightCount').textContent = '0';
+}
+renderBeh();
+
+let judgeStat = { judged: 0, right: 0 };
+function judgeBeh(i, choice) {
+  const card = document.getElementById('beh-' + i);
+  const isCorrect = choice === behaviors[i].right;
+  card.classList.remove('unknown');
+  card.classList.add('judged', behaviors[i].right ? 'right' : 'wrong');
+  judgeStat.judged++;
+  if (isCorrect) judgeStat.right++;
+  document.getElementById('judgedCount').textContent = judgeStat.judged;
+  document.getElementById('rightCount').textContent = judgeStat.right;
+}
+function resetBeh() { judgeStat = { judged: 0, right: 0 }; renderBeh(); }
+
+// ====== 翻页 ======
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function goSlide(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((n, idx) => n.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextSlide() { if (cur < slides.length - 1) goSlide(cur + 1); }
+function prevSlide() { if (cur > 0) goSlide(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>互联网应用与创新 · 七年级教学工具集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+body {
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  font-family: 'Noto Sans SC', sans-serif;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(78,209,184,.08), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(255,179,71,.08), transparent 40%);
+}
+.container { max-width: 1280px; margin: 0 auto; padding: 40px 32px; }
+
+.hero {
+  text-align: center; padding: 60px 0 40px;
+  border-bottom: 1px solid var(--border); margin-bottom: 40px;
+}
+.hero .tag {
+  display: inline-block; padding: 6px 16px; border-radius: 16px;
+  background: rgba(78,209,184,.12); color: var(--accent);
+  font-size: 13px; font-weight: 500; margin-bottom: 18px;
+  border: 1px solid rgba(78,209,184,.3);
+}
+.hero h1 {
+  font-size: 52px; font-weight: 900; margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  line-height: 1.15;
+}
+.hero p { color: var(--muted); font-size: 18px; max-width: 720px; margin: 0 auto 30px; }
+.hero-stats {
+  display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; margin-top: 24px;
+}
+.hero-stat .num {
+  font-size: 36px; font-weight: 900; font-family: 'JetBrains Mono', monospace;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-stat .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.unit { margin-bottom: 50px; }
+.unit-header {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+  padding-bottom: 14px; border-bottom: 2px solid var(--border);
+}
+.unit-num {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 20px;
+  color: #0f1729; flex-shrink: 0;
+}
+.unit-title h2 { font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+.unit-title p { font-size: 13px; color: var(--muted); }
+
+.lessons {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.lesson-card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 18px; border-radius: 12px;
+  transition: all .25s; position: relative; overflow: hidden;
+}
+.lesson-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent); opacity: 0; transition: opacity .25s;
+}
+.lesson-card:hover {
+  transform: translateY(-3px); border-color: var(--accent);
+  box-shadow: 0 10px 24px rgba(78,209,184,.15);
+}
+.lesson-card:hover::before { opacity: 1; }
+.lesson-meta {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+}
+.lesson-num {
+  background: var(--panel-2); color: var(--accent2);
+  padding: 2px 8px; border-radius: 6px; font-weight: 700;
+}
+.lesson-type {
+  padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 500;
+}
+.lesson-type.tool {
+  background: rgba(255,179,71,.12); color: var(--accent2);
+  border: 1px solid rgba(255,179,71,.3);
+}
+.lesson-type.deck {
+  background: rgba(78,209,184,.12); color: var(--accent);
+  border: 1px solid rgba(78,209,184,.3);
+}
+.lesson-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.lesson-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.footer {
+  text-align: center; padding: 40px 0; margin-top: 40px;
+  border-top: 1px solid var(--border); color: var(--muted); font-size: 13px;
+}
+.footer p { margin-bottom: 8px; }
+.legend {
+  display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap;
+}
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 36px; }
+  .hero-stats { gap: 24px; }
+  .container { padding: 24px 16px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <span class="tag">📘 义务教育信息科技课程教学指南</span>
+    <h1>互联网应用与创新</h1>
+    <p>七年级全一册 · 30 课时配套 HTML 网页工具，可替代 PPT 用于课堂教学，支持学生自学。</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">30</div><div class="label">课时</div></div>
+      <div class="hero-stat"><div class="num">6</div><div class="label">单元</div></div>
+      <div class="hero-stat"><div class="num">8</div><div class="label">交互工具</div></div>
+      <div class="hero-stat"><div class="num">22</div><div class="label">幻灯片课件</div></div>
+    </div>
+  </div>
+
+  <div class="unit">
+    <div class="unit-header">
+      <div class="unit-num">1</div>
+      <div class="unit-title"><h2>第一单元 · 探寻互联网新世界</h2><p>历史与特征 · 互联网影响</p></div>
+    </div>
+    <div class="lessons">
+      <a class="lesson-card" href="L01_互联网发展靠创新.html"><div class="lesson-meta"><span class="lesson-num">L01</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">互联网发展靠创新</div><div class="lesson-desc">ARPANET → WWW → 中国互联网建设历程，关键创新者与成就。</div></a>
+      <a class="lesson-card" href="L02_互联网应用新特征.html"><div class="lesson-meta"><span class="lesson-num">L02</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">互联网应用新特征</div><div class="lesson-desc">连通性、即时性、共享性、交互性、规模化五大特征解析。</div></a>
+      <a class="lesson-card" href="L03_互联网影响新体验.html"><div class="lesson-meta"><span class="lesson-num">L03</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">互联网影响新体验</div><div class="lesson-desc">教育、医疗、商业、交通、社交 5 大领域的变革与挑战。</div></a>
+    </div>
+  </div>
+
+  <div class="unit">
+    <div class="unit-header">
+      <div class="unit-num">2</div>
+      <div class="unit-title"><h2>第二单元 · 直播网络我来建</h2><p>分包传输 · 协议分层 · IP/DNS · 路由 · 组网</p></div>
+    </div>
+    <div class="lessons">
+      <a class="lesson-card" href="01_数据分包传输演示器.html"><div class="lesson-meta"><span class="lesson-num">L04</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">数据分包传输演示器</div><div class="lesson-desc">动画演示数据分包、传输、组装的完整过程。</div></a>
+      <a class="lesson-card" href="02_网络协议分层模型.html"><div class="lesson-meta"><span class="lesson-num">L05</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">网络协议分层模型</div><div class="lesson-desc">交互式呈现 TCP/IP 与 OSI 七层模型对照。</div></a>
+      <a class="lesson-card" href="03_IP地址解析器.html"><div class="lesson-meta"><span class="lesson-num">L06</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">IP 地址解析器</div><div class="lesson-desc">支持 IPv4 与 IPv6 地址解析，二进制转换演示。</div></a>
+      <a class="lesson-card" href="04_DNS域名解析模拟器.html"><div class="lesson-meta"><span class="lesson-num">L07</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">DNS 域名解析模拟器</div><div class="lesson-desc">递归 DNS 查询动画，根域名 → 顶级 → 权威服务器全过程。</div></a>
+      <a class="lesson-card" href="L08_路由路径靠算法.html"><div class="lesson-meta"><span class="lesson-num">L08</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">路由路径靠算法</div><div class="lesson-desc">路由器原理 + 最短路径算法动画演示 + 动/静态路由对比。</div></a>
+      <a class="lesson-card" href="L09_数据传输有新意.html"><div class="lesson-meta"><span class="lesson-num">L09</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">数据传输有新意</div><div class="lesson-desc">TCP/UDP 对比 + 三次握手 SVG 动图 + 端口号详解。</div></a>
+      <a class="lesson-card" href="L10_综合所学建网络.html"><div class="lesson-meta"><span class="lesson-num">L10</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">综合所学建网络</div><div class="lesson-desc">家庭网络结构图 + IP/子网掩码/网关/DNS 四参数 + DHCP 流程。</div></a>
+    </div>
+  </div>
+
+  <div class="unit">
+    <div class="unit-header">
+      <div class="unit-num">3</div>
+      <div class="unit-title"><h2>第三单元 · 便捷的互联网服务</h2><p>WWW · HTTPS · 搜索 · 网络命令实验</p></div>
+    </div>
+    <div class="lessons">
+      <a class="lesson-card" href="L11_互联网服务应用广.html"><div class="lesson-meta"><span class="lesson-num">L11</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">互联网服务应用广</div><div class="lesson-desc">C/S 模型 + 7 大互联网服务类型 + "东数西算"工程。</div></a>
+      <a class="lesson-card" href="L12_万维网服务大揭秘.html"><div class="lesson-meta"><span class="lesson-num">L12</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">万维网服务大揭秘</div><div class="lesson-desc">URL 解剖 + 访问网页全流程 + HTML/CSS/JS + HTTP 状态码。</div></a>
+      <a class="lesson-card" href="L13_万维网安全新协议.html"><div class="lesson-meta"><span class="lesson-num">L13</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">万维网安全新协议</div><div class="lesson-desc">HTTP vs HTTPS + TLS 握手 + 数字证书 + CA 机构。</div></a>
+      <a class="lesson-card" href="L14_互联网搜索新发展.html"><div class="lesson-meta"><span class="lesson-num">L14</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">互联网搜索新发展</div><div class="lesson-desc">爬虫/索引/排名 + 6 大搜索技巧 + AI 搜索新形态。</div></a>
+      <a class="lesson-card" href="L15_互联网实验齐发现.html"><div class="lesson-meta"><span class="lesson-num">L15</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">互联网实验齐发现</div><div class="lesson-desc">ipconfig / ping / tracert 实操命令 + 故障排查口诀。</div></a>
+    </div>
+  </div>
+
+  <div class="unit">
+    <div class="unit-header">
+      <div class="unit-num">4</div>
+      <div class="unit-title"><h2>第四单元 · 校园活动线上展</h2><p>HTML · CSS · Markdown · 网站建设</p></div>
+    </div>
+    <div class="lessons">
+      <a class="lesson-card" href="05_HTML实时编辑器.html"><div class="lesson-meta"><span class="lesson-num">L16-17</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">HTML 实时编辑器</div><div class="lesson-desc">左右分屏，所写即所见。涵盖常用标签讲解。</div></a>
+      <a class="lesson-card" href="06_CSS样式调试器.html"><div class="lesson-meta"><span class="lesson-num">L18</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">CSS 样式调试器</div><div class="lesson-desc">可视化调节颜色、字号、边距、动画等 CSS 属性。</div></a>
+      <a class="lesson-card" href="07_Markdown实时预览器.html"><div class="lesson-meta"><span class="lesson-num">L19</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">Markdown 实时预览器</div><div class="lesson-desc">即时渲染 Markdown 源码为格式化文档。</div></a>
+      <a class="lesson-card" href="L20_组建网站跟我做.html"><div class="lesson-meta"><span class="lesson-num">L20</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">组建网站跟我做</div><div class="lesson-desc">建站六步法 + 域名注册 + 4 种托管方式 + 合规要求。</div></a>
+    </div>
+  </div>
+
+  <div class="unit">
+    <div class="unit-header">
+      <div class="unit-num">5</div>
+      <div class="unit-title"><h2>第五单元 · 互联网创新应用</h2><p>移动互联 · 在线学习 · 智慧生活 · 云服务</p></div>
+    </div>
+    <div class="lessons">
+      <a class="lesson-card" href="L21_移动互联新发展.html"><div class="lesson-meta"><span class="lesson-num">L21</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">移动互联新发展</div><div class="lesson-desc">2G→5G 代际演进 + 移动支付/LBS/AR + 北斗导航。</div></a>
+      <a class="lesson-card" href="L22_在线学习新变革.html"><div class="lesson-meta"><span class="lesson-num">L22</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">在线学习新变革</div><div class="lesson-desc">国家智慧教育平台 + 6 种在线学习形态 + 高效学习方法。</div></a>
+      <a class="lesson-card" href="L23_在线生活创意多.html"><div class="lesson-meta"><span class="lesson-num">L23</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">在线生活创意多</div><div class="lesson-desc">智能家居 + 共享经济 + 电商演进 + 即时零售。</div></a>
+      <a class="lesson-card" href="L24_在线交流新气象.html"><div class="lesson-meta"><span class="lesson-num">L24</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">在线交流新气象</div><div class="lesson-desc">数字形象 + 数字足迹 + 6 大社交陷阱 + 文明上网 10 条。</div></a>
+      <a class="lesson-card" href="L25_网络创新云服务.html"><div class="lesson-meta"><span class="lesson-num">L25</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">网络创新云服务</div><div class="lesson-desc">IaaS/PaaS/SaaS 三层模型 + 云存储 + 中国云力量。</div></a>
+      <a class="lesson-card" href="L26_创意展示我家乡.html"><div class="lesson-meta"><span class="lesson-num">L26</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">创意展示我家乡</div><div class="lesson-desc">短视频策划/拍摄/剪辑/发布四步法 + 分镜脚本范例。</div></a>
+    </div>
+  </div>
+
+  <div class="unit">
+    <div class="unit-header">
+      <div class="unit-num">6</div>
+      <div class="unit-title"><h2>第六单元 · 共同守护互联网</h2><p>个人信息 · 数字版权 · 企业责任 · 网络生态</p></div>
+    </div>
+    <div class="lessons">
+      <a class="lesson-card" href="08_密码强度检测器.html"><div class="lesson-meta"><span class="lesson-num">L27</span><span class="lesson-type tool">交互工具</span></div><div class="lesson-title">密码强度检测器</div><div class="lesson-desc">实时分析密码强度，引导设置安全密码。</div></a>
+      <a class="lesson-card" href="L28_数字版权要保护.html"><div class="lesson-meta"><span class="lesson-num">L28</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">数字版权要保护</div><div class="lesson-desc">著作权法 + 合理使用 + CC 协议 + 合法素材网站。</div></a>
+      <a class="lesson-card" href="L29_企业责任勇担当.html"><div class="lesson-meta"><span class="lesson-num">L29</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">企业责任勇担当</div><div class="lesson-desc">企业 5 大责任 + 数据保护要求 + "卡脖子"与自主可控。</div></a>
+      <a class="lesson-card" href="L30_网络生态建设好.html"><div class="lesson-meta"><span class="lesson-num">L30</span><span class="lesson-type deck">幻灯片</span></div><div class="lesson-title">网络生态建设好</div><div class="lesson-desc">网络暴力 + 谣言识别 4 步法 + 国家"清朗"行动 + 网民角色。</div></a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p><strong>🎓 七年级 · 互联网应用与创新 · 教学工具集</strong></p>
+    <p>按照《义务教育信息科技课程教学指南》开发，配套教材使用</p>
+    <div class="legend">
+      <span><span class="lesson-type tool">交互工具</span>动手操作类（8 课）</span>
+      <span><span class="lesson-type deck">幻灯片</span>知识讲解类（22 课）</span>
+    </div>
+    <p style="margin-top:20px;">💡 幻灯片操作：键盘 ← → 翻页 · <strong>F</strong> 全屏 · <strong>T</strong> 目录</p>
+  </div>
+</div>
+</body>
+</html>

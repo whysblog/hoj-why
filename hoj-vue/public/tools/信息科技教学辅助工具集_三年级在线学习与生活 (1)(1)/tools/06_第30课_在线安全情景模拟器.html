@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>在线安全情景模拟器 — 第30课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fee2e2 0%, #fef9c3 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1000px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #b45309; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.progress-bar {
+  background: white; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.progress-info { font-size: 14px; color: #475569; }
+.progress-track {
+  flex: 1; height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444);
+  width: 0%; transition: width .4s; border-radius: 5px;
+}
+.score-box {
+  padding: 6px 14px; background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white; border-radius: 16px; font-weight: 700; font-size: 14px;
+}
+
+.scenario-card {
+  background: white; border-radius: 16px; padding: 28px;
+  box-shadow: 0 6px 30px rgba(0,0,0,.08);
+}
+.scenario-num {
+  display: inline-block; padding: 4px 12px; background: #fef3c7;
+  color: #b45309; border-radius: 16px; font-size: 13px; font-weight: 600; margin-bottom: 12px;
+}
+.scenario-title { color: #1e293b; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.scenario-desc {
+  background: #f8fafc; padding: 18px 22px; border-radius: 12px;
+  border-left: 4px solid #f59e0b; line-height: 1.8; color: #334155;
+  margin-bottom: 20px; font-size: 15px;
+}
+.scenario-illust {
+  text-align: center; font-size: 80px; padding: 20px; background: #fefce8;
+  border-radius: 12px; margin-bottom: 20px;
+}
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px;
+  background: white; cursor: pointer; transition: all .25s;
+  display: flex; align-items: flex-start; gap: 12px;
+  text-align: left; font-family: inherit; font-size: 14px; color: #334155; width: 100%;
+}
+.option:hover:not(:disabled) {
+  border-color: #f59e0b; background: #fffbeb; transform: translateX(4px);
+}
+.option-letter {
+  width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9;
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+  color: #64748b; flex-shrink: 0;
+}
+.option.correct { border-color: #16a34a; background: #f0fdf4; }
+.option.correct .option-letter { background: #16a34a; color: white; }
+.option.wrong { border-color: #dc2626; background: #fef2f2; }
+.option.wrong .option-letter { background: #dc2626; color: white; }
+.option:disabled { cursor: not-allowed; opacity: .85; }
+
+.feedback {
+  margin-top: 18px; padding: 18px; border-radius: 12px; display: none;
+}
+.feedback.show { display: block; animation: slideUp .3s; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.feedback.correct { background: #dcfce7; border-left: 4px solid #16a34a; }
+.feedback.wrong { background: #fee2e2; border-left: 4px solid #dc2626; }
+.feedback h4 { margin-bottom: 8px; font-size: 16px; }
+.feedback.correct h4 { color: #15803d; }
+.feedback.wrong h4 { color: #b91c1c; }
+.feedback p { color: #334155; font-size: 14px; line-height: 1.7; }
+
+.btn {
+  padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer;
+  font-weight: 600; font-size: 15px; transition: all .2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+  color: white;
+}
+.btn-primary:hover { opacity: .92; }
+.btn-row { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+
+.summary {
+  background: white; border-radius: 16px; padding: 32px; text-align: center;
+  box-shadow: 0 6px 30px rgba(0,0,0,.08); display: none;
+}
+.summary.show { display: block; }
+.summary .big-emoji { font-size: 80px; margin-bottom: 12px; }
+.summary h2 { color: #b45309; font-size: 26px; margin-bottom: 8px; }
+.summary .final-score { font-size: 42px; color: #16a34a; font-weight: 700; margin: 16px 0; }
+.summary p { color: #475569; line-height: 1.7; }
+
+.tips-section {
+  background: white; border-radius: 16px; padding: 24px; margin-top: 20px;
+  border-left: 5px solid #f59e0b; box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.tips-section h3 { color: #b45309; margin-bottom: 12px; font-size: 17px; }
+.tips-list {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.tip-item {
+  background: #fffbeb; padding: 12px 14px; border-radius: 8px;
+  font-size: 13px; color: #78350f; line-height: 1.6;
+}
+.tip-item strong { color: #b45309; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🛡️ 在线安全情景模拟器</h1>
+    <div class="subtitle">配套课时：第30课 在线安全防范 · 通过真实场景，学会做出正确的安全决策</div>
+  </header>
+
+  <div class="progress-bar">
+    <span class="progress-info">第 <b id="currentNum">1</b>/<b id="totalNum">8</b> 题</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="score-box">⭐ <span id="scoreText">0</span> 分</span>
+  </div>
+
+  <div class="scenario-card" id="scenarioCard">
+    <div class="scenario-num" id="scenarioNum">情景 1</div>
+    <h2 class="scenario-title" id="scenarioTitle"></h2>
+    <div class="scenario-illust" id="scenarioIllust"></div>
+    <div class="scenario-desc" id="scenarioDesc"></div>
+    <div class="options" id="optionsBox"></div>
+    <div class="feedback" id="feedback">
+      <h4 id="feedbackTitle"></h4>
+      <p id="feedbackText"></p>
+    </div>
+    <div class="btn-row" id="btnRow" style="display:none;">
+      <button class="btn btn-primary" onclick="nextScenario()" id="nextBtn">下一题 →</button>
+    </div>
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="big-emoji" id="summaryEmoji">🏆</div>
+    <h2 id="summaryTitle">完成！你是网络安全小卫士</h2>
+    <div class="final-score" id="finalScore">0 分</div>
+    <p id="summaryText"></p>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="restart()">🔄 再来一次</button>
+  </div>
+
+  <div class="tips-section">
+    <h3>📋 在线安全防范要点（牢记！）</h3>
+    <div class="tips-list">
+      <div class="tip-item"><strong>📶 公共 Wi-Fi</strong>：不连无密码的 Wi-Fi，连接公共 Wi-Fi 时不登录账号、不支付。</div>
+      <div class="tip-item"><strong>📱 二维码</strong>：来路不明的二维码不要扫，特别是路边、群里的"领奖品"。</div>
+      <div class="tip-item"><strong>🔗 陌生链接</strong>：不点击陌生人发送的超链接，警惕中奖、退款类信息。</div>
+      <div class="tip-item"><strong>💰 网络支付</strong>：未成年人在线购物要在家长陪同下进行，不擅自支付。</div>
+      <div class="tip-item"><strong>🎁 红包陷阱</strong>：发红包才能领红包？这是诈骗，立即退群。</div>
+      <div class="tip-item"><strong>📷 摄像头</strong>：拍摄他人前先征得同意，被拍时也要保护自己。</div>
+      <div class="tip-item"><strong>🔐 个人隐私</strong>：不轻易透露姓名、住址、电话、学校等隐私信息。</div>
+      <div class="tip-item"><strong>👮 求助</strong>：遇到不确定的情况，及时告诉家长、老师或拨打 96110 反诈热线。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const scenarios = [
+  {
+    title: '商场里的免费 Wi-Fi',
+    illust: '📱📶',
+    desc: '小夏和爸爸在商场，爸爸用手机搜索无线网络，页面中显示出多个名字相似的免费 Wi-Fi（比如 "Mall_Free"、"Mall-Free-WiFi"、"Free_WIFI_AAA"）。他们应该怎么做？',
+    options: [
+      { text: '随意选择一个免费 Wi-Fi 直接连接', correct: false },
+      { text: '向商场工作人员咨询正确的 Wi-Fi 账号和密码再连接', correct: true },
+      { text: '连接信号最强的那个，反正都是免费的', correct: false },
+    ],
+    explain: '✅ 正确做法：向工作人员问清楚再连接。<br><b>原因：</b>骗子常常伪造名字相似的"假 Wi-Fi"，你一连上去，他们就能监控你的网络流量，甚至盗取账号密码。即使是真的免费 Wi-Fi，连接时也尽量不登录支付应用。'
+  },
+  {
+    title: '路边"扫码领奖品"',
+    illust: '📋🎁',
+    desc: '小智和奶奶在路边看到一张宣传单："扫二维码，免费领 10 元小奖品！"宣传单上还印着各种诱人的礼物图案。',
+    options: [
+      { text: '赶快扫码领取奖品，反正是免费的', correct: false },
+      { text: '先看看别人扫了之后怎么样，再决定', correct: false },
+      { text: '不扫码，避免被骗。"天上不会掉馅饼"', correct: true },
+    ],
+    explain: '✅ 正确做法：不扫陌生二维码。<br><b>原因：</b>路边的二维码很可能链接到钓鱼网站或下载木马程序。骗子常用"免费奖品"做诱饵，扫码后会被诱导填写个人信息，甚至盗取手机里的钱财。要记住一句话：<b>"免费的往往最贵"</b>。'
+  },
+  {
+    title: '网上购物',
+    illust: '🛒💳',
+    desc: '小华看中了一个网上商城里的毛绒玩具，需要付款 89 元。她没有自己的支付账号，但记得爸爸手机里有支付软件。',
+    options: [
+      { text: '偷偷拿爸爸的手机付款，玩具到了再告诉爸爸', correct: false },
+      { text: '在父母的指导下购买，确认商品和卖家信誉后付款', correct: true },
+      { text: '用爸爸的支付账号付款，反正爸爸不会怪我', correct: false },
+    ],
+    explain: '✅ 正确做法：在家长指导下购买。<br><b>原因：</b>未成年人不能擅自进行网络支付。一是网上商品质量参差不齐，可能买到假货；二是擅自使用家长账户违反信任，也容易遭遇诈骗。和家长一起购买更安全。'
+  },
+  {
+    title: '"先发红包才能领红包"',
+    illust: '💸👥',
+    desc: '小慧妈妈收到消息：进入某个微信群可以领大红包。进群后，群里的"工作人员"说："必须先发个 10 元小红包，才能解锁领取 100 元大红包的资格。"',
+    options: [
+      { text: '先发个小红包，能赚钱很划算！', correct: false },
+      { text: '群里都是陌生人，肯定是诈骗，果断退群并举报', correct: true },
+      { text: '看看其他人怎么做，跟着大家一起', correct: false },
+    ],
+    explain: '✅ 正确做法：果断退群并举报。<br><b>原因：</b>这是典型的"红包返利"诈骗。骗子让你先发钱，最初可能真返一点小钱让你信任，等你发大额红包后就拉黑跑路。<b>记住：要让你先发钱才能"赚钱"的，100% 是骗局。</b>'
+  },
+  {
+    title: '陌生人的视频通话',
+    illust: '📞👤',
+    desc: '小慧爸爸接到一个视频电话，画面里是一位"老朋友"，长相和声音都很像，对方说急需借 5000 元钱周转，让爸爸马上转账。',
+    options: [
+      { text: '看到熟人的脸和声音，立即转账帮忙', correct: false },
+      { text: '挂断视频，用日常电话回拨"朋友"的号码核实', correct: true },
+      { text: '先转一半，看看朋友会不会要剩下的', correct: false },
+    ],
+    explain: '✅ 正确做法：通过其他渠道核实身份。<br><b>原因：</b>这是利用"AI 换脸 + AI 换声"的新型诈骗！骗子提前从社交平台收集你朋友的照片和声音，伪造视频电话。即使看到熟悉的脸、听到熟悉的声音，也<b>不能 100% 相信</b>。涉及金钱的事情，一定要通过其他方式（如直接打电话、当面）核实。'
+  },
+  {
+    title: '同学拍我的视频',
+    illust: '📸🎬',
+    desc: '课间，同学小明拿手机给你拍了一段你在做鬼脸的搞笑视频，没和你打招呼，还说要发到他的抖音上让大家看。',
+    options: [
+      { text: '没关系，反正是好朋友', correct: false },
+      { text: '告诉小明：未经我同意，请不要发布我的视频', correct: true },
+      { text: '让他发，能上热门更好', correct: false },
+    ],
+    explain: '✅ 正确做法：明确拒绝并要求删除或不发布。<br><b>原因：</b>每个人都有<b>肖像权</b>。即使是好朋友，未经你同意也不能随意拍摄、发布你的视频。把视频发到公开平台后，可能被陌生人看到、被恶意编辑、甚至被用于诈骗。要学会保护自己的肖像和隐私。'
+  },
+  {
+    title: '社交账号该用什么密码？',
+    illust: '🔐🆔',
+    desc: '小夏要注册一个学习平台的账号。他考虑了几种密码：',
+    options: [
+      { text: '使用生日 20140315，方便记忆', correct: false },
+      { text: '使用 123456 或 abc123，简单好记', correct: false },
+      { text: '使用"喜欢的诗+数字"，如 jtwmydtsgx2024', correct: true },
+    ],
+    explain: '✅ 正确做法：使用自己原创规则的密码。<br><b>原因：</b>① 生日是亲友都知道的信息，容易被猜中；<br>② "123456" 是黑客字典的第一个，几秒内就被破解；<br>③ 自己原创的"诗的首字母+数字"既好记又难猜，符合<b>自主可控</b>的要求。<br>另外，不同账号要用不同密码！'
+  },
+  {
+    title: '"紧急通知，看了快转！"',
+    illust: '📢⚠️',
+    desc: '小夏奶奶在家庭群里看到一条信息："紧急通知！某地大量水果有毒！是中国人就转！"信息里有一些图片，但没有官方来源。',
+    options: [
+      { text: '事关安全，赶紧转发给所有亲友', correct: false },
+      { text: '提醒奶奶不要转，先到官方网站核实信息真伪', correct: true },
+      { text: '不转也不阻止，让奶奶自己决定', correct: false },
+    ],
+    explain: '✅ 正确做法：先核实再转发。<br><b>原因：</b>带有"紧急""快转""是中国人就转"等煽动性语句的信息，绝大多数是<b>谣言</b>。盲目转发不实信息，自己也会成为谣言的"帮凶"。正确的做法：① 看信息来源是不是官方（政府/媒体/科研机构）；② 在搜索引擎上查证；③ 不确定的不要转。'
+  },
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+document.getElementById('totalNum').textContent = scenarios.length;
+
+function loadScenario() {
+  const s = scenarios[current];
+  document.getElementById('scenarioNum').textContent = `情景 ${current + 1}`;
+  document.getElementById('scenarioTitle').textContent = s.title;
+  document.getElementById('scenarioIllust').textContent = s.illust;
+  document.getElementById('scenarioDesc').textContent = s.desc;
+  document.getElementById('currentNum').textContent = current + 1;
+  document.getElementById('progressFill').style.width = ((current) / scenarios.length * 100) + '%';
+  
+  // 打乱选项顺序，但记住正确答案
+  const opts = s.options.map((o, i) => ({ ...o, originalIdx: i }));
+  // shuffle (固定种子让用户体验一致：可保留原顺序)
+  const optsBox = document.getElementById('optionsBox');
+  optsBox.innerHTML = opts.map((o, i) => 
+    `<button class="option" onclick="choose(${i})" id="opt-${i}" data-correct="${o.correct}">
+      <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+      <span>${o.text}</span>
+    </button>`
+  ).join('');
+  
+  document.getElementById('feedback').classList.remove('show');
+  document.getElementById('btnRow').style.display = 'none';
+  answered = false;
+}
+
+function choose(idx) {
+  if (answered) return;
+  answered = true;
+  const opts = document.querySelectorAll('.option');
+  const chosen = opts[idx];
+  const isCorrect = chosen.dataset.correct === 'true';
+  
+  opts.forEach((o, i) => {
+    o.disabled = true;
+    if (o.dataset.correct === 'true') o.classList.add('correct');
+    else if (i === idx) o.classList.add('wrong');
+  });
+  
+  if (isCorrect) score += 10;
+  document.getElementById('scoreText').textContent = score;
+  
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show', isCorrect ? 'correct' : 'wrong');
+  fb.classList.remove(isCorrect ? 'wrong' : 'correct');
+  document.getElementById('feedbackTitle').textContent = isCorrect ? '🎉 回答正确！+10 分' : '🤔 这个选择有风险';
+  document.getElementById('feedbackText').innerHTML = scenarios[current].explain;
+  document.getElementById('btnRow').style.display = 'flex';
+  
+  document.getElementById('nextBtn').textContent = (current >= scenarios.length - 1) ? '🏁 查看总结' : '下一题 →';
+}
+
+function nextScenario() {
+  current++;
+  if (current >= scenarios.length) {
+    showSummary();
+  } else {
+    loadScenario();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function showSummary() {
+  document.getElementById('scenarioCard').style.display = 'none';
+  document.getElementById('summary').classList.add('show');
+  document.getElementById('finalScore').textContent = score + ' / ' + (scenarios.length * 10) + ' 分';
+  document.getElementById('progressFill').style.width = '100%';
+  
+  let emoji, title, text;
+  if (score === scenarios.length * 10) {
+    emoji = '🏆'; title = '满分！网络安全小卫士';
+    text = '你掌握了所有的在线安全知识！记得把这些技能教给家人，特别是爷爷奶奶哦。';
+  } else if (score >= scenarios.length * 7) {
+    emoji = '⭐'; title = '不错的成绩！';
+    text = '你已经掌握了大部分安全知识，但还有一些细节要注意。回顾下方的"安全要点"，再做一次会更棒。';
+  } else if (score >= scenarios.length * 5) {
+    emoji = '💪'; title = '继续加油！';
+    text = '你需要再加强网络安全意识。仔细阅读下方的"安全要点"，多和老师、家长讨论这些情景。';
+  } else {
+    emoji = '📚'; title = '需要多多学习哦';
+    text = '没关系，安全知识需要慢慢积累。建议你和家人一起讨论这些情景，理解每个选择背后的原因。';
+  }
+  
+  document.getElementById('summaryEmoji').textContent = emoji;
+  document.getElementById('summaryTitle').textContent = title;
+  document.getElementById('summaryText').textContent = text;
+}
+
+function restart() {
+  current = 0;
+  score = 0;
+  document.getElementById('scoreText').textContent = '0';
+  document.getElementById('summary').classList.remove('show');
+  document.getElementById('scenarioCard').style.display = 'block';
+  loadScenario();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 初始化
+loadScenario();
+</script>
+</body>
+</html>

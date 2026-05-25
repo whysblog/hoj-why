@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RGB 颜色编码探索器 · 第13课</title>
+<style>
+:root {
+  --c-primary: #ec407a;
+  --c-primary-dark: #c2185b;
+  --c-ink: #2a1620;
+  --c-ink-soft: #6b5560;
+  --c-line: #f0e0e8;
+  --c-card: #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fff5f7 0%, #fff9f5 50%, #f5f9ff 100%);
+  color: var(--c-ink);
+  min-height: 100vh;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-ink-soft);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--c-primary); }
+
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.header .lesson-tag {
+  display: inline-block;
+  padding: 4px 14px;
+  background: rgba(236, 64, 122, 0.12);
+  color: var(--c-primary-dark);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #f44336, #ff9800, #4caf50, #2196f3, #9c27b0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.header p {
+  font-size: 15px;
+  color: var(--c-ink-soft);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 20px;
+}
+
+.card {
+  background: var(--c-card);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(236, 64, 122, 0.08);
+  border: 1px solid var(--c-line);
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-title .num {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  background: var(--c-primary);
+  color: white;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 颜色预览 */
+.color-preview {
+  height: 200px;
+  border-radius: 14px;
+  background: rgb(128, 128, 128);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.15s;
+  margin-bottom: 16px;
+}
+.color-preview .label {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(8px);
+}
+
+.codes-display {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.code-card {
+  padding: 14px;
+  background: #fafafa;
+  border-radius: 10px;
+  border: 1px solid var(--c-line);
+}
+.code-card .label {
+  font-size: 12px;
+  color: var(--c-ink-soft);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.code-card .value {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-ink);
+  word-break: break-all;
+}
+
+/* 滑块 */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider-label {
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.color-dot.r { background: #f44336; }
+.color-dot.g { background: #4caf50; }
+.color-dot.b { background: #2196f3; }
+
+.slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+.slider-input.r { background: linear-gradient(to right, #1a1a1a, #f44336); }
+.slider-input.g { background: linear-gradient(to right, #1a1a1a, #4caf50); }
+.slider-input.b { background: linear-gradient(to right, #1a1a1a, #2196f3); }
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border: 3px solid var(--c-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+.slider-input::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border: 3px solid var(--c-primary);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.number-input {
+  width: 80px;
+  padding: 8px 10px;
+  border: 2px solid var(--c-line);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  font-weight: 700;
+}
+.number-input:focus { outline: none; border-color: var(--c-primary); }
+
+/* 颜色宝典 */
+.preset-section {
+  margin-top: 20px;
+}
+.preset-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+  margin-bottom: 10px;
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+}
+.preset-color {
+  height: 56px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  position: relative;
+  transition: transform 0.15s, border-color 0.15s;
+  overflow: hidden;
+}
+.preset-color:hover {
+  transform: scale(1.05);
+  border-color: var(--c-primary);
+}
+.preset-color .name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-size: 11px;
+  text-align: center;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* 色卡区 */
+.theory-card {
+  background: linear-gradient(135deg, #fff8e1, #fff3c4);
+  border-left: 4px solid #ffa726;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #6b4e00;
+  margin-bottom: 20px;
+}
+
+.bit-explanation {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.bit-card {
+  padding: 14px;
+  background: #fafafa;
+  border-radius: 10px;
+  text-align: center;
+}
+.bit-card .num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+}
+.bit-card .label {
+  font-size: 12px;
+  color: var(--c-ink-soft);
+  margin-top: 4px;
+}
+
+@media (max-width: 880px) {
+  .workspace { grid-template-columns: 1fr; }
+  .header h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← 返回工具集</a>
+
+<div class="header">
+  <span class="lesson-tag">第 13 课 · 多彩的数字世界</span>
+  <h1>RGB 颜色编码探索器</h1>
+  <p>计算机用三个数字 (红 R、绿 G、蓝 B) 来表示一种颜色,每个数字范围是 0~255。试着拖动滑块,看看不同的组合能调出什么颜色!</p>
+</div>
+
+<div class="app">
+
+  <div class="theory-card">
+    <strong>🔬 科学小知识:</strong> RGB 中 R = Red (红)、G = Green (绿)、B = Blue (蓝)。
+    每种颜色用 0~255 之间的数字表示亮度,所以一共能表示 <strong>256 × 256 × 256 = 16,777,216</strong> 种不同颜色!
+    <br><strong>(0,0,0)</strong> 是纯黑,<strong>(255,255,255)</strong> 是纯白,中间各种数字的组合就构成了我们看到的多彩世界。
+  </div>
+
+  <div class="workspace">
+
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>颜色预览</div>
+      <div class="color-preview" id="preview">
+        <span class="label" id="preview-label">rgb(128, 128, 128)</span>
+      </div>
+
+      <div class="codes-display">
+        <div class="code-card">
+          <div class="label">RGB 编码 (十进制)</div>
+          <div class="value" id="rgb-display">rgb(128, 128, 128)</div>
+        </div>
+        <div class="code-card">
+          <div class="label">十六进制编码</div>
+          <div class="value" id="hex-display">#808080</div>
+        </div>
+      </div>
+
+      <div class="preset-section">
+        <div class="preset-title">🎨 试试这些颜色:</div>
+        <div class="preset-grid" id="preset-grid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="num">2</span>调整 RGB 数值</div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label"><span class="color-dot r"></span>红 R</span>
+          <input type="range" min="0" max="255" value="128" class="slider-input r" id="r-slider">
+          <input type="number" min="0" max="255" value="128" class="number-input" id="r-input">
+        </div>
+        <div class="slider-row">
+          <span class="slider-label"><span class="color-dot g"></span>绿 G</span>
+          <input type="range" min="0" max="255" value="128" class="slider-input g" id="g-slider">
+          <input type="number" min="0" max="255" value="128" class="number-input" id="g-input">
+        </div>
+        <div class="slider-row">
+          <span class="slider-label"><span class="color-dot b"></span>蓝 B</span>
+          <input type="range" min="0" max="255" value="128" class="slider-input b" id="b-slider">
+          <input type="number" min="0" max="255" value="128" class="number-input" id="b-input">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--c-line);">
+        <div style="font-size:13px;color:var(--c-ink-soft);margin-bottom:10px;">
+          🔢 <strong>试一试:</strong> 对照下面的提示输入数字,看看会变成什么颜色?
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:13px;">
+          <button class="preset-color" data-rgb="255,0,0" style="background:rgb(255,0,0);height:38px;"><span class="name">(255, 0, 0)</span></button>
+          <button class="preset-color" data-rgb="0,255,0" style="background:rgb(0,255,0);height:38px;"><span class="name">(0, 255, 0)</span></button>
+          <button class="preset-color" data-rgb="0,0,255" style="background:rgb(0,0,255);height:38px;"><span class="name">(0, 0, 255)</span></button>
+          <button class="preset-color" data-rgb="255,255,0" style="background:rgb(255,255,0);height:38px;"><span class="name">(255, 255, 0)</span></button>
+          <button class="preset-color" data-rgb="255,0,255" style="background:rgb(255,0,255);height:38px;"><span class="name">(255, 0, 255)</span></button>
+          <button class="preset-color" data-rgb="0,255,255" style="background:rgb(0,255,255);height:38px;"><span class="name">(0, 255, 255)</span></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-title"><span class="num">💡</span>编码长度与颜色数量</div>
+    <p style="font-size:14px;color:var(--c-ink-soft);margin-bottom:12px;">
+      RGB 中每个颜色为什么数值范围是 0~255?这是因为计算机用 8 个 0 和 1 (称为 8 位) 来存储一个颜色值,
+      8 位最多能组合出 <strong style="color:var(--c-primary-dark);">256</strong> 种不同的数字 (0 到 255)。
+    </p>
+    <div class="bit-explanation">
+      <div class="bit-card">
+        <div class="num">8 位</div>
+        <div class="label">表示一个颜色通道</div>
+      </div>
+      <div class="bit-card">
+        <div class="num">256</div>
+        <div class="label">每个通道的取值数量</div>
+      </div>
+      <div class="bit-card">
+        <div class="num">24 位</div>
+        <div class="label">完整 RGB 颜色 (3×8)</div>
+      </div>
+      <div class="bit-card">
+        <div class="num">16,777,216</div>
+        <div class="label">能表示的颜色总数</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--c-ink-soft);margin-top:14px;text-align:center;">
+      📌 <strong>规律:</strong> 编码越长,能表示的信息(颜色)就越多。这就是 8 × 8 黑白图只有 64 种状态,
+      而 RGB 颜色却能表示一千多万种颜色的原因!
+    </p>
+  </div>
+
+</div>
+
+<script>
+const presets = [
+  { name: '中国红', rgb: [220, 20, 60] },
+  { name: '皇室蓝', rgb: [65, 105, 225] },
+  { name: '森林绿', rgb: [34, 139, 34] },
+  { name: '柠檬黄', rgb: [255, 250, 100] },
+  { name: '橙子', rgb: [255, 140, 0] },
+  { name: '葡萄紫', rgb: [128, 0, 128] },
+  { name: '青柠', rgb: [50, 205, 50] },
+  { name: '粉樱花', rgb: [255, 182, 193] },
+  { name: '天空蓝', rgb: [135, 206, 250] },
+  { name: '巧克力', rgb: [139, 69, 19] },
+  { name: '炭灰', rgb: [54, 54, 54] },
+  { name: '雪白', rgb: [250, 250, 250] }
+];
+
+function renderPresets() {
+  const container = document.getElementById('preset-grid');
+  container.innerHTML = presets.map(p =>
+    `<div class="preset-color" style="background:rgb(${p.rgb.join(',')});" data-rgb="${p.rgb.join(',')}">
+       <span class="name">${p.name}</span>
+     </div>`
+  ).join('');
+  container.querySelectorAll('.preset-color').forEach(el => {
+    el.addEventListener('click', () => {
+      const [r,g,b] = el.dataset.rgb.split(',').map(Number);
+      setRGB(r, g, b);
+    });
+  });
+}
+
+function toHex(n) {
+  return n.toString(16).padStart(2, '0').toUpperCase();
+}
+
+function getColorName(r, g, b) {
+  // 判断主色调,给一个友好的名字
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max - min < 20) {
+    if (max < 50) return '黑色调';
+    if (max > 220) return '白色调';
+    return '灰色调';
+  }
+  if (r === max) {
+    if (g > 150 && b < 100) return '橙色调';
+    if (g > 100) return '红色偏暖';
+    if (b > 150) return '紫红色调';
+    return '红色调';
+  }
+  if (g === max) {
+    if (r > 150) return '黄绿色调';
+    if (b > 150) return '青色调';
+    return '绿色调';
+  }
+  if (b === max) {
+    if (r > 150) return '紫色调';
+    if (g > 150) return '青蓝色调';
+    return '蓝色调';
+  }
+  return '混合色';
+}
+
+function setRGB(r, g, b) {
+  r = Math.max(0, Math.min(255, Math.round(r)));
+  g = Math.max(0, Math.min(255, Math.round(g)));
+  b = Math.max(0, Math.min(255, Math.round(b)));
+
+  document.getElementById('r-slider').value = r;
+  document.getElementById('g-slider').value = g;
+  document.getElementById('b-slider').value = b;
+  document.getElementById('r-input').value = r;
+  document.getElementById('g-input').value = g;
+  document.getElementById('b-input').value = b;
+
+  const rgbStr = `rgb(${r}, ${g}, ${b})`;
+  const hexStr = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  const name = getColorName(r, g, b);
+
+  document.getElementById('preview').style.background = rgbStr;
+  document.getElementById('preview-label').textContent = `${rgbStr} · ${name}`;
+  document.getElementById('rgb-display').textContent = rgbStr;
+  document.getElementById('hex-display').textContent = hexStr;
+
+  // 标签颜色根据明度自动调整
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  const labelEl = document.getElementById('preview-label');
+  if (luminance > 180) {
+    labelEl.style.background = 'rgba(255,255,255,0.85)';
+    labelEl.style.color = '#222';
+  } else {
+    labelEl.style.background = 'rgba(0,0,0,0.6)';
+    labelEl.style.color = 'white';
+  }
+}
+
+function bindSliders() {
+  ['r','g','b'].forEach(c => {
+    const slider = document.getElementById(`${c}-slider`);
+    const input = document.getElementById(`${c}-input`);
+    slider.addEventListener('input', () => {
+      input.value = slider.value;
+      readAndSet();
+    });
+    input.addEventListener('input', () => {
+      const v = +input.value;
+      if (!isNaN(v)) {
+        slider.value = Math.max(0, Math.min(255, v));
+        readAndSet();
+      }
+    });
+  });
+}
+
+function readAndSet() {
+  const r = +document.getElementById('r-slider').value;
+  const g = +document.getElementById('g-slider').value;
+  const b = +document.getElementById('b-slider').value;
+  setRGB(r, g, b);
+}
+
+// 试一试按钮
+document.querySelectorAll('.preset-color[data-rgb]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const [r,g,b] = btn.dataset.rgb.split(',').map(Number);
+    setRGB(r, g, b);
+  });
+});
+
+// 初始化
+renderPresets();
+bindSliders();
+setRGB(220, 20, 60); // 默认中国红
+</script>
+
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第2课 · 传感之古今未来 — 传感器探索器</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --bg-2: #ebe6da;
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --accent: #c8542d;
+    --accent-2: #d4a93a;
+    --tech: #0e5b8a;
+    --tech-soft: #2980b9;
+    --line: #cdc5b4;
+    --card: #fdfaf3;
+    --shadow: 0 4px 20px rgba(20,30,50,.08), 0 1px 3px rgba(20,30,50,.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); }
+  body { background:
+    radial-gradient(circle at 90% 10%, rgba(212,169,58,.12), transparent 50%),
+    radial-gradient(circle at 10% 90%, rgba(14,91,138,.10), transparent 50%),
+    var(--bg);
+    min-height: 100vh;
+  }
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--tech); text-decoration: none; border-bottom: 1px dotted var(--tech); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  /* --- Section: Sensor structure diagram --- */
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--accent); margin-right: 8px; font-size: 14px; }
+
+  .structure {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 16px; align-items: stretch;
+    background: var(--card); padding: 32px; border-radius: 8px; box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+  .stage {
+    background: linear-gradient(160deg, #fff, var(--bg-2));
+    padding: 22px 18px; border-radius: 6px; text-align: center;
+    border: 1px solid var(--line);
+    transition: transform .25s, box-shadow .25s;
+    cursor: pointer;
+  }
+  .stage:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(20,30,50,.1); }
+  .stage h3 { font-size: 17px; margin-bottom: 6px; }
+  .stage p { font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+  .stage .ico { font-size: 32px; margin-bottom: 10px; }
+  .stage.input  { border-top: 4px solid var(--tech); }
+  .stage.calc   { border-top: 4px solid var(--accent-2); }
+  .stage.output { border-top: 4px solid var(--accent); }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 28px; }
+  .demo-window {
+    margin-top: 22px; padding: 20px; background: linear-gradient(180deg,#0e253a,#1a3852);
+    color: #f0e8d3; border-radius: 8px; font-size: 14px; line-height: 1.7;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px rgba(14,91,138,.2);
+  }
+  .demo-window .label { color: var(--accent-2); font-weight: 700; letter-spacing: 1px; font-size: 12px; }
+  .demo-window .out { color: #84d2a3; font-family: "JetBrains Mono","SF Mono","Consolas",monospace; }
+
+  /* --- Section: Sensor — Human Sense Map --- */
+  .map-wrap { display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: start; }
+  .human-figure {
+    position: relative; background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: 16px; box-shadow: var(--shadow); min-height: 480px;
+  }
+  .human-figure svg { width: 100%; height: 460px; }
+  .organ-dot {
+    cursor: pointer; transition: transform .2s;
+  }
+  .organ-dot:hover { transform: scale(1.15); }
+  .organ-dot.active circle { fill: var(--accent); stroke: #fff; stroke-width: 3; }
+  .organ-label { font-size: 13px; fill: var(--ink); font-weight: 600; pointer-events: none; }
+
+  .sensor-panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 28px;
+    box-shadow: var(--shadow); min-height: 480px;
+  }
+  .sensor-panel .header-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .sensor-panel h3 { font-size: 22px; }
+  .sensor-panel .tag { display: inline-block; padding: 4px 12px; background: var(--tech); color: #fff; font-size: 12px; border-radius: 999px; letter-spacing: 1px; }
+  .sensor-panel .desc { margin-top: 16px; color: var(--ink-soft); font-size: 14px; line-height: 1.8; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 20px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .compare-grid > div { padding: 14px 16px; }
+  .compare-grid .head { background: var(--bg-2); font-weight: 700; font-size: 13px; letter-spacing: 1px; }
+  .compare-grid .cell { font-size: 14px; line-height: 1.6; border-top: 1px solid var(--line); }
+  .compare-grid .cell.left { background: rgba(14,91,138,.04); }
+
+  .applications { margin-top: 18px; padding: 14px 18px; background: var(--bg-2); border-left: 4px solid var(--accent-2); border-radius: 4px; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
+  .applications strong { color: var(--ink); }
+
+  /* --- Section: Sensor catalog grid --- */
+  .catalog-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px;
+  }
+  .sensor-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 16px;
+    cursor: pointer; transition: all .25s; position: relative;
+  }
+  .sensor-card:hover { transform: translateY(-3px); border-color: var(--tech); box-shadow: 0 8px 18px rgba(14,91,138,.15); }
+  .sensor-card.active { border: 2px solid var(--accent); background: linear-gradient(160deg, #fff, #fff7ec); }
+  .sensor-card .name { font-weight: 700; font-size: 15px; }
+  .sensor-card .organ { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .sensor-card .hint { font-size: 11px; color: var(--accent); margin-top: 8px; opacity: 0; transition: opacity .2s; }
+  .sensor-card:hover .hint { opacity: 1; }
+  .sensor-card .icon { font-size: 22px; margin-bottom: 8px; }
+
+  /* --- Section: Timeline --- */
+  .timeline {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 30px 30px 20px;
+    box-shadow: var(--shadow); position: relative;
+  }
+  .timeline-track {
+    position: relative; margin: 30px 0 20px; padding: 30px 0;
+  }
+  .timeline-line {
+    position: absolute; left: 0; right: 0; top: 50%; height: 2px;
+    background: linear-gradient(90deg, var(--accent-2), var(--tech), var(--accent));
+  }
+  .timeline-points { display: flex; justify-content: space-between; position: relative; }
+  .tp {
+    width: 22%; text-align: center; cursor: pointer; transition: transform .2s;
+    background: var(--card); padding: 14px 10px; border: 1px solid var(--line); border-radius: 6px;
+    position: relative; z-index: 1;
+  }
+  .tp:hover { transform: translateY(-4px); border-color: var(--accent); }
+  .tp .era { font-size: 11px; letter-spacing: 1px; color: var(--accent); font-weight: 700; }
+  .tp .name { font-size: 15px; font-weight: 700; margin-top: 4px; }
+  .tp .desc { font-size: 12px; color: var(--ink-soft); margin-top: 6px; line-height: 1.5; }
+  .tp .marker {
+    width: 14px; height: 14px; background: var(--accent); border-radius: 50%; border: 3px solid var(--card);
+    position: absolute; left: 50%; transform: translateX(-50%); top: -7px;
+  }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .map-wrap { grid-template-columns: 1fr; }
+    .structure { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); padding: 6px 0; }
+    .timeline-points { flex-direction: column; gap: 16px; }
+    .tp { width: 100%; }
+    .timeline-line { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 2 课</span>传感之古今未来</h1>
+  <p class="lead">传感器是物联网的"感觉器官"，就像人的眼、耳、口、鼻、舌等。本工具帮助你理解传感器的工作原理（输入—计算—输出），探索传感器与人类感官的对应关系，并梳理传感技术从古至今的发展脉络。</p>
+</header>
+
+<main>
+
+  <!-- 第一部分：传感器工作原理 -->
+  <section class="section">
+    <div class="section-title">一、传感器的基本工作原理</div>
+    <div class="structure">
+      <div class="stage input" onclick="demoStage('input')">
+        <div class="ico">🌡️</div>
+        <h3>① 输入（敏感元件）</h3>
+        <p>感受被测量的物理量（声、光、热、力、湿等）</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stage calc" onclick="demoStage('calc')">
+        <div class="ico">⚙️</div>
+        <h3>② 计算（转换元件）</h3>
+        <p>将物理量转换成电学量等便于度量的信号</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stage output" onclick="demoStage('output')">
+        <div class="ico">📊</div>
+        <h3>③ 输出</h3>
+        <p>输出可被传输、处理、显示、记录、控制的信号</p>
+      </div>
+    </div>
+    <div class="demo-window">
+      <span class="label">▶ 案例演示</span>　
+      <span id="demoText">点击上方任一阶段查看声音传感器的工作过程示例 →</span>
+    </div>
+  </section>
+
+  <!-- 第二部分：传感器-感官类比 -->
+  <section class="section">
+    <div class="section-title">二、传感器与人类感官的对应关系（"电五官"）</div>
+    <div class="map-wrap">
+      <div class="human-figure">
+        <svg viewBox="0 0 280 460" xmlns="http://www.w3.org/2000/svg">
+          <!-- 简化人形 -->
+          <ellipse cx="140" cy="80" rx="42" ry="50" fill="#f5e9d4" stroke="#a08760" stroke-width="2"/>
+          <path d="M 100 130 L 90 270 Q 90 300 110 300 L 170 300 Q 190 300 190 270 L 180 130 Z" fill="#dde8f0" stroke="#88a0b0" stroke-width="2"/>
+          <ellipse cx="140" cy="380" rx="55" ry="60" fill="#f5e9d4" stroke="#a08760" stroke-width="2"/>
+          
+          <!-- 五官 -->
+          <ellipse cx="125" cy="75" rx="6" ry="4" fill="#1a2332"/> <!-- 左眼 -->
+          <ellipse cx="155" cy="75" rx="6" ry="4" fill="#1a2332"/> <!-- 右眼 -->
+          <path d="M 132 95 Q 140 102 148 95" stroke="#1a2332" stroke-width="2" fill="none"/> <!-- 嘴 -->
+          <path d="M 137 80 L 140 90 L 143 80" stroke="#a08760" stroke-width="1.5" fill="none"/> <!-- 鼻 -->
+          
+          <!-- 交互点 -->
+          <g class="organ-dot" data-organ="eye" onclick="selectOrgan('eye')">
+            <circle cx="125" cy="75" r="14" fill="rgba(200,84,45,.3)" stroke="var(--accent)" stroke-width="2"/>
+          </g>
+          <g class="organ-dot" data-organ="ear" onclick="selectOrgan('ear')">
+            <circle cx="100" cy="85" r="12" fill="rgba(14,91,138,.3)" stroke="var(--tech)" stroke-width="2"/>
+            <text class="organ-label" x="65" y="88">耳</text>
+          </g>
+          <g class="organ-dot" data-organ="nose" onclick="selectOrgan('nose')">
+            <circle cx="140" cy="88" r="11" fill="rgba(212,169,58,.3)" stroke="var(--accent-2)" stroke-width="2"/>
+          </g>
+          <g class="organ-dot" data-organ="mouth" onclick="selectOrgan('mouth')">
+            <circle cx="140" cy="98" r="11" fill="rgba(61,161,113,.3)" stroke="#3da171" stroke-width="2"/>
+            <text class="organ-label" x="160" y="104">舌</text>
+          </g>
+          <g class="organ-dot" data-organ="skin" onclick="selectOrgan('skin')">
+            <circle cx="180" cy="200" r="14" fill="rgba(160,80,140,.3)" stroke="#a0508c" stroke-width="2"/>
+            <text class="organ-label" x="200" y="205">皮肤</text>
+          </g>
+        </svg>
+        <p style="font-size:12px;color:var(--ink-soft);text-align:center;margin-top:6px;">点击人体感官位置 →</p>
+      </div>
+
+      <div class="sensor-panel">
+        <div class="header-row">
+          <h3 id="organName">👁 眼睛 → 光敏 / 图像传感器</h3>
+          <span class="tag" id="organCategory">视觉</span>
+        </div>
+        <p class="desc" id="organDesc">
+          光敏传感器和图像传感器扮演着人类眼睛的角色，能感知光照强度、颜色、画面等视觉信息。光敏传感器的核心是光敏元件，将光照转化为电信号。
+        </p>
+        <div class="compare-grid">
+          <div class="head">人体感官</div>
+          <div class="head">对应传感器</div>
+          <div class="cell left" id="cellHuman">眼睛 — 视网膜上的视锥/视杆细胞接收光线，将其转化为神经信号传至大脑。</div>
+          <div class="cell" id="cellSensor">光敏传感器/图像传感器 — 利用光电效应将光信号转化为电信号，输出为亮度值或像素数据。</div>
+        </div>
+        <div class="applications">
+          <strong>典型应用：</strong><span id="applications">手机自动调节屏幕亮度、自动门感应、监控摄像头、智能停车场车牌识别</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 第三部分：常见传感器目录 -->
+  <section class="section">
+    <div class="section-title">三、常见传感器一览（点击卡片切换上方详情）</div>
+    <div class="catalog-grid" id="catalogGrid"></div>
+  </section>
+
+  <!-- 第四部分：发展时间线 -->
+  <section class="section">
+    <div class="section-title">四、传感技术发展简史</div>
+    <div class="timeline">
+      <p style="color:var(--ink-soft);font-size:14px;line-height:1.8;">
+        从古代基于物理原理的简单装置，到现代集感知、计算、存储、传输于一体的智能集成器件，传感器的发展见证了人类科技的不断进步。<strong>古代中国在指南针、日晷、沙漏、水钟等领域贡献突出。</strong>
+      </p>
+      <div class="timeline-track">
+        <div class="timeline-line"></div>
+        <div class="timeline-points">
+          <div class="tp" onclick="alert('指南针（司南）：利用地球磁场判定方向。\\n输入：地磁场方向\\n输出：磁针指向（南北）')">
+            <div class="marker"></div>
+            <div class="era">远古—战国</div>
+            <div class="name">指南针·司南</div>
+            <div class="desc">利用地磁场判定方向</div>
+          </div>
+          <div class="tp" onclick="alert('日晷：利用太阳投影测时刻。\\n输入：太阳光\\n输出：指针在圆盘上的影子位置（时刻）')">
+            <div class="marker"></div>
+            <div class="era">秦汉</div>
+            <div class="name">日晷</div>
+            <div class="desc">利用日影测定时刻</div>
+          </div>
+          <div class="tp" onclick="alert('电子传感器：使用电学原理感知物理量。\\n采用半导体、压电、霍尔效应等多种工作原理，实现精确测量并输出电信号。')">
+            <div class="marker"></div>
+            <div class="era">20世纪</div>
+            <div class="name">电子传感器</div>
+            <div class="desc">电学原理 · 精度大幅提升</div>
+          </div>
+          <div class="tp" onclick="alert('智能集成传感器：集感知、计算、存储、传输于一体。\\n多传感器融合 + 微处理器 + 无线通信 + 边缘智能，是物联网时代的核心器件。')">
+            <div class="marker"></div>
+            <div class="era">21世纪</div>
+            <div class="name">智能集成传感器</div>
+            <div class="desc">感知+计算+存储+传输</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 2 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+// ============ 数据 ============
+var sensorData = {
+  eye: {
+    name: "👁 眼睛 → 光敏 / 图像传感器",
+    category: "视觉",
+    human: "眼睛 — 视网膜上的视锥/视杆细胞接收光线，将其转化为神经信号传至大脑。",
+    sensor: "光敏传感器/图像传感器 — 利用光电效应将光信号转化为电信号，输出为亮度值或像素数据。",
+    apps: "手机自动调节屏幕亮度、自动门感应、监控摄像头、智能停车场车牌识别",
+    desc: "光敏传感器和图像传感器扮演着人类眼睛的角色，能感知光照强度、颜色、画面等视觉信息。光敏传感器的核心是光敏元件，将光照转化为电信号。"
+  },
+  ear: {
+    name: "👂 耳朵 → 声音传感器",
+    category: "听觉",
+    human: "耳朵 — 耳蜗将空气振动转化为神经信号，传至大脑形成听觉。",
+    sensor: "声音传感器（麦克风）— 内部薄膜振动，通过压电或电容效应将声波转换为电信号，输出声音响度（dB）。",
+    apps: "噪声测试仪、智能音箱语音唤醒、视频会议麦克风、机器宠物对人声响应",
+    desc: "声音传感器对应人类的耳朵，可以将声波转换为电信号，常用于检测环境噪声响度。生理学上将妨碍人正常休息、学习、工作的声音定义为噪声。"
+  },
+  nose: {
+    name: "👃 鼻子 → 气味 / 气体传感器",
+    category: "嗅觉",
+    human: "鼻子 — 嗅觉感受器细胞识别气体分子并产生神经信号。",
+    sensor: "气体传感器 — 利用半导体材料对特定气体的吸附引起电阻变化，输出气体浓度。",
+    apps: "甲醛测试仪、燃气泄漏报警、空气质量监测站、车内异味检测",
+    desc: "气体传感器对应人类的鼻子，能识别空气中特定气体（如 CO、CO₂、甲醛、酒精等）的浓度。"
+  },
+  mouth: {
+    name: "👅 舌头 → 化学（pH/盐度）传感器",
+    category: "味觉",
+    human: "舌头 — 味蕾分辨甜、酸、苦、咸、鲜五种基本味道。",
+    sensor: "化学传感器（电子舌）— 通过电化学反应识别液体中的离子或化学物质，输出 pH、盐度、糖度等数值。",
+    apps: "水质测试笔、食品工业品控、医院血液 pH 检测、土壤养分检测",
+    desc: "化学传感器（电子舌）对应人类的舌头，可识别液体的酸碱度、盐度等化学性质。"
+  },
+  skin: {
+    name: "🤲 皮肤 → 温度 / 触觉 / 压力传感器",
+    category: "触觉",
+    human: "皮肤 — 真皮层中的温度感受器、触觉感受器接收外界刺激。",
+    sensor: "温度/压力/触觉传感器 — 利用热敏电阻或压电材料，将温度、压力转换为电信号。",
+    apps: "洗衣机水温检测、手机指纹识别、电子秤、医疗血压计、家用温湿度计",
+    desc: "温度、压力、触觉等传感器对应人类的皮肤，能够检测环境温度、物体接触压力等物理量。"
+  }
+};
+var allSensors = [{
+  key: "eye",
+  name: "光敏传感器",
+  organ: "对应：眼睛",
+  icon: "💡",
+  details: {
+    principle: "光电效应将光强转化为电信号",
+    unit: "勒克斯(Lux)",
+    apps: "路灯自动开启、手机亮度调节"
+  }
+}, {
+  key: "eye",
+  name: "图像传感器",
+  organ: "对应：眼睛",
+  icon: "📷",
+  details: {
+    principle: "CMOS/CCD 阵列将光信号转为像素",
+    unit: "像素",
+    apps: "摄像头、车牌识别、人脸识别"
+  }
+}, {
+  key: "ear",
+  name: "声音传感器",
+  organ: "对应：耳朵",
+  icon: "🔊",
+  details: {
+    principle: "薄膜振动产生电信号",
+    unit: "分贝(dB)",
+    apps: "智能音箱、噪声测试"
+  }
+}, {
+  key: "nose",
+  name: "气味传感器",
+  organ: "对应：鼻子",
+  icon: "🌫️",
+  details: {
+    principle: "半导体吸附引起电阻变化",
+    unit: "ppm",
+    apps: "甲醛检测、燃气泄漏"
+  }
+}, {
+  key: "skin",
+  name: "温度传感器",
+  organ: "对应：皮肤",
+  icon: "🌡️",
+  details: {
+    principle: "热敏电阻随温度变化",
+    unit: "℃",
+    apps: "空调控温、体温监测"
+  }
+}, {
+  key: "skin",
+  name: "湿度传感器",
+  organ: "对应：皮肤",
+  icon: "💧",
+  details: {
+    principle: "湿敏材料电容/电阻随湿度变化",
+    unit: "%RH",
+    apps: "植物花盆、加湿器"
+  }
+}, {
+  key: "skin",
+  name: "压力传感器",
+  organ: "对应：皮肤",
+  icon: "⚖️",
+  details: {
+    principle: "压电材料受压产生电信号",
+    unit: "帕(Pa)",
+    apps: "电子秤、血压计"
+  }
+}, {
+  key: "skin",
+  name: "加速度传感器",
+  organ: "对应：(身体平衡)",
+  icon: "📈",
+  details: {
+    principle: "测量物体在三轴方向的加速度",
+    unit: "m/s²",
+    apps: "手机摇一摇、计步器、防摔提醒"
+  }
+}, {
+  key: "eye",
+  name: "红外传感器",
+  organ: "对应：(超能力)",
+  icon: "🔴",
+  details: {
+    principle: "接收物体辐射的红外线",
+    unit: "无量纲",
+    apps: "自动门感应、夜视摄像头、遥控器"
+  }
+}, {
+  key: "ear",
+  name: "超声波传感器",
+  organ: "对应：(超能力)",
+  icon: "📡",
+  details: {
+    principle: "发射超声波并测量反射时间",
+    unit: "厘米/米",
+    apps: "汽车倒车雷达、无人机测高"
+  }
+}, {
+  key: "eye",
+  name: "气压传感器",
+  organ: "对应：(超能力)",
+  icon: "⛅",
+  details: {
+    principle: "测量大气压力变化",
+    unit: "千帕(kPa)",
+    apps: "无人机测高、天气预测"
+  }
+}, {
+  key: "eye",
+  name: "土壤湿度传感器",
+  organ: "对应：(超能力)",
+  icon: "🌱",
+  details: {
+    principle: "两根金属探头测电导率",
+    unit: "%",
+    apps: "智能花盆、农业灌溉"
+  }
+}];
+
+// ============ 渲染传感器目录 ============
+var grid = document.getElementById('catalogGrid');
+allSensors.forEach(function (s, i) {
+  var card = document.createElement('div');
+  card.className = 'sensor-card';
+  card.innerHTML = "\n    <div class=\"icon\">" + s.icon + "</div>\n    <div class=\"name\">" + s.name + "</div>\n    <div class=\"organ\">" + s.organ + "</div>\n    <div class=\"hint\">\u25B6 \u7C7B\u6BD4 " + (s.key === 'eye' ? '眼睛' : s.key === 'ear' ? '耳朵' : s.key === 'nose' ? '鼻子' : s.key === 'mouth' ? '舌头' : '皮肤') + "</div>\n  ";
+  card.onclick = function () {
+    document.querySelectorAll('.sensor-card').forEach(function (c) {
+      return c.classList.remove('active');
+    });
+    card.classList.add('active');
+    selectOrgan(s.key);
+    showSensorDetail(s);
+  };
+  grid.appendChild(card);
+});
+function showSensorDetail(s) {
+  document.getElementById('organName').textContent = s.icon + " " + s.name;
+  document.getElementById('organCategory').textContent = s.organ.replace('对应：', '');
+  document.getElementById('organDesc').textContent = s.name + "\uFF1A\u5DE5\u4F5C\u539F\u7406\u662F " + s.details.principle + "\u3002";
+  document.getElementById('cellSensor').textContent = s.name + " \u2014 " + s.details.principle + "\uFF0C\u8F93\u51FA\u5355\u4F4D\uFF1A" + s.details.unit + "\u3002";
+  document.getElementById('applications').textContent = s.details.apps;
+}
+
+// ============ 选中感官 ============
+function selectOrgan(organKey) {
+  if (!sensorData[organKey]) return;
+  var d = sensorData[organKey];
+  document.querySelectorAll('.organ-dot').forEach(function (el) {
+    return el.classList.remove('active');
+  });
+  var target = document.querySelector(".organ-dot[data-organ=\"" + organKey + "\"]");
+  if (target) target.classList.add('active');
+  document.getElementById('organName').textContent = d.name;
+  document.getElementById('organCategory').textContent = d.category;
+  document.getElementById('organDesc').textContent = d.desc;
+  document.getElementById('cellHuman').textContent = d.human;
+  document.getElementById('cellSensor').textContent = d.sensor;
+  document.getElementById('applications').textContent = d.apps;
+}
+
+// ============ 工作原理三阶段演示 ============
+function demoStage(stage) {
+  var demos = {
+    input: '【输入】声音传感器中的麦克风薄膜，感受空气振动 → 这就是"敏感元件"的作用。',
+    calc: '【计算】薄膜振动通过压电效应转换为微弱的电压信号，再由内部电路放大并转化为数字值（如 sound_value = 53）。',
+    output: '【输出】传感器最终输出一个数值（响度，单位 dB），通过 read() 返回给主控板，供后续显示、传输或控制使用。\n\n参考代码：\nsound_value = sound().read()'
+  };
+  var out = document.getElementById('demoText');
+  out.textContent = demos[stage];
+  out.style.color = '#84d2a3';
+}
+
+</script>
+</body>
+</html>

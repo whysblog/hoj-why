@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>从人工到自动化 · 第9课</title>
+<style>
+  :root {
+    --primary: #0d9488;
+    --primary-dark: #0f766e;
+    --manual: #f59e0b;
+    --auto: #0d9488;
+    --bg: #f0fdfa;
+    --card: #ffffff;
+    --text: #134e4a;
+    --muted: #64748b;
+    --border: #ccfbf1;
+    --ok: #16a34a;
+    --warn: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(13, 148, 136, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .slide-nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .slide-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .slide-dot.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.1);
+  }
+  .slide-dot.done { background: var(--ok); border-color: var(--ok); color: white; }
+  .slide-arrow {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .slide-arrow:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+  .slide-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .slide {
+    display: none;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+    min-height: 480px;
+    animation: slideIn 0.3s ease-out;
+  }
+  .slide.active { display: block; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide-type {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: #f0fdfa;
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .slide h2 {
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+  .slide h2::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 22px;
+    background: var(--primary);
+    border-radius: 3px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .slide h3 { font-size: 17px; margin: 18px 0 10px; color: var(--primary-dark); }
+  .slide p { font-size: 15px; margin-bottom: 12px; }
+  .slide ul { padding-left: 22px; margin-bottom: 16px; }
+  .slide li { font-size: 15px; margin-bottom: 8px; }
+
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .goal-card {
+    padding: 18px;
+    background: #f0fdfa;
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  .goal-card .num { color: var(--primary); font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+  .goal-card .text { font-size: 14px; line-height: 1.6; }
+
+  .info-card {
+    background: #f0fdfa;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  .info-card .title { font-weight: 700; color: var(--primary-dark); margin-bottom: 6px; }
+  .info-card .body { font-size: 14px; }
+
+  /* 对比布局 */
+  .compare-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 20px 0;
+  }
+  @media (max-width: 760px) { .compare-layout { grid-template-columns: 1fr; } }
+
+  .compare-card {
+    background: white;
+    border-radius: 14px;
+    padding: 22px;
+    border: 2px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .compare-card.manual { border-top: 5px solid var(--manual); }
+  .compare-card.auto { border-top: 5px solid var(--auto); }
+  .compare-card h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .compare-card .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .scene-svg {
+    width: 100%;
+    height: 200px;
+    border-radius: 10px;
+    background: #fafafa;
+    border: 1px solid var(--border);
+    margin: 12px 0;
+  }
+
+  .flow-row {
+    display: flex;
+    gap: 6px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1;
+    background: #f8fafc;
+    padding: 10px 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    min-width: 80px;
+    transition: all 0.3s;
+  }
+  .compare-card.manual .flow-step.active { background: var(--manual); color: white; border-color: var(--manual); }
+  .compare-card.auto .flow-step.active { background: var(--auto); color: white; border-color: var(--auto); }
+  .flow-arrow {
+    align-self: center;
+    color: var(--muted);
+    font-weight: bold;
+  }
+
+  .control-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+  }
+  .manual .control-btn { background: var(--manual); color: white; }
+  .manual .control-btn:hover { background: #d97706; }
+  .auto .control-btn { background: var(--auto); color: white; }
+  .auto .control-btn:hover { background: var(--primary-dark); }
+  .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 14px;
+  }
+  .compare-table th, .compare-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table th {
+    background: #f0fdfa;
+    color: var(--primary-dark);
+    font-weight: 600;
+  }
+  .compare-table .label { font-weight: 600; color: var(--muted); width: 25%; }
+
+  /* 案例切换 */
+  .case-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .case-tab {
+    padding: 8px 16px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .case-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .case-tab:hover:not(.active) { background: #f0fdfa; }
+
+  /* 测验 */
+  .quiz {
+    background: #fef3c7;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 16px 0;
+    border: 1.5px solid #fcd34d;
+  }
+  .quiz-question { font-weight: 700; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .quiz-option:hover { background: #f0fdfa; }
+  .quiz-option.correct { background: #dcfce7; border-color: var(--ok); color: #166534; font-weight: 600; }
+  .quiz-option.wrong { background: #fee2e2; border-color: var(--warn); color: #991b1b; }
+  .quiz-feedback {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #dcfce7; color: #166534; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第三单元 · 第9课</span>
+    <h1>从人工到自动化</h1>
+    <p>对比人工控制和自动控制，体会科技发展带来的变化</p>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-arrow" onclick="prevSlide()">← 上一页</button>
+    <div class="slide-dot active" data-i="0">1</div>
+    <div class="slide-dot" data-i="1">2</div>
+    <div class="slide-dot" data-i="2">3</div>
+    <div class="slide-dot" data-i="3">4</div>
+    <div class="slide-dot" data-i="4">5</div>
+    <button class="slide-arrow" onclick="nextSlide()">下一页 →</button>
+  </div>
+
+  <!-- 幻灯片 1: 学习目标 -->
+  <div class="slide active" data-slide="0">
+    <span class="slide-type">📋 学习目标</span>
+    <h2>本课你将学会</h2>
+    <div class="goals-grid">
+      <div class="goal-card">
+        <div class="num">目标 1</div>
+        <div class="text">了解人工控制与自动控制的区别</div>
+      </div>
+      <div class="goal-card">
+        <div class="num">目标 2</div>
+        <div class="text">体会自动控制系统的优势</div>
+      </div>
+      <div class="goal-card">
+        <div class="num">目标 3</div>
+        <div class="text">认识到自动化是科技发展的重要方向</div>
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="title">💡 引入</div>
+      <div class="body">
+        古时候，人们靠人工打更报时；今天，电子钟自动报时。<br>
+        从前，妈妈要守着洗衣盆搓洗衣物；现在，全自动洗衣机一键洗净。<br>
+        我们的生活，正在从"人工"走向"自动化"。这中间发生了什么？
+      </div>
+    </div>
+  </div>
+
+  <!-- 幻灯片 2: 互动对比 -->
+  <div class="slide" data-slide="1">
+    <span class="slide-type">🎯 互动对比实验</span>
+    <h2>"浇水"是怎么完成的？</h2>
+    <p>选择一个场景，分别用"人工"和"自动"两种方式给花浇水，观察两者的不同：</p>
+
+    <div class="case-tabs">
+      <button class="case-tab active" onclick="switchCase('water', this)">浇花</button>
+      <button class="case-tab" onclick="switchCase('clock', this)">报时</button>
+      <button class="case-tab" onclick="switchCase('door', this)">开门</button>
+    </div>
+
+    <div class="compare-layout">
+      <!-- 人工控制 -->
+      <div class="compare-card manual">
+        <h3 id="manual-title">人工控制 · 浇花</h3>
+        <p class="sub" id="manual-sub">由人来完成所有环节</p>
+        <svg class="scene-svg" id="manual-svg" viewBox="0 0 300 200">
+          <!-- 默认浇花场景 -->
+          <rect width="300" height="200" fill="#fef3c7"/>
+          <!-- 人 -->
+          <g id="manual-person">
+            <circle cx="80" cy="80" r="14" fill="#fde047" stroke="#a16207" stroke-width="1.5"/>
+            <rect x="68" y="94" width="24" height="36" rx="4" fill="#3b82f6"/>
+            <line x1="68" y1="105" x2="55" y2="120" stroke="#3b82f6" stroke-width="6" stroke-linecap="round"/>
+            <line x1="92" y1="105" x2="115" y2="100" stroke="#3b82f6" stroke-width="6" stroke-linecap="round"/>
+            <!-- 水壶 -->
+            <ellipse cx="125" cy="100" rx="14" ry="10" fill="#0ea5e9" stroke="#075985" stroke-width="1.5"/>
+            <rect x="124" y="88" width="2" height="6" fill="#075985"/>
+            <path d="M 138 95 L 145 90 L 145 95 Z" fill="#075985"/>
+            <!-- 水滴 (动画) -->
+            <g id="manual-water" style="display:none">
+              <ellipse cx="148" cy="105" rx="2" ry="3" fill="#0ea5e9"/>
+              <ellipse cx="152" cy="115" rx="2" ry="3" fill="#0ea5e9"/>
+              <ellipse cx="155" cy="125" rx="2" ry="3" fill="#0ea5e9"/>
+            </g>
+          </g>
+          <!-- 花盆 -->
+          <g transform="translate(190, 130)">
+            <path d="M -20 0 L 20 0 L 16 35 L -16 35 Z" fill="#92400e" stroke="#451a03" stroke-width="1.5"/>
+            <line x1="0" y1="0" x2="0" y2="-30" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-6" cy="-20" rx="6" ry="3" fill="#22c55e" transform="rotate(-30 -6 -20)"/>
+            <ellipse cx="6" cy="-25" rx="6" ry="3" fill="#16a34a" transform="rotate(30 6 -25)"/>
+            <circle cx="0" cy="-32" r="4" fill="#f87171" id="manual-flower"/>
+          </g>
+          <!-- 地面 -->
+          <line x1="0" y1="180" x2="300" y2="180" stroke="#a8a29e" stroke-width="2"/>
+        </svg>
+        <div class="flow-row" id="manual-flow">
+          <div class="flow-step">观察土壤</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">判断干湿</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">拎水壶</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">浇水</div>
+        </div>
+        <button class="control-btn" onclick="runManual()" id="manual-btn">▶ 我来浇水（人工操作）</button>
+      </div>
+
+      <!-- 自动控制 -->
+      <div class="compare-card auto">
+        <h3 id="auto-title">自动控制 · 浇花</h3>
+        <p class="sub" id="auto-sub">由系统自动完成</p>
+        <svg class="scene-svg" id="auto-svg" viewBox="0 0 300 200">
+          <rect width="300" height="200" fill="#ecfdf5"/>
+          <!-- 传感器 -->
+          <g transform="translate(100, 140)">
+            <rect x="-12" y="-10" width="24" height="20" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+            <line x1="-8" y1="-5" x2="8" y2="-5" stroke="#6ee7b7" stroke-width="1"/>
+            <line x1="-8" y1="0" x2="8" y2="0" stroke="#6ee7b7" stroke-width="1"/>
+            <line x1="-8" y1="5" x2="8" y2="5" stroke="#6ee7b7" stroke-width="1"/>
+            <text y="22" text-anchor="middle" font-size="9" fill="#475569">湿度传感器</text>
+            <!-- 探针入土 -->
+            <line x1="0" y1="10" x2="0" y2="22" stroke="#1e293b" stroke-width="2"/>
+          </g>
+          <!-- 控制器 -->
+          <g transform="translate(50, 60)">
+            <rect x="-22" y="-15" width="44" height="30" rx="3" fill="white" stroke="#0d9488" stroke-width="2"/>
+            <text y="-2" text-anchor="middle" font-size="9" fill="#0d9488">控制器</text>
+            <text y="9" text-anchor="middle" font-size="9" fill="#0d9488" id="auto-status">待机</text>
+          </g>
+          <!-- 自动喷头 -->
+          <g transform="translate(190, 70)">
+            <line x1="0" y1="0" x2="0" y2="30" stroke="#475569" stroke-width="3"/>
+            <circle cx="0" cy="30" r="6" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
+            <text y="-4" text-anchor="middle" font-size="9" fill="#475569">自动喷头</text>
+            <!-- 水滴 -->
+            <g id="auto-water" style="display:none">
+              <ellipse cx="-4" cy="42" rx="2" ry="3" fill="#0ea5e9"/>
+              <ellipse cx="0" cy="44" rx="2" ry="3" fill="#0ea5e9"/>
+              <ellipse cx="4" cy="42" rx="2" ry="3" fill="#0ea5e9"/>
+            </g>
+          </g>
+          <!-- 花盆 -->
+          <g transform="translate(190, 130)">
+            <path d="M -20 0 L 20 0 L 16 35 L -16 35 Z" fill="#92400e" stroke="#451a03" stroke-width="1.5"/>
+            <line x1="0" y1="0" x2="0" y2="-30" stroke="#15803d" stroke-width="2"/>
+            <ellipse cx="-6" cy="-20" rx="6" ry="3" fill="#22c55e" transform="rotate(-30 -6 -20)"/>
+            <ellipse cx="6" cy="-25" rx="6" ry="3" fill="#16a34a" transform="rotate(30 6 -25)"/>
+            <circle cx="0" cy="-32" r="4" fill="#f87171" id="auto-flower"/>
+          </g>
+          <!-- 连接线 -->
+          <path d="M 100 130 Q 70 100 50 75" stroke="#0d9488" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/>
+          <path d="M 72 60 Q 130 50 190 70" stroke="#0d9488" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/>
+          <line x1="0" y1="180" x2="300" y2="180" stroke="#a8a29e" stroke-width="2"/>
+        </svg>
+        <div class="flow-row" id="auto-flow">
+          <div class="flow-step">传感器检测</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">控制器判断</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">指令喷头</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">自动喷水</div>
+        </div>
+        <button class="control-btn" onclick="runAuto()" id="auto-btn">▶ 启动自动系统</button>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="title">💭 思考</div>
+      <div class="body">同样是"浇花"这件事，人工方式需要人完成所有环节；自动方式则由传感器、控制器、执行器配合完成。哪种方式更省人力？哪种方式更精确？</div>
+    </div>
+  </div>
+
+  <!-- 幻灯片 3: 对比知识 -->
+  <div class="slide" data-slide="2">
+    <span class="slide-type">📚 知识小结</span>
+    <h2>人工控制 vs 自动控制</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>对比项</th>
+          <th style="color: var(--manual);">人工控制</th>
+          <th style="color: var(--auto);">自动控制</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="label">谁来完成操作</td><td>人</td><td>控制系统（机器）</td></tr>
+        <tr><td class="label">是否需要人盯着</td><td>需要</td><td>不需要</td></tr>
+        <tr><td class="label">速度</td><td>较慢</td><td>较快</td></tr>
+        <tr><td class="label">精度</td><td>因人而异</td><td>稳定一致</td></tr>
+        <tr><td class="label">可重复性</td><td>容易疲劳出错</td><td>可长时间稳定运行</td></tr>
+        <tr><td class="label">成本</td><td>人力成本高</td><td>初期设备投入高，长期低</td></tr>
+        <tr><td class="label">典型例子</td><td>手洗衣物、手动浇水、打更报时</td><td>洗衣机、自动喷灌、电子时钟</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-card">
+      <div class="title">🚀 自动化的优势</div>
+      <div class="body">自动控制系统能<strong>不知疲倦地工作</strong>、<strong>稳定输出</strong>、<strong>解放人力</strong>，让人们去做更有创造性的事。这是现代社会效率大幅提升的重要原因！</div>
+    </div>
+  </div>
+
+  <!-- 幻灯片 4: 发展历程 -->
+  <div class="slide" data-slide="3">
+    <span class="slide-type">📜 发展历程</span>
+    <h2>"洗衣"的进化史</h2>
+    <p>让我们看看"洗衣"这件小事，几百年来是如何从人工演变到自动化的：</p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 20px 0;">
+      <div class="goal-card" style="background:#fef3c7; border-color: #f59e0b;">
+        <div class="num" style="color:#a16207;">古代</div>
+        <div class="text"><strong>河边搓洗</strong><br>全人工，靠双手揉搓</div>
+      </div>
+      <div class="goal-card" style="background:#fed7aa; border-color: #ea580c;">
+        <div class="num" style="color:#c2410c;">近代</div>
+        <div class="text"><strong>洗衣板 + 木盆</strong><br>仍是人工，但有工具辅助</div>
+      </div>
+      <div class="goal-card" style="background:#fcfce7; border-color: #ca8a04;">
+        <div class="num" style="color:#854d0e;">20世纪初</div>
+        <div class="text"><strong>手摇洗衣机</strong><br>机械辅助，人工驱动</div>
+      </div>
+      <div class="goal-card" style="background:#ecfeff; border-color: #0891b2;">
+        <div class="num" style="color:#0e7490;">20世纪中</div>
+        <div class="text"><strong>半自动洗衣机</strong><br>洗涤自动，但脱水/换水仍需人工</div>
+      </div>
+      <div class="goal-card" style="background:#ecfdf5; border-color: var(--auto);">
+        <div class="num" style="color: var(--primary-dark);">现代</div>
+        <div class="text"><strong>全自动洗衣机</strong><br>一键启动，全程自动</div>
+      </div>
+      <div class="goal-card" style="background:#f0f9ff; border-color: #0284c7;">
+        <div class="num" style="color: #075985;">未来</div>
+        <div class="text"><strong>智能洗衣机</strong><br>识别污渍、自配洗剂、远程控制</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="title">💡 启示</div>
+      <div class="body">从这条进化线可以看到：<strong>自动化程度越来越高，人参与的环节越来越少</strong>。这正是科技进步的方向——把繁琐的事交给机器，让人有更多时间做有意义的事。</div>
+    </div>
+  </div>
+
+  <!-- 幻灯片 5: 检测 -->
+  <div class="slide" data-slide="4">
+    <span class="slide-type">✓ 课堂检测</span>
+    <h2>测一测你的掌握程度</h2>
+
+    <div class="quiz">
+      <div class="quiz-question">1. 下列哪一组属于"人工控制"和"自动控制"的正确对应？</div>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="answer(this, false, 'q1')">A. 手电筒 vs 电池</button>
+        <button class="quiz-option" onclick="answer(this, true, 'q1')">B. 手动浇花 vs 自动喷灌系统</button>
+        <button class="quiz-option" onclick="answer(this, false, 'q1')">C. 自来水 vs 矿泉水</button>
+        <button class="quiz-option" onclick="answer(this, false, 'q1')">D. 自行车 vs 摩托车</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q1"></div>
+    </div>
+
+    <div class="quiz">
+      <div class="quiz-question">2. 相比人工控制，自动控制的<u>主要优势</u>是：</div>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="answer(this, false, 'q2')">A. 成本比人工更低</button>
+        <button class="quiz-option" onclick="answer(this, false, 'q2')">B. 操作起来比人更随意</button>
+        <button class="quiz-option" onclick="answer(this, true, 'q2')">C. 稳定、精确，能长时间持续运行</button>
+        <button class="quiz-option" onclick="answer(this, false, 'q2')">D. 不需要任何前期投入</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q2"></div>
+    </div>
+
+    <div class="quiz">
+      <div class="quiz-question">3. <strong>开放思考：</strong>除了浇花和洗衣，你还能举出哪些"从人工到自动"的例子？</div>
+      <p style="font-size:13px; color:var(--muted); margin-top: 8px;">参考：手动开门 → 自动门、人工售票 → 自助售票机、人工记账 → 计算器/电脑记账、人工打更 → 电子钟。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentSlide = 0;
+  const totalSlides = 5;
+  function showSlide(index) {
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.slide-dot');
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach((d, i) => {
+      d.classList.remove('active');
+      if (i < index) d.classList.add('done'); else d.classList.remove('done');
+    });
+    slides[index].classList.add('active');
+    dots[index].classList.add('active');
+    currentSlide = index;
+    window.scrollTo({ top: document.querySelector('.slide-nav').offsetTop - 80, behavior: 'smooth' });
+  }
+  function nextSlide() { if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
+  function prevSlide() { if (currentSlide > 0) showSlide(currentSlide - 1); }
+  document.querySelectorAll('.slide-dot').forEach(d => d.addEventListener('click', () => showSlide(+d.dataset.i)));
+
+  // === 互动对比 ===
+  let currentCase = 'water';
+  const cases = {
+    water: {
+      manualTitle: '人工控制 · 浇花',
+      manualSub: '由人来完成所有环节',
+      autoTitle: '自动控制 · 浇花',
+      autoSub: '由传感器+控制器+喷头自动完成'
+    },
+    clock: {
+      manualTitle: '人工控制 · 报时',
+      manualSub: '更夫敲锣报时',
+      autoTitle: '自动控制 · 报时',
+      autoSub: '电子时钟自动报时'
+    },
+    door: {
+      manualTitle: '人工控制 · 开门',
+      manualSub: '人手动推/拉门',
+      autoTitle: '自动控制 · 开门',
+      autoSub: '红外感应自动门'
+    }
+  };
+  function switchCase(key, btn) {
+    document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    currentCase = key;
+    const c = cases[key];
+    document.getElementById('manual-title').textContent = c.manualTitle;
+    document.getElementById('manual-sub').textContent = c.manualSub;
+    document.getElementById('auto-title').textContent = c.autoTitle;
+    document.getElementById('auto-sub').textContent = c.autoSub;
+    resetScenes();
+  }
+
+  function resetScenes() {
+    document.querySelectorAll('#manual-flow .flow-step').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('#auto-flow .flow-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('manual-water').style.display = 'none';
+    document.getElementById('auto-water').style.display = 'none';
+    document.getElementById('auto-status').textContent = '待机';
+    document.getElementById('manual-flower').setAttribute('fill', '#f87171');
+    document.getElementById('auto-flower').setAttribute('fill', '#f87171');
+  }
+
+  function runManual() {
+    resetScenes();
+    const btn = document.getElementById('manual-btn');
+    btn.disabled = true;
+    const steps = document.querySelectorAll('#manual-flow .flow-step');
+    let i = 0;
+    function next() {
+      if (i > 0) steps[i-1].classList.remove('active');
+      if (i < steps.length) {
+        steps[i].classList.add('active');
+        if (i === 3) {
+          document.getElementById('manual-water').style.display = 'inline';
+          setTimeout(() => {
+            document.getElementById('manual-flower').setAttribute('fill', '#dc2626');
+          }, 800);
+        }
+        i++;
+        setTimeout(next, 1200);
+      } else {
+        steps[steps.length-1].classList.remove('active');
+        btn.disabled = false;
+      }
+    }
+    next();
+  }
+
+  function runAuto() {
+    resetScenes();
+    const btn = document.getElementById('auto-btn');
+    btn.disabled = true;
+    const steps = document.querySelectorAll('#auto-flow .flow-step');
+    const statuses = ['检测中', '判断中', '发指令', '喷水中'];
+    let i = 0;
+    function next() {
+      if (i > 0) steps[i-1].classList.remove('active');
+      if (i < steps.length) {
+        steps[i].classList.add('active');
+        document.getElementById('auto-status').textContent = statuses[i];
+        if (i === 3) {
+          document.getElementById('auto-water').style.display = 'inline';
+          setTimeout(() => {
+            document.getElementById('auto-flower').setAttribute('fill', '#dc2626');
+          }, 800);
+        }
+        i++;
+        setTimeout(next, 1000);
+      } else {
+        steps[steps.length-1].classList.remove('active');
+        document.getElementById('auto-status').textContent = '完成';
+        btn.disabled = false;
+      }
+    }
+    next();
+  }
+
+  // === 测验 ===
+  const explanations = {
+    q1: '✓ "手动浇花"是人完成所有操作，"自动喷灌"则由系统自主完成检测和浇水，是典型的对比例子。',
+    q2: '✓ 自动控制系统不会疲劳、不会走神，能保证一致的精度，特别适合需要长时间持续工作的场景。'
+  };
+  function answer(btn, isCorrect, qid) {
+    const options = btn.parentElement.querySelectorAll('.quiz-option');
+    options.forEach(o => o.disabled = true);
+    if (isCorrect) {
+      btn.classList.add('correct');
+      const fb = document.getElementById('fb-' + qid);
+      fb.className = 'quiz-feedback show correct';
+      fb.innerHTML = '<strong>回答正确！</strong> ' + (explanations[qid] || '');
+    } else {
+      btn.classList.add('wrong');
+      options.forEach(o => {
+        if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+      });
+      const fb = document.getElementById('fb-' + qid);
+      fb.className = 'quiz-feedback show wrong';
+      fb.innerHTML = '<strong>再想想~</strong> ' + (explanations[qid] || '');
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第1课 · 开启物联网之门 — IoT 概念探索</title>
+<style>
+  :root {
+    --bg: #fdf8f0;
+    --bg-2: #f5ead8;
+    --ink: #2a1f12;
+    --ink-soft: #6b5a44;
+    --primary: #d97706;
+    --primary-2: #f59e0b;
+    --tech: #2563eb;
+    --green: #059669;
+    --red: #dc2626;
+    --line: #e7d8b8;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(120,80,20,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image: radial-gradient(circle at 10% 0%, rgba(217,119,6,.06), transparent 50%);
+    min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -.5px; }
+  h1 .num { color: var(--primary); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* Concept boxes */
+  .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .concept-card { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .concept-card h3 { font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .concept-card p { font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+  .concept-card.iot { border-top: 4px solid var(--primary); }
+  .concept-card.iot h3 { color: var(--primary); }
+  .concept-card.web { border-top: 4px solid var(--tech); }
+  .concept-card.web h3 { color: var(--tech); }
+  .vs-banner { text-align: center; padding: 14px; font-size: 16px; color: var(--ink-soft); font-weight: 700; letter-spacing: 4px; }
+
+  /* 3-requirements checker */
+  .check-tool {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .check-tool .intro {
+    background: var(--bg-2); padding: 14px 18px; border-radius: 8px;
+    margin-bottom: 20px; font-size: 13px; color: var(--ink-soft); line-height: 1.7;
+  }
+  .device-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .device-btn {
+    padding: 14px 10px; background: var(--bg); border: 2px solid var(--line);
+    border-radius: 8px; cursor: pointer; transition: all .15s;
+    font-size: 13px; font-family: inherit; color: var(--ink);
+    text-align: center;
+  }
+  .device-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .device-btn.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .device-btn .ic { font-size: 28px; display: block; margin-bottom: 4px; }
+  .req-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .req-item {
+    background: var(--bg-2); padding: 16px; border-radius: 8px; text-align: center;
+    border: 2px solid transparent; transition: all .25s;
+  }
+  .req-item.pass { border-color: var(--green); background: rgba(5,150,105,.08); }
+  .req-item.fail { border-color: var(--red); background: rgba(220,38,38,.08); }
+  .req-item .ic { font-size: 32px; margin-bottom: 4px; }
+  .req-item h4 { font-size: 14px; margin-bottom: 4px; }
+  .req-item p { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+  .req-item .status { font-size: 11px; font-weight: 700; margin-top: 6px; letter-spacing: 1px; }
+  .req-item.pass .status { color: var(--green); }
+  .req-item.fail .status { color: var(--red); }
+  .verdict {
+    margin-top: 18px; padding: 16px 20px; border-radius: 8px; text-align: center;
+    font-weight: 700; font-size: 15px;
+  }
+  .verdict.yes { background: linear-gradient(135deg, var(--green), #34d399); color: #fff; }
+  .verdict.no { background: var(--bg-2); color: var(--ink-soft); }
+
+  /* History timeline */
+  .timeline { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); position: relative; }
+  .timeline::before {
+    content: ""; position: absolute; left: 130px; top: 28px; bottom: 28px;
+    width: 3px; background: linear-gradient(180deg, var(--primary-2), var(--primary));
+  }
+  .tl-item { display: grid; grid-template-columns: 110px 1fr; gap: 24px; margin-bottom: 24px; position: relative; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-year {
+    text-align: right; font-weight: 700; color: var(--primary); font-size: 18px;
+    padding-top: 4px;
+  }
+  .tl-year .sub { display: block; font-size: 11px; color: var(--ink-soft); font-weight: 400; margin-top: 2px; }
+  .tl-dot {
+    position: absolute; left: 122px; top: 8px; width: 17px; height: 17px;
+    background: #fff; border: 4px solid var(--primary); border-radius: 50%; z-index: 1;
+  }
+  .tl-content {
+    background: var(--bg-2); padding: 14px 18px; border-radius: 6px;
+    font-size: 13px; line-height: 1.7;
+    margin-left: 20px;
+  }
+  .tl-content strong { color: var(--ink); }
+  .tl-content .badge {
+    display: inline-block; padding: 2px 8px; background: var(--primary); color: #fff;
+    border-radius: 99px; font-size: 10px; margin-right: 6px;
+  }
+
+  /* coffee pot story */
+  .story {
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    padding: 24px; border-radius: 12px; border: 1px solid var(--line);
+  }
+  .story h3 { color: var(--primary); margin-bottom: 14px; font-size: 17px; }
+  .story p { font-size: 13px; line-height: 1.8; color: var(--ink); }
+  .story .key { background: rgba(255,255,255,.7); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .concept-grid { grid-template-columns: 1fr; }
+    .req-panel { grid-template-columns: 1fr; }
+    .tl-item { grid-template-columns: 1fr; }
+    .timeline::before, .tl-dot { display: none; }
+    .tl-year { text-align: left; }
+    .tl-content { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 1 课</span>开启物联网之门</h1>
+  <p class="lead">物联网（Internet of Things, IoT）即"万物互联"，是把日常物品通过传感器、网络连接起来的技术。本课带你认识物联网的基本概念，理解物联网与互联网的关系，了解我国物联网发展历程。</p>
+</header>
+
+<main>
+
+  <!-- 一、物联网 vs 互联网 -->
+  <section class="section">
+    <div class="section-title">一、物联网 vs 互联网</div>
+    <div class="concept-grid">
+      <div class="concept-card web">
+        <h3>🌐 互联网（Internet）</h3>
+        <p><strong>基于"人"的网络</strong>：连接的主要是计算机、手机等智能终端，数据由<strong>人主动产生</strong>（发邮件、浏览网页、上传图片）。</p>
+        <p style="margin-top:8px;"><strong>核心场景：</strong>人与人通信、信息查询、电子商务、社交媒体。</p>
+        <p style="margin-top:8px;"><strong>例子：</strong>用手机浏览微博、网上购物、视频通话。</p>
+      </div>
+      <div class="concept-card iot">
+        <h3>📡 物联网（IoT）</h3>
+        <p><strong>基于"物"的网络</strong>：连接的是各种物品（家电、车辆、传感器等），数据由<strong>物品自主采集</strong>，无需人为干预。</p>
+        <p style="margin-top:8px;"><strong>核心场景：</strong>万物互联、智能感知、远程控制、自动反馈。</p>
+        <p style="margin-top:8px;"><strong>例子：</strong>智能花盆自动浇水、ETC 自动扣费、刷脸开门。</p>
+      </div>
+    </div>
+    <div class="vs-banner">物联网 = 互联网 + 传感器 + 万物</div>
+    <div class="story">
+      <h3>☕ 历史小故事：剑桥的"咖啡壶事件"（1991年）</h3>
+      <p>剑桥大学特洛伊计算机实验室的研究员们，为了不白跑一趟咖啡壶旁却发现咖啡没煮好，在<span class="key">咖啡壶旁安装了一个摄像头</span>，把镜头对准咖啡壶，将画面通过网络传到他们的<span class="key">计算机屏幕</span>上。这样，研究员们坐在办公室里就能<span class="key">实时查看咖啡是否煮好</span>。</p>
+      <p style="margin-top:10px;">这被认为是早期"实用化"<strong>物联思想</strong>的雏形 —— 让物品（咖啡壶）通过技术（摄像头+网络）和远程的人产生联系。</p>
+    </div>
+  </section>
+
+  <!-- 二、物品入网的 3 个条件 -->
+  <section class="section">
+    <div class="section-title">二、物品入网需要满足 3 个条件</div>
+    <div class="check-tool">
+      <div class="intro">
+        💡 计算机接入互联网需要有自己的身份（IP 地址、MAC 地址）。物品要联入物联网，也需要满足三个条件：<strong>有名字（唯一编码）、可感知（能产生数据）、能传输（与外界交换数据）</strong>。选择一个物品看看它是否符合：
+      </div>
+      <div class="device-row" id="deviceRow"></div>
+      <div class="req-panel">
+        <div class="req-item" id="req1">
+          <div class="ic">🏷</div>
+          <h4>有名字</h4>
+          <p>具有可被识别的唯一编码（如 IP、MAC、ID）</p>
+          <div class="status">- 选择物品 -</div>
+        </div>
+        <div class="req-item" id="req2">
+          <div class="ic">👁</div>
+          <h4>可感知</h4>
+          <p>能采集和提供物品本身的数据</p>
+          <div class="status">- 选择物品 -</div>
+        </div>
+        <div class="req-item" id="req3">
+          <div class="ic">📤</div>
+          <h4>能传输</h4>
+          <p>能与其他物品交换数据</p>
+          <div class="status">- 选择物品 -</div>
+        </div>
+      </div>
+      <div class="verdict" id="verdict">请选择一个物品开始检查</div>
+    </div>
+  </section>
+
+  <!-- 三、中国物联网发展 -->
+  <section class="section">
+    <div class="section-title">三、我国物联网发展历程</div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">1999<span class="sub">起步</span></div>
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <strong>中国科学院启动相关研究</strong>。当时被称为"<strong>传感网</strong>"，专注于无线传感器节点和组网技术。
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2009<span class="sub">飞跃</span></div>
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <span class="badge">里程碑</span>"<strong>感知中国</strong>"概念被提出，物联网迎来快速发展，正式纳入国家战略性新兴产业。
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2021<span class="sub">规划</span></div>
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          国家"<strong>十四五</strong>"规划纲要将物联网纳入<strong>7 大数字经济重点产业</strong>，对接入能力和重点应用做出部署。
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2022<span class="sub">加速</span></div>
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          党的二十大报告指出，要<strong>加快发展物联网</strong>。NB-IoT、4G、5G 多网协同发展格局基本形成。
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2023<span class="sub">规模</span></div>
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <span class="badge">数据</span>三家基础电信企业发展<strong>蜂窝物联网终端用户 23.32 亿户</strong>，我国建成全球规模最大的移动通信网络。
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">未来<span class="sub">智联</span></div>
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          5G、AI、区块链等技术与物联网加速融合，开启"<strong>万物智联</strong>"新时代，应用从碎片化走向规模化。
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 1 课配套交互工具</footer>
+
+<script>
+// ============ 三个条件检测器 ============
+var devices = [
+  { name: '台式计算机', ic: '🖥', has_id: 1, can_sense: 0, can_transmit: 1, hint: '有 IP/MAC 地址、可联网，但本身不感知物理量，需借助外设传感器。' },
+  { name: '智能手机',   ic: '📱', has_id: 1, can_sense: 1, can_transmit: 1, hint: '具备 IMEI、IP，内置加速度计/光照等传感器，可联网。' },
+  { name: '智能手表',   ic: '⌚', has_id: 1, can_sense: 1, can_transmit: 1, hint: '可监测心率、步数，可蓝牙/Wi-Fi 传输到手机。' },
+  { name: '普通灯泡',   ic: '💡', has_id: 0, can_sense: 0, can_transmit: 0, hint: '没有任何"智能"成分，不能联网。' },
+  { name: '智能灯泡',   ic: '🔆', has_id: 1, can_sense: 1, can_transmit: 1, hint: '内置 MAC、亮度传感器、Wi-Fi/蓝牙模块。' },
+  { name: '普通冰箱',   ic: '❄', has_id: 0, can_sense: 0, can_transmit: 0, hint: '只能制冷，不联网。' },
+  { name: '智能冰箱',   ic: '🧊', has_id: 1, can_sense: 1, can_transmit: 1, hint: '内置摄像头/温湿度传感器，可联网共享存货状态。' },
+  { name: '电子书签',   ic: '📚', has_id: 1, can_sense: 0, can_transmit: 1, hint: '有唯一编号，能联网，但缺乏自主感知能力。' },
+  { name: '智能门锁',   ic: '🚪', has_id: 1, can_sense: 1, can_transmit: 1, hint: '内置指纹/RFID 感应、Wi-Fi 模块，可远程控制。' },
+  { name: 'ETC 设备',   ic: '🚗', has_id: 1, can_sense: 1, can_transmit: 1, hint: '车牌号唯一识别，感应位置，无线传输扣费。' },
+  { name: '玻璃水杯',   ic: '🥛', has_id: 0, can_sense: 0, can_transmit: 0, hint: '完全是被动物品，无法联网。' },
+  { name: '智能水杯',   ic: '☕', has_id: 1, can_sense: 1, can_transmit: 1, hint: '内置温度/水位传感器，可与手机 APP 同步喝水数据。' }
+];
+
+function renderDevices() {
+  var row = document.getElementById('deviceRow');
+  var html = '';
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i];
+    html += '<div class="device-btn" data-i="' + i + '" onclick="selectDevice(' + i + ')"><span class="ic">' + d.ic + '</span>' + d.name + '</div>';
+  }
+  row.innerHTML = html;
+}
+
+function selectDevice(i) {
+  var btns = document.querySelectorAll('.device-btn');
+  for (var k = 0; k < btns.length; k++) btns[k].className = 'device-btn';
+  btns[i].className = 'device-btn selected';
+
+  var d = devices[i];
+  setReq('req1', d.has_id);
+  setReq('req2', d.can_sense);
+  setReq('req3', d.can_transmit);
+
+  var v = document.getElementById('verdict');
+  if (d.has_id && d.can_sense && d.can_transmit) {
+    v.className = 'verdict yes';
+    v.innerHTML = '✓ ' + d.name + ' <strong>可以接入物联网</strong>！' + d.hint;
+  } else {
+    v.className = 'verdict no';
+    v.innerHTML = '✗ ' + d.name + ' <strong>暂不满足全部条件</strong>。' + d.hint;
+  }
+}
+
+function setReq(id, pass) {
+  var el = document.getElementById(id);
+  el.className = 'req-item ' + (pass ? 'pass' : 'fail');
+  el.querySelector('.status').textContent = pass ? '✓ 满足' : '✗ 不满足';
+}
+
+renderDevices();
+window.selectDevice = selectDevice;
+</script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分支判断模拟器 - 第6课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.ticket-machine {
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+}
+.height-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.height-control input[type=range] {
+  width: 240px;
+  cursor: pointer;
+}
+.height-display {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  min-width: 100px;
+}
+.height-display small { font-size: 14px; color: var(--text-light); }
+
+.ticket-result {
+  background: white;
+  border: 2.5px solid;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.35s;
+}
+.ticket-result.half { border-color: var(--secondary); background: #E8F8EE; color: #2A7A41; }
+.ticket-result.full { border-color: var(--accent); background: #FFF4E6; color: #C75A1F; }
+.ticket-result .icon { font-size: 38px; display: block; margin-bottom: 8px; }
+.ticket-result .price { font-size: 30px; font-weight: 700; margin-top: 6px; }
+
+/* 分支流程图 */
+.branch-flow {
+  position: relative;
+  padding: 20px;
+  background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.bfn {
+  padding: 12px 22px;
+  background: white;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 160px;
+  transition: all 0.35s;
+  position: relative;
+  z-index: 2;
+}
+.bfn.start, .bfn.end { border-radius: 24px; background: #F0F7FF; }
+.bfn.io { background: #FFF9E6; border-color: var(--warning); }
+.bfn.cond {
+  background: #FDECEA;
+  border-color: var(--danger);
+  border-radius: 6px;
+  padding: 16px 30px;
+}
+.bfn.active {
+  background: linear-gradient(135deg, var(--secondary), #3FA866) !important;
+  border-color: var(--secondary) !important;
+  color: white;
+  box-shadow: 0 4px 16px rgba(80,200,120,0.3);
+  transform: scale(1.05);
+}
+.branch-split {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  gap: 30px;
+  position: relative;
+}
+.branch-arrow-v {
+  width: 2px; height: 30px;
+  background: var(--primary);
+  position: relative;
+}
+.branch-arrow-v::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--primary);
+  border-bottom: 0;
+}
+.branch-arrow-side {
+  position: relative;
+  width: 40%;
+  height: 30px;
+  border-top: 2px solid var(--primary);
+  border-left: 2px solid var(--primary);
+}
+.branch-arrow-side.right {
+  border-left: none;
+  border-right: 2px solid var(--primary);
+}
+.branch-label {
+  position: absolute;
+  top: -10px;
+  background: white;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.branch-label.yes { color: var(--secondary); left: -8px; }
+.branch-label.no { color: var(--danger); right: -8px; }
+
+/* 选择场景 */
+.scenario-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.scenario-tab {
+  padding: 8px 14px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-light);
+  font-family: inherit;
+}
+.scenario-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.compare-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 14px 0;
+}
+.cmp-card {
+  background: white;
+  border: 2px solid;
+  border-radius: 10px;
+  padding: 14px;
+}
+.cmp-card.h1 { border-color: var(--secondary); }
+.cmp-card.h2 { border-color: var(--accent); }
+.cmp-card .h-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cmp-card.h1 .h-tag { background: var(--secondary); }
+.cmp-card.h2 .h-tag { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔀 分支判断模拟器</h1>
+    <div class="subtitle">"如果……就……,否则……" — 算法的分支结构</div>
+    <span class="lesson-tag">第6课 · 判断选择用分支</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="slide-subtitle">认识算法的"分支结构"</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识算法的<strong>分支结构</strong>(根据条件选择路径)</li>
+            <li>用<strong>菱形框</strong>表示判断条件</li>
+            <li>理解"如果……就……,否则……"的逻辑</li>
+            <li>分析生活中存在的分支判断场景</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="slide" data-title="情境引入">
+        <div class="slide-title"><span class="num">2</span>情境:公园购票</div>
+        <div class="slide-subtitle">小智和妹妹去公园,售票员问什么、做什么?</div>
+        <div class="scenario-box">
+          <span class="label">🎫 售票窗口</span>
+          <p style="margin-top:6px;">小智说:"我和妹妹要买票。"</p>
+          <p>售票员问:"你们的<strong>身高</strong>分别是多少?"</p>
+          <p>小智答:"我 138 厘米,妹妹 116 厘米。"</p>
+          <p style="margin-top:8px;">售票员算了算:"妹妹身高 < 120 厘米,<strong>半价 5 元</strong>;你 ≥ 120 厘米,<strong>全价 10 元</strong>。共 <strong>15 元</strong>。"</p>
+        </div>
+        <div class="compare-cards">
+          <div class="cmp-card h1">
+            <span class="h-tag">妹妹 116 cm</span>
+            <div>身高 < 120 厘米</div>
+            <div style="font-size:18px; font-weight:700; color:var(--secondary); margin-top:6px;">→ 半价票 5 元</div>
+          </div>
+          <div class="cmp-card h2">
+            <span class="h-tag">小智 138 cm</span>
+            <div>身高 ≥ 120 厘米</div>
+            <div style="font-size:18px; font-weight:700; color:var(--accent); margin-top:6px;">→ 全价票 10 元</div>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>💡 关键观察:</strong>同样是买票,<strong>不同身高的人走不同的路径</strong> — 这就是"分支结构"!
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:购票模拟">
+        <div class="slide-title"><span class="num">3</span>🎫 互动:售票机模拟</div>
+        <div class="slide-subtitle">拖动滑块改变身高,看算法走哪条分支</div>
+        <div class="ticket-machine">
+          <div class="height-control">
+            <label>👤 身高:</label>
+            <input type="range" id="heightSlider" min="80" max="180" value="138" oninput="updateTicket()">
+            <div class="height-display"><strong id="heightVal">138</strong><small> 厘米</small></div>
+          </div>
+          <div class="ticket-result" id="ticketResult"></div>
+        </div>
+
+        <h4 style="margin:20px 0 10px; color:var(--primary-dark);">📊 分支流程图(高亮当前走的路径)</h4>
+        <div class="branch-flow">
+          <div class="bfn start" data-flow="start">开始</div>
+          <div class="branch-arrow-v"></div>
+          <div class="bfn io" data-flow="input">输入身高</div>
+          <div class="branch-arrow-v"></div>
+          <div class="bfn cond" data-flow="cond">身高 < 120 厘米?</div>
+          <div style="display:flex; gap:30px; align-items:flex-start; position:relative; margin-top:8px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
+              <div style="font-size:13px; font-weight:700; color:var(--secondary); margin-bottom:4px;">是 ↓</div>
+              <div class="bfn" data-flow="half" style="border-color:var(--secondary);">半价票 5 元</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
+              <div style="font-size:13px; font-weight:700; color:var(--danger); margin-bottom:4px;">否 ↓</div>
+              <div class="bfn" data-flow="full" style="border-color:var(--accent);">全价票 10 元</div>
+            </div>
+          </div>
+          <div class="branch-arrow-v" style="margin-top:8px;"></div>
+          <div class="bfn end" data-flow="end">结束</div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="更多分支场景">
+        <div class="slide-title"><span class="num">4</span>更多生活分支</div>
+        <div class="slide-subtitle">分支结构在生活中无处不在</div>
+        <div class="scenario-tabs">
+          <button class="scenario-tab active" onclick="switchScenario('cross', event)">🚦 过马路</button>
+          <button class="scenario-tab" onclick="switchScenario('weather', event)">🌧 看天出门</button>
+          <button class="scenario-tab" onclick="switchScenario('grade', event)">📝 成绩评定</button>
+          <button class="scenario-tab" onclick="switchScenario('age', event)">👶 年龄折扣</button>
+        </div>
+        <div id="scenarioBox"></div>
+      </div>
+
+      <div class="slide" data-title="分支结构特点">
+        <div class="slide-title"><span class="num">5</span>分支结构的特点</div>
+        <div class="slide-subtitle">让算法"会做选择"</div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>🔷 判断条件</h4>
+            <p>用<strong>菱形框</strong>表示,问一个能用"是/否"回答的问题。<br>
+              例:"身高 < 120 厘米?"</p>
+          </div>
+          <div class="concept-card">
+            <h4>🌿 两条分支</h4>
+            <p>判断后走<strong>"是"</strong>或<strong>"否"</strong>分支。两条分支通常最终会汇合,继续后面的步骤。</p>
+          </div>
+          <div class="concept-card">
+            <h4>🎯 让算法更灵活</h4>
+            <p>有了分支,算法就能<strong>针对不同情况</strong>做不同处理,变得更"聪明"。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🔍 进阶思考:</strong>如果条件改成"身高 ≥ 120 厘米?",流程图需要怎么改?(提示:"是/否"分支的内容要交换!)
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li><strong>分支结构</strong> — 根据条件,选择不同执行路径</li>
+            <li>用<strong>菱形框</strong>表示判断条件</li>
+            <li>分支结构在生活中无处不在:购票、过马路、看天气、评等级…</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后练习</h3>
+          <p>画一个流程图,描述"如果今天下雨,就带伞出门;否则,不带伞"。</p>
+          <p style="margin-top:6px;">下节课我们学习<strong>循环结构</strong>(重复做……)!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+function updateTicket() {
+  const h = parseInt(document.getElementById('heightSlider').value);
+  document.getElementById('heightVal').textContent = h;
+  const result = document.getElementById('ticketResult');
+  const nodes = document.querySelectorAll('.bfn[data-flow]');
+  nodes.forEach(n => n.classList.remove('active'));
+
+  // 高亮 start, input, cond
+  ['start', 'input', 'cond'].forEach(f => {
+    const n = document.querySelector('.bfn[data-flow="' + f + '"]');
+    if (n) n.classList.add('active');
+  });
+
+  if (h < 120) {
+    result.className = 'ticket-result half';
+    result.innerHTML = '<span class="icon">🎫</span>身高 ' + h + ' < 120 厘米<br>可以购买<strong>半价票</strong><div class="price">¥ 5</div>';
+    const half = document.querySelector('.bfn[data-flow="half"]');
+    if (half) half.classList.add('active');
+  } else {
+    result.className = 'ticket-result full';
+    result.innerHTML = '<span class="icon">🎟️</span>身高 ' + h + ' ≥ 120 厘米<br>需要购买<strong>全价票</strong><div class="price">¥ 10</div>';
+    const full = document.querySelector('.bfn[data-flow="full"]');
+    if (full) full.classList.add('active');
+  }
+  const end = document.querySelector('.bfn[data-flow="end"]');
+  if (end) end.classList.add('active');
+}
+
+// ============ 更多场景 ============
+const SCENARIOS = {
+  cross: {
+    title: '🚦 过马路:走天桥还是斑马线?',
+    desc: '到达路口后,根据有没有过街天桥/地下通道,选择不同方式过马路。',
+    cond: '附近有过街天桥或地下通道吗?',
+    yes: '从天桥/地下通道过马路',
+    no: '从红绿灯路口过马路'
+  },
+  weather: {
+    title: '🌧 看天气决定带不带伞',
+    desc: '出门前看一眼天气预报,决定要不要带伞。',
+    cond: '今天会下雨吗?',
+    yes: '带上雨伞 ☂',
+    no: '不带伞,直接出门'
+  },
+  grade: {
+    title: '📝 成绩评定',
+    desc: '老师改卷,根据分数评 A 还是 B 等级。',
+    cond: '分数 ≥ 90 分?',
+    yes: '评定为 A 等级',
+    no: '评定为 B 等级'
+  },
+  age: {
+    title: '👶 高铁购票:年龄折扣',
+    desc: '高铁票:6 岁以下免费,6-14 岁半票,15 岁以上全价。',
+    cond: '年龄 < 6 岁?',
+    yes: '免费乘车 🆓',
+    no: '需要购票(还需进一步判断半价/全价)'
+  }
+};
+
+function switchScenario(key, ev) {
+  document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+  if (ev && ev.target) {
+    ev.target.classList.add('active');
+  } else {
+    // 找到对应按钮(初次调用没有 event)
+    const tabs = document.querySelectorAll('.scenario-tab');
+    const order = ['cross', 'weather', 'grade', 'age'];
+    const idx = order.indexOf(key);
+    if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+  }
+  const s = SCENARIOS[key];
+  document.getElementById('scenarioBox').innerHTML =
+    '<div class="scenario-box">' +
+    '<span class="label">' + s.title + '</span>' +
+    '<p style="margin-top:6px;">' + s.desc + '</p>' +
+    '</div>' +
+    '<div class="branch-flow" style="margin-top:14px;">' +
+    '<div class="bfn cond">' + s.cond + '</div>' +
+    '<div style="display:flex; gap:30px; margin-top:14px;">' +
+    '<div style="display:flex; flex-direction:column; align-items:center;">' +
+    '<div style="font-size:13px; font-weight:700; color:var(--secondary); margin-bottom:6px;">✓ 是</div>' +
+    '<div class="bfn" style="border-color:var(--secondary);">' + s.yes + '</div></div>' +
+    '<div style="display:flex; flex-direction:column; align-items:center;">' +
+    '<div style="font-size:13px; font-weight:700; color:var(--danger); margin-bottom:6px;">✗ 否</div>' +
+    '<div class="bfn" style="border-color:var(--accent);">' + s.no + '</div></div>' +
+    '</div></div>';
+}
+
+updateTicket();
+switchScenario('cross');
+// 修正:首次调用时没有 event 对象
+document.addEventListener('DOMContentLoaded', () => {
+  const tabs = document.querySelectorAll('.scenario-tab');
+  if (tabs[0]) tabs[0].classList.add('active');
+});
+</script>
+</body>
+</html>

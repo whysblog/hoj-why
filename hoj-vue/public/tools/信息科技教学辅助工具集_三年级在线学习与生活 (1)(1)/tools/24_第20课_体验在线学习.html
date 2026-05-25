@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>体验在线学习 — 第20课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#ecfeff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#0e7490,#06b6d4);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#0e7490;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#06b6d4;color:white;border-color:#0e7490}
+.intro{background:linear-gradient(135deg,#cffafe,#a5f3fc);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#0e7490;margin-bottom:8px;font-size:20px}.intro p{color:#0c4a6e;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+
+/* 资源导航 */
+.subject-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sub-tab{padding:8px 16px;background:white;border:1.5px solid #a5f3fc;border-radius:18px;cursor:pointer;font-size:13px;transition:all .2s}
+.sub-tab:hover{background:#cffafe}
+.sub-tab.active{background:#06b6d4;color:white;border-color:#0e7490}
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.resource-card{background:white;padding:16px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer;transition:all .2s;border-top:4px solid #06b6d4}
+.resource-card:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.resource-card .icon{font-size:36px}
+.resource-card h4{color:#0e7490;margin:6px 0 4px;font-size:14px}
+.resource-card .platform{color:#64748b;font-size:11px;margin-bottom:6px}
+.resource-card p{color:#475569;font-size:12px;line-height:1.5}
+
+.method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.method-card{background:white;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.method-card .icon{font-size:36px}
+.method-card h4{color:#0e7490;margin:8px 0 6px;font-size:14px}
+.method-card p{color:#475569;font-size:13px;line-height:1.6}
+
+/* 兴趣选择 */
+.interest-board{background:white;padding:18px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.interest-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:6px 14px;border:1.5px solid #a5f3fc;border-radius:18px;cursor:pointer;font-size:13px;background:white;transition:all .2s;user-select:none}
+.chip:hover{background:#cffafe}
+.chip.selected{background:#06b6d4;color:white;border-color:#0e7490}
+.recommend-section{margin-top:14px;padding:14px;background:#ecfeff;border-radius:8px}
+.recommend-section h4{color:#0e7490;font-size:13px;margin-bottom:8px}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🎓 体验在线学习</h1>
+    <div class="lesson">第 20 课 · 第六单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>在线学习的特点</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>学科资源浏览</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>多样的学习方式</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>兴趣爱好学习</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🎓 在线学习的特点</h2>
+      <div class="lead">通过网络获取学习资源、与老师同学远程互动</div>
+      <div class="intro">
+        <h3>💻 什么是在线学习</h3>
+        <p>不限地点、不限时间，<b>通过网络平台学习</b>就是在线学习。可以看视频课、做练习题、和同学讨论、向老师提问。</p>
+      </div>
+      <div class="method-grid">
+        <div class="method-card"><div class="icon">⏰</div><h4>时间灵活</h4><p>可以反复回看，按自己的进度学习</p></div>
+        <div class="method-card"><div class="icon">🌍</div><h4>地点不限</h4><p>在家、在车上都可以学</p></div>
+        <div class="method-card"><div class="icon">📚</div><h4>资源丰富</h4><p>名师课、动画、试题、纪录片</p></div>
+        <div class="method-card"><div class="icon">🎯</div><h4>个性化</h4><p>可以选择自己想学的内容</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📚 学科资源浏览</h2>
+      <div class="lead">点击不同学科，看看可以在线学习什么</div>
+      <div class="subject-tabs">
+        <div class="sub-tab active" onclick="selSubject(this,'chinese')">📖 语文</div>
+        <div class="sub-tab" onclick="selSubject(this,'math')">➕ 数学</div>
+        <div class="sub-tab" onclick="selSubject(this,'english')">🔤 英语</div>
+        <div class="sub-tab" onclick="selSubject(this,'science')">🔬 科学</div>
+        <div class="sub-tab" onclick="selSubject(this,'art')">🎨 艺术</div>
+        <div class="sub-tab" onclick="selSubject(this,'sport')">🏃 体育</div>
+      </div>
+      <div class="resource-grid" id="resGrid"></div>
+      <div class="know">
+        <h3>🌟 国家中小学智慧教育平台</h3>
+        <p>这是教育部主办的<b>免费、权威</b>的中小学在线学习平台。提供与教材配套的视频课程、试题、专题学习资源。所有内容由专业团队制作，质量有保证。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎯 多样的学习方式</h2>
+      <div class="lead">在线学习不只是看视频，还有很多形式</div>
+      <div class="method-grid">
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">🎬</div><h4>看视频课</h4><p>专业老师讲解，配有动画演示</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">✍️</div><h4>做练习</h4><p>在线答题，立即获得反馈</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">🔍</div><h4>搜索答疑</h4><p>遇到不懂的问题搜索查询</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">📊</div><h4>互动游戏</h4><p>通过游戏化方式学习</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">🏛️</div><h4>虚拟参观</h4><p>云游博物馆、科技馆</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">👥</div><h4>在线讨论</h4><p>和同学一起讨论问题</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">🎓</div><h4>直播课</h4><p>实时和老师互动</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">📝</div><h4>电子作业</h4><p>提交、批改、订正</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🌈 兴趣爱好学习</h2>
+      <div class="lead">点选你感兴趣的爱好，看推荐的在线学习资源</div>
+      <div class="interest-board">
+        <p style="font-size:13px;color:#475569;margin-bottom:8px;">我的兴趣爱好（点击选择）：</p>
+        <div class="interest-chips" id="chips">
+          <div class="chip" data-id="paint">🎨 绘画</div>
+          <div class="chip" data-id="music">🎵 音乐</div>
+          <div class="chip" data-id="dance">💃 舞蹈</div>
+          <div class="chip" data-id="kungfu">🥋 武术</div>
+          <div class="chip" data-id="chess">♟️ 围棋</div>
+          <div class="chip" data-id="code">💻 编程</div>
+          <div class="chip" data-id="sci">🔬 科学实验</div>
+          <div class="chip" data-id="hist">🏛️ 历史故事</div>
+          <div class="chip" data-id="craft">✂️ 手工制作</div>
+          <div class="chip" data-id="cook">🍳 烹饪</div>
+          <div class="chip" data-id="space">🚀 天文</div>
+          <div class="chip" data-id="animal">🐾 动物</div>
+        </div>
+        <div class="recommend-section">
+          <h4>💡 推荐资源</h4>
+          <div id="interestRecommend" style="font-size:12px;color:#475569;line-height:1.8;">
+            请选择一个或多个兴趣爱好，给你推荐合适的在线学习资源。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="method-grid">
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">🌐</div><h4>多种学习方式</h4><p>视频、练习、互动、讨论</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">📚</div><h4>各科都能学</h4><p>语数英、艺体科都有资源</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">🎯</div><h4>兴趣扩展</h4><p>课本之外学更多</p></div>
+        <div class="method-card" style="border-top:4px solid #06b6d4;"><div class="icon">✅</div><h4>选权威平台</h4><p>智慧教育平台首选</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 老师建议</h3>
+        <p>① <b>学习要主动</b>：不要只看不动手；<br>② <b>选择权威</b>：优先国家智慧教育平台、央视频、新华社等；<br>③ <b>劳逸结合</b>：每学 30 分钟休息 5 分钟；<br>④ <b>与人交流</b>：和爸妈、同学分享学到的内容。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const resources = {
+  chinese: [
+    { icon: '📚', name: '部编版语文', platform: '国家中小学智慧教育平台', desc: '与教材完全配套的视频课程' },
+    { icon: '📖', name: '经典诵读', platform: '中国诗词大会', desc: '古诗词学习与欣赏' },
+    { icon: '🎭', name: '中国传统文化', platform: '央视少儿频道', desc: '了解中华文化精髓' },
+    { icon: '📝', name: '小学生作文指导', platform: '人教社', desc: '名师指导写作技巧' },
+  ],
+  math: [
+    { icon: '🧮', name: '人教版数学', platform: '智慧教育平台', desc: '小学数学全程视频' },
+    { icon: '🎯', name: '奥数趣味题', platform: '中国少儿教育网', desc: '挑战数学思维' },
+    { icon: '🎲', name: '数学游戏', platform: '智慧云课堂', desc: '在游戏中学数学' },
+    { icon: '📐', name: '图形与几何', platform: '北师大附小', desc: '动画演示几何概念' },
+  ],
+  english: [
+    { icon: '🔤', name: '小学英语', platform: '智慧教育平台', desc: '配套视频课' },
+    { icon: '🎵', name: '英语儿歌', platform: 'BBC Learning', desc: '英美儿歌学英语' },
+    { icon: '📖', name: '英文绘本', platform: '中国少儿出版', desc: '免费英文绘本阅读' },
+    { icon: '🎬', name: '英语动画片', platform: '央视少儿', desc: '看动画学英语' },
+  ],
+  science: [
+    { icon: '🌍', name: '科学探究', platform: '中国科普网', desc: '小学科学全册' },
+    { icon: '🔬', name: '十万个为什么', platform: '少儿百科', desc: '生活中的科学' },
+    { icon: '🚀', name: '太空探索', platform: '中国航天科普', desc: '航天科技知识' },
+    { icon: '🦕', name: '恐龙世界', platform: '自然博物馆', desc: '古生物科普' },
+  ],
+  art: [
+    { icon: '🎨', name: '美术鉴赏', platform: '故宫博物院云教育', desc: '名画欣赏与赏析' },
+    { icon: '🎵', name: '少儿音乐', platform: '中央音乐学院', desc: '基础音乐知识' },
+    { icon: '🎭', name: '京剧欣赏', platform: '国家大剧院', desc: '了解传统戏曲' },
+  ],
+  sport: [
+    { icon: '🏃', name: '校园广播体操', platform: '智慧教育平台', desc: '随时跟练' },
+    { icon: '⚽', name: '足球基础', platform: '中国足协', desc: '足球启蒙教学' },
+    { icon: '🏓', name: '乒乓球教学', platform: '国家体育总局', desc: '国球技巧' },
+    { icon: '🧘', name: '少儿瑜伽', platform: '体育课堂', desc: '居家锻炼' },
+  ],
+};
+
+function selSubject(btn, key) {
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderRes(key);
+}
+
+function renderRes(key) {
+  document.getElementById('resGrid').innerHTML = resources[key].map(r => `
+    <div class="resource-card">
+      <div class="icon">${r.icon}</div>
+      <h4>${r.name}</h4>
+      <div class="platform">📍 ${r.platform}</div>
+      <p>${r.desc}</p>
+    </div>
+  `).join('');
+}
+renderRes('chinese');
+
+// 兴趣推荐
+const interestMap = {
+  paint: '🎨 推荐：故宫博物院云教育（名画鉴赏）、中央美院启蒙课程、《艺术启蒙》动画系列',
+  music: '🎵 推荐：央视音乐频道少儿专区、《小小音乐家》、国家大剧院少儿音乐会回放',
+  dance: '💃 推荐：中央芭蕾舞团《天鹅湖》普及版、《舞蹈风暴》青少年组、中国民族舞基础',
+  kungfu: '🥋 推荐：少林寺武术普及课、中国武协青少年武术教学视频、《武术启蒙》',
+  chess: '♟️ 推荐：中国棋院在线、《围棋少年》动画片、国际象棋世界少儿冠军教学',
+  code: '💻 推荐：scratch.mit.edu（图形化编程）、Code.org 中文版、《和爸爸学编程》',
+  sci: '🔬 推荐：央视《加油！向未来》、《最强大脑》青少年版、中国科普网"科学小实验"',
+  hist: '🏛️ 推荐：央视《如果国宝会说话》、《中国通史》动画版、博物馆云端展览',
+  craft: '✂️ 推荐：央视《巧手剪纸》、《手工创意》系列、传统手工艺人云课堂',
+  cook: '🍳 推荐：央视《家有妙招》、《大头儿子和小头爸爸厨房记》、亲子烹饪节目',
+  space: '🚀 推荐：中国航天科普网、《天宫课堂》系列、央视《飞向太空》',
+  animal: '🐾 推荐：央视《动物世界》、北京动物园直播、《国家地理少儿版》',
+};
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.onclick = () => {
+    chip.classList.toggle('selected');
+    updateInterest();
+  };
+});
+
+function updateInterest() {
+  const sel = [...document.querySelectorAll('.chip.selected')].map(c => c.dataset.id);
+  const target = document.getElementById('interestRecommend');
+  if (sel.length === 0) {
+    target.innerHTML = '请选择一个或多个兴趣爱好，给你推荐合适的在线学习资源。';
+  } else {
+    target.innerHTML = sel.map(id => '<div style="padding:4px 0;">' + interestMap[id] + '</div>').join('');
+  }
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

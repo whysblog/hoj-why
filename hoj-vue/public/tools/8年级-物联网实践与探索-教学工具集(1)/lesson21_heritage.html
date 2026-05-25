@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第21课 · 文物保护新手段 — 智慧博物馆环境监测</title>
+<style>
+  :root {
+    --bg: #faf5ff;
+    --bg-2: #f3e8ff;
+    --ink: #1e1b4b;
+    --ink-soft: #5b5076;
+    --primary: #7c3aed;
+    --primary-2: #a855f7;
+    --accent: #ec4899;
+    --warn: #f59e0b;
+    --red: #dc2626;
+    --green: #10b981;
+    --line: #ddd0f5;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(124,58,237,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image: radial-gradient(circle at 80% 0%, rgba(168,85,247,.06), transparent 50%);
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 文物挑战 */
+  .threats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .threat {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-left: 4px solid var(--red);
+  }
+  .threat .ic { font-size: 28px; margin-bottom: 6px; }
+  .threat h4 { font-size: 14px; margin-bottom: 4px; color: var(--red); }
+  .threat p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  /* 展柜模拟器 */
+  .museum-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .display-case {
+    background: linear-gradient(180deg, #1e1b4b, #312e81);
+    border-radius: 12px; padding: 24px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;
+  }
+  .artifact-area {
+    background: rgba(0,0,0,.3); border-radius: 10px; padding: 20px;
+    text-align: center; position: relative;
+  }
+  .artifact-area svg { width: 100%; height: 220px; }
+  .sensors-area {
+    color: #fff;
+  }
+  .sensors-area h3 { font-size: 14px; margin-bottom: 10px; color: #c4b5fd; letter-spacing: 1px; }
+  .sensor-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+    padding: 10px; background: rgba(255,255,255,.08); border-radius: 6px;
+    margin-bottom: 8px; font-size: 12px;
+  }
+  .sensor-row .name { color: #e9d5ff; }
+  .sensor-row .val {
+    font-family: "JetBrains Mono",monospace; font-weight: 700;
+    padding: 3px 10px; border-radius: 99px;
+  }
+  .sensor-row .val.ok    { background: rgba(16,185,129,.25); color: #6ee7b7; }
+  .sensor-row .val.warn  { background: rgba(245,158,11,.25); color: #fde68a; }
+  .sensor-row .val.alert { background: rgba(220,38,38,.25); color: #fca5a5; }
+  .controls-row {
+    margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .ctl-btn {
+    padding: 8px 16px; background: var(--bg-2); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-family: inherit;
+  }
+  .ctl-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .status-bar {
+    margin-top: 14px; padding: 12px 16px; border-radius: 6px;
+    text-align: center; font-size: 13px;
+  }
+  .status-bar.ok    { background: rgba(16,185,129,.15); color: #047857; }
+  .status-bar.alert { background: rgba(220,38,38,.15); color: var(--red); }
+
+  /* 应用领域 */
+  .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .app-card {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+  }
+  .app-card .ic { font-size: 28px; margin-bottom: 6px; }
+  .app-card h4 { font-size: 14px; margin-bottom: 4px; color: var(--primary); }
+  .app-card p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .display-case { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 21 课</span>文物保护新手段</h1>
+  <p class="lead">珍贵文物对温度、湿度、光照、振动极其敏感。物联网技术让博物馆能<strong>7×24 小时实时监测每一件文物的微环境</strong>，并通过自动控制系统稳定环境参数，让千年文物得以更好地保存。</p>
+</header>
+
+<main>
+
+  <!-- 文物面临的挑战 -->
+  <section class="section">
+    <div class="section-title">一、文物保存面临的环境挑战</div>
+    <div class="threats-grid">
+      <div class="threat">
+        <div class="ic">💧</div>
+        <h4>湿度过高</h4>
+        <p>有机文物（书画、丝绸、木器）发霉、虫蛀；金属文物加速锈蚀。理想：45-55%</p>
+      </div>
+      <div class="threat">
+        <div class="ic">🏜</div>
+        <h4>湿度过低</h4>
+        <p>纸张、皮革变脆开裂；竹木收缩变形。室内湿度不应低于 40%</p>
+      </div>
+      <div class="threat">
+        <div class="ic">☀</div>
+        <h4>紫外光照</h4>
+        <p>使色素褪色、纤维老化。书画、织物对紫外尤为敏感。照度需 &lt; 50 lux</p>
+      </div>
+      <div class="threat">
+        <div class="ic">🌡</div>
+        <h4>温度波动</h4>
+        <p>反复热胀冷缩导致材质开裂。日波动应 &lt; 2℃</p>
+      </div>
+      <div class="threat">
+        <div class="ic">💨</div>
+        <h4>空气污染</h4>
+        <p>SO₂ 等酸性气体腐蚀金属、石质文物；甲醛影响有机物</p>
+      </div>
+      <div class="threat">
+        <div class="ic">📳</div>
+        <h4>振动冲击</h4>
+        <p>地震、施工、人流踩踏会传到文物，造成细微裂纹累积</p>
+      </div>
+      <div class="threat">
+        <div class="ic">🦠</div>
+        <h4>微生物</h4>
+        <p>霉菌、细菌啃食有机文物；CO₂ 浓度高也利于微生物繁殖</p>
+      </div>
+      <div class="threat">
+        <div class="ic">🦋</div>
+        <h4>虫害</h4>
+        <p>书蠹、白蚁啃食纸张木器。需监测温湿度避免适宜虫害繁殖</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 展柜模拟 -->
+  <section class="section">
+    <div class="section-title">二、智慧展柜实时监测</div>
+    <div class="museum-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">下方是一个<strong>展示书画文物的智慧展柜</strong>。展柜内布置多种传感器，实时上传到管理后台。点击场景按钮观察不同条件下的报警机制：</p>
+      <div class="display-case">
+        <div class="artifact-area">
+          <svg viewBox="0 0 280 240" xmlns="http://www.w3.org/2000/svg">
+            <!-- 展柜玻璃 -->
+            <rect x="20" y="20" width="240" height="200" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="4 3"/>
+            <!-- 文物：书画卷轴 -->
+            <g transform="translate(70 60)">
+              <rect x="0" y="0" width="140" height="120" fill="#fef3c7" stroke="#a37315" stroke-width="2"/>
+              <!-- 山水画意象 -->
+              <path d="M 5 80 Q 30 50 50 70 T 90 60 T 135 75 L 135 115 L 5 115 Z" fill="#84cc16" opacity="0.5"/>
+              <circle cx="100" cy="35" r="10" fill="#fbbf24"/>
+              <text x="70" y="105" font-size="10" fill="#4a6c5e" text-anchor="middle" font-style="italic">古代山水</text>
+              <text x="70" y="135" font-size="9" fill="#92400e" text-anchor="middle">⚺ 国家一级文物</text>
+            </g>
+            <!-- 传感器标记 -->
+            <circle cx="40" cy="40" r="6" fill="#10b981"/>
+            <text x="48" y="44" font-size="8" fill="#c4b5fd">温湿度</text>
+            <circle cx="240" cy="40" r="6" fill="#fbbf24"/>
+            <text x="248" y="44" font-size="8" fill="#c4b5fd" text-anchor="end">光照</text>
+            <circle cx="40" cy="200" r="6" fill="#ec4899"/>
+            <text x="48" y="204" font-size="8" fill="#c4b5fd">振动</text>
+            <circle cx="240" cy="200" r="6" fill="#06b6d4"/>
+            <text x="248" y="204" font-size="8" fill="#c4b5fd" text-anchor="end">空气质量</text>
+          </svg>
+        </div>
+        <div class="sensors-area">
+          <h3>📡 实时传感器数据</h3>
+          <div class="sensor-row"><span class="name">🌡 温度</span><span class="val ok" id="vT">20.5 ℃</span></div>
+          <div class="sensor-row"><span class="name">💧 相对湿度</span><span class="val ok" id="vH">52 %</span></div>
+          <div class="sensor-row"><span class="name">☀ 光照</span><span class="val ok" id="vL">42 lux</span></div>
+          <div class="sensor-row"><span class="name">💨 VOC 有机物</span><span class="val ok" id="vV">0.3 mg/m³</span></div>
+          <div class="sensor-row"><span class="name">📳 振动</span><span class="val ok" id="vVB">0.02 g</span></div>
+          <div class="sensor-row"><span class="name">🦠 CO₂</span><span class="val ok" id="vC">450 ppm</span></div>
+        </div>
+      </div>
+      <div class="controls-row">
+        <button class="ctl-btn active" id="b_normal" onclick="setScene('normal')">✓ 正常状态</button>
+        <button class="ctl-btn" id="b_humid" onclick="setScene('humid')">⚠ 湿度过高</button>
+        <button class="ctl-btn" id="b_light" onclick="setScene('light')">⚠ 光照超标</button>
+        <button class="ctl-btn" id="b_vibration" onclick="setScene('vibration')">⚠ 异常振动</button>
+        <button class="ctl-btn" id="b_air" onclick="setScene('air')">⚠ 空气污染</button>
+      </div>
+      <div class="status-bar ok" id="statusBar">✓ 环境参数正常，所有指标在适宜范围内。</div>
+    </div>
+  </section>
+
+  <!-- 其他应用 -->
+  <section class="section">
+    <div class="section-title">三、物联网在文物保护中的其他应用</div>
+    <div class="apps-grid">
+      <div class="app-card">
+        <div class="ic">🏛</div>
+        <h4>古建筑健康监测</h4>
+        <p>在古塔、古城墙、古桥布置倾斜、应力传感器，长期监测结构形变，预警坍塌风险。</p>
+      </div>
+      <div class="app-card">
+        <div class="ic">🪦</div>
+        <h4>遗址实时巡查</h4>
+        <p>在野外古墓、石刻周围部署摄像头+人体红外，识别盗墓、破坏行为并即时报警。</p>
+      </div>
+      <div class="app-card">
+        <div class="ic">🎫</div>
+        <h4>客流密度控制</h4>
+        <p>用红外计数器、Wi-Fi 探针统计展厅人流。超过阈值自动限流，避免拥挤造成 CO₂ 升高、文物振动。</p>
+      </div>
+      <div class="app-card">
+        <div class="ic">📍</div>
+        <h4>文物 RFID 追踪</h4>
+        <p>每件文物贴 RFID 标签，调拨、修复、外借时全程定位，杜绝丢失。</p>
+      </div>
+      <div class="app-card">
+        <div class="ic">🌐</div>
+        <h4>数字孪生</h4>
+        <p>通过 3D 扫描+IoT 数据，建立"数字文物"模型。损坏后仍可虚拟保存和修复参考。</p>
+      </div>
+      <div class="app-card">
+        <div class="ic">🤖</div>
+        <h4>智能展示导览</h4>
+        <p>蓝牙 Beacon 定位参观者位置，自动推送相应文物讲解音频，提升观众体验。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 21 课配套交互工具</footer>
+
+<script>
+var scenes = {
+  normal:    { T: ['20.5 ℃','ok'],  H: ['52 %','ok'],     L: ['42 lux','ok'],   V: ['0.3 mg/m³','ok'],   VB: ['0.02 g','ok'],   C: ['450 ppm','ok'],   msg: '✓ 环境参数正常，所有指标在适宜范围内。', barCls: 'ok' },
+  humid:     { T: ['21.0 ℃','ok'],  H: ['72 %','alert'],  L: ['38 lux','ok'],   V: ['0.4 mg/m³','ok'],   VB: ['0.02 g','ok'],   C: ['440 ppm','ok'],   msg: '⚠ 湿度过高 (72%)！立即启动除湿机，并通知保管员关注书画状态。', barCls: 'alert' },
+  light:     { T: ['20.5 ℃','ok'],  H: ['50 %','ok'],     L: ['185 lux','alert'],V: ['0.3 mg/m³','ok'],   VB: ['0.02 g','ok'],   C: ['450 ppm','ok'],   msg: '⚠ 光照超标 (185 lux)！紫外滤光受损或灯光过强，自动降低照度并告警。', barCls: 'alert' },
+  vibration: { T: ['20.6 ℃','ok'],  H: ['51 %','ok'],     L: ['42 lux','ok'],   V: ['0.3 mg/m³','ok'],   VB: ['1.45 g','alert'],C: ['450 ppm','ok'],   msg: '⚠ 检测到异常振动 (1.45g)！可能附近施工或地震活动，启动应急方案。', barCls: 'alert' },
+  air:       { T: ['20.5 ℃','ok'],  H: ['52 %','ok'],     L: ['42 lux','ok'],   V: ['2.8 mg/m³','alert'],VB: ['0.02 g','ok'],   C: ['1280 ppm','alert'],msg: '⚠ 空气污染！VOC 2.8 mg/m³、CO₂ 1280 ppm。启动新风系统并疏散观众。', barCls: 'alert' }
+};
+
+function setScene(name) {
+  var keys = ['normal','humid','light','vibration','air'];
+  for (var i = 0; i < keys.length; i++) {
+    document.getElementById('b_' + keys[i]).className = 'ctl-btn' + (keys[i] === name ? ' active' : '');
+  }
+  var s = scenes[name];
+  setVal('vT',  s.T);
+  setVal('vH',  s.H);
+  setVal('vL',  s.L);
+  setVal('vV',  s.V);
+  setVal('vVB', s.VB);
+  setVal('vC',  s.C);
+  var bar = document.getElementById('statusBar');
+  bar.className = 'status-bar ' + s.barCls;
+  bar.textContent = s.msg;
+}
+function setVal(id, pair) {
+  var el = document.getElementById(id);
+  el.textContent = pair[0];
+  el.className = 'val ' + pair[1];
+}
+
+window.setScene = setScene;
+</script>
+</body>
+</html>

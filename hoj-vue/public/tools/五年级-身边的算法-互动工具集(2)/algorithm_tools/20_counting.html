@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算机数数演示器 - 第13课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.counter-display {
+  background: linear-gradient(135deg, #1e1e2e, #2A2A3E);
+  border-radius: 14px;
+  padding: 30px 20px;
+  text-align: center;
+  color: white;
+  position: relative;
+}
+.current-num {
+  font-size: 96px;
+  font-weight: 900;
+  color: #50C878;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Consolas', monospace;
+  text-shadow: 0 0 30px rgba(80,200,120,0.5);
+  margin: 10px 0;
+  letter-spacing: 2px;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.current-num.pop { animation: popNum 0.3s ease; }
+@keyframes popNum {
+  0% { transform: scale(0.7); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.counter-status {
+  color: #A8E6CF;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+.stat-box {
+  background: rgba(255,255,255,0.1);
+  padding: 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+.stat-label {
+  font-size: 11px;
+  color: #BBB;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.stat-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFE082;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.numbers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+}
+.num-chip {
+  background: linear-gradient(135deg, #50C878, #3FA866);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: monospace;
+  animation: chipIn 0.25s ease;
+}
+@keyframes chipIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+.num-chip.odd { background: linear-gradient(135deg, #FFC107, #FF9800); }
+.num-chip.mult5 { background: linear-gradient(135deg, #FF8C42, #E94B3C); }
+.num-chip.mult7 { background: linear-gradient(135deg, #9C27B0, #6A1B9A); }
+.num-chip.pass {
+  background: linear-gradient(135deg, var(--danger), #C62828);
+  text-decoration: line-through;
+}
+
+.config-panel {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.cfg-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.cfg-row label { font-weight: 600; color: var(--text); font-size: 13.5px; min-width: 90px; }
+.speed-slider { width: 200px; }
+.speed-label { font-size: 13px; color: var(--text-light); min-width: 70px; }
+
+.race-section {
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  border-radius: 14px;
+  padding: 20px;
+}
+.race-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px;
+  gap: 14px;
+  align-items: center;
+  margin: 12px 0;
+}
+.race-name { font-weight: 600; }
+.race-track {
+  background: white;
+  height: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  border: 1.5px solid var(--border);
+}
+.race-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--secondary), #3FA866);
+  width: 0;
+  transition: width 0.1s linear;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+.race-fill.computer { background: linear-gradient(to right, var(--primary), var(--primary-dark)); }
+.race-time {
+  text-align: right;
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+.race-count { font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔢 计算机数数演示器</h1>
+    <div class="subtitle">用循环结构让计算机"会数数",并体会它的速度优势</div>
+    <span class="lesson-tag">第13课 · 让计算机会数数</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识 Python 中的 <code>while</code> 循环结构</li>
+            <li>理解循环的<strong>三要素</strong>:初始化、判断条件、循环体</li>
+            <li>能修改循环条件,实现数奇数、偶数、5 的倍数等</li>
+            <li>体会计算机<strong>"重复执行"</strong>的速度优势</li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>🤔 想一想:</strong>让你从 1 数到 100 要多久?计算机呢?
+        </div>
+      </div>
+
+      <div class="slide" data-title="循环代码">
+        <div class="slide-title"><span class="num">2</span>从 1 数到 100 的算法</div>
+        <div class="slide-subtitle">用 <code>while</code> 循环实现</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start;">
+          <div>
+            <h4 style="color:var(--primary-dark); margin-bottom:8px;">🔁 流程图</h4>
+            <div class="flowchart" style="padding:14px;">
+              <div class="flow-node start">开始</div>
+              <div class="flow-arrow"></div>
+              <div class="flow-node">设定初始数 c = 1</div>
+              <div class="flow-arrow"></div>
+              <div class="flow-node cond" style="background:#FDECEA;">c ≤ 100 ?</div>
+              <div style="display:flex; gap:12px; align-items:center; margin-top:6px;">
+                <span style="font-size:13px; font-weight:700; color:var(--secondary);">↶ 是</span>
+                <span style="font-size:13px; font-weight:700; color:var(--danger);">否 ↓</span>
+              </div>
+              <div class="flow-arrow"></div>
+              <div class="flow-node" style="background:#E8F8EE; border-color:var(--secondary);">输出 c<br>c = c + 1</div>
+              <div style="font-size:12px; color:var(--text-light); margin-top:6px;">↑ 返回判断</div>
+              <div class="flow-arrow" style="margin-top:6px;"></div>
+              <div class="flow-node end">结束</div>
+            </div>
+          </div>
+          <div>
+            <h4 style="color:var(--primary-dark); margin-bottom:8px;">🐍 Python 代码</h4>
+            <pre style="background:#1e1e2e; color:#d4d4d4; padding:18px; border-radius:10px; font-family:Consolas,monospace; font-size:14px; line-height:1.9; overflow-x:auto;"><span style="color:#6a9955;"># 设置计数变量的初值</span>
+c <span style="color:#d4d4d4;">=</span> <span style="color:#b5cea8;">1</span>
+
+<span style="color:#6a9955;"># 用循环控制从 1 数到 100</span>
+<span style="color:#c586c0;">while</span> c <span style="color:#d4d4d4;">&lt;=</span> <span style="color:#b5cea8;">100</span>:
+    <span style="color:#dcdcaa;">print</span>(c)       <span style="color:#6a9955;"># 输出当前的数</span>
+    c <span style="color:#d4d4d4;">=</span> c <span style="color:#d4d4d4;">+</span> <span style="color:#b5cea8;">1</span>   <span style="color:#6a9955;"># 计数变量加 1</span>
+</pre>
+            <div class="info-panel" style="margin-top:10px;">
+              <strong>🔑 三要素:</strong>
+              <ul style="font-size:13px; margin-top:4px; padding-left:20px;">
+                <li><strong>初始化:</strong> c = 1</li>
+                <li><strong>判断条件:</strong> c ≤ 100</li>
+                <li><strong>循环体:</strong> 输出 c 并 c = c + 1</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:开始数数">
+        <div class="slide-title"><span class="num">3</span>🚀 互动:让计算机开始数数</div>
+        <div class="slide-subtitle">选择模式,看计算机如何快速完成任务</div>
+
+        <div class="config-panel">
+          <div class="cfg-row">
+            <label>📋 数数模式:</label>
+            <select id="modeSelect">
+              <option value="all">全部数(1, 2, 3, ...)</option>
+              <option value="odd">只数奇数(1, 3, 5, ...)</option>
+              <option value="even">只数偶数(2, 4, 6, ...)</option>
+              <option value="mult5">只数 5 的倍数</option>
+              <option value="mult7">只数 7 的倍数</option>
+              <option value="pass7">逢七必过(7 的倍数或末位 7)</option>
+            </select>
+          </div>
+          <div class="cfg-row">
+            <label>🎯 数到:</label>
+            <input type="number" id="upTo" value="100" min="10" max="1000" style="width:90px;">
+          </div>
+          <div class="cfg-row">
+            <label>⏱ 速度:</label>
+            <input type="range" id="speedSlider" class="speed-slider" min="1" max="100" value="30">
+            <span class="speed-label" id="speedLabel">每秒 30 个</span>
+          </div>
+        </div>
+
+        <div class="counter-display">
+          <div style="font-size:13px; color:#BBB; margin-bottom:4px;">当前数字</div>
+          <div class="current-num" id="currentNum">—</div>
+          <div class="counter-status" id="counterStatus">点击"开始数数"启动</div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-label">已输出</div>
+              <div class="stat-val" id="outputCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">判断次数</div>
+              <div class="stat-val" id="checkCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">耗时(秒)</div>
+              <div class="stat-val" id="elapsed">0.0</div>
+            </div>
+          </div>
+          <div class="numbers-grid" id="numbersGrid"></div>
+        </div>
+
+        <div style="text-align:center; margin-top:14px;">
+          <button class="btn-success" onclick="startCounting()" id="countBtn">▶ 开始数数</button>
+          <button class="btn-secondary" onclick="stopCounting()">⏸ 暂停</button>
+          <button class="btn-secondary" onclick="resetCounting()">⏹ 重置</button>
+        </div>
+      </div>
+
+      <div class="slide" data-title="人机对决">
+        <div class="slide-title"><span class="num">4</span>⚡ 人 VS 计算机:数数大赛</div>
+        <div class="slide-subtitle">看看计算机数 100 个数 vs 人数 100 个数,差距有多大?</div>
+        <div class="race-section">
+          <div class="race-row">
+            <div class="race-name">🤖 计算机</div>
+            <div class="race-track"><div class="race-fill computer" id="raceComp"></div></div>
+            <div class="race-time" id="raceCompTime">—</div>
+          </div>
+          <div class="race-row">
+            <div class="race-name">🧑 人(平均)</div>
+            <div class="race-track"><div class="race-fill" id="raceHuman"></div></div>
+            <div class="race-time" id="raceHumanTime">—</div>
+          </div>
+          <div style="text-align:center; margin-top:14px;">
+            <button class="btn-success" onclick="startRace()">🏁 开始比赛</button>
+            <button class="btn-secondary" onclick="resetRace()">🔄 重置</button>
+          </div>
+          <div id="raceResult" style="margin-top:14px; text-align:center; font-weight:600;"></div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>💡 关键发现:</strong>计算机 1 秒可以做 <strong>几百万次</strong>加法运算,这就是为什么很多<strong>重复性大量计算</strong>都交给计算机做。
+        </div>
+      </div>
+
+      <div class="slide" data-title="循环的应用">
+        <div class="slide-title"><span class="num">5</span>循环的强大之处</div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>🚀 速度快</h4>
+            <p>普通个人计算机,1 秒能枚举<strong>几百万个</strong>数。同样的任务人需要几小时甚至几天。</p>
+          </div>
+          <div class="concept-card">
+            <h4>🔁 不厌其烦</h4>
+            <p>从 1 数到 1 亿,计算机不嫌烦不出错,人却很难做到。</p>
+          </div>
+          <div class="concept-card">
+            <h4>🎯 准确可靠</h4>
+            <p>只要程序写对,计算机执行 100 万次都不会出错。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🎮 拓展:</strong>"<strong>逢七必过</strong>"游戏 — 数数时遇到 7 的倍数或末位是 7,要喊"过"。这里既有循环(数数)又有分支(判断)。试试看上一页选择这个模式!
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>Python 中用 <code>while</code> 实现循环</li>
+            <li>循环三要素:<strong>初始化、判断条件、循环体</strong></li>
+            <li>修改循环条件可以数<strong>奇数、偶数、倍数</strong>等</li>
+            <li>计算机重复执行的<strong>速度</strong>是人的几百万倍</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后挑战</h3>
+          <p>修改程序,实现:输入起始数 b 和终止数 e,输出 b 到 e 之间的所有<strong>奇数</strong>。</p>
+          <p style="margin-top:6px;">下节课我们要比一比:解决同一个问题的<strong>不同算法,效率有多大差异</strong>!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+let countTimer = null;
+let counting = false;
+let curC = 1;
+let outputCnt = 0;
+let checkCnt = 0;
+let startTime = 0;
+
+function shouldOutput(n, mode) {
+  if (mode === 'all') return true;
+  if (mode === 'odd') return n % 2 === 1;
+  if (mode === 'even') return n % 2 === 0;
+  if (mode === 'mult5') return n % 5 === 0;
+  if (mode === 'mult7') return n % 7 === 0;
+  if (mode === 'pass7') return !(n % 7 === 0 || n % 10 === 7);
+  return true;
+}
+
+function isPassNum(n) {
+  return n % 7 === 0 || n % 10 === 7;
+}
+
+document.getElementById('speedSlider').addEventListener('input', e => {
+  document.getElementById('speedLabel').textContent = '每秒 ' + e.target.value + ' 个';
+  if (counting) {
+    stopCounting();
+    setTimeout(startCounting, 50);
+  }
+});
+
+function startCounting() {
+  if (counting) return;
+  counting = true;
+  document.getElementById('countBtn').disabled = true;
+  if (curC === 1) {
+    document.getElementById('numbersGrid').innerHTML = '';
+    outputCnt = 0;
+    checkCnt = 0;
+    startTime = performance.now();
+  }
+  const upTo = parseInt(document.getElementById('upTo').value) || 100;
+  const speed = parseInt(document.getElementById('speedSlider').value);
+  const interval = Math.max(10, 1000 / speed);
+  const mode = document.getElementById('modeSelect').value;
+
+  countTimer = setInterval(() => {
+    if (curC > upTo) {
+      stopCounting();
+      document.getElementById('counterStatus').textContent = '✅ 数完了! 退出循环';
+      return;
+    }
+    checkCnt++;
+    document.getElementById('currentNum').textContent = curC;
+    document.getElementById('currentNum').classList.remove('pop');
+    void document.getElementById('currentNum').offsetWidth;
+    document.getElementById('currentNum').classList.add('pop');
+    document.getElementById('counterStatus').textContent = '⚙️ 第 ' + checkCnt + ' 次判断:c = ' + curC + ',条件 c ≤ ' + upTo + ' ✓';
+
+    const out = shouldOutput(curC, mode);
+    if (out) {
+      outputCnt++;
+      const grid = document.getElementById('numbersGrid');
+      const chip = document.createElement('span');
+      chip.className = 'num-chip';
+      if (mode === 'odd' || (mode === 'pass7' && curC % 2 === 1)) chip.classList.add('odd');
+      if (mode === 'mult5') chip.classList.add('mult5');
+      if (mode === 'mult7') chip.classList.add('mult7');
+      chip.textContent = curC;
+      grid.appendChild(chip);
+      grid.scrollTop = grid.scrollHeight;
+    } else if (mode === 'pass7') {
+      // 显示"过"
+      outputCnt++;
+      const grid = document.getElementById('numbersGrid');
+      const chip = document.createElement('span');
+      chip.className = 'num-chip pass';
+      chip.textContent = curC + '→过';
+      grid.appendChild(chip);
+      grid.scrollTop = grid.scrollHeight;
+    }
+    document.getElementById('outputCount').textContent = outputCnt;
+    document.getElementById('checkCount').textContent = checkCnt;
+    document.getElementById('elapsed').textContent = ((performance.now() - startTime) / 1000).toFixed(1);
+    curC++;
+  }, interval);
+}
+
+function stopCounting() {
+  counting = false;
+  if (countTimer) clearInterval(countTimer);
+  countTimer = null;
+  document.getElementById('countBtn').disabled = false;
+}
+
+function resetCounting() {
+  stopCounting();
+  curC = 1;
+  outputCnt = 0;
+  checkCnt = 0;
+  document.getElementById('currentNum').textContent = '—';
+  document.getElementById('counterStatus').textContent = '点击"开始数数"启动';
+  document.getElementById('outputCount').textContent = 0;
+  document.getElementById('checkCount').textContent = 0;
+  document.getElementById('elapsed').textContent = '0.0';
+  document.getElementById('numbersGrid').innerHTML = '';
+}
+
+// ============ 人机对决 ============
+function startRace() {
+  resetRace();
+  const target = 100;
+  // 计算机:0.0001 秒/个 (模拟,实际更快)
+  const compEnd = 0.05; // 50 毫秒
+  const humanEnd = 50; // 50 秒
+
+  // 同步显示进度,人速度慢得多
+  // 计算机:在 1.5 秒内填满
+  const compDuration = 1500;
+  // 人:在 25 秒内填满(模拟)
+  const humanDuration = 25000;
+
+  const compStart = performance.now();
+  const compTimer = setInterval(() => {
+    const elapsed = performance.now() - compStart;
+    const pct = Math.min(100, elapsed / compDuration * 100);
+    document.getElementById('raceComp').style.width = pct + '%';
+    document.getElementById('raceComp').textContent = Math.floor(pct) + '%';
+    if (pct >= 100) {
+      clearInterval(compTimer);
+      document.getElementById('raceCompTime').textContent = '0.05 秒';
+      document.getElementById('raceResult').innerHTML = '<span style="color:var(--secondary);">✓ 计算机完成! 实际只用了约 0.05 秒(此处放慢演示)</span>';
+    }
+  }, 30);
+
+  const humanStart = performance.now();
+  const humanTimer = setInterval(() => {
+    const elapsed = performance.now() - humanStart;
+    const pct = Math.min(100, elapsed / humanDuration * 100);
+    document.getElementById('raceHuman').style.width = pct + '%';
+    document.getElementById('raceHuman').textContent = Math.floor(pct) + '%';
+    // 实时显示估计的人耗时
+    const estTime = (elapsed / 1000) * (humanEnd / (humanDuration / 1000));
+    document.getElementById('raceHumanTime').textContent = Math.round(estTime) + ' 秒';
+    if (pct >= 100) {
+      clearInterval(humanTimer);
+      document.getElementById('raceHumanTime').textContent = '约 50 秒';
+      document.getElementById('raceResult').innerHTML = '<span style="color:var(--secondary);">🏆 比赛结束! 计算机 ' + (50/0.05) + ' 倍于人速 — 这就是循环结构的威力!</span>';
+    }
+  }, 100);
+}
+
+function resetRace() {
+  document.getElementById('raceComp').style.width = '0%';
+  document.getElementById('raceComp').textContent = '';
+  document.getElementById('raceHuman').style.width = '0%';
+  document.getElementById('raceHuman').textContent = '';
+  document.getElementById('raceCompTime').textContent = '—';
+  document.getElementById('raceHumanTime').textContent = '—';
+  document.getElementById('raceResult').innerHTML = '';
+}
+</script>
+</body>
+</html>

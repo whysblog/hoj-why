@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自主可控与安全 · 第28-30课综合课件</title>
+<style>
+  :root {
+    --primary: #dc2626;
+    --primary-dark: #b91c1c;
+    --bg: #fef2f2;
+    --card: #ffffff;
+    --text: #450a0a;
+    --muted: #6b7280;
+    --border: #fecaca;
+    --ok: #16a34a;
+    --warn: #f59e0b;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
+                 sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .lesson-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .lesson-nav button {
+    flex: 1;
+    padding: 10px 14px;
+    background: white;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .lesson-nav button:hover { background: var(--bg); }
+  .lesson-nav button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .lesson-nav button .lesson-num { display: block; font-size: 11px; opacity: 0.7; margin-bottom: 2px; }
+
+  .lesson { display: none; }
+  .lesson.active { display: block; }
+
+  .slide-nav {
+    display: flex; gap: 6px; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap;
+  }
+  .slide-dot {
+    width: 32px; height: 32px; border-radius: 50%; background: white; border: 2px solid var(--border); cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--muted); transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; font-family: inherit;
+  }
+  .slide-dot.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.1); }
+  .slide-dot.done { background: var(--ok); border-color: var(--ok); color: white; }
+  .slide-arrow {
+    background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+    cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s;
+  }
+  .slide-arrow:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+  .slide-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .slide {
+    display: none; background: white; border-radius: 16px; padding: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border);
+    min-height: 480px; animation: slideIn 0.3s ease-out;
+  }
+  .slide.active { display: block; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide-type {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px;
+    background: var(--bg); color: var(--primary-dark); margin-bottom: 10px; font-weight: 600;
+  }
+  .slide h2 { font-size: 22px; margin-bottom: 14px; }
+  .slide h2::before {
+    content: ""; display: inline-block; width: 5px; height: 22px; background: var(--primary);
+    border-radius: 3px; margin-right: 10px; vertical-align: middle;
+  }
+  .slide h3 { font-size: 17px; margin: 18px 0 10px; color: var(--primary-dark); }
+  .slide p { font-size: 15px; margin-bottom: 12px; }
+  .slide ul { padding-left: 22px; margin-bottom: 16px; }
+  .slide li { font-size: 15px; margin-bottom: 8px; }
+
+  .goals-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0;
+  }
+  .goal-card { padding: 18px; background: var(--bg); border-radius: 12px; border-left: 4px solid var(--primary); }
+  .goal-card .num { color: var(--primary); font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+  .goal-card .text { font-size: 14px; line-height: 1.6; }
+
+  .info-card {
+    background: var(--bg); border-left: 4px solid var(--primary); padding: 14px 18px;
+    border-radius: 8px; margin: 16px 0;
+  }
+  .info-card .title { font-weight: 700; color: var(--primary-dark); margin-bottom: 6px; }
+  .info-card .body { font-size: 14px; }
+
+  /* === 第28课：安全标识 === */
+  .sign-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .sign-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+  .sign-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+  }
+  .sign-svg {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 10px;
+    display: block;
+  }
+  .sign-name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .sign-meaning {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* === 第29课：故障与防护 === */
+  .scenario-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .scenario-tab {
+    padding: 8px 14px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .scenario-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .scenario-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    margin: 14px 0;
+  }
+
+  .protection-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+    margin: 16px 0;
+  }
+  @media (max-width: 700px) {
+    .protection-flow { grid-template-columns: 1fr; }
+    .protection-flow > .flow-arrow { text-align: center; }
+  }
+  .pf-box {
+    background: var(--bg);
+    border: 1.5px solid var(--primary);
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .pf-box .pf-label { font-size: 11px; color: var(--primary-dark); font-weight: 700; margin-bottom: 4px; }
+  .pf-box .pf-content { font-size: 13px; }
+  .flow-arrow { font-size: 24px; color: var(--primary); text-align: center; }
+
+  /* === 第30课：自主可控 === */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .compare-table th, .compare-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table th { background: var(--bg); color: var(--primary-dark); font-weight: 700; }
+  .compare-table .label { font-weight: 600; color: var(--muted); width: 25%; }
+
+  .case-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid var(--primary);
+    margin: 14px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .case-card h3 { margin-top: 0; }
+  .case-card .case-meta {
+    display: inline-block;
+    background: var(--bg);
+    color: var(--primary-dark);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .icon-bullets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .icon-bullet {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .icon-bullet .ic {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .icon-bullet .text { font-size: 13px; line-height: 1.6; }
+  .icon-bullet .text strong { color: var(--primary-dark); }
+
+  /* 测验 */
+  .quiz {
+    background: #fef3c7; border-radius: 12px; padding: 22px; margin: 16px 0; border: 1.5px solid #fcd34d;
+  }
+  .quiz-question { font-weight: 700; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    background: white; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 10px 16px; cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 14px; transition: all 0.2s;
+  }
+  .quiz-option:hover { background: var(--bg); }
+  .quiz-option.correct { background: #dcfce7; border-color: var(--ok); color: #166534; font-weight: 600; }
+  .quiz-option.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+  .quiz-feedback {
+    margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #dcfce7; color: #166534; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第八单元 · 3课时综合课件</span>
+    <h1>自主可控与安全</h1>
+    <p>学会规范使用控制系统、了解故障预防、认识核心技术自主可控的重要意义</p>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="active" data-lesson="28"><span class="lesson-num">第28课</span>使用系统讲安全</button>
+    <button data-lesson="29"><span class="lesson-num">第29课</span>避免故障保安全</button>
+    <button data-lesson="30"><span class="lesson-num">第30课</span>自主可控变强大</button>
+  </div>
+
+  <!-- ============== 第28课 ============== -->
+  <div class="lesson active" id="lesson-28">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(28)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(28)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">认识常见的控制系统安全标识</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">了解个人使用控制系统的行为规范</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">树立安全使用控制系统的意识</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">每天我们都在使用控制系统：电梯、共享单车、地铁闸机、自动门……不正确的使用方式可能危及自己或他人的安全。让我们学会"安全使用"！</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🚨 安全标识</span>
+      <h2>认一认这些常见标识</h2>
+      <p>点击下面的标识看看它的意思：</p>
+
+      <div class="sign-grid">
+        <div class="sign-card" onclick="showSign('danger')">
+          <svg class="sign-svg" viewBox="0 0 64 64">
+            <polygon points="32,8 58,56 6,56" fill="#fef3c7" stroke="#dc2626" stroke-width="3"/>
+            <line x1="32" y1="22" x2="32" y2="42" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="32" cy="50" r="2.5" fill="#dc2626"/>
+          </svg>
+          <div class="sign-name">警告</div>
+          <div class="sign-meaning">注意危险</div>
+        </div>
+
+        <div class="sign-card" onclick="showSign('electric')">
+          <svg class="sign-svg" viewBox="0 0 64 64">
+            <polygon points="32,8 58,56 6,56" fill="#fef3c7" stroke="#dc2626" stroke-width="3"/>
+            <path d="M 34 18 L 24 38 L 32 38 L 28 50 L 40 30 L 32 30 Z" fill="#dc2626"/>
+          </svg>
+          <div class="sign-name">注意触电</div>
+          <div class="sign-meaning">有电流危险</div>
+        </div>
+
+        <div class="sign-card" onclick="showSign('forbidden')">
+          <svg class="sign-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#dc2626" stroke-width="4"/>
+            <line x1="14" y1="14" x2="50" y2="50" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <div class="sign-name">禁止</div>
+          <div class="sign-meaning">禁止某项行为</div>
+        </div>
+
+        <div class="sign-card" onclick="showSign('emergency')">
+          <svg class="sign-svg" viewBox="0 0 64 64">
+            <rect x="6" y="14" width="52" height="36" rx="3" fill="#16a34a" stroke="#15803d" stroke-width="2"/>
+            <path d="M 16 32 L 38 32 L 34 26 M 38 32 L 34 38" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <rect x="42" y="24" width="3" height="16" fill="white"/>
+            <text x="32" y="58" text-anchor="middle" font-size="9" fill="#16a34a">EXIT</text>
+          </svg>
+          <div class="sign-name">安全出口</div>
+          <div class="sign-meaning">紧急时撤离方向</div>
+        </div>
+
+        <div class="sign-card" onclick="showSign('stop')">
+          <svg class="sign-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="#dc2626" stroke="#7f1d1d" stroke-width="3"/>
+            <rect x="20" y="28" width="24" height="8" rx="1" fill="white"/>
+            <text x="32" y="22" text-anchor="middle" font-size="9" fill="white" font-weight="700">STOP</text>
+          </svg>
+          <div class="sign-name">紧急停止</div>
+          <div class="sign-meaning">遇险时立即按下</div>
+        </div>
+
+        <div class="sign-card" onclick="showSign('caution')">
+          <svg class="sign-svg" viewBox="0 0 64 64">
+            <polygon points="32,8 58,56 6,56" fill="#fef3c7" stroke="#dc2626" stroke-width="3"/>
+            <path d="M 24 30 Q 32 22 40 30 Q 40 36 36 38 Q 32 40 28 38" stroke="#dc2626" stroke-width="3" fill="none"/>
+            <line x1="32" y1="42" x2="32" y2="46" stroke="#dc2626" stroke-width="3"/>
+          </svg>
+          <div class="sign-name">注意安全</div>
+          <div class="sign-meaning">使用需小心</div>
+        </div>
+      </div>
+
+      <div class="info-card" id="signDetail">
+        <div class="title">👆 点击标识查看含义</div>
+        <div class="body">这些是我们日常生活中常见的安全标识，看到它们时要提高警觉，按提示行动。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 行为规范</span>
+      <h2>使用控制系统的"三要三不要"</h2>
+
+      <div class="icon-bullets">
+        <div class="icon-bullet">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M 4 10 L 8 14 L 16 6" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+          <div class="text"><strong>要 1：阅读说明</strong><br>使用新设备前先看说明书或操作提示，按规范操作</div>
+        </div>
+        <div class="icon-bullet">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M 4 10 L 8 14 L 16 6" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+          <div class="text"><strong>要 2：留意标识</strong><br>看到警示标志要立即停止当前行为，思考原因</div>
+        </div>
+        <div class="icon-bullet">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M 4 10 L 8 14 L 16 6" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+          <div class="text"><strong>要 3：求助专业</strong><br>遇到自己不懂的故障，找懂行的大人帮忙，不擅自拆修</div>
+        </div>
+        <div class="icon-bullet">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20"><line x1="5" y1="5" x2="15" y2="15" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="5" x2="5" y2="15" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="text"><strong>不要 1：乱按按钮</strong><br>电梯紧急按钮、地铁紧急停车等不能"试试看"</div>
+        </div>
+        <div class="icon-bullet">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20"><line x1="5" y1="5" x2="15" y2="15" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="5" x2="5" y2="15" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="text"><strong>不要 2：超载使用</strong><br>电梯标定的载重不能超过，否则可能下坠</div>
+        </div>
+        <div class="icon-bullet">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20"><line x1="5" y1="5" x2="15" y2="15" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="5" x2="5" y2="15" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="text"><strong>不要 3：私自破坏</strong><br>公共控制系统不是玩具，破坏会承担法律责任</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">💡 思考题</div>
+        <div class="body">在电梯里，<strong>紧急停止按钮</strong>什么时候才能按？为什么平时不能去按？</div>
+        <p style="margin-top: 8px; font-size: 13px; color: var(--muted);">参考：紧急按钮是用于电梯发生异常（如轿厢异响、夹人、坠落感）时使用的。平时按下会让电梯立即停止，可能困住乘客，扰乱秩序。</p>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 在公共场所看到"⚡ 注意触电"标识时，应当：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q28_1')">A. 觉得好玩，过去摸一摸</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q28_1')">B. 注意安全，远离该区域</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q28_1')">C. 拍照发朋友圈</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q28_1')">D. 把标识揭下来</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q28_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 关于使用控制系统，下列做法<u>错误</u>的是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q28_2')">A. 使用前阅读说明书</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q28_2')">B. 按照标识规范操作</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q28_2')">C. 没事时随便按按紧急停止键，体验一下</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q28_2')">D. 不懂的故障找专业人员处理</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q28_2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 第29课：故障预防 ============== -->
+  <div class="lesson" id="lesson-29">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(29)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(29)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">了解控制系统可能出现的故障类型</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">理解"多重保障"的安全设计思想</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">初步具备控制系统安全性能设计意识</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">任何控制系统都可能出现故障——传感器失灵、停电、网络中断……怎样设计才能让系统在"出问题"时也能保护人的安全呢？这就是<strong>安全性能设计</strong>。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🔍 案例分析</span>
+      <h2>看看不同场景的"多重保障"设计</h2>
+
+      <div class="scenario-tabs">
+        <button class="scenario-tab active" onclick="switchScenario('elevator', this)">电梯</button>
+        <button class="scenario-tab" onclick="switchScenario('cooker', this)">电饭煲</button>
+        <button class="scenario-tab" onclick="switchScenario('car', this)">汽车</button>
+      </div>
+
+      <div class="scenario-card" id="scenarioContent">
+        <!-- 默认电梯 -->
+      </div>
+
+      <div class="info-card">
+        <div class="title">💡 安全设计的两条原则</div>
+        <div class="body">
+          🔹 <strong>多重保障</strong>：不依赖单个安全机制，至少有 2-3 道防线<br>
+          🔹 <strong>故障保护</strong>：万一出故障，系统应自动进入"安全状态"（如停下来），而不是失控
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">📚 知识小结</span>
+      <h2>常见的安全设计方法</h2>
+
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="num">方法 1</div>
+          <div class="text"><strong>设置阈值警报</strong><br>关键数据（如温度、压力）超过安全范围时报警</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">方法 2</div>
+          <div class="text"><strong>设置紧急停止</strong><br>出错时人或系统能立即让设备停下来</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">方法 3</div>
+          <div class="text"><strong>冗余备份</strong><br>关键部件准备多套，一套坏了另一套顶上</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">方法 4</div>
+          <div class="text"><strong>故障自检</strong><br>系统定期检查自己各部件是否正常</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">方法 5</div>
+          <div class="text"><strong>断电保护</strong><br>停电时系统自动进入安全状态</div>
+        </div>
+        <div class="goal-card">
+          <div class="num">方法 6</div>
+          <div class="text"><strong>用户操作限制</strong><br>儿童锁、密码、权限管理等</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="title">🌟 工程师的思维</div>
+        <div class="body">优秀的工程师设计系统时不仅想"系统正常时会怎样"，更要想"出故障时会怎样"——这种"未雨绸缪"的思维是保护人民生命财产安全的关键。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测</span>
+      <h2>测一测</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. 关于"多重保障"的安全设计，下面说法<u>正确</u>的是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q29_1')">A. 太复杂没必要</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q29_1')">B. 单一安全措施不可靠，多重保障才能更好保护人员</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q29_1')">C. 增加了系统成本，应该尽量避免</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q29_1')">D. 一种安全措施已经足够</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q29_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. <strong>开放思考：</strong>你能想到家里哪些电器有"故障保护"设计吗？</div>
+        <p style="font-size:13px; color:var(--muted); margin-top: 8px;">
+          参考：电热水器（漏电保护开关）、电饭煲（防干烧保护）、燃气热水器（防熄火保护）、洗衣机（开盖停机）、电吹风（过热自动断电）……这些都是工程师为我们考虑周到的"故障保护"。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 第30课：自主可控 ============== -->
+  <div class="lesson" id="lesson-30">
+    <div class="slide-nav">
+      <button class="slide-arrow" onclick="prevSlide(30)">← 上一页</button>
+      <div class="slide-dot active" data-i="0">1</div>
+      <div class="slide-dot" data-i="1">2</div>
+      <div class="slide-dot" data-i="2">3</div>
+      <div class="slide-dot" data-i="3">4</div>
+      <button class="slide-arrow" onclick="nextSlide(30)">下一页 →</button>
+    </div>
+
+    <div class="slide active" data-slide="0">
+      <span class="slide-type">📋 学习目标</span>
+      <h2>本课你将学会</h2>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="num">目标 1</div><div class="text">理解"核心技术自主可控"的含义</div></div>
+        <div class="goal-card"><div class="num">目标 2</div><div class="text">理解"数据自主可控"的重要性</div></div>
+        <div class="goal-card"><div class="num">目标 3</div><div class="text">认识到自主可控对国家安全的重要意义</div></div>
+      </div>
+      <div class="info-card">
+        <div class="title">💡 引入</div>
+        <div class="body">如果一个国家的电力系统、铁路系统、银行系统所用的核心技术都来自别国，会怎样？万一对方"卡脖子"，这些系统就会瘫痪。这就是为什么我们必须<strong>掌握核心技术</strong>。</div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="1">
+      <span class="slide-type">🔬 概念理解</span>
+      <h2>什么是"自主可控"？</h2>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>对比项</th><th>非自主可控</th><th>自主可控 ✓</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="label">核心技术</td><td>依赖国外</td><td>自己研发、自己掌握</td></tr>
+          <tr><td class="label">关键芯片</td><td>从国外进口</td><td>自己设计、自己生产</td></tr>
+          <tr><td class="label">操作系统</td><td>用别国的系统</td><td>有国产操作系统可选</td></tr>
+          <tr><td class="label">数据存储</td><td>放在国外服务器</td><td>放在本国服务器，自己管理</td></tr>
+          <tr><td class="label">风险</td><td>容易被"卡脖子"或断供</td><td>不受制于人，安全可靠</td></tr>
+        </tbody>
+      </table>
+
+      <h3>"自主可控"包括两个层面</h3>
+
+      <div class="icon-bullets">
+        <div class="icon-bullet">
+          <div class="ic">
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <rect x="3" y="3" width="14" height="14" rx="2" fill="none" stroke="#dc2626" stroke-width="2"/>
+              <rect x="7" y="7" width="6" height="6" fill="#dc2626"/>
+            </svg>
+          </div>
+          <div class="text"><strong>核心技术自主可控</strong><br>关键的芯片、操作系统、算法等都由我们自己掌握，不依赖别人。</div>
+        </div>
+        <div class="icon-bullet">
+          <div class="ic">
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <path d="M 10 3 L 4 7 L 4 13 Q 4 17 10 18 Q 16 17 16 13 L 16 7 Z" fill="none" stroke="#dc2626" stroke-width="2"/>
+              <path d="M 7 10 L 9 12 L 13 8" stroke="#dc2626" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="text"><strong>数据自主可控</strong><br>用户数据、地理数据、行业数据等都存储在自己的服务器上，由自己管理和保护。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="2">
+      <span class="slide-type">🇨🇳 中国案例</span>
+      <h2>我国自主可控的代表性成就</h2>
+
+      <div class="case-card">
+        <span class="case-meta">🛰 航天领域</span>
+        <h3>北斗卫星导航系统</h3>
+        <p>中国自主建设、独立运行的全球卫星导航系统。<strong>独立于美国 GPS、俄罗斯格洛纳斯</strong>。今天，你手机里的地图、共享单车、自动驾驶汽车、远洋渔船都在用北斗。这意味着：即使外部环境变化，我们的定位导航始终可用。</p>
+      </div>
+
+      <div class="case-card">
+        <span class="case-meta">🚄 交通领域</span>
+        <h3>中国高铁</h3>
+        <p>从引进吸收到自主创新，今天中国高铁的控制系统、信号系统、车辆制造已经做到自主可控，并向世界多国出口。<strong>"复兴号"动车组实现了核心系统的100%国产化</strong>。</p>
+      </div>
+
+      <div class="case-card">
+        <span class="case-meta">💻 信息技术</span>
+        <h3>国产操作系统与芯片</h3>
+        <p>从龙芯、鸿蒙到统信 UOS，越来越多的国产芯片和操作系统正在被广泛使用。这让我们在关键领域（如政府、金融、能源）不再完全依赖别国技术。</p>
+      </div>
+
+      <div class="case-card">
+        <span class="case-meta">⚡ 能源领域</span>
+        <h3>特高压输电</h3>
+        <p>我国掌握了世界领先的特高压输电技术，把西部的电送到东部沿海地区，这是别国想"卡脖子"也做不到的<strong>独门绝技</strong>。</p>
+      </div>
+    </div>
+
+    <div class="slide" data-slide="3">
+      <span class="slide-type">✓ 课堂检测 & 总结</span>
+      <h2>测一测 & 课程总结</h2>
+
+      <div class="quiz">
+        <div class="quiz-question">1. "核心技术自主可控"的<u>主要意义</u>是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q30_1')">A. 让产品看起来更高级</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q30_1')">B. 不受别国限制，保障国家安全与发展</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q30_1')">C. 节省成本</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q30_1')">D. 让别国跟我们做生意</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q30_1"></div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-question">2. 下列<u>不属于</u>"自主可控"案例的是：</div>
+        <div class="quiz-options">
+          <button class="quiz-option" onclick="answer(this, false, 'q30_2')">A. 北斗卫星导航系统</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q30_2')">B. 中国高铁</button>
+          <button class="quiz-option" onclick="answer(this, true, 'q30_2')">C. 进口苹果手机</button>
+          <button class="quiz-option" onclick="answer(this, false, 'q30_2')">D. 特高压输电技术</button>
+        </div>
+        <div class="quiz-feedback" id="fb-q30_2"></div>
+      </div>
+
+      <div class="info-card" style="background: linear-gradient(135deg, #fef3c7, #fee2e2); border-left-color: var(--primary);">
+        <div class="title">🎓 全模块总结</div>
+        <div class="body">
+          经过 30 节课的学习，我们认识了过程与控制的方方面面：从身边的简单开关，到逻辑运算，到反馈与闭环，到智能种植、电梯、汽车，最后到自主可控。<br><br>
+          <strong>请记住</strong>：每一个小小的控制系统背后都凝聚着无数工程师的智慧。希望未来你们当中也有人能成为优秀的工程师，为国家的<strong>科技自主</strong>贡献力量！💪
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 课时切换 ===
+document.querySelectorAll('.lesson-nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lesson-nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('lesson-' + btn.dataset.lesson).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// === 幻灯片导航 ===
+function showSlide(lesson, index) {
+  const lessonEl = document.getElementById('lesson-' + lesson);
+  const slides = lessonEl.querySelectorAll('.slide');
+  const dots = lessonEl.querySelectorAll('.slide-dot');
+  slides.forEach(s => s.classList.remove('active'));
+  dots.forEach((d, i) => {
+    d.classList.remove('active');
+    if (i < index) d.classList.add('done'); else d.classList.remove('done');
+  });
+  slides[index].classList.add('active');
+  dots[index].classList.add('active');
+}
+function getCurrentSlideIndex(lesson) {
+  const slides = Array.from(document.getElementById('lesson-' + lesson).querySelectorAll('.slide'));
+  return slides.findIndex(s => s.classList.contains('active'));
+}
+function nextSlide(lesson) {
+  const idx = getCurrentSlideIndex(lesson);
+  const total = document.getElementById('lesson-' + lesson).querySelectorAll('.slide').length;
+  if (idx < total - 1) showSlide(lesson, idx + 1);
+}
+function prevSlide(lesson) {
+  const idx = getCurrentSlideIndex(lesson);
+  if (idx > 0) showSlide(lesson, idx - 1);
+}
+document.querySelectorAll('.slide-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    const lesson = d.closest('.lesson').id.split('-')[1];
+    showSlide(lesson, +d.dataset.i);
+  });
+});
+
+// === 第28课：标识 ===
+const signInfo = {
+  danger: { title: '⚠ 警告标识', body: '黄底三角形，提示"前方有危险"。看到时要提高警惕，按提示行动。' },
+  electric: { title: '⚡ 注意触电', body: '提示该区域有触电危险，不能用手或导电物品触摸。' },
+  forbidden: { title: '🚫 禁止标识', body: '红色圆圈带斜线，表示禁止某种行为（如禁止吸烟、禁止使用手机）。' },
+  emergency: { title: '🚪 安全出口', body: '绿色矩形带人形，指示紧急情况下的逃生方向。在公共场所要留意它的位置。' },
+  stop: { title: '🛑 紧急停止', body: '红色圆形按钮，遇到设备失控时按下能让设备立即停止。<strong>切勿好奇乱按！</strong>' },
+  caution: { title: '⚠ 注意安全', body: '通用警示标识，提醒使用者操作时要小心、规范。' }
+};
+function showSign(key) {
+  const info = signInfo[key];
+  document.getElementById('signDetail').innerHTML = `<div class="title">${info.title}</div><div class="body">${info.body}</div>`;
+}
+
+// === 第29课：场景 ===
+const scenarios = {
+  elevator: {
+    title: '电梯的多重安全保障',
+    intro: '一部正常运行的电梯不止有一道安全防线，工程师为它设计了至少 5-7 重保障：',
+    layers: [
+      { label: '保障 1', content: '<strong>钢丝绳冗余</strong><br>多根钢丝绳同时承重，每根都能单独拉住整个轿厢' },
+      { label: '保障 2', content: '<strong>超速制动器</strong><br>感知到下坠加速就立即抱死导轨' },
+      { label: '保障 3', content: '<strong>缓冲底座</strong><br>井道底部有强力缓冲器，即使坠落也能减震' }
+    ]
+  },
+  cooker: {
+    title: '电饭煲的多重安全保障',
+    intro: '小小一个电饭煲，看不见的安全设计有很多：',
+    layers: [
+      { label: '保障 1', content: '<strong>温控开关</strong><br>水沸腾后自动跳保温档' },
+      { label: '保障 2', content: '<strong>过热保险丝</strong><br>异常高温时熔断，切断电源' },
+      { label: '保障 3', content: '<strong>底部温感</strong><br>检测干烧时立即停止加热' }
+    ]
+  },
+  car: {
+    title: '汽车的多重安全保障',
+    intro: '一辆汽车的安全系统是高度冗余的设计：',
+    layers: [
+      { label: '保障 1', content: '<strong>主动安全</strong><br>ABS 防抱死、车道偏离预警、自动紧急刹车' },
+      { label: '保障 2', content: '<strong>被动安全</strong><br>安全带、安全气囊、溃缩区设计' },
+      { label: '保障 3', content: '<strong>故障保护</strong><br>关键部件故障时自动降低车速并报警' }
+    ]
+  }
+};
+function switchScenario(key, btn) {
+  document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const s = scenarios[key];
+  document.getElementById('scenarioContent').innerHTML = `
+    <h3>${s.title}</h3>
+    <p>${s.intro}</p>
+    <div class="protection-flow">
+      <div class="pf-box">
+        <div class="pf-label">${s.layers[0].label}</div>
+        <div class="pf-content">${s.layers[0].content}</div>
+      </div>
+      <div class="flow-arrow">+</div>
+      <div class="pf-box">
+        <div class="pf-label">${s.layers[1].label}</div>
+        <div class="pf-content">${s.layers[1].content}</div>
+      </div>
+      <div class="flow-arrow">+</div>
+      <div class="pf-box">
+        <div class="pf-label">${s.layers[2].label}</div>
+        <div class="pf-content">${s.layers[2].content}</div>
+      </div>
+    </div>
+  `;
+}
+switchScenario('elevator', null);
+document.querySelector('.scenario-tab').classList.add('active');
+
+// === 测验 ===
+const explanations = {
+  q28_1: '✓ "注意触电"是警示性标识，意味着该区域有电流危险，应远离并按指示行动。',
+  q28_2: '✓ 紧急停止键是关键安全装置，没有真实紧急情况绝不能去按，否则会扰乱秩序甚至造成安全事故。',
+  q29_1: '✓ 任何单一安全措施都可能失效，多重保障才能在某一道防线被突破时依然保护人员安全。',
+  q30_1: '✓ 关键核心技术不能受制于人，这是国家安全和长远发展的根本保障。',
+  q30_2: '✓ 苹果手机是美国苹果公司设计，关键芯片和操作系统都不是我国自主研发，所以不属于"自主可控"案例。'
+};
+function answer(btn, isCorrect, qid) {
+  const options = btn.parentElement.querySelectorAll('.quiz-option');
+  options.forEach(o => o.disabled = true);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'quiz-feedback show correct';
+    fb.innerHTML = '<strong>回答正确！</strong> ' + (explanations[qid] || '');
+  } else {
+    btn.classList.add('wrong');
+    options.forEach(o => {
+      if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+    });
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'quiz-feedback show wrong';
+    fb.innerHTML = '<strong>再想想~</strong> ' + (explanations[qid] || '');
+  }
+}
+</script>
+</body>
+</html>

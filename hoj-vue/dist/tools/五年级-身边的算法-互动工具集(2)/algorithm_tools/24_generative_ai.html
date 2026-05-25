@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生成式AI体验 - 第29课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.chat-window {
+  background: #F0F4F8;
+  border-radius: 14px;
+  padding: 16px;
+  max-height: 420px;
+  overflow-y: auto;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+}
+.bubble {
+  max-width: 75%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  animation: bubblePop 0.3s ease;
+}
+@keyframes bubblePop {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bubble.user {
+  background: var(--primary);
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+.bubble.ai {
+  background: white;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.bubble.ai::before {
+  content: '🤖 AI 助手';
+  display: block;
+  font-size: 11px;
+  color: var(--text-light);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.bubble.user::before {
+  content: '🧒 你';
+  display: block;
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.bubble pre {
+  background: rgba(0,0,0,0.06);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  margin-top: 6px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.bubble.user pre { background: rgba(255,255,255,0.2); color: white; }
+.bubble .poem {
+  background: rgba(0,0,0,0.04);
+  padding: 10px 14px;
+  border-left: 3px solid var(--primary);
+  margin-top: 6px;
+  font-family: 'Cambria', serif;
+  font-style: italic;
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.typing-dots span {
+  width: 7px; height: 7px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: typingDot 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingDot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.prompt-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.prompt-btn {
+  background: white;
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.prompt-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+.prompt-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--text-light);
+}
+.prompt-btn .icon { margin-right: 6px; }
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.poem-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.poem-card h4 {
+  color: var(--primary-dark);
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.poem-card .poem-text {
+  background: #FAFBFC;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Cambria', serif;
+  font-style: italic;
+  line-height: 2;
+  font-size: 14px;
+}
+.prompt-tag {
+  display: inline-block;
+  background: #FFF9E6;
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.warning-card {
+  background: linear-gradient(135deg, #FDECEA, #FCE7E5);
+  border-left: 5px solid var(--danger);
+  padding: 16px;
+  border-radius: 10px;
+  margin: 14px 0;
+}
+.warning-card h4 {
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+
+.hourglass-problem {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1.5px solid var(--border);
+}
+.hourglass-visual {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 14px 0;
+}
+.hg-item {
+  text-align: center;
+}
+.hg-icon { font-size: 60px; }
+.hg-time {
+  background: var(--accent);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🤖 生成式 AI 体验</h1>
+    <div class="subtitle">认识生成式人工智能,学会正确使用</div>
+    <span class="lesson-tag">第29课 · 智能工具再体验</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识<strong>生成式人工智能</strong>(可以生成文字、图片、代码…)</li>
+            <li>体验用 AI 工具<strong>辅助学习</strong></li>
+            <li>理解<strong>提示词</strong>对 AI 生成结果的影响</li>
+            <li>知道 AI <strong>不是万能</strong>的,要培养<strong>独立思考</strong></li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>🌟 什么是生成式 AI?</strong>能根据你的<strong>"提示"</strong>(prompt)<strong>"生成"</strong>新内容的 AI: 写诗、画画、编程序、回答问题…
+        </div>
+      </div>
+
+      <div class="slide" data-title="体验:AI 写诗">
+        <div class="slide-title"><span class="num">2</span>📝 体验 1:AI 写诗</div>
+        <div class="slide-subtitle">小夏让 AI 写"冬季初雪"的诗,看看效果</div>
+        <div class="chat-window" id="chat1"></div>
+        <div class="prompt-buttons">
+          <button class="prompt-btn" onclick="askAI1('basic')"><span class="icon">📩</span>请为我写一首冬季初雪的诗歌</button>
+          <button class="prompt-btn" onclick="askAI1('seven')"><span class="icon">📩</span>请为我写一首冬季初雪的<strong>七言诗</strong></button>
+          <button class="prompt-btn" onclick="askAI1('reset')"><span class="icon">🔄</span>清空对话,重新开始</button>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>💡 观察:</strong>不同的<strong>提示词</strong>(prompt)会让 AI 生成<strong>完全不同</strong>的内容。这就是"提示词工程"。
+        </div>
+      </div>
+
+      <div class="slide" data-title="提示词的力量">
+        <div class="slide-title"><span class="num">3</span>同一主题,不同提示词</div>
+        <div class="slide-subtitle">提示词越精确,AI 生成的结果越符合你的预期</div>
+        <div class="compare-row">
+          <div class="poem-card">
+            <div class="prompt-tag">📩 提示词 1:写一首冬季初雪的诗歌</div>
+            <h4>🤖 AI 输出:自由诗</h4>
+            <div class="poem-text">
+              初雪飘落时,世界变得纯净无瑕。<br>
+              银装素裹的大地,如同一幅美丽的画卷。<br>
+              树枝挂满了雪,仿佛披上了洁白的羽毛大衣。<br>
+              寒风吹过,雪花在空中翩翩起舞。
+            </div>
+          </div>
+          <div class="poem-card">
+            <div class="prompt-tag">📩 提示词 2:写一首冬季初雪的<strong>七言诗</strong></div>
+            <h4>🤖 AI 输出:七言诗</h4>
+            <div class="poem-text">
+              初雪飘零落满山,<br>
+              银装素裹似仙境。<br>
+              寒风凛冽吹不散,<br>
+              冰清玉洁入梦来。
+            </div>
+          </div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>🎯 关键:</strong>多加"<strong>七言</strong>"两个字,AI 就严格按照每行 7 个字、有韵律的格式生成。<br>
+          提示词描述<strong>越具体</strong>(风格、长度、形式、情感),AI 输出越合心意。
+        </div>
+      </div>
+
+      <div class="slide" data-title="体验:AI 写代码">
+        <div class="slide-title"><span class="num">4</span>💻 体验 2:AI 帮忙写程序</div>
+        <div class="slide-subtitle">让 AI 写一个计算 BMI 指数的 Python 程序</div>
+        <div class="chat-window" id="chat2"></div>
+        <div class="prompt-buttons">
+          <button class="prompt-btn" onclick="askAI2('describe')"><span class="icon">📩</span>请描述计算 BMI 指数的算法</button>
+          <button class="prompt-btn" onclick="askAI2('code')"><span class="icon">📩</span>请编写一个 Python 程序,计算 BMI 指数并输出</button>
+          <button class="prompt-btn" onclick="askAI2('reset')"><span class="icon">🔄</span>清空对话</button>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>📘 你看到了什么:</strong>AI 既能<strong>描述算法步骤</strong>,也能<strong>生成可运行的程序代码</strong>。但记得 — <strong>把代码复制到 Python 中运行,自己检验</strong>!
+        </div>
+      </div>
+
+      <div class="slide" data-title="AI 不是万能的">
+        <div class="slide-title"><span class="num">5</span>⚠️ AI 不是万能的!</div>
+        <div class="slide-subtitle">看看 AI 在这个题目上栽跟头了</div>
+        <div class="hourglass-problem">
+          <h4 style="color:var(--accent); margin-bottom:8px;">🧠 经典逻辑题:沙漏计时</h4>
+          <p style="font-size:14px;">有两个沙漏:</p>
+          <div class="hourglass-visual">
+            <div class="hg-item">
+              <div class="hg-icon">⏳</div>
+              <div class="hg-time">大沙漏 7 分钟</div>
+            </div>
+            <div class="hg-item">
+              <div class="hg-icon">⌛</div>
+              <div class="hg-time">小沙漏 4 分钟</div>
+            </div>
+          </div>
+          <p style="text-align:center; font-weight:600; color:var(--primary-dark);">问:如何<strong>准确计时 9 分钟</strong>?</p>
+        </div>
+        <div class="chat-window" id="chat3" style="margin-top:14px; max-height:280px;"></div>
+        <div class="prompt-buttons">
+          <button class="prompt-btn" onclick="askAI3()"><span class="icon">📩</span>把这题交给 AI 看看</button>
+        </div>
+        <div class="warning-card">
+          <h4>⚠️ 重要提醒</h4>
+          <p style="font-size:13.5px; line-height:1.7;">生成式 AI 通过分析<strong>大量历史数据</strong>来生成新内容,但<strong>不能完全代替人类的独立思考</strong>。AI 有时会:</p>
+          <ul style="font-size:13.5px; margin-top:6px; padding-left:20px;">
+            <li>给出<strong>看似合理但错误</strong>的答案</li>
+            <li>对复杂逻辑题<strong>搞不清楚</strong></li>
+            <li>编造<strong>不存在的</strong>事实(称为"幻觉")</li>
+          </ul>
+          <p style="font-size:13.5px; margin-top:6px;"><strong>✅ 正确做法:</strong>把 AI 当成<strong>学习助手</strong>,但所有答案都要<strong>自己验证</strong>!</p>
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li><strong>生成式 AI</strong> 能生成文字、代码、图片、视频…</li>
+            <li>同样的主题,<strong>不同提示词</strong>会得到不同结果</li>
+            <li>AI 是强大工具,但<strong>不能完全代替人类思考</strong></li>
+            <li>正确做法:用 AI 拓宽知识、辅助学习,<strong>但要自己验证</strong></li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后思考</h3>
+          <p>1. 如果完全依赖 AI 做作业,会有什么<strong>问题</strong>?</p>
+          <p>2. 算法<strong>自主可控</strong>很重要 — 国家、社会、个人都需要拥有自主的算法技术。</p>
+          <p style="margin-top:6px;">下节课我们将探索<strong>"生命游戏"</strong> — 一个用简单规则产生复杂美的算法!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+function appendBubble(chatId, type, html, delay = 0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const chat = document.getElementById(chatId);
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ' + type;
+      bubble.innerHTML = html;
+      chat.appendChild(bubble);
+      chat.scrollTop = chat.scrollHeight;
+      resolve();
+    }, delay);
+  });
+}
+
+async function appendTyping(chatId) {
+  return appendBubble(chatId, 'ai', '<div class="typing-dots"><span></span><span></span><span></span></div>');
+}
+
+function removeLastBubble(chatId) {
+  const chat = document.getElementById(chatId);
+  if (chat.lastChild) chat.removeChild(chat.lastChild);
+}
+
+// ============ 体验 1:AI 写诗 ============
+async function askAI1(type) {
+  const chat = document.getElementById('chat1');
+  if (type === 'reset') {
+    chat.innerHTML = '';
+    document.querySelectorAll('#chat1 ~ .prompt-buttons .prompt-btn').forEach(b => b.disabled = false);
+    return;
+  }
+  if (type === 'basic') {
+    await appendBubble('chat1', 'user', '请为我写一首冬季初雪的诗歌');
+    await appendTyping('chat1');
+    await new Promise(r => setTimeout(r, 1500));
+    removeLastBubble('chat1');
+    await appendBubble('chat1', 'ai',
+      '好的,以下是一首冬季初雪的诗歌:' +
+      '<div class="poem"><strong>冬日初雪</strong><br>' +
+      '初雪飘落时,世界变得纯净无瑕。<br>' +
+      '银装素裹的大地,如同一幅美丽的画卷。<br>' +
+      '树枝挂满了雪,仿佛披上了洁白的羽毛大衣。<br>' +
+      '寒风吹过,雪花在空中翩翩起舞。</div>'
+    );
+  } else if (type === 'seven') {
+    await appendBubble('chat1', 'user', '请为我写一首冬季初雪的<strong>七言诗</strong>');
+    await appendTyping('chat1');
+    await new Promise(r => setTimeout(r, 1500));
+    removeLastBubble('chat1');
+    await appendBubble('chat1', 'ai',
+      '好的,以下是一首冬季初雪的七言诗:' +
+      '<div class="poem"><strong>冬日初雪</strong><br>' +
+      '初雪飘零落满山,<br>' +
+      '银装素裹似仙境。<br>' +
+      '寒风凛冽吹不散,<br>' +
+      '冰清玉洁入梦来。</div>' +
+      '<small style="color:var(--text-light); margin-top:8px; display:block;">注:严格按七言格式生成,每行 7 个字。</small>'
+    );
+  }
+}
+
+// ============ 体验 2:AI 写代码 ============
+async function askAI2(type) {
+  if (type === 'reset') {
+    document.getElementById('chat2').innerHTML = '';
+    return;
+  }
+  if (type === 'describe') {
+    await appendBubble('chat2', 'user', '请描述计算 BMI 指数的算法');
+    await appendTyping('chat2');
+    await new Promise(r => setTimeout(r, 1500));
+    removeLastBubble('chat2');
+    await appendBubble('chat2', 'ai',
+      '好的,BMI(身体质量指数)用于衡量人体胖瘦程度。算法步骤:<br>' +
+      '<strong>1.</strong> 输入身高(米)和体重(千克)<br>' +
+      '<strong>2.</strong> 计算 BMI = 体重 ÷ 身高²<br>' +
+      '<strong>3.</strong> 根据 BMI 值判断:<br>' +
+      '&nbsp;&nbsp;• BMI < 18.5 → 偏瘦<br>' +
+      '&nbsp;&nbsp;• 18.5 ≤ BMI < 24 → 正常<br>' +
+      '&nbsp;&nbsp;• 24 ≤ BMI < 28 → 超重<br>' +
+      '&nbsp;&nbsp;• BMI ≥ 28 → 肥胖<br>' +
+      '<strong>4.</strong> 输出 BMI 值和健康状况'
+    );
+  } else if (type === 'code') {
+    await appendBubble('chat2', 'user', '请编写一个 Python 程序,计算 BMI 指数并输出');
+    await appendTyping('chat2');
+    await new Promise(r => setTimeout(r, 1800));
+    removeLastBubble('chat2');
+    await appendBubble('chat2', 'ai',
+      '好的,这是计算 BMI 的 Python 程序:' +
+      '<pre>' +
+      '# 输入身高和体重\n' +
+      'height = float(input(\'请输入身高(米):\'))\n' +
+      'weight = float(input(\'请输入体重(千克):\'))\n\n' +
+      '# 计算 BMI\n' +
+      'bmi = weight / (height * height)\n\n' +
+      '# 判断健康状况(分支结构)\n' +
+      'if bmi &lt; 18.5:\n' +
+      '    status = \'偏瘦\'\n' +
+      'elif bmi &lt; 24:\n' +
+      '    status = \'正常\'\n' +
+      'elif bmi &lt; 28:\n' +
+      '    status = \'超重\'\n' +
+      'else:\n' +
+      '    status = \'肥胖\'\n\n' +
+      '# 输出结果\n' +
+      'print(\'BMI 指数:\', round(bmi, 1))\n' +
+      'print(\'健康状况:\', status)' +
+      '</pre>' +
+      '<small style="color:var(--text-light); margin-top:6px; display:block;">📝 这个程序综合了输入、顺序、分支、输出。<strong>记得复制到 Python 实际运行验证!</strong></small>'
+    );
+  }
+}
+
+// ============ 体验 3:沙漏问题(AI 失误) ============
+async function askAI3() {
+  const chat = document.getElementById('chat3');
+  chat.innerHTML = '';
+  await appendBubble('chat3', 'user', '有两个沙漏,大沙漏 7 分钟,小沙漏 4 分钟,怎样准确计时 9 分钟?');
+  await appendTyping('chat3');
+  await new Promise(r => setTimeout(r, 2000));
+  removeLastBubble('chat3');
+  await appendBubble('chat3', 'ai',
+    '嗯…让我想想:<br>' +
+    '1. 同时倒过来两个沙漏<br>' +
+    '2. 4 分钟到了,小沙漏停止<br>' +
+    '3. 等 7 分钟后大沙漏停止,这时再算 2 分钟…<br>' +
+    '<strong style="color:var(--danger);">总用时是 7 + 2 = 9 分钟?</strong> ✗ 这个解法<strong>不严谨</strong>!'
+  );
+  await new Promise(r => setTimeout(r, 800));
+  await appendBubble('chat3', 'user', '不对吧,你再想想?');
+  await appendTyping('chat3');
+  await new Promise(r => setTimeout(r, 2000));
+  removeLastBubble('chat3');
+  await appendBubble('chat3', 'ai',
+    '抱歉,我刚才<strong>说错了</strong>。让我重新思考:<br>' +
+    '正确的步骤应该是:<br>' +
+    '<strong>1.</strong> 两个沙漏同时倒过来,等小沙漏漏完 → <strong>4 分钟</strong><br>' +
+    '<strong>2.</strong> 不动大沙漏,把小沙漏再倒过来,等大沙漏漏完 → <strong>7 分钟</strong><br>' +
+    '<strong>3.</strong> 不动小沙漏,把大沙漏再倒过来,等小沙漏漏完 → <strong>8 分钟</strong><br>' +
+    '<strong>4.</strong> 立即把大沙漏再倒过来,等它漏完(此时只走了 1 分钟) → <strong>9 分钟</strong>! 🎉<br>' +
+    '<small style="color:var(--text-light);">看到了吗? AI 第一次的回答是错的,需要我们<strong>独立思考、追问、验证</strong>。</small>'
+  );
+}
+</script>
+</body>
+</html>

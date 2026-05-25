@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鸡兔同笼求解器 - 第21课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.problem-card {
+  background: linear-gradient(135deg, #FFF8E6, #FFF3CC);
+  border: 2px solid #FFC107;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 14px 0;
+}
+.input-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.input-card .icon { font-size: 32px; }
+.input-card label {
+  font-size: 13px;
+  color: var(--text-light);
+}
+.input-card input {
+  width: 100%;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  border: none;
+  border-bottom: 2px solid var(--border);
+  border-radius: 0;
+  padding: 4px 0;
+}
+.input-card input:focus { border-bottom-color: var(--primary); }
+.method-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px;
+  border-bottom: 2px solid var(--border);
+}
+.method-tab {
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--text-light);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+.method-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+.enum-table {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: white;
+}
+.enum-table table { margin: 0; border-radius: 0; }
+.enum-table .found td {
+  background: #D1FAE5 !important;
+  font-weight: 700;
+  color: #065F46;
+}
+.enum-table .checking td {
+  background: #FFF4E6 !important;
+}
+.answer-box {
+  background: linear-gradient(135deg, var(--secondary), #3FA866);
+  color: white;
+  border-radius: 12px;
+  padding: 22px;
+  text-align: center;
+  margin: 14px 0;
+}
+.answer-num {
+  display: inline-block;
+  font-size: 42px;
+  font-weight: 700;
+  margin: 0 14px;
+}
+.formula-step {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  font-size: 15px;
+  font-family: 'Courier New', monospace;
+}
+.formula-step .label {
+  font-family: -apple-system, "Microsoft YaHei", sans-serif;
+  color: var(--text-light);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🐔 🐰 鸡兔同笼求解器</h1>
+    <div class="subtitle">体验枚举算法与数学方法的对比</div>
+    <span class="lesson-tag">第21课 · 鸡兔同笼巧计算</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="problem-card">
+      📜 <strong>《孙子算经》经典题：</strong>"今有鸡兔同笼，上有三十五头，下有九十四足，问鸡兔各几何？"
+      <br>意思是：鸡和兔子关在同一个笼子里，从上面数有 35 个头，从下面数有 94 只脚。问鸡和兔各有多少只？
+    </div>
+
+    <div class="input-row">
+      <div class="input-card">
+        <div class="icon">🪶</div>
+        <div style="flex:1;">
+          <label>头的总数</label>
+          <input type="number" id="heads" value="35" min="1">
+        </div>
+      </div>
+      <div class="input-card">
+        <div class="icon">🦶</div>
+        <div style="flex:1;">
+          <label>脚的总数</label>
+          <input type="number" id="feet" value="94" min="2" step="2">
+        </div>
+      </div>
+    </div>
+
+    <div class="method-tabs">
+      <button class="method-tab active" onclick="switchTab(this, 'enum')">🔢 枚举法（计算机思维）</button>
+      <button class="method-tab" onclick="switchTab(this, 'math')">🎓 数学法（巧妙推理）</button>
+    </div>
+
+    <div id="enumPanel">
+      <div class="info-panel">
+        <strong>💡 枚举法思路：</strong>从0只鸡开始，假设鸡的数量为0,1,2,...逐个尝试，每次计算兔的数量，验证脚数是否符合，找到正确答案为止。
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <label>速度：</label>
+          <select id="speedSel">
+            <option value="500">慢</option>
+            <option value="200" selected>中</option>
+            <option value="50">快</option>
+            <option value="0">瞬间</option>
+          </select>
+        </div>
+        <button class="btn-success" id="runBtn" onclick="runEnum()">▶ 开始枚举</button>
+        <button class="btn-secondary" onclick="resetEnum()">🔄 重置</button>
+      </div>
+
+      <div class="enum-table">
+        <table>
+          <thead>
+            <tr><th>尝试次数</th><th>鸡 🐔</th><th>兔 🐰</th><th>头数</th><th>脚数</th><th>是否符合？</th></tr>
+          </thead>
+          <tbody id="enumBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="mathPanel" style="display:none;">
+      <div class="info-panel">
+        <strong>💡 数学法思路：</strong>假设全部都是鸡，那么脚数会少；多出来的脚数除以"兔比鸡多的脚数"就是兔的数量。
+      </div>
+      <div id="mathSteps"></div>
+    </div>
+
+    <div id="answerArea"></div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>枚举法（遍历法）：</strong>逐个尝试所有可能，根据条件检查是否满足。是计算机最常用的解题方法之一。</p>
+      <p><strong>对比两种方法：</strong></p>
+      <ul>
+        <li>🎓 <strong>数学法：</strong>需要灵感和巧妙的推理，"假设全是鸡"或"砍掉一半脚"等。</li>
+        <li>🔢 <strong>枚举法：</strong>简单"笨"办法，用循环逐个尝试。但因为计算机运算速度极快，可以在毫秒内完成。</li>
+      </ul>
+      <p><strong>启发：</strong>用计算机解决问题，常常采用枚举法这种看起来"笨"的方法，但效率出奇地高。这就是计算机解决问题的优势——快速、不知疲倦地重复执行。</p>
+      <p><strong>💭 思考：</strong>如果不是35个头，而是35万个头，人脑解题时间会大幅增加，但计算机仍然可以瞬间求解。这就是<strong>算法+算力</strong>的强大之处。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let isRunning = false;
+
+function switchTab(tab, type) {
+  document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('enumPanel').style.display = type === 'enum' ? 'block' : 'none';
+  document.getElementById('mathPanel').style.display = type === 'math' ? 'block' : 'none';
+  if (type === 'math') showMath();
+  document.getElementById('answerArea').innerHTML = '';
+}
+
+function showMath() {
+  const heads = parseInt(document.getElementById('heads').value);
+  const feet = parseInt(document.getElementById('feet').value);
+  if (isNaN(heads) || isNaN(feet)) return;
+  const allChicken = heads * 2;
+  const diff = feet - allChicken;
+  if (diff < 0 || diff % 2 !== 0) {
+    document.getElementById('mathSteps').innerHTML = '<div class="info-panel" style="background:#FEE2E2;border-left-color:var(--danger);">无解：脚数与头数不匹配。</div>';
+    return;
+  }
+  const rabbits = diff / 2;
+  const chickens = heads - rabbits;
+  document.getElementById('mathSteps').innerHTML = `
+    <div class="formula-step"><div class="label">第1步：假设全部都是鸡</div>那么脚的总数 = ${heads} × 2 = <strong>${allChicken}</strong> 只</div>
+    <div class="formula-step"><div class="label">第2步：少了的脚数</div>实际脚数 - 假设脚数 = ${feet} - ${allChicken} = <strong>${diff}</strong> 只</div>
+    <div class="formula-step"><div class="label">第3步：每只鸡换成兔，会多出 2 只脚</div>所以 兔的数量 = ${diff} ÷ 2 = <strong>${rabbits}</strong> 只</div>
+    <div class="formula-step"><div class="label">第4步：用总头数减去兔数</div>鸡的数量 = ${heads} - ${rabbits} = <strong>${chickens}</strong> 只</div>
+  `;
+  if (chickens >= 0 && rabbits >= 0) {
+    showAnswer(chickens, rabbits);
+  } else {
+    document.getElementById('answerArea').innerHTML = '<div class="info-panel" style="background:#FEE2E2;border-left-color:var(--danger);">无解：请检查输入数据。</div>';
+  }
+}
+
+function resetEnum() {
+  if (isRunning) return;
+  document.getElementById('enumBody').innerHTML = '';
+  document.getElementById('answerArea').innerHTML = '';
+}
+
+async function runEnum() {
+  if (isRunning) return;
+  isRunning = true;
+  document.getElementById('runBtn').disabled = true;
+  resetEnum();
+  const heads = parseInt(document.getElementById('heads').value);
+  const feet = parseInt(document.getElementById('feet').value);
+  const tbody = document.getElementById('enumBody');
+  const speed = parseInt(document.getElementById('speedSel').value);
+  let found = false;
+
+  for (let chickens = 0; chickens <= heads; chickens++) {
+    const rabbits = heads - chickens;
+    const totalFeet = chickens * 2 + rabbits * 4;
+    const isMatch = (totalFeet === feet);
+    const tr = document.createElement('tr');
+    tr.className = isMatch ? 'found' : 'checking';
+    tr.innerHTML = `<td>${chickens+1}</td><td>${chickens}</td><td>${rabbits}</td><td>${heads}</td><td>${totalFeet}</td><td>${isMatch ? '✅ 符合！' : '❌'}</td>`;
+    tbody.appendChild(tr);
+    tr.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    if (isMatch) {
+      showAnswer(chickens, rabbits);
+      found = true;
+      break;
+    }
+    if (speed > 0) await new Promise(r => setTimeout(r, speed));
+    setTimeout(() => tr.classList.remove('checking'), 100);
+  }
+  if (!found) {
+    document.getElementById('answerArea').innerHTML = '<div class="info-panel" style="background:#FEE2E2;border-left-color:var(--danger);">未找到符合条件的答案，请检查输入。</div>';
+  }
+  isRunning = false;
+  document.getElementById('runBtn').disabled = false;
+}
+
+function showAnswer(c, r) {
+  document.getElementById('answerArea').innerHTML = `
+    <div class="answer-box">
+      🎉 找到答案啦！
+      <div style="margin-top:10px;">
+        🐔 鸡 <span class="answer-num">${c}</span> 只
+        🐰 兔 <span class="answer-num">${r}</span> 只
+      </div>
+      <div style="font-size:14px;opacity:0.9;margin-top:8px;">验证：${c}+${r} = ${c+r} 个头，${c}×2 + ${r}×4 = ${c*2+r*4} 只脚 ✓</div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

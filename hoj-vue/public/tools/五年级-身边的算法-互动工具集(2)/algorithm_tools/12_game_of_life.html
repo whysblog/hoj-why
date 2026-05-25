@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生命游戏 - 第30课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.game-board-wrap {
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+}
+#gameCanvas {
+  background: #1a1f2e;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  cursor: pointer;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 16px 0;
+  padding: 14px;
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  border-radius: 10px;
+  border: 1px solid #D6E8FA;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  color: var(--text);
+  font-size: 14px;
+}
+.preset-btn:hover {
+  border-color: var(--primary);
+  background: #F0F7FF;
+  transform: translateY(-1px);
+}
+.preset-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.preset-info { flex: 1; }
+.preset-name { font-weight: 600; font-size: 13px; }
+.preset-desc { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+.rule-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+.rule-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rule-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+.rule-card.death .rule-num { background: var(--danger); }
+.rule-card.birth .rule-num { background: var(--secondary); }
+.rule-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+.rule-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 22px);
+  gap: 2px;
+  margin-top: 10px;
+  width: fit-content;
+}
+.mini-cell {
+  width: 22px; height: 22px;
+  background: #2a3142;
+  border-radius: 3px;
+}
+.mini-cell.alive { background: #FFC107; }
+.mini-cell.center { box-shadow: 0 0 0 2px var(--primary); z-index: 2; }
+
+.speed-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🌌 生命游戏</h1>
+    <div class="subtitle">用最简单的规则,模拟生命的诞生、繁衍与消亡</div>
+    <span class="lesson-tag">第30课 · 生命游戏的算法</span>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="content">
+    <div class="intro">
+      <strong>📚 关于生命游戏:</strong>
+      数学家约翰·康威 1970 年发明的细胞自动机。每个格子代表一个"细胞",有"存活"和"死亡"两种状态。仅靠两条简单规则,就能演化出令人惊叹的复杂图案——这正是"涌现"现象的经典案例。
+    </div>
+
+    <div class="rule-cards">
+      <div class="rule-card birth">
+        <div class="rule-card-header">
+          <div class="rule-num">1</div>
+          <div class="rule-title">诞生规则</div>
+        </div>
+        <div class="rule-desc">死细胞周围<strong>正好有 3 个</strong>活细胞 → 下一代<strong style="color:var(--secondary);">复活</strong></div>
+        <div class="mini-grid">
+          <div class="mini-cell alive"></div><div class="mini-cell"></div><div class="mini-cell alive"></div>
+          <div class="mini-cell"></div><div class="mini-cell center"></div><div class="mini-cell"></div>
+          <div class="mini-cell alive"></div><div class="mini-cell"></div><div class="mini-cell"></div>
+        </div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-num">2</div>
+          <div class="rule-title">存活规则</div>
+        </div>
+        <div class="rule-desc">活细胞周围有 <strong>2 或 3 个</strong>活细胞 → 下一代继续<strong style="color:var(--primary);">存活</strong></div>
+        <div class="mini-grid">
+          <div class="mini-cell"></div><div class="mini-cell alive"></div><div class="mini-cell"></div>
+          <div class="mini-cell"></div><div class="mini-cell alive center"></div><div class="mini-cell alive"></div>
+          <div class="mini-cell"></div><div class="mini-cell"></div><div class="mini-cell"></div>
+        </div>
+      </div>
+      <div class="rule-card death">
+        <div class="rule-card-header">
+          <div class="rule-num">3</div>
+          <div class="rule-title">死亡规则</div>
+        </div>
+        <div class="rule-desc">活细胞周围 <strong>少于 2 个</strong>(孤独)或 <strong>多于 3 个</strong>(拥挤)活细胞 → 下一代<strong style="color:var(--danger);">死亡</strong></div>
+        <div class="mini-grid">
+          <div class="mini-cell alive"></div><div class="mini-cell alive"></div><div class="mini-cell alive"></div>
+          <div class="mini-cell alive"></div><div class="mini-cell alive center"></div><div class="mini-cell alive"></div>
+          <div class="mini-cell"></div><div class="mini-cell"></div><div class="mini-cell"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="playBtn" onclick="togglePlay()">▶ 开始</button>
+      <button onclick="step()" class="btn-secondary">⏭ 单步</button>
+      <button onclick="randomFill()" class="btn-warning">🎲 随机</button>
+      <button onclick="clearGrid()" class="btn-secondary">🗑 清空</button>
+      <div class="control-group">
+        <label>速度:</label>
+        <input type="range" id="speedSlider" min="1" max="20" value="8" oninput="updateSpeed()">
+        <span id="speedLabel" class="speed-badge">8 代/秒</span>
+      </div>
+      <div class="control-group">
+        <label>网格:</label>
+        <select id="gridSize" onchange="resizeGrid()">
+          <option value="20">20×20</option>
+          <option value="30" selected>30×30</option>
+          <option value="40">40×40</option>
+          <option value="50">50×50</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-label">代数</div>
+        <div class="stat-value" id="generation">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">存活细胞</div>
+        <div class="stat-value" style="color:var(--secondary);" id="aliveCount">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">本代诞生</div>
+        <div class="stat-value" style="color:var(--accent);" id="bornCount">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">本代死亡</div>
+        <div class="stat-value" style="color:var(--danger);" id="diedCount">0</div>
+      </div>
+    </div>
+
+    <div class="game-board-wrap">
+      <canvas id="gameCanvas" width="600" height="600"></canvas>
+    </div>
+    <p style="text-align:center; font-size:13px; color:var(--text-light); margin-top:10px;">
+      💡 提示:点击格子可以编辑细胞状态;按住鼠标拖动可以连续涂抹
+    </p>
+
+    <h3 style="margin-top:24px; color:var(--primary-dark);">🎨 经典图案预设</h3>
+    <p style="font-size:13px; color:var(--text-light); margin-bottom:10px;">
+      点击下方按钮,在网格中央加载经典图案,然后点击"开始"观察它们的演化。
+    </p>
+    <div class="preset-grid">
+      <button class="preset-btn" onclick="loadPreset('blinker')">
+        <span class="preset-icon">⬛</span>
+        <div class="preset-info">
+          <div class="preset-name">闪烁器</div>
+          <div class="preset-desc">最简单的振荡器</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('toad')">
+        <span class="preset-icon">🐸</span>
+        <div class="preset-info">
+          <div class="preset-name">蟾蜍</div>
+          <div class="preset-desc">2 周期振荡</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('beacon')">
+        <span class="preset-icon">🚨</span>
+        <div class="preset-info">
+          <div class="preset-name">信号灯</div>
+          <div class="preset-desc">2 周期振荡</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('pulsar')">
+        <span class="preset-icon">✨</span>
+        <div class="preset-info">
+          <div class="preset-name">脉冲星</div>
+          <div class="preset-desc">3 周期振荡</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('glider')">
+        <span class="preset-icon">🛸</span>
+        <div class="preset-info">
+          <div class="preset-name">滑翔机</div>
+          <div class="preset-desc">向右下移动</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('lwss')">
+        <span class="preset-icon">🚀</span>
+        <div class="preset-info">
+          <div class="preset-name">轻型飞船</div>
+          <div class="preset-desc">向右移动</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('block')">
+        <span class="preset-icon">🟧</span>
+        <div class="preset-info">
+          <div class="preset-name">方块</div>
+          <div class="preset-desc">最稳定的静物</div>
+        </div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('beehive')">
+        <span class="preset-icon">🍯</span>
+        <div class="preset-info">
+          <div class="preset-name">蜂巢</div>
+          <div class="preset-desc">永不变化</div>
+        </div>
+      </button>
+    </div>
+
+    <div class="knowledge">
+      <h3>🔬 生命游戏的科学意义</h3>
+      <p><strong>"涌现"现象:</strong>仅 3 条简单规则,产生了振荡器、移动飞船、稳定结构等丰富图案。这说明<strong>简单规则可以产生复杂行为</strong>——大自然中的雪花、蚁群、心跳节律、市场波动都遵循类似机制。</p>
+      <p><strong>图灵完备:</strong>数学家证明,生命游戏可以模拟任何计算机程序——理论上,你能在它的网格里"搭建"出一台计算机!</p>
+      <p><strong>它还告诉我们什么?</strong></p>
+      <ul>
+        <li><strong>算法不必复杂</strong>——少数关键规则就能创造无限可能</li>
+        <li><strong>初始条件很重要</strong>——细微差别会导致完全不同的演化</li>
+        <li><strong>计算机能够模拟世界</strong>——这正是科学计算和人工智能的基础</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 状态 ====================
+let cols = 30, rows = 30;
+let cellSize = 20;
+let grid = [];
+let generation = 0;
+let aliveCount = 0;
+let bornCount = 0;
+let diedCount = 0;
+let isPlaying = false;
+let timerId = null;
+let speedFps = 8;
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// ==================== 初始化 ====================
+function initGrid() {
+  grid = [];
+  for (let r = 0; r < rows; r++) {
+    grid.push(new Array(cols).fill(0));
+  }
+  generation = 0;
+  bornCount = 0;
+  diedCount = 0;
+  countAlive();
+  updateStats();
+  draw();
+}
+
+function resizeGrid() {
+  const size = parseInt(document.getElementById('gridSize').value);
+  cols = rows = size;
+  cellSize = Math.floor(600 / size);
+  canvas.width = cols * cellSize;
+  canvas.height = rows * cellSize;
+  initGrid();
+}
+
+// ==================== 绘图 ====================
+function draw() {
+  ctx.fillStyle = '#1a1f2e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c]) {
+        const age = grid[r][c];
+        // 颜色随年龄渐变(从黄到橙)
+        if (age === 1) ctx.fillStyle = '#FFC107';
+        else if (age < 5) ctx.fillStyle = '#FFA726';
+        else if (age < 15) ctx.fillStyle = '#FF8C42';
+        else ctx.fillStyle = '#E94B3C';
+        ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
+      }
+    }
+  }
+  // 网格线
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let r = 0; r <= rows; r++) {
+    ctx.beginPath();
+    ctx.moveTo(0, r * cellSize);
+    ctx.lineTo(canvas.width, r * cellSize);
+    ctx.stroke();
+  }
+  for (let c = 0; c <= cols; c++) {
+    ctx.beginPath();
+    ctx.moveTo(c * cellSize, 0);
+    ctx.lineTo(c * cellSize, canvas.height);
+    ctx.stroke();
+  }
+}
+
+// ==================== 演化 ====================
+function countNeighbors(r, c) {
+  let n = 0;
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc]) n++;
+    }
+  }
+  return n;
+}
+
+function step() {
+  const next = [];
+  bornCount = 0;
+  diedCount = 0;
+  for (let r = 0; r < rows; r++) {
+    next.push([]);
+    for (let c = 0; c < cols; c++) {
+      const n = countNeighbors(r, c);
+      const alive = grid[r][c] > 0;
+      if (alive) {
+        if (n === 2 || n === 3) {
+          next[r].push(grid[r][c] + 1); // 继续存活,年龄增加
+        } else {
+          next[r].push(0);
+          diedCount++;
+        }
+      } else {
+        if (n === 3) {
+          next[r].push(1); // 新生
+          bornCount++;
+        } else {
+          next[r].push(0);
+        }
+      }
+    }
+  }
+  grid = next;
+  generation++;
+  countAlive();
+  updateStats();
+  draw();
+
+  // 全死了就停止
+  if (aliveCount === 0 && isPlaying) {
+    togglePlay();
+  }
+}
+
+function countAlive() {
+  aliveCount = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c]) aliveCount++;
+    }
+  }
+}
+
+function updateStats() {
+  document.getElementById('generation').textContent = generation;
+  document.getElementById('aliveCount').textContent = aliveCount;
+  document.getElementById('bornCount').textContent = bornCount;
+  document.getElementById('diedCount').textContent = diedCount;
+}
+
+// ==================== 控制 ====================
+function togglePlay() {
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('playBtn');
+  if (isPlaying) {
+    btn.textContent = '⏸ 暂停';
+    btn.className = 'btn-warning';
+    timerId = setInterval(step, 1000 / speedFps);
+  } else {
+    btn.textContent = '▶ 开始';
+    btn.className = '';
+    clearInterval(timerId);
+  }
+}
+
+function updateSpeed() {
+  speedFps = parseInt(document.getElementById('speedSlider').value);
+  document.getElementById('speedLabel').textContent = speedFps + ' 代/秒';
+  if (isPlaying) {
+    clearInterval(timerId);
+    timerId = setInterval(step, 1000 / speedFps);
+  }
+}
+
+function clearGrid() {
+  if (isPlaying) togglePlay();
+  initGrid();
+}
+
+function randomFill() {
+  if (isPlaying) togglePlay();
+  generation = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      grid[r][c] = Math.random() < 0.3 ? 1 : 0;
+    }
+  }
+  bornCount = 0;
+  diedCount = 0;
+  countAlive();
+  updateStats();
+  draw();
+}
+
+// ==================== 鼠标交互 ====================
+let isDrawing = false;
+let drawValue = 1;
+
+function getCellFromEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  return {
+    c: Math.floor(x / cellSize),
+    r: Math.floor(y / cellSize)
+  };
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const {r, c} = getCellFromEvent(e);
+  if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+  drawValue = grid[r][c] ? 0 : 1;
+  grid[r][c] = drawValue;
+  isDrawing = true;
+  countAlive();
+  updateStats();
+  draw();
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDrawing) return;
+  const {r, c} = getCellFromEvent(e);
+  if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+  if (grid[r][c] !== drawValue) {
+    grid[r][c] = drawValue;
+    countAlive();
+    updateStats();
+    draw();
+  }
+});
+
+canvas.addEventListener('mouseup', () => isDrawing = false);
+canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+// 触摸支持
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const t = e.touches[0];
+  const evt = { clientX: t.clientX, clientY: t.clientY };
+  const {r, c} = getCellFromEvent(evt);
+  if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+  drawValue = grid[r][c] ? 0 : 1;
+  grid[r][c] = drawValue;
+  isDrawing = true;
+  countAlive();
+  updateStats();
+  draw();
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!isDrawing) return;
+  const t = e.touches[0];
+  const evt = { clientX: t.clientX, clientY: t.clientY };
+  const {r, c} = getCellFromEvent(evt);
+  if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+  if (grid[r][c] !== drawValue) {
+    grid[r][c] = drawValue;
+    countAlive();
+    updateStats();
+    draw();
+  }
+});
+
+canvas.addEventListener('touchend', () => isDrawing = false);
+
+// ==================== 预设图案 ====================
+const PRESETS = {
+  blinker: [[0,0],[0,1],[0,2]],
+  toad: [[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]],
+  beacon: [[0,0],[0,1],[1,0],[1,1],[2,2],[2,3],[3,2],[3,3]],
+  pulsar: [
+    [0,2],[0,3],[0,4],[0,8],[0,9],[0,10],
+    [2,0],[2,5],[2,7],[2,12],
+    [3,0],[3,5],[3,7],[3,12],
+    [4,0],[4,5],[4,7],[4,12],
+    [5,2],[5,3],[5,4],[5,8],[5,9],[5,10],
+    [7,2],[7,3],[7,4],[7,8],[7,9],[7,10],
+    [8,0],[8,5],[8,7],[8,12],
+    [9,0],[9,5],[9,7],[9,12],
+    [10,0],[10,5],[10,7],[10,12],
+    [12,2],[12,3],[12,4],[12,8],[12,9],[12,10]
+  ],
+  glider: [[0,1],[1,2],[2,0],[2,1],[2,2]],
+  lwss: [[0,1],[0,4],[1,0],[2,0],[2,4],[3,0],[3,1],[3,2],[3,3]],
+  block: [[0,0],[0,1],[1,0],[1,1]],
+  beehive: [[0,1],[0,2],[1,0],[1,3],[2,1],[2,2]]
+};
+
+function loadPreset(name) {
+  if (isPlaying) togglePlay();
+  const pattern = PRESETS[name];
+  // 计算图案尺寸
+  let maxR = 0, maxC = 0;
+  for (const [r, c] of pattern) {
+    if (r > maxR) maxR = r;
+    if (c > maxC) maxC = c;
+  }
+  // 居中放置
+  const offsetR = Math.floor((rows - maxR - 1) / 2);
+  const offsetC = Math.floor((cols - maxC - 1) / 2);
+  // 清空再放置
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      grid[r][c] = 0;
+    }
+  }
+  for (const [r, c] of pattern) {
+    const nr = r + offsetR, nc = c + offsetC;
+    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+      grid[nr][nc] = 1;
+    }
+  }
+  generation = 0;
+  bornCount = 0;
+  diedCount = 0;
+  countAlive();
+  updateStats();
+  draw();
+}
+
+// 启动
+resizeGrid();
+loadPreset('glider');
+</script>
+</body>
+</html>

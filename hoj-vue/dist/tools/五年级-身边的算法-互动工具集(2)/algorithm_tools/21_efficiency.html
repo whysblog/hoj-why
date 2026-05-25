@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>算法效率对决 - 第14课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.gauss-story {
+  background: linear-gradient(135deg, #FFF9E6, #FFF4D4);
+  border-radius: 14px;
+  padding: 22px;
+  border-left: 5px solid var(--warning);
+}
+.gauss-story .label {
+  display: inline-block;
+  background: var(--warning);
+  color: white;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.algo-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.algo-box {
+  background: white;
+  border: 2.5px solid;
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+}
+.algo-box.algo1 { border-color: var(--accent); }
+.algo-box.algo2 { border-color: var(--secondary); }
+.algo-box h3 {
+  font-size: 17px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.algo-box.algo1 h3 { color: var(--accent); }
+.algo-box.algo2 h3 { color: var(--secondary); }
+.algo-step-list {
+  background: #1e1e2e;
+  color: #d4d4d4;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 10px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.algo-step-list .step-line {
+  border-left: 3px solid transparent;
+  padding-left: 8px;
+  transition: all 0.2s;
+}
+.algo-step-list .step-line.running {
+  background: rgba(80,200,120,0.15);
+  border-left-color: var(--secondary);
+  color: white;
+}
+.algo-step-list .accum {
+  color: #FFE082;
+  font-weight: 600;
+}
+
+.stats-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.stat-mini {
+  background: #F0F7FF;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.stat-mini .lbl {
+  font-size: 11px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-mini .val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+.algo-box.algo1 .stat-mini .val { color: var(--accent); }
+.algo-box.algo2 .stat-mini .val { color: var(--secondary); }
+
+.battle-banner {
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 14px 0;
+}
+
+.chart-area {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 80px;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+}
+.chart-label { font-weight: 600; font-size: 13px; }
+.chart-bar {
+  height: 30px;
+  background: #F0F4F8;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.chart-fill {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  transition: width 0.6s ease;
+}
+.chart-fill.a1 { background: linear-gradient(to right, var(--accent), #C75A1F); }
+.chart-fill.a2 { background: linear-gradient(to right, var(--secondary), #3FA866); }
+.chart-time { text-align: right; font-family: monospace; font-weight: 700; font-size: 13px; }
+
+.algo-result {
+  text-align: center;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.algo-result strong { color: var(--primary-dark); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>⚡ 算法效率对决</h1>
+    <div class="subtitle">不同算法,不同效率 — 同一个问题的"快慢之别"</div>
+    <span class="lesson-tag">第14课 · 算法效率比一比</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识到<strong>同一个问题可以有不同的算法</strong></li>
+            <li>不同算法的<strong>效率有差异</strong>(步骤数、运行时间)</li>
+            <li>了解高斯巧算 1+2+...+100 的故事</li>
+            <li>通过程序对比,直观感受<strong>算法选择的重要性</strong></li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>💭 想一想:</strong>1+2+3+...+100 怎么算最快?如果换成 1+2+...+10000 呢?
+        </div>
+      </div>
+
+      <div class="slide" data-title="高斯的故事">
+        <div class="slide-title"><span class="num">2</span>📜 高斯小时候的故事</div>
+        <div class="gauss-story">
+          <span class="label">数学家小故事</span>
+          <p style="margin-top:10px; font-size:15px;">200 多年前,德国小镇上,数学老师为难全班同学:</p>
+          <div style="background:white; padding:14px; border-radius:8px; margin:12px 0; font-size:18px; font-weight:600; text-align:center; color:var(--primary-dark);">
+            "请算出 1 + 2 + 3 + ... + 100 = ?"
+          </div>
+          <p style="font-size:14px; line-height:1.7;">同学们都开始一个数一个数地相加。可是 <strong>9 岁的高斯</strong>很快举手:"我算完了!答案是 <strong>5050</strong>!"</p>
+          <p style="font-size:14px; line-height:1.7;">老师吃惊地问他怎么算的。高斯说:</p>
+          <div style="background:#F0F7FF; padding:12px; border-radius:8px; margin:10px 0; font-family:monospace; text-align:center; color:var(--primary-dark);">
+            1 + 100 = 101<br>
+            2 + 99 &nbsp;= 101<br>
+            3 + 98 &nbsp;= 101<br>
+            ... 共 50 组,每组都等于 101<br>
+            <strong>50 × 101 = 5050</strong>
+          </div>
+          <p style="font-size:14px;">同样的问题,高斯用了完全不同的算法,<strong>速度快了几十倍</strong>!</p>
+        </div>
+      </div>
+
+      <div class="slide" data-title="两种算法">
+        <div class="slide-title"><span class="num">3</span>两种算法的步骤对比</div>
+        <div class="algo-compare">
+          <div class="algo-box algo1">
+            <h3>🐌 算法 1:逐个累加</h3>
+            <p style="font-size:13.5px;">从 1 开始,把每个数依次加到总和上。</p>
+            <div class="algo-step-list" id="algo1Steps">
+              <div class="step-line">sum = 0</div>
+              <div class="step-line">sum = 0 + 1 = 1</div>
+              <div class="step-line">sum = 1 + 2 = 3</div>
+              <div class="step-line">sum = 3 + 3 = 6</div>
+              <div class="step-line">sum = 6 + 4 = 10</div>
+              <div class="step-line">...</div>
+              <div class="step-line">sum = ... + n = ?</div>
+            </div>
+            <div style="font-size:13px; color:#34495E;">
+              <strong>步骤数:</strong>需要 <code>n − 1</code> 次加法<br>
+              <strong>n = 100 时:</strong>99 次加法
+            </div>
+          </div>
+          <div class="algo-box algo2">
+            <h3>🚀 算法 2:公式法</h3>
+            <p style="font-size:13.5px;">利用等差数列求和公式,一步算出。</p>
+            <div class="algo-step-list" id="algo2Steps">
+              <div class="step-line">sum = (1 + n) × n ÷ 2</div>
+              <div class="step-line"></div>
+              <div class="step-line"><span class="accum">代入 n = 100:</span></div>
+              <div class="step-line">sum = (1 + 100) × 100 ÷ 2</div>
+              <div class="step-line">sum = 101 × 100 ÷ 2</div>
+              <div class="step-line">sum = 10100 ÷ 2</div>
+              <div class="step-line">sum = <span class="accum">5050</span></div>
+            </div>
+            <div style="font-size:13px; color:#34495E;">
+              <strong>步骤数:</strong>1 次加法 + 1 次乘法 + 1 次除法<br>
+              <strong>无论 n 多大:</strong>都只要 3 步!
+            </div>
+          </div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>🔍 关键观察:</strong>当 <code>n</code> 变大时,算法 1 的步骤数也会变大(<strong>线性增长</strong>),而算法 2 始终只要 3 步(<strong>常数</strong>)!
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:效率实测">
+        <div class="slide-title"><span class="num">4</span>⚡ 互动:实测两种算法</div>
+        <div class="slide-subtitle">输入 n,看两种算法的步骤数和耗时差距</div>
+
+        <div class="controls">
+          <div class="control-group">
+            <label>求 1+2+...+n,n =</label>
+            <input type="number" id="nInput" value="100" min="10" max="10000000" step="100" style="width:120px;">
+          </div>
+          <button class="btn-success" onclick="runBattle()">⚔️ 开战!</button>
+          <button class="btn-secondary" onclick="setN(100)">n=100</button>
+          <button class="btn-secondary" onclick="setN(10000)">n=1万</button>
+          <button class="btn-secondary" onclick="setN(1000000)">n=100万</button>
+        </div>
+
+        <div class="battle-banner" id="battleBanner">点击 "开战" 启动对决!</div>
+
+        <div class="algo-compare">
+          <div class="algo-box algo1">
+            <h3>🐌 算法 1:逐个累加</h3>
+            <div class="algo-result"><strong id="r1Result">—</strong></div>
+            <div class="stats-grid-2">
+              <div class="stat-mini">
+                <div class="lbl">步骤数</div>
+                <div class="val" id="r1Steps">—</div>
+              </div>
+              <div class="stat-mini">
+                <div class="lbl">耗时</div>
+                <div class="val" id="r1Time">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="algo-box algo2">
+            <h3>🚀 算法 2:公式法</h3>
+            <div class="algo-result"><strong id="r2Result">—</strong></div>
+            <div class="stats-grid-2">
+              <div class="stat-mini">
+                <div class="lbl">步骤数</div>
+                <div class="val" id="r2Steps">3</div>
+              </div>
+              <div class="stat-mini">
+                <div class="lbl">耗时</div>
+                <div class="val" id="r2Time">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-area">
+          <h4 style="color:var(--primary-dark); margin-bottom:10px;">📊 耗时对比(越短越快)</h4>
+          <div class="chart-row">
+            <div class="chart-label">🐌 算法 1</div>
+            <div class="chart-bar"><div class="chart-fill a1" id="chart1"></div></div>
+            <div class="chart-time" id="chart1Time">— ms</div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-label">🚀 算法 2</div>
+            <div class="chart-bar"><div class="chart-fill a2" id="chart2"></div></div>
+            <div class="chart-time" id="chart2Time">— ms</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="重要启示">
+        <div class="slide-title"><span class="num">5</span>重要启示</div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>💡 算法决定速度</h4>
+            <p>同一个问题,<strong>选对算法</strong>可能让程序快上千倍、万倍。一个"聪明"的算法 = 万台普通算法。</p>
+          </div>
+          <div class="concept-card">
+            <h4>📈 数据量越大,差距越大</h4>
+            <p>n = 100 时,两种算法肉眼难以察觉差距。但 n = 100 万时,算法 1 要慢得多!</p>
+          </div>
+          <div class="concept-card">
+            <h4>🎯 综合考虑</h4>
+            <p>不只看<strong>步骤数</strong>,还要看每一步的<strong>耗时</strong>(乘除比加法慢)。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🏭 现实意义:</strong>在<strong>芯片制造</strong>、<strong>航天轨道控制</strong>、<strong>大数据分析</strong>等领域,算法效率直接决定能不能解决问题。
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>同一个问题可以有<strong>不同的算法</strong></li>
+            <li>算法效率主要看:<strong>步骤数</strong>和<strong>运行时间</strong></li>
+            <li>数据量越大,<strong>"好算法"</strong>的优势越明显</li>
+            <li>高斯巧算 → 启发我们寻找问题中的<strong>规律</strong>来提升效率</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后挑战</h3>
+          <p>计算圆周率 π 也有<strong>不同的算法</strong>,有的算 10 分钟才到小数点后 4 位,有的几秒就到 1000 位。回家了解一下祖冲之是怎么算的!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+function setN(v) {
+  document.getElementById('nInput').value = v;
+}
+
+function runBattle() {
+  const n = parseInt(document.getElementById('nInput').value);
+  if (!n || n < 1) return;
+  if (n > 50000000) {
+    document.getElementById('battleBanner').innerHTML = '⚠️ n 太大,会卡住浏览器,请小一点 (≤ 5000万)';
+    return;
+  }
+
+  // 算法 1:逐个累加
+  const t1Start = performance.now();
+  let sum1 = 0;
+  for (let i = 1; i <= n; i++) sum1 += i;
+  const t1End = performance.now();
+  const t1 = t1End - t1Start;
+  const steps1 = n;
+
+  // 算法 2:公式法
+  const t2Start = performance.now();
+  let sum2 = (1 + n) * n / 2;
+  const t2End = performance.now();
+  const t2 = Math.max(0.001, t2End - t2Start);  // 太快了几乎无法测量
+
+  document.getElementById('r1Result').textContent = sum1.toLocaleString();
+  document.getElementById('r1Steps').textContent = steps1.toLocaleString();
+  document.getElementById('r1Time').textContent = t1.toFixed(2) + ' ms';
+
+  document.getElementById('r2Result').textContent = sum2.toLocaleString();
+  document.getElementById('r2Steps').textContent = '3';
+  document.getElementById('r2Time').textContent = t2.toFixed(3) + ' ms';
+
+  // 图表
+  const maxT = Math.max(t1, t2);
+  document.getElementById('chart1').style.width = (t1 / maxT * 100) + '%';
+  document.getElementById('chart1').textContent = t1.toFixed(2) + ' ms';
+  document.getElementById('chart2').style.width = Math.max(2, t2 / maxT * 100) + '%';
+  document.getElementById('chart2').textContent = t2.toFixed(3) + ' ms';
+  document.getElementById('chart1Time').textContent = t1.toFixed(2) + ' ms';
+  document.getElementById('chart2Time').textContent = t2.toFixed(3) + ' ms';
+
+  // 横幅
+  const ratio = t1 / t2;
+  let banner = '';
+  if (n <= 100) {
+    banner = '⚡ 两种算法都很快!n = ' + n + ' 时,差距不太明显';
+  } else if (ratio > 100) {
+    banner = '🚀 算法 2 大获全胜! 比算法 1 <strong>快约 ' + Math.round(ratio).toLocaleString() + ' 倍</strong>';
+  } else if (ratio > 10) {
+    banner = '✨ 算法 2 领先! 比算法 1 <strong>快约 ' + Math.round(ratio) + ' 倍</strong>';
+  } else if (ratio > 2) {
+    banner = '👍 算法 2 较快,比算法 1 <strong>快约 ' + ratio.toFixed(1) + ' 倍</strong>';
+  } else {
+    banner = '🤝 两种算法旗鼓相当(n 还不够大)';
+  }
+  document.getElementById('battleBanner').innerHTML = '<strong>结果:</strong>' + banner;
+}
+
+// 默认演示 n = 100
+runBattle();
+</script>
+</body>
+</html>

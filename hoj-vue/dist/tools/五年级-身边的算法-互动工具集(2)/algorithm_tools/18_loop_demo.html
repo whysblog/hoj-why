@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>循环结构演示器 - 第7课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.traffic-scene {
+  background: linear-gradient(135deg, #FAFBFC, #E8EDF3);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+}
+.traffic-light {
+  width: 60px;
+  margin: 0 auto;
+  background: #2A3340;
+  padding: 8px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.light-bulb {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #444;
+  margin: 0 auto;
+  transition: all 0.3s;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+}
+.light-bulb.on-red { background: #FF3B30; box-shadow: 0 0 24px #FF3B30; }
+.light-bulb.on-yellow { background: #FFC107; box-shadow: 0 0 24px #FFC107; }
+.light-bulb.on-green { background: #50C878; box-shadow: 0 0 24px #50C878; }
+
+.person-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 60px;
+  margin: 20px 0;
+}
+.person {
+  font-size: 48px;
+  transition: transform 0.6s, opacity 0.4s;
+  position: relative;
+}
+.person.walking {
+  animation: walk 1.5s ease forwards;
+}
+@keyframes walk {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-200px); }
+}
+.person.observing {
+  animation: bounce 1s infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.road {
+  height: 80px;
+  background: repeating-linear-gradient(90deg, #2A3340 0 30px, white 30px 50px);
+  background-position: 0 50%;
+  background-size: auto 8px;
+  background-repeat: repeat-x;
+  border-radius: 8px;
+  position: relative;
+  margin: 14px 0;
+}
+
+.scene-status {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  margin: 10px 0;
+  min-height: 30px;
+}
+.loop-counter {
+  display: inline-block;
+  background: var(--warning);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+/* 水温计 */
+.kettle-scene {
+  background: linear-gradient(135deg, #FFF4E6, #FFE5D4);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+}
+.kettle-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.kettle-emoji {
+  font-size: 80px;
+  position: relative;
+  transition: transform 0.3s;
+}
+.kettle-emoji.heating { animation: shake 0.4s infinite; }
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -1px); }
+  75% { transform: translate(-2px, 1px); }
+}
+.steam-puff {
+  position: absolute;
+  top: -20px; left: 50%;
+  font-size: 30px;
+  opacity: 0;
+  animation: steamRise 1.2s infinite;
+}
+@keyframes steamRise {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  50% { opacity: 0.8; transform: translate(-50%, -30px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -60px) scale(1.2); }
+}
+.thermometer {
+  position: relative;
+  width: 36px;
+  height: 200px;
+  background: white;
+  border-radius: 18px;
+  border: 3px solid var(--primary-dark);
+  overflow: hidden;
+  margin: 0 auto;
+}
+.thermometer .fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, var(--secondary), var(--warning), var(--danger));
+  transition: height 0.3s;
+}
+.thermometer .bulb {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px; height: 50px;
+  background: var(--danger);
+  border: 3px solid var(--primary-dark);
+  border-radius: 50%;
+}
+.temp-readout {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+
+.loop-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.loop-type-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+.loop-type-card.active {
+  border-color: var(--primary);
+  background: #F0F7FF;
+}
+.loop-type-card h4 {
+  color: var(--primary-dark);
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔁 循环结构演示器</h1>
+    <div class="subtitle">"重复做……直到……" — 算法的循环结构</div>
+    <span class="lesson-tag">第7课 · 重复操作用循环</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="slide-subtitle">认识算法的"循环结构"</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识算法的<strong>循环结构</strong>(重复执行某些步骤)</li>
+            <li>用流程图描述循环结构</li>
+            <li>发现生活中需要<strong>"反复操作"</strong>的场景</li>
+            <li>理解循环的<strong>退出条件</strong>(什么时候停)</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="slide" data-title="情境引入">
+        <div class="slide-title"><span class="num">2</span>情境:红绿灯过马路</div>
+        <div class="slide-subtitle">这看似简单的事情,藏着"循环"的秘密</div>
+        <div class="traffic-scene">
+          <div class="traffic-light">
+            <div class="light-bulb" id="lightR"></div>
+            <div class="light-bulb" id="lightY"></div>
+            <div class="light-bulb" id="lightG"></div>
+          </div>
+          <div class="scene-status" id="trafficStatus">点击"开始过马路"启动演示</div>
+          <div class="road">
+            <div class="person-row" style="position:absolute; top:50%; transform:translateY(-50%); width:100%; left:0;">
+              <span class="person" id="personEmoji">🧍</span>
+            </div>
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+            <button class="btn-success" onclick="startTraffic()" id="trafficBtn">▶ 开始过马路</button>
+            <button class="btn-secondary" onclick="resetTraffic()">⏹ 重置</button>
+            <span class="loop-counter">观察次数: <strong id="observeCount">0</strong></span>
+          </div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>🔍 关键步骤:</strong>"<strong>观察并等待绿灯亮</strong>" — 这一步需要<strong>反复执行</strong>,直到绿灯亮起为止。这就是循环!
+        </div>
+      </div>
+
+      <div class="slide" data-title="循环结构">
+        <div class="slide-title"><span class="num">3</span>循环结构的流程图</div>
+        <div class="slide-subtitle">"绿灯未亮起? 是 → 继续观察 → 再判断"</div>
+        <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:24px; align-items:center;">
+          <div class="flowchart">
+            <div class="flow-node start">到达十字路口</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node">原地观察红绿灯</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node cond" id="loopCond" style="background:#FDECEA;">绿灯未亮起?</div>
+            <div style="display:flex; gap:12px; align-items:center; margin-top:6px;">
+              <span style="font-size:13px; font-weight:700; color:var(--danger);">↶ 是,返回观察</span>
+              <span style="font-size:13px; font-weight:700; color:var(--secondary);">否 ↓</span>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" style="background:#E8F8EE; border-color:var(--secondary);">过马路</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node end">到达对面</div>
+          </div>
+          <div>
+            <h4 style="color:var(--primary-dark); margin-bottom:10px;">📘 循环的三个要素</h4>
+            <div class="concept-card" style="margin-bottom:10px;">
+              <h4>1️⃣ 循环条件</h4>
+              <p>"绿灯未亮起?" — 满足时继续循环,不满足时退出。</p>
+            </div>
+            <div class="concept-card" style="margin-bottom:10px;">
+              <h4>2️⃣ 循环体</h4>
+              <p>"原地观察红绿灯" — 需要<strong>反复执行</strong>的操作。</p>
+            </div>
+            <div class="concept-card">
+              <h4>3️⃣ 终止</h4>
+              <p>条件不再成立 → 跳出循环,执行后面的步骤。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:水温自动断电">
+        <div class="slide-title"><span class="num">4</span>🫖 互动:水温达到 100℃ 自动断电</div>
+        <div class="slide-subtitle">热水壶不停地检测水温,直到沸腾才停止 — 又是一个循环!</div>
+        <div class="kettle-scene">
+          <div class="kettle-display">
+            <div style="text-align:center;">
+              <div class="kettle-emoji" id="kettleEmoji">🫖<span class="steam-puff" id="steamPuff" style="display:none;">💨</span></div>
+              <div style="margin-top:6px; font-size:14px; color:var(--text-light);" id="kettleStatus">未通电</div>
+            </div>
+            <div style="text-align:center;">
+              <div class="thermometer">
+                <div class="fill" id="tempFill" style="height:20%;"></div>
+                <div class="bulb"></div>
+              </div>
+              <div style="margin-top:24px;">
+                <span class="temp-readout"><span id="tempReadout">20</span>°C</span>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <button class="btn-success" onclick="startKettle()" id="kettleBtn">▶ 开始加热</button>
+            <button class="btn-secondary" onclick="resetKettle()">⏹ 重置</button>
+            <span class="loop-counter">检测次数: <strong id="checkCount">0</strong></span>
+          </div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>💡 循环条件:</strong>"<strong>水温 < 100℃?</strong>" — 是的话继续加热并检测,否则停止。
+        </div>
+      </div>
+
+      <div class="slide" data-title="生活中的循环">
+        <div class="slide-title"><span class="num">5</span>更多生活循环</div>
+        <div class="slide-subtitle">循环结构在生活中处处可见</div>
+        <div class="loop-types">
+          <div class="loop-type-card">
+            <h4>🧹 扫地机器人</h4>
+            <p style="font-size:13.5px; color:#34495E;">每秒检测前方,如果有障碍物就转向。<br><em>条件: 有障碍?</em></p>
+          </div>
+          <div class="loop-type-card">
+            <h4>❄️ 空调制冷</h4>
+            <p style="font-size:13.5px; color:#34495E;">不断测温,温度高于设定值就继续制冷。<br><em>条件: 温度 > 设定值?</em></p>
+          </div>
+          <div class="loop-type-card">
+            <h4>🧼 洗衣机</h4>
+            <p style="font-size:13.5px; color:#34495E;">设定时间后反复转动,时间到自动停。<br><em>条件: 剩余时间 > 0?</em></p>
+          </div>
+          <div class="loop-type-card">
+            <h4>🚦 智慧红绿灯</h4>
+            <p style="font-size:13.5px; color:#34495E;">不停切换红、黄、绿,根据车流调整时长。<br><em>条件: 始终循环</em></p>
+          </div>
+          <div class="loop-type-card">
+            <h4>📞 拨电话占线</h4>
+            <p style="font-size:13.5px; color:#34495E;">没接通就再拨,直到接通或放弃。<br><em>条件: 未接通?</em></p>
+          </div>
+          <div class="loop-type-card">
+            <h4>📚 复习单词</h4>
+            <p style="font-size:13.5px; color:#34495E;">反复背诵,直到全部记住。<br><em>条件: 还有不会的?</em></p>
+          </div>
+        </div>
+        <div class="info-panel" style="margin-top:14px;">
+          <strong>🏙️ 智慧交通:</strong>大城市的信号灯,每个路口的红绿灯时长是根据<strong>实时车流量</strong>动态调整的 — 这是一种带循环的复杂算法。
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li><strong>循环结构</strong> — 重复执行某些步骤,直到条件不再满足</li>
+            <li>循环的三要素:<strong>条件</strong>、<strong>循环体</strong>、<strong>终止</strong></li>
+            <li>生活中:红绿灯、热水壶、空调、扫地机器人……都用了循环</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后练习</h3>
+          <p>用流程图描述<strong>"空调制冷"</strong>:不停读取室温,若高于设定值则继续制冷,否则停止。</p>
+          <p style="margin-top:6px;">下节课我们用 Python 程序<strong>实现</strong>所学的算法!</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+// ============ 红绿灯演示 ============
+let trafficTimer = null;
+let observeCount = 0;
+
+function setLight(color) {
+  ['lightR', 'lightY', 'lightG'].forEach(id => {
+    document.getElementById(id).className = 'light-bulb';
+  });
+  if (color === 'red') document.getElementById('lightR').classList.add('on-red');
+  if (color === 'yellow') document.getElementById('lightY').classList.add('on-yellow');
+  if (color === 'green') document.getElementById('lightG').classList.add('on-green');
+}
+
+function startTraffic() {
+  resetTraffic();
+  document.getElementById('trafficBtn').disabled = true;
+  observeCount = 0;
+  const person = document.getElementById('personEmoji');
+  const status = document.getElementById('trafficStatus');
+  setLight('red');
+  status.innerHTML = '🔴 红灯亮起,在路口等待...';
+  person.classList.add('observing');
+  // 模拟循环:每秒观察一次,3 秒后绿灯亮
+  trafficTimer = setInterval(() => {
+    observeCount++;
+    document.getElementById('observeCount').textContent = observeCount;
+    document.getElementById('loopCond').classList.add('active');
+    setTimeout(() => document.getElementById('loopCond').classList.remove('active'), 400);
+    if (observeCount >= 4) {
+      // 绿灯亮
+      clearInterval(trafficTimer);
+      setLight('green');
+      status.innerHTML = '🟢 绿灯亮了! 退出循环,开始过马路';
+      person.classList.remove('observing');
+      person.classList.add('walking');
+      setTimeout(() => {
+        status.innerHTML = '🎉 安全到达对面! 共观察了 ' + observeCount + ' 次,然后退出循环';
+        document.getElementById('trafficBtn').disabled = false;
+      }, 1600);
+    } else {
+      status.innerHTML = '👀 观察第 ' + observeCount + ' 次:还是红灯,继续等待...';
+    }
+  }, 900);
+}
+
+function resetTraffic() {
+  if (trafficTimer) { clearInterval(trafficTimer); trafficTimer = null; }
+  setLight('red');
+  observeCount = 0;
+  document.getElementById('observeCount').textContent = 0;
+  const person = document.getElementById('personEmoji');
+  person.classList.remove('walking', 'observing');
+  document.getElementById('trafficStatus').textContent = '点击"开始过马路"启动演示';
+  document.getElementById('trafficBtn').disabled = false;
+  document.getElementById('loopCond').classList.remove('active');
+}
+
+// ============ 热水壶演示 ============
+let kettleTimer = null;
+let currentTemp = 20;
+let checkCount = 0;
+
+function startKettle() {
+  resetKettle();
+  document.getElementById('kettleBtn').disabled = true;
+  document.getElementById('kettleEmoji').classList.add('heating');
+  document.getElementById('kettleStatus').textContent = '🔥 正在加热中...';
+  document.getElementById('steamPuff').style.display = 'inline';
+  kettleTimer = setInterval(() => {
+    checkCount++;
+    document.getElementById('checkCount').textContent = checkCount;
+    if (currentTemp < 100) {
+      currentTemp += Math.random() * 6 + 4;
+      if (currentTemp > 100) currentTemp = 100;
+      const pct = Math.min(100, (currentTemp / 120) * 100);
+      document.getElementById('tempFill').style.height = pct + '%';
+      document.getElementById('tempReadout').textContent = Math.round(currentTemp);
+      document.getElementById('kettleStatus').textContent =
+        '🔥 检测第 ' + checkCount + ' 次:水温 ' + Math.round(currentTemp) + '°C < 100°C,继续加热';
+    } else {
+      // 到 100,停止
+      clearInterval(kettleTimer);
+      kettleTimer = null;
+      document.getElementById('kettleEmoji').classList.remove('heating');
+      document.getElementById('steamPuff').style.display = 'inline';
+      document.getElementById('kettleStatus').innerHTML =
+        '✅ 水温达到 100°C! 停止加热(循环退出)<br>共检测 ' + checkCount + ' 次';
+      document.getElementById('kettleBtn').disabled = false;
+    }
+  }, 700);
+}
+
+function resetKettle() {
+  if (kettleTimer) { clearInterval(kettleTimer); kettleTimer = null; }
+  currentTemp = 20;
+  checkCount = 0;
+  document.getElementById('checkCount').textContent = 0;
+  document.getElementById('tempFill').style.height = '20%';
+  document.getElementById('tempReadout').textContent = 20;
+  document.getElementById('kettleEmoji').classList.remove('heating');
+  document.getElementById('steamPuff').style.display = 'none';
+  document.getElementById('kettleStatus').textContent = '未通电';
+  document.getElementById('kettleBtn').disabled = false;
+}
+</script>
+</body>
+</html>

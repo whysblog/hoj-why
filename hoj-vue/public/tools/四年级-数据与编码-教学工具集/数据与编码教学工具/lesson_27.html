@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第27课 数据点亮新生活 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#ec407a;
+  --theme-dark:#ad1457;
+  --theme-light:#fce4ec;
+  --bg:#fff5f8;
+}
+.scene-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;margin:14px 0;
+}
+.scene-tile{
+  background:#fff;border-radius:14px;
+  padding:16px;
+  border:2px solid var(--theme-light);
+  transition:all .2s;
+}
+.scene-tile:hover{
+  transform:translateY(-3px);
+  border-color:var(--theme);
+  box-shadow:0 6px 16px rgba(0,0,0,0.08);
+}
+.scene-tile .scene-emoji{
+  font-size:42px;
+  display:block;
+  text-align:center;
+  margin-bottom:8px;
+}
+.scene-tile h4{
+  color:var(--theme-dark);
+  font-size:16px;
+  text-align:center;
+  margin-bottom:8px;
+}
+.scene-tile p{
+  font-size:13px;color:#37474f;
+  line-height:1.6;
+  margin-bottom:8px;
+}
+.scene-tile .data-flow{
+  background:var(--theme-light);
+  border-radius:6px;
+  padding:6px 10px;
+  font-size:11px;
+  color:var(--theme-dark);
+  text-align:center;
+}
+.flow-diagram{
+  background:#fff;border-radius:12px;
+  padding:18px;margin:14px 0;
+  text-align:center;
+}
+.flow-line{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;flex-wrap:wrap;
+  font-size:14px;
+}
+.flow-node{
+  background:var(--theme-light);
+  border:2px solid var(--theme);
+  border-radius:10px;
+  padding:10px 14px;
+  color:var(--theme-dark);
+  font-weight:bold;
+  min-width:80px;
+}
+.flow-arrow{color:var(--theme);font-size:20px}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第六单元 · 第27课</span>
+    <h1>💡 数据点亮新生活</h1>
+    <p>看数据如何让我们的生活变得更智能、更美好</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">🏠 智慧生活</button>
+    <button class="nav-btn" data-slide="2">🚗 智慧出行</button>
+    <button class="nav-btn" data-slide="3">🏥 智慧服务</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      你有没有发现，生活越来越"<b>智能</b>"了：
+      <ul style="margin-top:6px">
+        <li>📱 手机一打开，<b>地图自动定位</b>你在哪里</li>
+        <li>🌡️ 智能空调能<b>记住</b>你喜欢的温度</li>
+        <li>🚊 上学路上，导航能<b>预知</b>哪里堵车</li>
+        <li>📺 视频 APP <b>知道</b>你喜欢看什么</li>
+      </ul>
+      这些"智能"背后的秘密是什么？答案是——<b>数据</b>！
+    </div>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>了解数据在<b>智能生活</b>各个方面的应用</li>
+      <li>理解<b>多种数据综合利用</b>能产生更大价值</li>
+      <li>感受数字时代生活的<b>美好与便利</b></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>智慧生活</h2>
+
+    <div class="scene-grid">
+      <div class="scene-tile">
+        <span class="scene-emoji">🏠</span>
+        <h4>智能家居</h4>
+        <p>下班回家前，空调自动调到舒适温度；起床时间，窗帘自动拉开；语音一句"开灯"就能开灯。</p>
+        <div class="data-flow">🌡️ 温度数据 + ⏰ 时间数据 + 🗣️ 声音数据</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">📺</span>
+        <h4>智能推荐</h4>
+        <p>视频网站知道你喜欢动画片，所以首页都是动画；电商记得你买过什么，推荐相关商品。</p>
+        <div class="data-flow">👀 观看记录 + 🛒 购买记录</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">⌚</span>
+        <h4>智能手表</h4>
+        <p>记录你每天走多少步、心跳多少次、睡得好不好。还能提醒你"该喝水了"。</p>
+        <div class="data-flow">👣 运动数据 + ❤️ 健康数据</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">💬</span>
+        <h4>智能助手</h4>
+        <p>"小爱同学，明天会下雨吗？" 它综合天气、地理、时间数据，立刻回答你。</p>
+        <div class="data-flow">🗣️ 语音 + ☁️ 天气 + 📍 位置</div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 关键洞察</h4>
+      智能 = <b>采集大量数据</b> + <b>分析数据规律</b> + <b>用规律服务你</b>。
+      <br>没有数据，就没有智能！
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>智慧出行</h2>
+
+    <div class="scene-grid">
+      <div class="scene-tile">
+        <span class="scene-emoji">🗺️</span>
+        <h4>智能导航</h4>
+        <p>哪条路最快？哪里堵车？高德、百度地图能<b>实时</b>告诉你。</p>
+        <div class="data-flow">🚗 千万车辆位置 + 🚦 道路状态</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">🚲</span>
+        <h4>共享单车</h4>
+        <p>手机一扫，就能借车；骑到目的地，下车锁好。哪个区域车少了，系统会调度车去补充。</p>
+        <div class="data-flow">📍 车辆位置 + 👥 用户位置 + 📊 需求统计</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">🚄</span>
+        <h4>高铁出行</h4>
+        <p>买票、刷脸进站、查时刻表，全靠数据。中国高铁已经覆盖全国主要城市。</p>
+        <div class="data-flow">🎫 票务数据 + 📷 人脸数据 + 🕐 时刻数据</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">🛰️</span>
+        <h4>北斗导航</h4>
+        <p>中国自主研发的卫星导航系统，让定位<b>精确到米</b>，还能给国外用户使用。</p>
+        <div class="data-flow">🛰️ 30+ 颗卫星 + 🌍 全球定位</div>
+      </div>
+    </div>
+
+    <h3>📊 数据综合的流程</h3>
+
+    <div class="flow-diagram">
+      <p style="font-size:14px;color:#607d8b;margin-bottom:14px">以"导航软件"为例：</p>
+      <div class="flow-line">
+        <div class="flow-node">📍 你的位置</div>
+        <span class="flow-arrow">+</span>
+        <div class="flow-node">🚗 路况数据</div>
+        <span class="flow-arrow">+</span>
+        <div class="flow-node">🗺️ 地图数据</div>
+      </div>
+      <div style="font-size:24px;color:var(--theme);margin:14px 0">⬇️</div>
+      <div class="flow-line">
+        <div class="flow-node" style="background:#fff;color:var(--theme-dark);border-width:3px">
+          ✨ 最佳路线推荐
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>智慧服务</h2>
+
+    <div class="scene-grid">
+      <div class="scene-tile">
+        <span class="scene-emoji">🏥</span>
+        <h4>智慧医疗</h4>
+        <p>医院电子病历记录每位病人的就诊数据；AI 能帮医生分析片子，准确率超过 90%。</p>
+        <div class="data-flow">🩺 病历 + 📷 影像 + 📊 化验</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">🏫</span>
+        <h4>智慧教育</h4>
+        <p>学习软件记录你做错的题，下次专门给你出类似题，"哪里弱补哪里"。</p>
+        <div class="data-flow">📝 答题记录 + 📚 知识点</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">🌾</span>
+        <h4>智慧农业</h4>
+        <p>无人机巡视农田，传感器测土壤湿度。农民在手机上就能<b>遥控浇水、施肥</b>。</p>
+        <div class="data-flow">🌧️ 气象 + 🌱 土壤 + 🛩️ 影像</div>
+      </div>
+
+      <div class="scene-tile">
+        <span class="scene-emoji">🌆</span>
+        <h4>智慧城市</h4>
+        <p>城市大脑实时监控交通、用电、垃圾、空气。哪里有问题立刻处理。</p>
+        <div class="data-flow">📷 摄像头 + 🚥 信号灯 + 🚒 应急</div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 中国的数字化成就</h4>
+      <ul style="margin-top:4px">
+        <li>📱 <b>移动支付</b>普及率世界第一</li>
+        <li>🚚 <b>快递</b>当日达、次日达</li>
+        <li>🛰️ <b>北斗导航</b>覆盖全球</li>
+        <li>🚄 <b>高铁网</b>覆盖 96% 的百万人口城市</li>
+        <li>📞 <b>5G 基站</b>数全球领先</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🏠</span>
+        <h4>生活</h4>
+        <p>智能家居、智能推荐</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🚗</span>
+        <h4>出行</h4>
+        <p>导航、单车、北斗</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🏥</span>
+        <h4>服务</h4>
+        <p>医疗、教育、农业、城市</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🇨🇳</span>
+        <h4>发展</h4>
+        <p>数字中国，蒸蒸日上</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 核心要点</h4>
+      <b>数据 + 网络 + 智能</b> = 美好新生活！
+      <br>
+      <b>多种数据综合</b>能发挥更大的力量——就像导航需要位置、地图、路况三种数据配合。
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      数据这么有用，再加上<b>人工智能（AI）</b>，会发生什么样的化学反应？
+      下节课《大数据助力智能》，揭开人工智能的奥秘！🤖
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

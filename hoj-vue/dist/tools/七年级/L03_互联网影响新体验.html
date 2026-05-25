@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第3课 · 互联网影响新体验</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第1单元 · 第3课</span>
+    <span class="title">互联网影响新体验</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>互联网影响<br>新体验</h1>
+<p class="subtitle">第一单元 · 第3课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>影响各领域</strong></span>
+<span>💡 关键词：<strong>赋能 · 变革</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🔍</span><div class="card-title">观察影响</div><div class="card-desc">观察互联网对学习、生活、工作各方面的影响。</div></div><div class="card"><span class="card-icon">⚖️</span><div class="card-title">辩证分析</div><div class="card-desc">分析互联网带来的机遇与挑战。</div></div><div class="card"><span class="card-icon">💡</span><div class="card-title">主动思考</div><div class="card-desc">思考如何成为合格的数字公民。</div></div></div></section>
+<section class="slide"><h2>🎓 教育领域</h2><ul><li><strong>在线课堂：</strong>慕课(MOOC)、国家智慧教育平台，名师课遍及全国</li>
+<li><strong>智能学习：</strong>AI 辅导、个性化推荐题目</li>
+<li><strong>资源开放：</strong>电子图书、可汗学院免费分享</li>
+<li><strong>VR课堂：</strong>虚拟实验室，让学生看到原子和宇宙</li></ul></section>
+<section class="slide"><h2>🏥 医疗健康</h2><ul><li><strong>在线挂号：</strong>不用凌晨排队，手机就能预约专家号</li>
+<li><strong>远程问诊：</strong>偏远山区也能咨询北京三甲医院医生</li>
+<li><strong>电子病历：</strong>跨医院共享，避免重复检查</li>
+<li><strong>AI 辅助诊断：</strong>识别 X 光片、CT 影像更精准</li></ul></section>
+<section class="slide"><h2>🛒 商业消费</h2><ul><li><strong>电子商务：</strong>淘宝、京东、拼多多，足不出户买全球</li>
+<li><strong>移动支付：</strong>微信支付、支付宝，让中国成为"无现金社会"</li>
+<li><strong>共享经济：</strong>共享单车、共享充电宝，按需付费</li>
+<li><strong>直播带货：</strong>主播带货成为新职业</li></ul></section>
+<section class="slide"><h2>🚗 交通出行</h2><ul><li><strong>网约车：</strong>滴滴、高德打车，比传统出租车更方便</li>
+<li><strong>导航服务：</strong>百度地图、高德地图，实时路况</li>
+<li><strong>共享出行：</strong>共享单车解决最后一公里</li>
+<li><strong>智能交通：</strong>红绿灯智能调度，减少拥堵</li></ul></section>
+<section class="slide"><h2>👥 社会交往</h2><ul><li><strong>即时通讯：</strong>微信让亲友联系无障碍</li>
+<li><strong>社交媒体：</strong>微博、B站、小红书，分享生活</li>
+<li><strong>视频会议：</strong>钉钉、腾讯会议，跨地区协作</li>
+<li><strong>兴趣社群：</strong>找到志同道合的同伴更容易</li></ul></section>
+<section class="slide"><h2>⚠️ 互联网带来的挑战</h2>
+<div class="cards">
+<div class="card"><span class="card-icon">🔓</span><div class="card-title">隐私安全</div><div class="card-desc">个人信息、位置、消费记录可能被收集、泄露、滥用。</div></div>
+<div class="card"><span class="card-icon">📰</span><div class="card-title">虚假信息</div><div class="card-desc">谣言、假新闻、网络诈骗传播速度极快，难以辨别。</div></div>
+<div class="card"><span class="card-icon">📱</span><div class="card-title">网络成瘾</div><div class="card-desc">沉迷游戏、短视频，影响学习、视力、睡眠。</div></div>
+<div class="card"><span class="card-icon">🕳</span><div class="card-title">信息茧房</div><div class="card-desc">算法只推你喜欢的内容，视野越来越窄。</div></div>
+<div class="card"><span class="card-icon">👴</span><div class="card-title">数字鸿沟</div><div class="card-desc">老人、残障人士、边远地区被"数字落下"。</div></div>
+<div class="card"><span class="card-icon">⚖️</span><div class="card-title">伦理挑战</div><div class="card-desc">AI 换脸、深度伪造、算法歧视等新问题。</div></div>
+</div></section>
+<section class="slide"><h2>🌱 成为合格的数字公民</h2>
+<div class="highlight">📜 <strong>"数字公民"</strong>：能在数字社会中安全、负责任、合乎伦理地使用互联网技术的人。</div>
+<div class="cards">
+<div class="card"><span class="card-icon">🛡️</span><div class="card-title">学会保护</div><div class="card-desc">不随便填个人信息、密码定期换、不连陌生 WiFi。</div></div>
+<div class="card"><span class="card-icon">🔍</span><div class="card-title">独立思考</div><div class="card-desc">不轻信网上消息，多方核实，养成查证习惯。</div></div>
+<div class="card"><span class="card-icon">⏰</span><div class="card-title">合理用网</div><div class="card-desc">控制上网时间，不沉迷游戏短视频，劳逸结合。</div></div>
+<div class="card"><span class="card-icon">💬</span><div class="card-title">文明上网</div><div class="card-desc">不发表攻击性言论、不传播谣言、不参与网暴。</div></div>
+<div class="card"><span class="card-icon">🎯</span><div class="card-title">主动学习</div><div class="card-desc">用互联网工具提升自己，而不是只用来娱乐。</div></div>
+<div class="card"><span class="card-icon">❤️</span><div class="card-title">帮助他人</div><div class="card-desc">教家中老人用智能手机、向同学分享好资源。</div></div>
+</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 关于互联网对教育的影响，下列说法<strong>正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">完全可以替代学校教育</div>
+<div class="quiz-opt" data-correct="true">让优质教育资源更易获取</div>
+<div class="quiz-opt" data-correct="false">只对城市学生有用</div>
+<div class="quiz-opt" data-correct="false">与课堂学习无关</div></div>
+<div class="quiz-feedback">✅ 慕课、国家智慧教育平台等让偏远地区学生也能学习名师课程。但它是补充，并不能完全替代学校的师生互动。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 下列哪种行为<strong>不符合</strong>"数字公民"要求？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">看到网上消息先核实再传播</div>
+<div class="quiz-opt" data-correct="true">随手把朋友的丑照发到网上嘲笑</div>
+<div class="quiz-opt" data-correct="false">教爷爷奶奶用手机预约挂号</div>
+<div class="quiz-opt" data-correct="false">每天限制自己玩游戏时间</div></div>
+<div class="quiz-feedback">✅ 未经他人同意发布对方照片并嘲笑，既侵犯隐私权也涉嫌网络欺凌，是不文明、不合法的行为。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2>
+<div class="highlight">互联网已渗透到<strong>教育、医疗、商业、交通、社交</strong>等几乎所有领域，带来了空前的便利，也带来了新的挑战。</div>
+<h3>🎯 三个关键认识</h3>
+<ul>
+<li><strong>不可逆：</strong>互联网已成为现代社会的基础设施，不可能"回到过去"</li>
+<li><strong>双刃剑：</strong>同样的工具，可以助力学习，也可能让人沉迷；可以传播知识，也可能传播谣言</li>
+<li><strong>主动权：</strong>关键在于<strong>我们如何使用</strong>——做主动的使用者，而不是被动的消费者</li>
+</ul>
+<div class="highlight" style="margin-top:24px; text-align:center;">💭 <strong>课后任务：</strong>采访一位长辈，问问他/她小时候没有互联网是怎么学习、购物、联系朋友的，并对比今天写一份感悟。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "🎓 教育领域", "🏥 医疗健康", "🛒 商业消费", "🚗 交通出行", "👥 社会交往", "挑战", "数字公民", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

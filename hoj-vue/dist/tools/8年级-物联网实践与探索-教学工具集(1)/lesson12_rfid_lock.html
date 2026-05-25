@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第12课 · 刷卡开锁易实现 — RFID 门锁实践模拟</title>
+<style>
+  :root {
+    --bg: #f0fdf4;
+    --bg-2: #dcfce7;
+    --ink: #052e1a;
+    --ink-soft: #4a6c5e;
+    --primary: #047857;
+    --primary-2: #10b981;
+    --warn: #f59e0b;
+    --red: #dc2626;
+    --blue: #2563eb;
+    --line: #c8d8ce;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(4,120,87,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--warn); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 模拟器 */
+  .sim {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px;
+  }
+  .door-area {
+    background: linear-gradient(180deg, #dcfce7 0%, #fef3c7 60%, #fed7aa 100%);
+    border-radius: 10px; padding: 24px; min-height: 400px; position: relative; overflow: hidden;
+  }
+  .door-area svg { width: 100%; height: 380px; }
+  .controls {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .ctl-card {
+    background: var(--bg-2); padding: 16px; border-radius: 8px;
+  }
+  .ctl-card h4 { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 10px; }
+  .tag-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tag-btn {
+    padding: 12px 8px; background: var(--card); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; text-align: center; transition: all .15s; font-family: inherit;
+    color: var(--ink);
+  }
+  .tag-btn:hover { transform: translateY(-2px); border-color: var(--primary); }
+  .tag-btn.unknown { background: rgba(220,38,38,.05); }
+  .tag-btn .ic { font-size: 18px; display: block; margin-bottom: 2px; }
+  .tag-btn .id { font-family: "JetBrains Mono",monospace; font-size: 10px; color: var(--ink-soft); margin-top: 2px; display: block; }
+
+  .log {
+    background: #0f1c14; color: #6ee7b7; padding: 14px; border-radius: 6px;
+    font-family: "JetBrains Mono",monospace; font-size: 11px; line-height: 1.7;
+    max-height: 160px; overflow-y: auto;
+  }
+  .log .ts { color: #64748b; }
+  .log .ok { color: #6ee7b7; }
+  .log .err { color: #fca5a5; }
+
+  /* Code panel */
+  .code-card {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .code {
+    background: #0f1c14; color: #84d2a3; padding: 18px;
+    border-radius: 8px; font-family: "JetBrains Mono",monospace; font-size: 12px;
+    line-height: 1.8; overflow-x: auto; white-space: pre;
+  }
+  .code .kw { color: #fbbf24; }
+  .code .str { color: #93c5fd; }
+  .code .com { color: #6b7280; }
+  .code .fn { color: #c4b5fd; }
+  .code .num { color: #f87171; }
+
+  /* 流程图 */
+  .flow-card {
+    background: var(--card); padding: 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .flow-svg { width: 100%; max-height: 320px; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 1000px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .sim { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 12 课</span>刷卡开锁易实现</h1>
+  <p class="lead">基于第 7 课学过的 RFID 原理，本课实现"<strong>刷卡开锁</strong>"功能：读卡器读取学生卡 → 与白名单比对 → 控制舵机打开门锁。同时通过 OLED 屏幕和指示灯反馈结果。</p>
+</header>
+
+<main>
+
+  <!-- 模拟器 -->
+  <section class="section">
+    <div class="section-title">一、刷卡开锁模拟器</div>
+    <div class="sim">
+      <div class="door-area">
+        <svg viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg">
+          <!-- 门框 -->
+          <rect x="80" y="40" width="220" height="320" fill="#a37315" rx="4"/>
+          <rect x="90" y="50" width="200" height="300" fill="#e7d8b8" rx="2"/>
+          <!-- 门 -->
+          <g id="doorPanel" transform="rotate(0 90 200)">
+            <rect x="90" y="50" width="200" height="300" fill="#d97706" stroke="#a37315" stroke-width="2"/>
+            <rect x="105" y="75" width="170" height="100" fill="#b45309" rx="2"/>
+            <rect x="105" y="195" width="170" height="100" fill="#b45309" rx="2"/>
+            <!-- 锁/把手 -->
+            <circle cx="260" cy="200" r="9" fill="#fef3c7" stroke="#a37315" stroke-width="2"/>
+            <rect x="255" y="208" width="10" height="36" fill="#fef3c7" stroke="#a37315" stroke-width="1.5"/>
+            <!-- 锁状态指示灯 -->
+            <circle id="lockLed" cx="260" cy="170" r="6" fill="#94a3b8"/>
+          </g>
+          <!-- 读卡器 -->
+          <g transform="translate(20 150)">
+            <rect x="0" y="0" width="50" height="80" rx="6" fill="#1f2937" stroke="#0f172a" stroke-width="2"/>
+            <circle id="readerLed" cx="25" cy="22" r="6" fill="#94a3b8"/>
+            <text x="25" y="50" font-size="9" fill="#84d2a3" text-anchor="middle" font-family="monospace">RFID</text>
+            <text x="25" y="62" font-size="8" fill="#84d2a3" text-anchor="middle">READER</text>
+            <!-- 信号 -->
+            <g id="rfWaves" opacity="0">
+              <circle cx="55" cy="40" r="15" fill="none" stroke="#06b6d4" stroke-width="2"/>
+              <circle cx="55" cy="40" r="22" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.5"/>
+              <circle cx="55" cy="40" r="30" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.3"/>
+            </g>
+          </g>
+          <!-- OLED 屏 -->
+          <g transform="translate(120 12)">
+            <rect x="0" y="0" width="140" height="34" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
+            <text id="oledText" x="70" y="22" font-size="11" fill="#84d2a3" text-anchor="middle" font-family="monospace">请刷卡...</text>
+          </g>
+        </svg>
+      </div>
+      <div class="controls">
+        <div class="ctl-card">
+          <h4>选择一张卡刷</h4>
+          <div class="tag-row" id="tagRow"></div>
+        </div>
+        <div class="ctl-card">
+          <h4>📋 实时日志</h4>
+          <div class="log" id="log">
+            <div><span class="ts">[就绪]</span> 等待刷卡...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 程序代码 -->
+  <section class="section">
+    <div class="section-title">二、MicroPython 实现代码</div>
+    <div class="code-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">下面是教材中实现刷卡开锁的典型代码，使用字典存储已登记的卡号和姓名：</p>
+      <div class="code"><span class="kw">from</span> rfid <span class="kw">import</span> rfid
+<span class="kw">from</span> servo <span class="kw">import</span> servo
+<span class="kw">from</span> oled <span class="kw">import</span> oled
+<span class="kw">import</span> time
+
+<span class="com"># 已登记的学生卡白名单（教材数据结构：字典）</span>
+white_list = {
+    <span class="str">"001A79B56C"</span>: <span class="str">"小智"</span>,
+    <span class="str">"001A79B56D"</span>: <span class="str">"小慧"</span>,
+    <span class="str">"001A79B56E"</span>: <span class="str">"小华"</span>,
+    <span class="str">"A7F8E901"</span>:   <span class="str">"通用钥匙"</span>
+}
+
+scan = rfid(sda=<span class="num">4</span>, scl=<span class="num">5</span>)       <span class="com"># 初始化 RFID 读卡器</span>
+sg = servo(pin=<span class="num">14</span>)                <span class="com"># 初始化舵机（门锁）</span>
+display = oled()
+
+<span class="kw">while True</span>:
+    rf = scan.scanning()             <span class="com"># 持续扫描</span>
+    sn = rf.serial_number()          <span class="com"># 读取卡号</span>
+    
+    <span class="kw">if</span> sn <span class="kw">in</span> white_list:           <span class="com"># 字典查找：O(1)</span>
+        name = white_list[sn]
+        display.print(<span class="str">"欢迎 "</span> + name)
+        sg.angle(<span class="num">90</span>)               <span class="com"># 舵机转 90° 开锁</span>
+        time.sleep(<span class="num">3</span>)               <span class="com"># 保持 3 秒</span>
+        sg.angle(<span class="num">0</span>)                <span class="com"># 自动回位上锁</span>
+    <span class="kw">else</span>:
+        display.print(<span class="str">"未授权!"</span>)
+        <span class="com"># 可选：触发蜂鸣器/上报云端</span></div>
+    </div>
+  </section>
+
+  <!-- 流程图 -->
+  <section class="section">
+    <div class="section-title">三、程序流程图</div>
+    <div class="flow-card">
+      <svg class="flow-svg" viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#047857"/>
+          </marker>
+        </defs>
+        <!-- 开始 -->
+        <g transform="translate(360 20)">
+          <ellipse cx="60" cy="22" rx="60" ry="22" fill="#dcfce7" stroke="#047857" stroke-width="2"/>
+          <text x="60" y="27" font-size="13" text-anchor="middle" fill="#047857" font-weight="700">开始</text>
+        </g>
+        <line x1="420" y1="64" x2="420" y2="84" stroke="#047857" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- 扫描卡 -->
+        <g transform="translate(330 92)">
+          <rect x="0" y="0" width="180" height="46" rx="6" fill="#fff" stroke="#047857" stroke-width="2"/>
+          <text x="90" y="28" font-size="13" text-anchor="middle">扫描 RFID 卡，读取卡号</text>
+        </g>
+        <line x1="420" y1="142" x2="420" y2="162" stroke="#047857" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- 判断 -->
+        <g transform="translate(330 168)">
+          <polygon points="90,0 180,32 90,64 0,32" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="90" y="35" font-size="12" text-anchor="middle" font-weight="700">卡号在白名单？</text>
+        </g>
+        <!-- Yes 分支 -->
+        <line x1="510" y1="200" x2="640" y2="200" stroke="#047857" stroke-width="2" marker-end="url(#arr)"/>
+        <text x="570" y="195" font-size="12" fill="#047857" font-weight="700">是</text>
+        <g transform="translate(640 175)">
+          <rect x="0" y="0" width="140" height="52" rx="6" fill="#dcfce7" stroke="#10b981" stroke-width="2"/>
+          <text x="70" y="22" font-size="12" text-anchor="middle">显示欢迎语</text>
+          <text x="70" y="40" font-size="12" text-anchor="middle">舵机开锁</text>
+        </g>
+        <!-- No 分支 -->
+        <line x1="330" y1="200" x2="200" y2="200" stroke="#047857" stroke-width="2" marker-end="url(#arr)"/>
+        <text x="270" y="195" font-size="12" fill="#047857" font-weight="700">否</text>
+        <g transform="translate(60 175)">
+          <rect x="0" y="0" width="140" height="52" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+          <text x="70" y="22" font-size="12" text-anchor="middle">显示"未授权"</text>
+          <text x="70" y="40" font-size="12" text-anchor="middle">可选报警</text>
+        </g>
+        <!-- 回到扫描（loop） -->
+        <line x1="130" y1="227" x2="130" y2="280" stroke="#047857" stroke-width="2"/>
+        <line x1="130" y1="280" x2="710" y2="280" stroke="#047857" stroke-width="2"/>
+        <line x1="710" y1="280" x2="710" y2="227" stroke="#047857" stroke-width="2"/>
+        <line x1="420" y1="280" x2="420" y2="142" stroke="#047857" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+        <text x="430" y="275" font-size="11" fill="#047857" font-style="italic">循环</text>
+      </svg>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 12 课配套交互工具</footer>
+
+<script>
+// RF wave animation
+var __wavePhase = 0;
+setInterval(function () {
+  __wavePhase = (__wavePhase + 0.03) % 1;
+  var circles = document.querySelectorAll('#rfWaves circle');
+  for (var i = 0; i < circles.length; i++) {
+    var p = (__wavePhase + i * 0.33) % 1;
+    circles[i].setAttribute('r', String(15 + p * 25));
+    circles[i].setAttribute('opacity', String((0.7 * (1 - p)).toFixed(2)));
+  }
+}, 50);
+
+// 白名单
+var whiteList = {
+  '001A79B56C': '小智',
+  '001A79B56D': '小慧',
+  '001A79B56E': '小华',
+  'A7F8E901':   '通用钥匙'
+};
+
+var tags = [
+  { id: '001A79B56C', ic: '🧑', label: '学生卡-A' },
+  { id: '001A79B56D', ic: '🧑‍🦰', label: '学生卡-B' },
+  { id: '001A79B56E', ic: '🧒', label: '学生卡-C' },
+  { id: 'A7F8E901',   ic: '🔑', label: '钥匙卡' },
+  { id: 'FF8800AA',   ic: '❓', label: '陌生卡（未登记）' },
+  { id: 'BAD12345',   ic: '🃏', label: '伪造卡' }
+];
+
+function renderTags() {
+  var row = document.getElementById('tagRow');
+  var html = '';
+  for (var i = 0; i < tags.length; i++) {
+    var t = tags[i];
+    var cls = (t.id in whiteList) ? '' : ' unknown';
+    html += '<div class="tag-btn' + cls + '" onclick="swipe(\'' + t.id + '\')"><span class="ic">' + t.ic + '</span>' + t.label + '<span class="id">' + t.id + '</span></div>';
+  }
+  row.innerHTML = html;
+}
+
+function logMsg(html) {
+  var l = document.getElementById('log');
+  var ts = new Date().toTimeString().slice(0,8);
+  l.innerHTML += '<div><span class="ts">[' + ts + ']</span> ' + html + '</div>';
+  l.scrollTop = l.scrollHeight;
+}
+
+var locked = true;
+function swipe(id) {
+  // 读卡器闪烁
+  document.getElementById('readerLed').setAttribute('fill', '#06b6d4');
+  document.getElementById('oledText').textContent = '扫描中...';
+  logMsg('扫描到卡号 <strong>' + id + '</strong>...');
+
+  setTimeout(function () {
+    if (id in whiteList) {
+      var name = whiteList[id];
+      logMsg('<span class="ok">✓ 白名单匹配：' + name + '</span>');
+      document.getElementById('oledText').textContent = '欢迎 ' + name;
+      document.getElementById('oledText').setAttribute('fill', '#84d2a3');
+      document.getElementById('lockLed').setAttribute('fill', '#10b981');
+      document.getElementById('readerLed').setAttribute('fill', '#10b981');
+      // 开门动画
+      document.getElementById('doorPanel').setAttribute('transform', 'rotate(-35 90 200)');
+      logMsg('<span class="ok">⚙ 舵机转 90°，门已开启。</span>');
+      // 3 秒后自动关
+      setTimeout(function () {
+        document.getElementById('doorPanel').setAttribute('transform', 'rotate(0 90 200)');
+        document.getElementById('lockLed').setAttribute('fill', '#94a3b8');
+        document.getElementById('readerLed').setAttribute('fill', '#94a3b8');
+        document.getElementById('oledText').textContent = '请刷卡...';
+        document.getElementById('oledText').setAttribute('fill', '#84d2a3');
+        logMsg('门已自动上锁');
+      }, 3000);
+    } else {
+      logMsg('<span class="err">✗ 卡号 ' + id + ' 不在白名单，拒绝开锁！</span>');
+      document.getElementById('oledText').textContent = '未授权!';
+      document.getElementById('oledText').setAttribute('fill', '#fca5a5');
+      document.getElementById('lockLed').setAttribute('fill', '#dc2626');
+      document.getElementById('readerLed').setAttribute('fill', '#dc2626');
+      setTimeout(function () {
+        document.getElementById('lockLed').setAttribute('fill', '#94a3b8');
+        document.getElementById('readerLed').setAttribute('fill', '#94a3b8');
+        document.getElementById('oledText').textContent = '请刷卡...';
+        document.getElementById('oledText').setAttribute('fill', '#84d2a3');
+      }, 2000);
+    }
+  }, 500);
+}
+
+renderTags();
+window.swipe = swipe;
+</script>
+</body>
+</html>

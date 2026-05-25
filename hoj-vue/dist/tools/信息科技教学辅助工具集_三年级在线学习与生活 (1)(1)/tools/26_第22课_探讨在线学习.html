@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>探讨在线学习 — 第22课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#ecfeff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#0e7490,#06b6d4);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#0e7490;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#06b6d4;color:white;border-color:#0e7490}
+.intro{background:linear-gradient(135deg,#cffafe,#a5f3fc);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#0e7490;margin-bottom:8px;font-size:20px}.intro p{color:#0c4a6e;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:36px}.tool-card h4{color:#0e7490;margin:6px 0 4px;font-size:14px}.tool-card p{color:#475569;font-size:12px;line-height:1.5}
+
+/* 学习计划表 */
+.plan-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.plan-table table{width:100%;border-collapse:collapse}
+.plan-table th{background:#cffafe;color:#0e7490;padding:10px 8px;font-weight:600;font-size:13px}
+.plan-table td{padding:6px 8px;border-top:1px solid #cffafe;font-size:13px;vertical-align:middle}
+.plan-table input,.plan-table select{width:100%;padding:6px 8px;border:1px solid #cffafe;border-radius:4px;font-size:12px}
+.plan-table input:focus,.plan-table select:focus{outline:none;border-color:#06b6d4}
+.day-header{background:#ecfeff;color:#0e7490;font-weight:600;text-align:center;padding:6px}
+
+/* 计划检查 */
+.check-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:700px){.check-list{grid-template-columns:1fr}}
+.check-item{background:white;padding:12px 14px;border-radius:10px;display:flex;gap:10px;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.04);cursor:pointer;transition:all .2s}
+.check-item:hover{background:#ecfeff}
+.check-item.checked{background:#cffafe}
+.check-item .box{width:24px;height:24px;border-radius:6px;border:2px solid #a5f3fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.check-item.checked .box{background:#06b6d4;border-color:#0e7490;color:white}
+.check-item .text{font-size:13px;color:#475569}
+.check-item.checked .text{color:#0e7490;font-weight:600}
+
+.tip-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.tip-card{background:white;padding:14px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.04);text-align:center}
+.tip-card .icon{font-size:32px}
+.tip-card h4{color:#0e7490;font-size:13px;margin:6px 0 4px}
+.tip-card p{font-size:11px;color:#475569;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}.plan-table{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>📅 探讨在线学习</h1>
+    <div class="lesson">第 22 课 · 第六单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>本课导入</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>制订学习计划</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>我的周计划表</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>提高学习效率</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>📅 本课导入</h2>
+      <div class="lead">在线学习很自由，但容易分心。要做"自己的小老板"，自己管理自己</div>
+      <div class="intro">
+        <h3>🤔 思考一下</h3>
+        <p>同样是 1 小时学习时间，为什么有的同学能学好多内容？关键在于：<b>有计划、有方法、专注高效</b>。本课我们一起探讨：怎样让在线学习更有效？</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">📋</div><h4>有计划</h4><p>清楚什么时间学什么</p></div>
+        <div class="tool-card"><div class="icon">🎯</div><h4>有目标</h4><p>每次学习有具体目标</p></div>
+        <div class="tool-card"><div class="icon">⚡</div><h4>有方法</h4><p>边学边记，互动答题</p></div>
+        <div class="tool-card"><div class="icon">🧘</div><h4>专注力</h4><p>排除干扰，全神贯注</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📝 制订学习计划</h2>
+      <div class="lead">一个好计划，让学习事半功倍</div>
+      <h3 style="color:#0e7490;font-size:16px;margin-bottom:10px;">📌 计划包含什么？</h3>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">⏰</div><h4>时间</h4><p>什么时候学</p></div>
+        <div class="tool-card"><div class="icon">📚</div><h4>学科</h4><p>学哪一门</p></div>
+        <div class="tool-card"><div class="icon">📖</div><h4>内容</h4><p>学什么单元</p></div>
+        <div class="tool-card"><div class="icon">🎯</div><h4>目标</h4><p>要达到什么效果</p></div>
+        <div class="tool-card"><div class="icon">🛠️</div><h4>工具</h4><p>用什么平台/资源</p></div>
+        <div class="tool-card"><div class="icon">⏱️</div><h4>时长</h4><p>需要多久</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 SMART 原则</h3>
+        <p><b>S</b>pecific 具体的 · <b>M</b>easurable 可衡量的 · <b>A</b>chievable 能做到的 · <b>R</b>elevant 相关的 · <b>T</b>ime-bound 有时限的<br>
+        例如不要说"我要好好学英语"，要说<b>"今天 18:00-18:30，看 1 集 BBC 英语动画片，记 5 个新单词"</b>。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📅 我的周计划表</h2>
+      <div class="lead">填写下面的表格，制订属于你的在线学习周计划</div>
+      <div class="plan-table">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:60px;">星期</th>
+              <th>学科</th>
+              <th>学习内容</th>
+              <th>目标</th>
+              <th style="width:80px;">时长</th>
+            </tr>
+          </thead>
+          <tbody id="planTbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="ctrl-btn primary" onclick="savePlan()">💾 保存计划</button>
+        <button class="ctrl-btn" onclick="resetPlan()">🔄 重置示例</button>
+        <button class="ctrl-btn" onclick="printPlan()">🖨️ 打印</button>
+        <span style="font-size:12px;color:#94a3b8;margin-left:auto;">📌 制订计划后要定期检查执行情况</span>
+      </div>
+      <div class="know">
+        <h3>💡 制订计划的小贴士</h3>
+        <p>① <b>不贪多</b>：每天 30-60 分钟就够了；<br>② <b>留余地</b>：留出灵活调整的时间；<br>③ <b>劳逸结合</b>：学 30 分钟休息 5 分钟；<br>④ <b>奖励自己</b>：完成一周计划，奖励自己看一部喜欢的电影。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>⚡ 提高学习效率</h2>
+      <div class="lead">这些小习惯，让在线学习更高效</div>
+      <div class="tip-row">
+        <div class="tip-card"><div class="icon">🎯</div><h4>明确目标</h4><p>学习前明确要学什么</p></div>
+        <div class="tip-card"><div class="icon">🧘</div><h4>专心听课</h4><p>关闭无关 App、群消息</p></div>
+        <div class="tip-card"><div class="icon">📝</div><h4>边学边记</h4><p>记下要点、疑问、灵感</p></div>
+        <div class="tip-card"><div class="icon">⏸️</div><h4>暂停思考</h4><p>看完一段停下来想想</p></div>
+        <div class="tip-card"><div class="icon">🔁</div><h4>反复看</h4><p>难点反复回看、慢放</p></div>
+        <div class="tip-card"><div class="icon">✋</div><h4>动手实践</h4><p>看完要做、要练习</p></div>
+        <div class="tip-card"><div class="icon">💬</div><h4>交流答疑</h4><p>不懂的问老师同学</p></div>
+        <div class="tip-card"><div class="icon">🔄</div><h4>定期复习</h4><p>学过的隔段时间复习</p></div>
+      </div>
+      <h3 style="color:#0e7490;font-size:16px;margin:20px 0 10px;">🎯 学习习惯自查清单</h3>
+      <p style="font-size:13px;color:#64748b;margin-bottom:10px;">点击勾选你已经做到的：</p>
+      <div class="check-list" id="checkList"></div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="tip-row">
+        <div class="tip-card" style="border-top:4px solid #06b6d4;"><div class="icon">📋</div><h4>制订计划</h4><p>有目标有时间</p></div>
+        <div class="tip-card" style="border-top:4px solid #06b6d4;"><div class="icon">⚡</div><h4>提高效率</h4><p>专注 + 互动 + 记录</p></div>
+        <div class="tip-card" style="border-top:4px solid #06b6d4;"><div class="icon">📅</div><h4>定期反思</h4><p>看看计划完成得怎样</p></div>
+        <div class="tip-card" style="border-top:4px solid #06b6d4;"><div class="icon">🌱</div><h4>持续改进</h4><p>下周计划做得更好</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 老师寄语</h3>
+        <p>在线学习就像跑步：<b>没有教练在旁边</b>，全靠自己。但是只要养成<b>计划好、专注学、定期反思</b>的好习惯，你会发现自己的进步速度比同学快很多。从今天起，做自己的小老板！</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const days = ['周一','周二','周三','周四','周五','周六','周日'];
+const samples = [
+  { subject: '语文', content: '古诗背诵 2 首', goal: '能流畅背诵', dur: '30 分钟' },
+  { subject: '数学', content: '看 1 集"奥数趣题"', goal: '能解 3 道题', dur: '20 分钟' },
+  { subject: '英语', content: 'BBC 儿童英语动画', goal: '听懂大意，记 5 词', dur: '30 分钟' },
+  { subject: '科学', content: '十万个为什么 1 篇', goal: '能复述给爸妈听', dur: '15 分钟' },
+  { subject: '艺术', content: '云游故宫博物院', goal: '了解 1 件文物', dur: '20 分钟' },
+  { subject: '休息', content: '与同学打游戏聊天', goal: '放松心情', dur: '30 分钟' },
+  { subject: '复习', content: '本周笔记回顾', goal: '巩固本周所学', dur: '40 分钟' },
+];
+
+function renderPlan() {
+  document.getElementById('planTbody').innerHTML = days.map((d, i) => `
+    <tr>
+      <td class="day-header">${d}</td>
+      <td><input value="${samples[i].subject}" placeholder="如：语文"></td>
+      <td><input value="${samples[i].content}" placeholder="如：古诗 2 首"></td>
+      <td><input value="${samples[i].goal}" placeholder="如：能背诵"></td>
+      <td><input value="${samples[i].dur}" placeholder="如：30 分钟"></td>
+    </tr>
+  `).join('');
+}
+renderPlan();
+
+function savePlan() {
+  alert('💾 计划已保存（演示）！\n📌 把你的计划打印出来，贴在书桌前，每天提醒自己。');
+}
+
+function resetPlan() {
+  if (confirm('确定重置为示例计划吗？当前修改将丢失。')) renderPlan();
+}
+
+function printPlan() {
+  alert('🖨️ 提示：按 Ctrl+P (Windows) 或 Cmd+P (Mac) 可以打印当前页面');
+}
+
+const habits = [
+  '学习前关闭与学习无关的应用',
+  '记下不懂的问题，及时请教',
+  '看视频时手不停，记笔记',
+  '每学 30 分钟，远眺 5 分钟',
+  '完成学习后整理笔记',
+  '把学到的讲给爸爸妈妈听',
+  '复习当天学过的内容',
+  '主动找有趣的拓展资源',
+];
+
+document.getElementById('checkList').innerHTML = habits.map((h, i) => `
+  <div class="check-item" onclick="toggleCheck(this)">
+    <div class="box">✓</div>
+    <div class="text">${h}</div>
+  </div>
+`).join('');
+
+function toggleCheck(el) { el.classList.toggle('checked'); }
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') p();
+});
+</script>
+</body>
+</html>

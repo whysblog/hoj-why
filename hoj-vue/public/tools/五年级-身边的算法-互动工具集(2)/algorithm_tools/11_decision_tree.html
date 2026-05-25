@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>决策树构建器 - 第28课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+.mode-tab {
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--text-light);
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+.mode-tab:hover {
+  background: transparent;
+  color: var(--primary);
+  transform: none;
+}
+.mode-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.mode-panel { display: none; }
+.mode-panel.active { display: block; }
+
+/* 游戏模式 */
+.game-area {
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  border: 2px solid #D6E8FA;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.question-text {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.answer-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.answer-btn {
+  padding: 14px 36px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 30px;
+  min-width: 100px;
+}
+.answer-btn.yes { background: var(--secondary); }
+.answer-btn.yes:hover { background: #3FA866; }
+.answer-btn.no { background: var(--danger); }
+.answer-btn.no:hover { background: #C73E32; }
+
+.result-display {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 16px 0;
+}
+.result-icon { font-size: 64px; margin-bottom: 10px; }
+
+.history-list {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 16px;
+  text-align: left;
+  max-width: 500px;
+}
+.history-list h4 {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.history-item {
+  padding: 6px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed #E0E6ED;
+}
+.history-item:last-child { border-bottom: none; }
+.history-item .q { color: var(--text); }
+.history-item .a {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.history-item .a.yes { background: #E8F8EE; color: var(--secondary); }
+.history-item .a.no { background: #FDECEA; color: var(--danger); }
+
+/* 树状图模式 */
+.tree-container {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  overflow-x: auto;
+}
+.tree-svg-wrap {
+  display: flex;
+  justify-content: center;
+  min-width: 600px;
+}
+.tree-node-q {
+  fill: white;
+  stroke: var(--primary);
+  stroke-width: 2.5;
+}
+.tree-node-q-text {
+  font-size: 13px;
+  fill: var(--primary-dark);
+  font-weight: 600;
+}
+.tree-leaf {
+  fill: #FFF4E6;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.tree-leaf-text {
+  font-size: 13px;
+  fill: var(--accent);
+  font-weight: 700;
+}
+.tree-edge {
+  stroke: #B0BEC5;
+  stroke-width: 2;
+  fill: none;
+}
+.tree-edge.active {
+  stroke: var(--primary);
+  stroke-width: 3.5;
+}
+.tree-edge-label {
+  font-size: 12px;
+  fill: var(--text-light);
+  font-weight: 600;
+}
+.tree-node-q.active {
+  fill: #F0F7FF;
+  stroke-width: 3.5;
+}
+.tree-leaf.active {
+  fill: var(--secondary);
+}
+.tree-leaf.active + .tree-leaf-text,
+.tree-leaf.active ~ text {
+  fill: white;
+}
+
+.dataset-table th { background: #FFF4E6; color: var(--accent); }
+.legend-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.legend-row span { display: flex; align-items: center; gap: 6px; }
+.legend-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🌳 决策树构建器</h1>
+    <div class="subtitle">通过"是/否"问题层层判断,自动得出结论</div>
+    <span class="lesson-tag">第28课 · 认识决策树算法</span>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="content">
+    <div class="intro">
+      <strong>📚 决策树是什么?</strong>
+      决策树是一种像"问答游戏"一样的算法:从根节点出发,每个节点提一个问题,根据答案走向不同分支,最终在叶子节点得到结论。它被广泛用于商品推荐、医疗诊断、自助服务等场景。
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="switchMode('game')">🎮 猜动物游戏</button>
+      <button class="mode-tab" onclick="switchMode('tree')">🌳 决策树可视化</button>
+      <button class="mode-tab" onclick="switchMode('build')">🛠️ 数据建树</button>
+    </div>
+
+    <!-- 模式1: 猜动物游戏 -->
+    <div id="mode-game" class="mode-panel active">
+      <div class="game-area" id="gameArea">
+        <div class="question-text" id="questionText">想一种动物,我来猜!点击开始</div>
+        <div class="answer-buttons" id="answerButtons">
+          <button class="answer-btn yes" onclick="startGame()">▶ 开始游戏</button>
+        </div>
+      </div>
+      <div class="history-list" id="historyList" style="display:none;">
+        <h4>📝 提问历史</h4>
+        <div id="historyItems"></div>
+      </div>
+    </div>
+
+    <!-- 模式2: 决策树可视化 -->
+    <div id="mode-tree" class="mode-panel">
+      <div class="controls">
+        <div class="control-group">
+          <label>查看:</label>
+          <select id="treeSelect" onchange="renderTree()">
+            <option value="animal">动物分类树</option>
+            <option value="plant">植物分类树</option>
+          </select>
+        </div>
+        <button onclick="renderTree()" class="btn-secondary">🔄 重新绘制</button>
+      </div>
+      <div class="tree-container">
+        <div class="tree-svg-wrap" id="treeSvgWrap"></div>
+      </div>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="border-color:var(--primary);background:white;"></span>问题节点</span>
+        <span><span class="legend-dot" style="border-color:var(--accent);background:#FFF4E6;"></span>结论(叶子)</span>
+      </div>
+    </div>
+
+    <!-- 模式3: 数据建树 -->
+    <div id="mode-build" class="mode-panel">
+      <div class="intro" style="background:#FFF9E6; border-left-color:var(--warning);">
+        <strong>💡 看数据建决策树</strong>
+        下面是一份"水果分类"数据。决策树算法会自动选择最能"区分"数据的问题作为根节点,逐步把数据分成纯净的小组。
+      </div>
+      <table class="dataset-table">
+        <thead>
+          <tr><th>编号</th><th>颜色</th><th>大小</th><th>形状</th><th>结论</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>红色</td><td>大</td><td>圆</td><td>🍎 苹果</td></tr>
+          <tr><td>2</td><td>红色</td><td>小</td><td>圆</td><td>🍒 樱桃</td></tr>
+          <tr><td>3</td><td>黄色</td><td>大</td><td>长</td><td>🍌 香蕉</td></tr>
+          <tr><td>4</td><td>黄色</td><td>小</td><td>圆</td><td>🍋 柠檬</td></tr>
+          <tr><td>5</td><td>紫色</td><td>小</td><td>圆</td><td>🍇 葡萄</td></tr>
+          <tr><td>6</td><td>绿色</td><td>大</td><td>圆</td><td>🍉 西瓜</td></tr>
+        </tbody>
+      </table>
+      <div class="success-panel">
+        <strong>✓ 算法构建步骤:</strong>
+        <ol style="margin-left:20px; margin-top:6px;">
+          <li>先问"颜色"——把6种水果分成红/黄/紫/绿四类</li>
+          <li>红色组内再问"大小"——大的是苹果,小的是樱桃</li>
+          <li>黄色组内再问"形状"——长的是香蕉,圆的是柠檬</li>
+          <li>紫色和绿色已经只剩一种,直接得出结论</li>
+        </ol>
+      </div>
+      <div class="tree-container" style="margin-top:14px;">
+        <div class="tree-svg-wrap" id="fruitTreeWrap"></div>
+      </div>
+    </div>
+
+    <div class="knowledge">
+      <h3>🔬 决策树的科学原理</h3>
+      <p><strong>核心思想:</strong>把复杂问题拆分成一系列简单的"是/否"判断,像剥洋葱一样一层层缩小范围。</p>
+      <p><strong>构建步骤:</strong></p>
+      <ul>
+        <li><strong>① 收集数据</strong> — 把已知的样本及其特征整理成表格</li>
+        <li><strong>② 选择最佳问题</strong> — 选能把数据分得最"干净"的问题作为节点</li>
+        <li><strong>③ 创建分支</strong> — 根据答案把数据分到不同的子树继续提问</li>
+        <li><strong>④ 测试验证</strong> — 用新样本测试,看决策树预测得是否准确</li>
+      </ul>
+      <p style="margin-top:8px;"><strong>生活中的应用:</strong>购物 App 推荐商品、医生诊断疾病、银行判断贷款风险、智能客服自助服务……都用到了决策树思想。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== 动物决策树数据 ======
+const animalTree = {
+  q: "它会飞吗?",
+  yes: {
+    q: "它的体型很大吗?",
+    yes: { leaf: "🦅 老鹰" },
+    no: {
+      q: "它会唱歌吗?",
+      yes: { leaf: "🐦 麻雀" },
+      no: { leaf: "🦋 蝴蝶" }
+    }
+  },
+  no: {
+    q: "它生活在水里吗?",
+    yes: {
+      q: "它有腿吗?",
+      yes: { leaf: "🐸 青蛙" },
+      no: { leaf: "🐟 鱼" }
+    },
+    no: {
+      q: "它的体型比猫大吗?",
+      yes: {
+        q: "它有长鼻子吗?",
+        yes: { leaf: "🐘 大象" },
+        no: {
+          q: "它身上有黑白条纹吗?",
+          yes: { leaf: "🦓 斑马" },
+          no: { leaf: "🐎 马" }
+        }
+      },
+      no: {
+        q: "它会汪汪叫吗?",
+        yes: { leaf: "🐕 狗" },
+        no: {
+          q: "它会喵喵叫吗?",
+          yes: { leaf: "🐱 猫" },
+          no: { leaf: "🐰 兔子" }
+        }
+      }
+    }
+  }
+};
+
+const plantTree = {
+  q: "有种子吗?",
+  yes: {
+    q: "种子有果皮包裹吗?",
+    yes: {
+      q: "叶脉是网状的吗?",
+      yes: { leaf: "🌹 双子叶植物" },
+      no: { leaf: "🌾 单子叶植物" }
+    },
+    no: { leaf: "🌲 裸子植物(松树)" }
+  },
+  no: {
+    q: "有茎和叶吗?",
+    yes: { leaf: "🌿 蕨类植物" },
+    no: { leaf: "🍀 苔藓/藻类" }
+  }
+};
+
+// ====== 游戏模式逻辑 ======
+let currentNode = null;
+let history = [];
+
+function startGame() {
+  currentNode = animalTree;
+  history = [];
+  renderQuestion();
+  document.getElementById('historyList').style.display = 'block';
+  updateHistory();
+}
+
+function renderQuestion() {
+  const qText = document.getElementById('questionText');
+  const btns = document.getElementById('answerButtons');
+  if (currentNode.leaf) {
+    qText.innerHTML = '<div class="result-icon">' + currentNode.leaf.split(' ')[0] + '</div>' +
+      '<div class="result-display">我猜是 ' + currentNode.leaf.split(' ')[1] + ' !</div>' +
+      '<div style="font-size:14px;color:var(--text-light);">猜对了吗?</div>';
+    btns.innerHTML = '<button class="answer-btn yes" onclick="startGame()">🎉 再玩一次</button>';
+  } else {
+    qText.textContent = currentNode.q;
+    btns.innerHTML =
+      '<button class="answer-btn yes" onclick="answer(true)">✓ 是</button>' +
+      '<button class="answer-btn no" onclick="answer(false)">✗ 否</button>';
+  }
+}
+
+function answer(yes) {
+  history.push({ q: currentNode.q, a: yes });
+  currentNode = yes ? currentNode.yes : currentNode.no;
+  renderQuestion();
+  updateHistory();
+}
+
+function updateHistory() {
+  const container = document.getElementById('historyItems');
+  if (history.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-light);font-size:13px;">还没有提问记录</div>';
+    return;
+  }
+  container.innerHTML = history.map((h, i) =>
+    '<div class="history-item">' +
+    '<span style="color:var(--text-light);">Q' + (i+1) + ':</span> ' +
+    '<span class="q">' + h.q + '</span>' +
+    '<span class="a ' + (h.a ? 'yes' : 'no') + '">' + (h.a ? '是' : '否') + '</span>' +
+    '</div>'
+  ).join('');
+}
+
+// ====== 决策树可视化 ======
+function renderTree() {
+  const sel = document.getElementById('treeSelect').value;
+  const tree = sel === 'animal' ? animalTree : plantTree;
+  drawTree(tree, 'treeSvgWrap');
+}
+
+function computeLayout(node, depth = 0) {
+  if (node.leaf) {
+    return { node, depth, width: 1, children: [] };
+  }
+  const yes = computeLayout(node.yes, depth + 1);
+  const no = computeLayout(node.no, depth + 1);
+  return { node, depth, width: yes.width + no.width, children: [yes, no] };
+}
+
+function assignX(layout, xStart) {
+  if (layout.children.length === 0) {
+    layout.x = xStart + layout.width / 2;
+    return;
+  }
+  let cursor = xStart;
+  for (const child of layout.children) {
+    assignX(child, cursor);
+    cursor += child.width;
+  }
+  layout.x = (layout.children[0].x + layout.children[1].x) / 2;
+}
+
+function drawTree(tree, containerId) {
+  const layout = computeLayout(tree);
+  assignX(layout, 0);
+
+  const xUnit = 130;
+  const yUnit = 110;
+  const totalWidth = layout.width * xUnit + 60;
+  const maxDepth = getMaxDepth(layout);
+  const totalHeight = (maxDepth + 1) * yUnit + 40;
+
+  const nodes = [];
+  const edges = [];
+  collectShapes(layout, null, null, nodes, edges, xUnit, yUnit);
+
+  let svg = '<svg viewBox="0 0 ' + totalWidth + ' ' + totalHeight + '" style="max-width:100%; height:auto;">';
+
+  // 边
+  for (const e of edges) {
+    const midY = (e.y1 + e.y2) / 2;
+    svg += '<path class="tree-edge" d="M' + e.x1 + ',' + e.y1 + ' Q' + e.x1 + ',' + midY + ' ' + e.xMid + ',' + midY + ' T' + e.x2 + ',' + e.y2 + '" />';
+    // 边标签
+    const labelX = (e.x1 + e.x2) / 2;
+    const labelY = midY - 4;
+    svg += '<rect x="' + (labelX - 14) + '" y="' + (labelY - 10) + '" width="28" height="16" rx="8" fill="white" stroke="' + (e.label === '是' ? '#50C878' : '#E94B3C') + '" stroke-width="1.5"/>';
+    svg += '<text class="tree-edge-label" x="' + labelX + '" y="' + (labelY + 2) + '" text-anchor="middle" fill="' + (e.label === '是' ? '#50C878' : '#E94B3C') + '">' + e.label + '</text>';
+  }
+
+  // 节点
+  for (const n of nodes) {
+    if (n.leaf) {
+      const text = n.text;
+      const w = Math.max(80, text.length * 14);
+      svg += '<rect class="tree-leaf" x="' + (n.x - w/2) + '" y="' + (n.y - 22) + '" width="' + w + '" height="44" rx="22"/>';
+      svg += '<text class="tree-leaf-text" x="' + n.x + '" y="' + (n.y + 5) + '" text-anchor="middle">' + text + '</text>';
+    } else {
+      const text = n.text;
+      const w = Math.max(110, text.length * 12);
+      svg += '<rect class="tree-node-q" x="' + (n.x - w/2) + '" y="' + (n.y - 22) + '" width="' + w + '" height="44" rx="10"/>';
+      svg += '<text class="tree-node-q-text" x="' + n.x + '" y="' + (n.y + 5) + '" text-anchor="middle">' + text + '</text>';
+    }
+  }
+
+  svg += '</svg>';
+  document.getElementById(containerId).innerHTML = svg;
+}
+
+function getMaxDepth(layout) {
+  if (layout.children.length === 0) return layout.depth;
+  return Math.max(...layout.children.map(getMaxDepth));
+}
+
+function collectShapes(layout, parent, label, nodes, edges, xUnit, yUnit) {
+  const x = layout.x * xUnit + 30;
+  const y = layout.depth * yUnit + 30;
+  const isLeaf = layout.node.leaf !== undefined;
+  nodes.push({
+    x, y,
+    leaf: isLeaf,
+    text: isLeaf ? layout.node.leaf : layout.node.q
+  });
+  if (parent) {
+    edges.push({
+      x1: parent.x, y1: parent.y + 22,
+      x2: x, y2: y - 22,
+      xMid: (parent.x + x) / 2,
+      label
+    });
+  }
+  if (!isLeaf) {
+    collectShapes(layout.children[0], {x, y}, '是', nodes, edges, xUnit, yUnit);
+    collectShapes(layout.children[1], {x, y}, '否', nodes, edges, xUnit, yUnit);
+  }
+}
+
+// ====== 模式切换 ======
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('mode-' + mode).classList.add('active');
+  if (mode === 'tree') renderTree();
+  if (mode === 'build') drawFruitTree();
+}
+
+// ====== 水果决策树 ======
+const fruitTree = {
+  q: "颜色?",
+  yes: null, no: null,
+  branches: [
+    { label: "红", child: { q: "大小?", branches: [
+      { label: "大", child: { leaf: "🍎 苹果" } },
+      { label: "小", child: { leaf: "🍒 樱桃" } }
+    ]}},
+    { label: "黄", child: { q: "形状?", branches: [
+      { label: "长", child: { leaf: "🍌 香蕉" } },
+      { label: "圆", child: { leaf: "🍋 柠檬" } }
+    ]}},
+    { label: "紫", child: { leaf: "🍇 葡萄" } },
+    { label: "绿", child: { leaf: "🍉 西瓜" } }
+  ]
+};
+
+function drawFruitTree() {
+  const w = 720, h = 380;
+  let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="max-width:100%;height:auto;">';
+
+  // 根节点
+  svg += '<rect class="tree-node-q" x="320" y="20" width="80" height="44" rx="10"/>';
+  svg += '<text class="tree-node-q-text" x="360" y="47" text-anchor="middle">颜色?</text>';
+
+  // 4个分支
+  const branches = [
+    { x: 100, label: "红色", color: "#E94B3C" },
+    { x: 280, label: "黄色", color: "#FFC107" },
+    { x: 460, label: "紫色", color: "#9C27B0" },
+    { x: 640, label: "绿色", color: "#50C878" }
+  ];
+
+  for (const b of branches) {
+    // 边
+    svg += '<path class="tree-edge" d="M360,64 Q360,100 ' + b.x + ',130" />';
+    // 边标签
+    svg += '<rect x="' + (b.x - 18) + '" y="100" width="36" height="18" rx="9" fill="white" stroke="' + b.color + '" stroke-width="1.5"/>';
+    svg += '<text x="' + b.x + '" y="113" text-anchor="middle" font-size="12" font-weight="600" fill="' + b.color + '">' + b.label + '</text>';
+  }
+
+  // 二级节点
+  // 红:大小?
+  svg += '<rect class="tree-node-q" x="60" y="130" width="80" height="44" rx="10"/>';
+  svg += '<text class="tree-node-q-text" x="100" y="157" text-anchor="middle">大小?</text>';
+  // 黄:形状?
+  svg += '<rect class="tree-node-q" x="240" y="130" width="80" height="44" rx="10"/>';
+  svg += '<text class="tree-node-q-text" x="280" y="157" text-anchor="middle">形状?</text>';
+  // 紫:葡萄
+  svg += '<rect class="tree-leaf" x="410" y="130" width="100" height="44" rx="22"/>';
+  svg += '<text class="tree-leaf-text" x="460" y="157" text-anchor="middle">🍇 葡萄</text>';
+  // 绿:西瓜
+  svg += '<rect class="tree-leaf" x="590" y="130" width="100" height="44" rx="22"/>';
+  svg += '<text class="tree-leaf-text" x="640" y="157" text-anchor="middle">🍉 西瓜</text>';
+
+  // 三级节点(红色分支)
+  svg += '<path class="tree-edge" d="M100,174 Q100,210 50,250" />';
+  svg += '<path class="tree-edge" d="M100,174 Q100,210 150,250" />';
+  svg += '<text x="65" y="220" font-size="11" fill="#E94B3C" font-weight="600">大</text>';
+  svg += '<text x="135" y="220" font-size="11" fill="#E94B3C" font-weight="600">小</text>';
+  svg += '<rect class="tree-leaf" x="10" y="250" width="80" height="44" rx="22"/>';
+  svg += '<text class="tree-leaf-text" x="50" y="277" text-anchor="middle">🍎 苹果</text>';
+  svg += '<rect class="tree-leaf" x="110" y="250" width="80" height="44" rx="22"/>';
+  svg += '<text class="tree-leaf-text" x="150" y="277" text-anchor="middle">🍒 樱桃</text>';
+
+  // 三级节点(黄色分支)
+  svg += '<path class="tree-edge" d="M280,174 Q280,210 230,250" />';
+  svg += '<path class="tree-edge" d="M280,174 Q280,210 330,250" />';
+  svg += '<text x="245" y="220" font-size="11" fill="#FFC107" font-weight="600">长</text>';
+  svg += '<text x="315" y="220" font-size="11" fill="#FFC107" font-weight="600">圆</text>';
+  svg += '<rect class="tree-leaf" x="190" y="250" width="80" height="44" rx="22"/>';
+  svg += '<text class="tree-leaf-text" x="230" y="277" text-anchor="middle">🍌 香蕉</text>';
+  svg += '<rect class="tree-leaf" x="290" y="250" width="80" height="44" rx="22"/>';
+  svg += '<text class="tree-leaf-text" x="330" y="277" text-anchor="middle">🍋 柠檬</text>';
+
+  svg += '</svg>';
+  document.getElementById('fruitTreeWrap').innerHTML = svg;
+}
+
+// 初始化
+renderTree();
+</script>
+</body>
+</html>

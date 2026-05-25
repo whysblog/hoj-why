@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑白方块图 ↔ 0/1 编码 · 第12课</title>
+<style>
+:root {
+  --c-bg: #faf7ff;
+  --c-card: #ffffff;
+  --c-primary: #8e24aa;
+  --c-primary-dark: #6a1b9a;
+  --c-primary-soft: #f3e5f5;
+  --c-accent: #ffa726;
+  --c-ink: #2d1b3d;
+  --c-ink-soft: #6b5b7d;
+  --c-line: #e8dff0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--c-bg);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(142, 36, 170, 0.06), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(255, 167, 38, 0.06), transparent 40%);
+  color: var(--c-ink);
+  min-height: 100vh;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-ink-soft);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--c-primary); }
+
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.header .lesson-tag {
+  display: inline-block;
+  padding: 4px 14px;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-dark);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--c-primary-dark);
+}
+.header p {
+  font-size: 15px;
+  color: var(--c-ink-soft);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: var(--c-card);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(142, 36, 170, 0.08);
+  border: 1px solid var(--c-line);
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--c-ink);
+}
+.card-title .num {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  background: var(--c-primary);
+  color: white;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--c-line);
+}
+
+.size-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--c-ink-soft);
+}
+.size-picker select {
+  padding: 6px 10px;
+  border: 1px solid var(--c-line);
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  font-family: inherit;
+  cursor: pointer;
+}
+.size-picker select:focus {
+  outline: none;
+  border-color: var(--c-primary);
+}
+
+.btn {
+  padding: 8px 14px;
+  border: 1px solid var(--c-line);
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn:hover {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+.btn.primary {
+  background: var(--c-primary);
+  color: white;
+  border-color: var(--c-primary);
+}
+.btn.primary:hover {
+  background: var(--c-primary-dark);
+  color: white;
+}
+
+.grid-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  min-height: 280px;
+}
+
+.pixel-grid {
+  display: grid;
+  gap: 2px;
+  background: #999;
+  padding: 2px;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.pixel {
+  background: white;
+  cursor: pointer;
+  transition: background-color 0.1s;
+  position: relative;
+}
+.pixel:hover { box-shadow: inset 0 0 0 2px var(--c-primary); }
+.pixel.on { background: #1a1a1a; }
+
+.code-output {
+  background: #f8f4fb;
+  border: 2px solid var(--c-line);
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--c-primary-dark);
+  word-break: break-all;
+  min-height: 80px;
+  letter-spacing: 0.05em;
+}
+
+.code-output .row {
+  display: block;
+  white-space: nowrap;
+}
+.code-output .bit-0 { color: #b39ddb; }
+.code-output .bit-1 { color: var(--c-primary-dark); font-weight: bold; }
+
+.code-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 2px solid var(--c-line);
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  resize: vertical;
+  letter-spacing: 0.05em;
+}
+.code-input:focus { outline: none; border-color: var(--c-primary); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.stat {
+  text-align: center;
+  padding: 12px 8px;
+  background: var(--c-primary-soft);
+  border-radius: 10px;
+}
+.stat .num {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+}
+.stat .label {
+  font-size: 12px;
+  color: var(--c-ink-soft);
+  margin-top: 2px;
+}
+
+.preset-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.preset-btn {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid var(--c-line);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--c-ink-soft);
+  transition: all 0.15s;
+}
+.preset-btn:hover {
+  background: var(--c-primary);
+  color: white;
+  border-color: var(--c-primary);
+}
+
+.info-box {
+  background: linear-gradient(135deg, #fff8e1, #fff3c4);
+  border-left: 4px solid var(--c-accent);
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #6b4e00;
+}
+.info-box strong { color: #8a5d00; }
+
+@media (max-width: 880px) {
+  .workspace { grid-template-columns: 1fr; }
+  .header h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← 返回工具集</a>
+
+<div class="header">
+  <span class="lesson-tag">第 12 课 · 二值的黑白图像</span>
+  <h1>黑白方块图 ↔ 0/1 编码</h1>
+  <p>用 <strong>0</strong> 表示白色,用 <strong>1</strong> 表示黑色,你设计的图案就能变成一串数字编码!画的越复杂,编码就越长。</p>
+</div>
+
+<div class="app">
+
+  <div class="info-box">
+    <strong>🔍 玩法提示:</strong> 在左侧网格中点击方块切换黑白(也可以拖动鼠标快速绘制),右侧的 0/1 编码会立即更新。
+    或者反过来在右侧输入 0 和 1,左侧的图案会自动出现!试着对比 4×4 和 8×8 网格,看看编码长度有什么不同?
+  </div>
+
+  <div class="workspace">
+
+    <!-- 左侧: 设计区 -->
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>设计你的黑白方块图</div>
+
+      <div class="controls">
+        <div class="size-picker">
+          <span>网格大小:</span>
+          <select id="size-select">
+            <option value="4">4 × 4</option>
+            <option value="6">6 × 6</option>
+            <option value="8" selected>8 × 8</option>
+            <option value="10">10 × 10</option>
+            <option value="12">12 × 12</option>
+            <option value="16">16 × 16</option>
+          </select>
+        </div>
+        <button class="btn" id="invert-btn">🔄 反色</button>
+        <button class="btn" id="clear-btn">🧹 清空</button>
+      </div>
+
+      <div class="preset-row">
+        <button class="preset-btn" data-preset="arrow">↗ 箭头</button>
+        <button class="preset-btn" data-preset="heart">♥ 爱心</button>
+        <button class="preset-btn" data-preset="smile">☺ 笑脸</button>
+        <button class="preset-btn" data-preset="star">★ 五角星</button>
+        <button class="preset-btn" data-preset="cross">✚ 十字</button>
+      </div>
+
+      <div class="grid-container">
+        <div class="pixel-grid" id="grid"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="num" id="size-stat">8×8</span>
+          <span class="label">网格大小</span>
+        </div>
+        <div class="stat">
+          <span class="num" id="length-stat">64</span>
+          <span class="label">编码长度</span>
+        </div>
+        <div class="stat">
+          <span class="num" id="black-stat">0</span>
+          <span class="label">黑色方块数</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧: 编码区 -->
+    <div class="card">
+      <div class="card-title"><span class="num">2</span>对应的 0 / 1 编码</div>
+
+      <div style="font-size:13px;color:var(--c-ink-soft);margin-bottom:8px;">📤 自动生成 (按行展开):</div>
+      <div class="code-output" id="code-output"></div>
+
+      <div style="font-size:13px;color:var(--c-ink-soft);margin: 16px 0 8px;">📥 也可以输入 0 / 1 编码,左侧自动出图:</div>
+      <textarea class="code-input" id="code-input" placeholder="输入 0 和 1 (其他字符会被忽略),数量需要与网格匹配 (例如 8×8 = 64 个)"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn primary" id="apply-btn">应用编码到图案</button>
+        <button class="btn" id="copy-code-btn">📋 复制编码</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-title"><span class="num">💡</span>编码长度与信息量的关系</div>
+    <div id="comparison" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+      <div style="text-align:center;padding:14px;background:#fafafa;border-radius:10px;">
+        <div style="font-size:14px;color:var(--c-ink-soft);margin-bottom:6px;">4 × 4 网格</div>
+        <div style="font-size:28px;font-weight:800;color:var(--c-primary-dark);">16 位</div>
+        <div style="font-size:12px;color:var(--c-ink-soft);">能表达简单图形</div>
+      </div>
+      <div style="text-align:center;padding:14px;background:#fafafa;border-radius:10px;">
+        <div style="font-size:14px;color:var(--c-ink-soft);margin-bottom:6px;">8 × 8 网格</div>
+        <div style="font-size:28px;font-weight:800;color:var(--c-primary-dark);">64 位</div>
+        <div style="font-size:12px;color:var(--c-ink-soft);">点阵字库常用</div>
+      </div>
+      <div style="text-align:center;padding:14px;background:#fafafa;border-radius:10px;">
+        <div style="font-size:14px;color:var(--c-ink-soft);margin-bottom:6px;">16 × 16 网格</div>
+        <div style="font-size:28px;font-weight:800;color:var(--c-primary-dark);">256 位</div>
+        <div style="font-size:12px;color:var(--c-ink-soft);">可表达复杂汉字</div>
+      </div>
+      <div style="text-align:center;padding:14px;background:#fafafa;border-radius:10px;">
+        <div style="font-size:14px;color:var(--c-ink-soft);margin-bottom:6px;">100 × 100 网格</div>
+        <div style="font-size:28px;font-weight:800;color:var(--c-primary-dark);">10000 位</div>
+        <div style="font-size:12px;color:var(--c-ink-soft);">已经是小图片啦</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:14px;color:var(--c-ink-soft);text-align:center;">
+      📌 <strong style="color:var(--c-primary-dark);">规律:</strong> 网格越精细 → 图像越清晰 → 编码长度越长 → 包含的信息量越大
+    </div>
+  </div>
+
+</div>
+
+<script>
+let size = 8;
+let pixels = [];
+let isDragging = false;
+let dragValue = null; // 拖动时统一设置的值
+
+const grid = document.getElementById('grid');
+const codeOutput = document.getElementById('code-output');
+const codeInput = document.getElementById('code-input');
+
+// 预设图案 (8x8)
+const presets8 = {
+  arrow: [
+    0,0,0,0,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    0,0,1,1,1,0,0,0,
+    0,1,1,1,1,1,1,1,
+    0,0,1,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    0,0,0,0,1,0,0,0,
+    0,0,0,0,0,0,0,0,
+  ],
+  heart: [
+    0,1,1,0,0,1,1,0,
+    1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,
+    0,1,1,1,1,1,1,0,
+    0,0,1,1,1,1,0,0,
+    0,0,0,1,1,0,0,0,
+    0,0,0,0,0,0,0,0,
+  ],
+  smile: [
+    0,0,1,1,1,1,0,0,
+    0,1,0,0,0,0,1,0,
+    1,0,1,0,0,1,0,1,
+    1,0,0,0,0,0,0,1,
+    1,0,1,0,0,1,0,1,
+    1,0,0,1,1,0,0,1,
+    0,1,0,0,0,0,1,0,
+    0,0,1,1,1,1,0,0,
+  ],
+  star: [
+    0,0,0,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    1,1,1,1,1,1,1,1,
+    0,1,1,1,1,1,1,0,
+    0,0,1,1,1,1,0,0,
+    0,1,1,0,0,1,1,0,
+    0,1,0,0,0,0,1,0,
+    1,0,0,0,0,0,0,1,
+  ],
+  cross: [
+    0,0,0,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,
+    0,0,0,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+  ]
+};
+
+function buildGrid(n) {
+  size = n;
+  pixels = new Array(n * n).fill(0);
+  const cellSize = Math.min(36, Math.floor(420 / n));
+  grid.style.gridTemplateColumns = `repeat(${n}, ${cellSize}px)`;
+  grid.style.gridTemplateRows = `repeat(${n}, ${cellSize}px)`;
+  grid.innerHTML = '';
+  for (let i = 0; i < n * n; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'pixel';
+    cell.dataset.idx = i;
+    grid.appendChild(cell);
+  }
+  document.getElementById('size-stat').textContent = `${n}×${n}`;
+  updateOutput();
+}
+
+function setPixel(idx, value) {
+  if (pixels[idx] === value) return;
+  pixels[idx] = value;
+  const cell = grid.children[idx];
+  if (cell) cell.classList.toggle('on', value === 1);
+  updateOutput();
+}
+
+function togglePixel(idx) {
+  setPixel(idx, pixels[idx] === 1 ? 0 : 1);
+}
+
+function updateOutput() {
+  // 渲染编码 (按行)
+  const rows = [];
+  for (let r = 0; r < size; r++) {
+    let row = '';
+    for (let c = 0; c < size; c++) {
+      const v = pixels[r * size + c];
+      row += `<span class="bit-${v}">${v}</span>`;
+    }
+    rows.push(`<span class="row">${row}</span>`);
+  }
+  codeOutput.innerHTML = rows.join('');
+
+  // 更新统计
+  const blackCount = pixels.filter(p => p === 1).length;
+  document.getElementById('length-stat').textContent = pixels.length;
+  document.getElementById('black-stat').textContent = blackCount;
+}
+
+// 网格交互
+grid.addEventListener('mousedown', (e) => {
+  if (!e.target.classList.contains('pixel')) return;
+  isDragging = true;
+  const idx = +e.target.dataset.idx;
+  dragValue = pixels[idx] === 1 ? 0 : 1;
+  setPixel(idx, dragValue);
+  e.preventDefault();
+});
+grid.addEventListener('mousemove', (e) => {
+  if (!isDragging || !e.target.classList.contains('pixel')) return;
+  setPixel(+e.target.dataset.idx, dragValue);
+});
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+// 触摸支持
+grid.addEventListener('touchstart', (e) => {
+  const t = e.touches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  if (el && el.classList.contains('pixel')) {
+    isDragging = true;
+    const idx = +el.dataset.idx;
+    dragValue = pixels[idx] === 1 ? 0 : 1;
+    setPixel(idx, dragValue);
+    e.preventDefault();
+  }
+}, { passive: false });
+grid.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  const t = e.touches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  if (el && el.classList.contains('pixel')) {
+    setPixel(+el.dataset.idx, dragValue);
+  }
+  e.preventDefault();
+}, { passive: false });
+document.addEventListener('touchend', () => { isDragging = false; });
+
+// 网格大小切换
+document.getElementById('size-select').addEventListener('change', (e) => {
+  buildGrid(+e.target.value);
+});
+
+// 清空
+document.getElementById('clear-btn').addEventListener('click', () => {
+  pixels.fill(0);
+  Array.from(grid.children).forEach(c => c.classList.remove('on'));
+  updateOutput();
+});
+
+// 反色
+document.getElementById('invert-btn').addEventListener('click', () => {
+  for (let i = 0; i < pixels.length; i++) {
+    pixels[i] = pixels[i] === 1 ? 0 : 1;
+    grid.children[i].classList.toggle('on');
+  }
+  updateOutput();
+});
+
+// 预设
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const preset = presets8[btn.dataset.preset];
+    if (!preset) return;
+    if (size !== 8) {
+      document.getElementById('size-select').value = '8';
+      buildGrid(8);
+    }
+    for (let i = 0; i < 64; i++) {
+      pixels[i] = preset[i];
+      grid.children[i].classList.toggle('on', preset[i] === 1);
+    }
+    updateOutput();
+  });
+});
+
+// 应用编码
+document.getElementById('apply-btn').addEventListener('click', () => {
+  const input = codeInput.value.replace(/[^01]/g, '');
+  if (input.length === 0) {
+    alert('请输入 0 和 1 编码');
+    return;
+  }
+  // 自动选择最匹配的网格大小
+  const len = input.length;
+  const sqrt = Math.sqrt(len);
+  if (Number.isInteger(sqrt) && [4,6,8,10,12,16].includes(sqrt)) {
+    if (size !== sqrt) {
+      document.getElementById('size-select').value = String(sqrt);
+      buildGrid(sqrt);
+    }
+  } else {
+    // 截取或填充到当前网格
+    if (input.length !== size * size) {
+      if (!confirm(`输入了 ${input.length} 位编码,当前网格需要 ${size*size} 位,是否继续 (多余截断,不足补0)?`)) return;
+    }
+  }
+  for (let i = 0; i < pixels.length; i++) {
+    pixels[i] = i < input.length ? +input[i] : 0;
+    grid.children[i].classList.toggle('on', pixels[i] === 1);
+  }
+  updateOutput();
+});
+
+// 复制编码
+document.getElementById('copy-code-btn').addEventListener('click', () => {
+  const code = pixels.join('');
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copy-code-btn');
+    const old = btn.textContent;
+    btn.textContent = '✓ 已复制!';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  });
+});
+
+// 初始化
+buildGrid(8);
+// 默认显示一个小箭头作为示例
+setTimeout(() => {
+  const preset = presets8.arrow;
+  for (let i = 0; i < 64; i++) {
+    pixels[i] = preset[i];
+    grid.children[i].classList.toggle('on', preset[i] === 1);
+  }
+  updateOutput();
+}, 100);
+</script>
+
+</body>
+</html>

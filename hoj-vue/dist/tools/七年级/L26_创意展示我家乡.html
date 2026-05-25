@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第26课 · 创意展示我家乡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第5单元 · 第26课</span>
+    <span class="title">创意展示我家乡</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>创意展示<br>我家乡</h1>
+<p class="subtitle">第五单元 · 第26课</p>
+<div class="meta"><span>📅 课时：<strong>2 学时</strong></span>
+<span>🎯 重点：<strong>短视频创作</strong></span>
+<span>💡 关键词：<strong>策划 · 拍摄 · 剪辑</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">🎬</span><div class="card-title">认识短视频</div><div class="card-desc">了解短视频创作的基本流程。</div></div><div class="card"><span class="card-icon">💡</span><div class="card-title">学习创意</div><div class="card-desc">掌握"用画面讲故事"的方法。</div></div><div class="card"><span class="card-icon">🛠</span><div class="card-title">动手实践</div><div class="card-desc">制作并发布一个介绍家乡的短视频。</div></div></div></section>
+<section class="slide"><h2>短视频的力量</h2>
+<p>从淄博烧烤到哈尔滨冰雪、从贵州村超到甘肃天水麻辣烫——<strong>一条短视频能让一座城市火遍全国</strong>。</p>
+<div class="stats">
+<div class="stat"><div class="stat-num">10亿+</div><div class="stat-label">中国短视频用户</div></div>
+<div class="stat"><div class="stat-num">2.5h</div><div class="stat-label">日均使用时长</div></div>
+<div class="stat"><div class="stat-num">每秒</div><div class="stat-label">数千条新视频上传</div></div>
+</div>
+<h3>主流短视频平台</h3>
+<ul>
+<li><strong>抖音 / TikTok</strong>：用户最多，算法推荐强</li>
+<li><strong>快手</strong>：下沉市场，"老铁"文化</li>
+<li><strong>B站</strong>：中长视频、二次元、知识区</li>
+<li><strong>小红书</strong>：图文+视频，生活方式</li>
+<li><strong>视频号</strong>：依托微信生态，社交分发</li>
+</ul></section>
+<section class="slide"><h2>短视频创作四步法</h2>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">① 策划 (Plan)</div><div class="tl-title">想清楚要表达什么</div><div class="tl-desc">主题、目标观众、时长（一般 15-60 秒）、核心信息、传播平台。先写"<strong>分镜脚本</strong>"。</div></div>
+<div class="tl-item"><div class="tl-year">② 拍摄 (Shoot)</div><div class="tl-title">用画面记录</div><div class="tl-desc">注意光线、稳定、画面构图。手机就够用，关键是"<strong>多拍几条</strong>"。</div></div>
+<div class="tl-item"><div class="tl-year">③ 剪辑 (Edit)</div><div class="tl-title">让节奏紧凑</div><div class="tl-desc">用剪映/CapCut/必剪剪辑：删冗余、加字幕、配音乐、调色。</div></div>
+<div class="tl-item"><div class="tl-year">④ 发布 (Publish)</div><div class="tl-title">让更多人看到</div><div class="tl-desc">起好标题、选好封面、加热门话题标签、选择最佳发布时间。</div></div>
+</div></section>
+<section class="slide"><h2>"家乡主题"创意思路</h2><div class="cards"><div class="card"><span class="card-icon">🍜</span><div class="card-title">美食</div><div class="card-desc">最受欢迎的题材。家乡特色菜、街头小吃、传统做法。</div></div><div class="card"><span class="card-icon">🏞</span><div class="card-title">风光</div><div class="card-desc">不一定是名胜，普通的山、河、田野、夕阳也能拍出感觉。</div></div><div class="card"><span class="card-icon">👴</span><div class="card-title">人物</div><div class="card-desc">手艺人、奶奶做菜、孩子上学路、菜市场摊主，平凡中见真情。</div></div><div class="card"><span class="card-icon">🎉</span><div class="card-title">习俗</div><div class="card-desc">节日庆典、婚丧嫁娶、地方戏曲、方言段子。</div></div><div class="card"><span class="card-icon">🏛</span><div class="card-title">变迁</div><div class="card-desc">老照片 vs 新照片，10 年前 vs 现在，对比震撼。</div></div><div class="card"><span class="card-icon">🌅</span><div class="card-title">一日</div><div class="card-desc">"我家乡的一天" 主题，从清晨到深夜的城市群像。</div></div></div><div class="highlight">💡 <strong>火爆秘诀：</strong>① <strong>真实</strong>胜过完美 ② <strong>细节</strong>胜过全景 ③ <strong>情感</strong>胜过技术 ④ <strong>独特视角</strong>胜过随大流。</div></section>
+<section class="slide"><h2>分镜脚本怎么写？</h2>
+<p>分镜脚本 = 把视频每个画面提前规划好。来看一个简单例子：</p>
+<table class="tbl">
+<tr><th>镜号</th><th>画面</th><th>时长</th><th>音乐/旁白</th></tr>
+<tr><td>1</td><td>晨光中的家乡牌坊全景</td><td>3秒</td><td>背景音乐起，旁白："这是我的家乡——绍兴"</td></tr>
+<tr><td>2</td><td>近景：青石板路、屋檐滴水</td><td>2秒</td><td>"它已经 2500 岁了"</td></tr>
+<tr><td>3</td><td>奶奶包粽子的双手特写</td><td>3秒</td><td>"它的味道是粽叶的香"</td></tr>
+<tr><td>4</td><td>小孩追逐玩水的远景</td><td>2秒</td><td>"是孩子的笑"</td></tr>
+<tr><td>5</td><td>夕阳下的乌篷船</td><td>3秒</td><td>"是日落的桨声"</td></tr>
+<tr><td>6</td><td>家乡名字字幕大字</td><td>2秒</td><td>"我爱我的家乡 ❤️"</td></tr>
+</table>
+<div class="highlight">📋 <strong>编写技巧：</strong>① <strong>开头 3 秒</strong>定生死，必须吸引人 ② <strong>每个镜头</strong>都要有用 ③ <strong>声画结合</strong>更有冲击力。</div></section>
+<section class="slide"><h2>拍摄实用技巧</h2><div class="cards"><div class="card"><span class="card-icon">📱</span><div class="card-title">手机横竖屏</div><div class="card-desc"><strong>竖屏</strong>(9:16) 适合抖音、视频号；<strong>横屏</strong>(16:9) 适合 B 站、电视。</div></div><div class="card"><span class="card-icon">☀️</span><div class="card-title">光线</div><div class="card-desc">光线要充足，<strong>背对太阳</strong>拍人，避免逆光。早晚"黄金时段"光线最美。</div></div><div class="card"><span class="card-icon">🤚</span><div class="card-title">稳定</div><div class="card-desc">用<strong>手机稳定器/三脚架</strong>，否则画面晃动看不下去。</div></div><div class="card"><span class="card-icon">📐</span><div class="card-title">构图</div><div class="card-desc"><strong>三分法</strong>：主体放在画面 1/3 处，比放中间更有美感。</div></div><div class="card"><span class="card-icon">🔁</span><div class="card-title">多拍几条</div><div class="card-desc">同一画面多拍几遍，回头挑最好的。</div></div><div class="card"><span class="card-icon">🎤</span><div class="card-title">注意声音</div><div class="card-desc">嘈杂环境用<strong>外接麦克风</strong>或后期配音。</div></div></div></section>
+<section class="slide"><h2>剪辑：让作品脱胎换骨</h2>
+<p>剪辑可以决定一条视频的"<strong>命运</strong>"——同样的素材，不同剪辑效果天差地别。</p>
+<h3>常用剪辑软件</h3>
+<table class="tbl">
+<tr><th>软件</th><th>平台</th><th>特点</th></tr>
+<tr><td>剪映 / CapCut</td><td>手机/电脑</td><td>免费、模板多、新手友好</td></tr>
+<tr><td>必剪</td><td>手机/电脑</td><td>B站官方，操作简单</td></tr>
+<tr><td>Premiere Pro</td><td>电脑</td><td>专业、功能全</td></tr>
+<tr><td>Final Cut Pro</td><td>Mac</td><td>专业、Mac 独占</td></tr>
+<tr><td>DaVinci Resolve</td><td>电脑</td><td>免费专业级、调色强</td></tr>
+</table>
+<h3>剪辑关键操作</h3>
+<ul>
+<li><strong>剪掉冗余：</strong>开头空白、说话停顿、无用镜头一律删除</li>
+<li><strong>加字幕：</strong>很多人静音看视频，字幕必不可少</li>
+<li><strong>配音乐：</strong>选择契合主题的 BGM（注意版权）</li>
+<li><strong>转场：</strong>用淡入淡出、推拉，不要太花哨</li>
+<li><strong>调色：</strong>稍微提亮、加饱和，画面更有质感</li>
+</ul></section>
+<section class="slide"><h2>发布与传播</h2><div class="cards"><div class="card"><span class="card-icon">📰</span><div class="card-title">标题</div><div class="card-desc">短而有钩子，最好制造好奇。例："这家爷爷开了 40 年的早点铺..."</div></div><div class="card"><span class="card-icon">🖼</span><div class="card-title">封面</div><div class="card-desc">突出主体、加大字标题，3 秒抓眼球。</div></div><div class="card"><span class="card-icon">🏷</span><div class="card-title">标签</div><div class="card-desc">加上 #家乡推荐 #美食 #旅行 等热门话题，提升曝光。</div></div><div class="card"><span class="card-icon">⏰</span><div class="card-title">时间</div><div class="card-desc">晚 7-10 点是流量高峰；周末发更容易上热门。</div></div><div class="card"><span class="card-icon">💬</span><div class="card-title">互动</div><div class="card-desc">主动回复评论；发布后 1 小时是黄金互动期。</div></div><div class="card"><span class="card-icon">🔄</span><div class="card-title">多平台分发</div><div class="card-desc">抖音 + 视频号 + 小红书 + B站，覆盖不同人群。</div></div></div><div class="highlight">⚠️ <strong>合规提醒：</strong>① 拍他人需获得同意 ② 不使用未授权音乐 ③ 不发布违法、虚假内容 ④ 涉及未成年人要更谨慎。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 短视频创作四步法的<strong>第一步</strong>是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">拍摄</div>
+<div class="quiz-opt" data-correct="false">剪辑</div>
+<div class="quiz-opt" data-correct="true">策划</div>
+<div class="quiz-opt" data-correct="false">发布</div></div>
+<div class="quiz-feedback">✅ 策划是最关键的第一步：想清楚主题、受众、核心信息后再动手，能避免大量返工。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 视频开头多少秒最关键？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">1秒</div>
+<div class="quiz-opt" data-correct="true">3秒</div>
+<div class="quiz-opt" data-correct="false">10秒</div>
+<div class="quiz-opt" data-correct="false">1分钟</div></div>
+<div class="quiz-feedback">✅ 短视频开头 3 秒是"黄金 3 秒"，决定观众是继续看还是划走。要立即抛出钩子。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 拍摄家乡老爷爷做手艺时，<strong>必须做</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="true">提前征得他同意</div>
+<div class="quiz-opt" data-correct="false">偷偷拍才自然</div>
+<div class="quiz-opt" data-correct="false">马上发布</div>
+<div class="quiz-opt" data-correct="false">剪掉他脸</div></div>
+<div class="quiz-feedback">✅ 拍摄他人必须取得同意（涉及肖像权）；商业用途还需签授权书。这既是法律要求，也是基本尊重。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>四步法</strong>：策划 → 拍摄 → 剪辑 → 发布</li>
+<li><strong>家乡题材</strong>：美食、风光、人物、习俗、变迁、一日</li>
+<li><strong>分镜脚本</strong>：提前规划每个画面、时长、配音</li>
+<li><strong>拍摄技巧</strong>：光线、稳定、构图、多拍</li>
+<li><strong>剪辑工具</strong>：剪映/CapCut 最常用，新手友好</li>
+<li><strong>火爆秘诀</strong>：真实 + 细节 + 情感 + 独特视角</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>以"我的家乡"为主题，独立策划 + 拍摄 + 剪辑一段 30-60 秒的短视频。下节课分享。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "短视频力量", "四步法", "创意思路", "分镜脚本", "拍摄技巧", "剪辑", "发布传播", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

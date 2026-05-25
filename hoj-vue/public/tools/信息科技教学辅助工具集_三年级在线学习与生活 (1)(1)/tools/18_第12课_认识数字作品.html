@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>认识数字作品 — 第12课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#fdf2f8;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#be185d,#ec4899);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#be185d;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#ec4899;color:white;border-color:#be185d}
+.intro{background:linear-gradient(135deg,#fce7f3,#fbcfe8);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#be185d;margin-bottom:8px;font-size:20px}.intro p{color:#831843;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.work-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer;transition:all .2s;border:2px solid transparent}
+.work-card:hover{transform:translateY(-3px);border-color:#ec4899}
+.work-card .icon{font-size:42px}.work-card h4{color:#be185d;margin:8px 0 4px;font-size:14px}.work-card p{color:#831843;font-size:12px;line-height:1.5}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.flow-step{background:white;padding:14px 18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);text-align:center;min-width:140px}
+.flow-step .icon{font-size:30px}
+.flow-step h4{color:#be185d;font-size:13px;margin:6px 0 4px}
+.flow-step p{color:#831843;font-size:11px;line-height:1.5}
+.flow-arrow{color:#ec4899;font-size:24px}
+.example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+.ex{background:white;padding:16px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.ex-thumb{aspect-ratio:4/3;background:linear-gradient(135deg,#fce7f3,#fbcfe8);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:8px}
+.ex h4{color:#be185d;font-size:14px;margin-bottom:4px}
+.ex .meta{font-size:12px;color:#94a3b8}
+.ex .desc{font-size:12px;color:#475569;line-height:1.5;margin-top:6px}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🎨 认识数字作品</h1>
+    <div class="lesson">第 12 课 · 第四单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>什么是数字作品</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>多样的作品类型</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>欣赏优秀作品</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>创作流程</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🎨 什么是数字作品</h2>
+      <div class="lead">用数字工具创作出来的作品，统称数字作品</div>
+      <div class="intro">
+        <h3>💡 数字作品 vs 传统作品</h3>
+        <p>纸上的画、本子上的文章是传统作品；<b>电脑里的画、Word 文档、PPT、视频、音乐、相册</b>……都是数字作品。它们可以方便地保存、编辑、传播。</p>
+      </div>
+      <div class="grid g4">
+        <div class="work-card"><div class="icon">🖼️</div><h4>数字绘画</h4><p>用画图软件创作</p></div>
+        <div class="work-card"><div class="icon">📝</div><h4>电子文档</h4><p>Word、记事本</p></div>
+        <div class="work-card"><div class="icon">📰</div><h4>电子小报</h4><p>图文混排</p></div>
+        <div class="work-card"><div class="icon">📊</div><h4>演示文稿</h4><p>PPT 演讲</p></div>
+        <div class="work-card"><div class="icon">📷</div><h4>数字相册</h4><p>照片合集</p></div>
+        <div class="work-card"><div class="icon">🎬</div><h4>视频作品</h4><p>短视频、纪录片</p></div>
+        <div class="work-card"><div class="icon">🎵</div><h4>音频作品</h4><p>朗诵、歌曲</p></div>
+        <div class="work-card"><div class="icon">🌐</div><h4>电子网页</h4><p>HTML 页面</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 数字作品的特点</h2>
+      <div class="lead">数字作品和传统作品有什么不一样？</div>
+      <div class="grid g3">
+        <div class="work-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">💾</div>
+          <h4>易保存</h4>
+          <p>存进电脑/网盘，不会丢失、不会褪色</p>
+        </div>
+        <div class="work-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">✏️</div>
+          <h4>易编辑</h4>
+          <p>错了可以撤销、可以反复修改</p>
+        </div>
+        <div class="work-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">📤</div>
+          <h4>易分享</h4>
+          <p>通过网络可以瞬间发给千里之外</p>
+        </div>
+        <div class="work-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">🎨</div>
+          <h4>多媒体</h4>
+          <p>图文、声音、视频结合，更生动</p>
+        </div>
+        <div class="work-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">🤝</div>
+          <h4>可协作</h4>
+          <p>多人可以在线一起创作</p>
+        </div>
+        <div class="work-card" style="border-top:4px solid #ec4899;">
+          <div class="icon">♾️</div>
+          <h4>可复制</h4>
+          <p>一份原作可以复制成千上万份</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🌟 欣赏优秀作品</h2>
+      <div class="lead">来看看其他同学的优秀数字作品，从中找灵感</div>
+      <div class="example-grid">
+        <div class="ex">
+          <div class="ex-thumb">📰</div>
+          <h4>《我爱我的家乡》电子小报</h4>
+          <div class="meta">作者：三 (2) 班 王小明</div>
+          <div class="desc">用图片、文字、装饰元素介绍家乡的山水风光和特色美食，版面整洁，色彩搭配得当。</div>
+        </div>
+        <div class="ex">
+          <div class="ex-thumb">📸</div>
+          <h4>《校园四季》数字相册</h4>
+          <div class="meta">作者：三 (1) 班 李小红</div>
+          <div class="desc">收集了一年四季校园的美景照片，配以诗意的文字解说，记录了美好的校园时光。</div>
+        </div>
+        <div class="ex">
+          <div class="ex-thumb">📊</div>
+          <h4>《我喜欢的科学家》演示文稿</h4>
+          <div class="meta">作者：三 (3) 班 陈小华</div>
+          <div class="desc">介绍了钱学森、屠呦呦、袁隆平等中国科学家，通过 PPT 展示他们的生平和贡献。</div>
+        </div>
+        <div class="ex">
+          <div class="ex-thumb">🎬</div>
+          <h4>《我的一天》短视频</h4>
+          <div class="meta">作者：三 (4) 班 张小军</div>
+          <div class="desc">用手机记录从早上起床到晚上睡觉的一天，剪辑了精彩瞬间，配上轻松的背景音乐。</div>
+        </div>
+        <div class="ex">
+          <div class="ex-thumb">🖼️</div>
+          <h4>《想象的未来世界》数字绘画</h4>
+          <div class="meta">作者：三 (5) 班 刘小娟</div>
+          <div class="desc">用画图软件创作了一幅未来世界图，展现飞行汽车、机器人朋友、智能家居的奇妙生活。</div>
+        </div>
+        <div class="ex">
+          <div class="ex-thumb">🎵</div>
+          <h4>《古诗朗诵》音频集</h4>
+          <div class="meta">作者：三 (6) 班 赵小贝</div>
+          <div class="desc">朗诵了 10 首经典古诗，配上古风背景音乐，让人感受中华诗词的魅力。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🔄 创作流程</h2>
+      <div class="lead">一个完整的数字作品，要经过这些步骤</div>
+      <div class="flow" style="margin-bottom:18px;">
+        <div class="flow-step"><div class="icon">💡</div><h4>1. 构思</h4><p>定主题、画草图</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="icon">📦</div><h4>2. 准备素材</h4><p>收集图片、文字、音频</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="icon">🛠️</div><h4>3. 选工具</h4><p>选合适的软件</p></div>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><div class="icon">🎨</div><h4>4. 制作</h4><p>组合素材，添加效果</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="icon">👀</div><h4>5. 检查</h4><p>预览、修改、完善</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="icon">📤</div><h4>6. 保存分享</h4><p>导出文件，分享他人</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 创作秘诀</h3>
+        <p>① <b>主题鲜明</b>：每件作品要有清晰的中心思想；<br>② <b>素材合规</b>：不直接用别人的作品，可以用原创或免费素材；<br>③ <b>多次修改</b>：好作品都是改出来的，不要怕推翻重做。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课回顾</div>
+      <div class="grid g4">
+        <div class="work-card" style="border-top:4px solid #ec4899;"><div class="icon">🎨</div><h4>多样的作品</h4><p>绘画、相册、小报、PPT、视频等</p></div>
+        <div class="work-card" style="border-top:4px solid #ec4899;"><div class="icon">⚡</div><h4>独特优势</h4><p>易保存、易编辑、易分享</p></div>
+        <div class="work-card" style="border-top:4px solid #ec4899;"><div class="icon">🔄</div><h4>有序流程</h4><p>构思→素材→工具→制作→分享</p></div>
+        <div class="work-card" style="border-top:4px solid #ec4899;"><div class="icon">⭐</div><h4>用心创作</h4><p>主题鲜明，反复修改</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 课后拓展</h3>
+        <p>选一种你最喜欢的数字作品类型，思考接下来你想创作什么主题的作品？是介绍家乡？记录校园生活？还是分享一本好书？下节课我们就开始动手制作！</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

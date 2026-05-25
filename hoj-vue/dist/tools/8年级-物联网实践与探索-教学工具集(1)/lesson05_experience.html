@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第5课 · 物联功能趣体验 — 简易物联系统搭建</title>
+<style>
+  :root {
+    --bg: #fdf8f0;
+    --bg-2: #f5ead8;
+    --ink: #2a1f12;
+    --ink-soft: #6b5a44;
+    --primary: #d97706;
+    --primary-2: #f59e0b;
+    --green: #059669;
+    --blue: #2563eb;
+    --red: #dc2626;
+    --line: #e7d8b8;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(120,80,20,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--primary); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 3 components */
+  .components { display: grid; grid-template-columns: repeat(3, 1fr) ; gap: 16px; }
+  .comp {
+    background: var(--card); padding: 22px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    text-align: center;
+  }
+  .comp.input  { border-top: 4px solid var(--blue); }
+  .comp.proc   { border-top: 4px solid var(--primary); }
+  .comp.output { border-top: 4px solid var(--green); }
+  .comp .ic { font-size: 48px; margin-bottom: 10px; }
+  .comp h3 { font-size: 16px; margin-bottom: 8px; }
+  .comp p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .comp .examples { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .comp .examples .e { display: inline-block; padding: 3px 8px; background: var(--bg-2); border-radius: 4px; margin: 2px; font-size: 11px; }
+
+  /* Builder */
+  .builder { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .builder-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .slot {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+    border: 2px dashed var(--line); min-height: 110px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .slot.filled { border-style: solid; background: #fff; }
+  .slot.input.filled  { border-color: var(--blue); }
+  .slot.proc.filled   { border-color: var(--primary); }
+  .slot.output.filled { border-color: var(--green); }
+  .slot h4 { font-size: 11px; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 1px; }
+  .slot .picked { font-size: 14px; font-weight: 700; }
+  .slot .picked .ic { font-size: 28px; display: block; margin-bottom: 4px; }
+  .slot .empty { color: #b5a378; font-size: 12px; }
+
+  .picker { margin-top: 18px; }
+  .picker h4 { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 8px; }
+  .pick-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .pick-btn {
+    padding: 8px 14px; background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; transition: all .15s; font-family: inherit;
+    color: var(--ink);
+  }
+  .pick-btn:hover { transform: translateY(-1px); border-color: var(--primary); }
+  .pick-btn.input  { border-color: var(--blue); }
+  .pick-btn.proc   { border-color: var(--primary); }
+  .pick-btn.output { border-color: var(--green); }
+
+  .result {
+    margin-top: 20px; padding: 18px; border-radius: 10px;
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    font-size: 14px; line-height: 1.8;
+  }
+  .result.ready { background: linear-gradient(135deg, var(--green), #34d399); color: #fff; }
+  .result strong { font-weight: 700; }
+  .result .flow {
+    margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,.5); border-radius: 6px;
+    font-family: "JetBrains Mono",monospace; font-size: 13px;
+  }
+  .result.ready .flow { background: rgba(0,0,0,.18); color: #fff; }
+
+  /* Examples */
+  .ex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .ex-card {
+    background: var(--card); padding: 20px; border-radius: 10px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    cursor: pointer; transition: all .2s;
+  }
+  .ex-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+  .ex-card h3 { font-size: 15px; margin-bottom: 8px; color: var(--primary); }
+  .ex-card .chain {
+    font-family: "JetBrains Mono",monospace; font-size: 11px; color: var(--ink-soft);
+    background: var(--bg-2); padding: 8px 10px; border-radius: 4px; margin: 8px 0;
+    line-height: 1.7;
+  }
+  .ex-card p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .components { grid-template-columns: 1fr; }
+    .builder-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 5 课</span>物联功能趣体验</h1>
+  <p class="lead">物联网系统看似复杂，但任何一个物联功能都由 <strong>输入（感知）→ 处理（决策）→ 输出（执行）</strong> 三部分组成。本课带你拆解物联功能的基本结构，自己动手"搭配"一个简易物联系统。</p>
+</header>
+
+<main>
+
+  <!-- 三个组成部分 -->
+  <section class="section">
+    <div class="section-title">一、物联功能的 3 个组成部分</div>
+    <div class="components">
+      <div class="comp input">
+        <div class="ic">👁</div>
+        <h3>① 输入（感知）</h3>
+        <p>通过各种传感器或输入设备，<strong>采集环境或物体的数据</strong>。这是物联系统的"耳目"。</p>
+        <div class="examples">
+          <span class="e">温度传感器</span>
+          <span class="e">湿度传感器</span>
+          <span class="e">光敏传感器</span>
+          <span class="e">人体红外</span>
+          <span class="e">RFID 读卡器</span>
+          <span class="e">摄像头</span>
+          <span class="e">按钮开关</span>
+        </div>
+      </div>
+      <div class="comp proc">
+        <div class="ic">🧠</div>
+        <h3>② 处理（决策）</h3>
+        <p>主控板（如开发板）<strong>根据程序中的判断逻辑</strong>，对采集到的数据进行分析和决策。</p>
+        <div class="examples">
+          <span class="e">主控板/开发板</span>
+          <span class="e">if/else 判断</span>
+          <span class="e">数据比对</span>
+          <span class="e">阈值检测</span>
+          <span class="e">联网上报</span>
+          <span class="e">云端计算</span>
+        </div>
+      </div>
+      <div class="comp output">
+        <div class="ic">⚙</div>
+        <h3>③ 输出（执行）</h3>
+        <p>通过执行器或显示设备，<strong>根据决策结果产生动作或反馈</strong>。这是物联系统的"手脚"。</p>
+        <div class="examples">
+          <span class="e">LED 指示灯</span>
+          <span class="e">蜂鸣器</span>
+          <span class="e">电机/水泵</span>
+          <span class="e">舵机/锁</span>
+          <span class="e">OLED 屏幕</span>
+          <span class="e">手机推送</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 自己搭配 -->
+  <section class="section">
+    <div class="section-title">二、动手搭配一个简易物联系统</div>
+    <div class="builder">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px;">从下方依次选择 <strong>① 输入</strong>、<strong>② 处理逻辑</strong>、<strong>③ 输出</strong>，看看你能搭建出什么样的物联系统：</p>
+
+      <div class="builder-grid">
+        <div class="slot input" id="slot1">
+          <h4>① 输入（感知）</h4>
+          <div class="empty">- 请选择 -</div>
+        </div>
+        <div class="slot proc" id="slot2">
+          <h4>② 处理（条件）</h4>
+          <div class="empty">- 请选择 -</div>
+        </div>
+        <div class="slot output" id="slot3">
+          <h4>③ 输出（动作）</h4>
+          <div class="empty">- 请选择 -</div>
+        </div>
+      </div>
+
+      <div class="picker">
+        <h4>选择输入：</h4>
+        <div class="pick-row">
+          <span class="pick-btn input" onclick="pick(1, 'soil', '🌱', '土壤湿度传感器')">🌱 土壤湿度</span>
+          <span class="pick-btn input" onclick="pick(1, 'light', '💡', '光敏传感器')">💡 光敏传感器</span>
+          <span class="pick-btn input" onclick="pick(1, 'pir', '🚶', '人体红外传感器')">🚶 人体红外</span>
+          <span class="pick-btn input" onclick="pick(1, 'rfid', '🏷', 'RFID 读卡器')">🏷 RFID 读卡器</span>
+          <span class="pick-btn input" onclick="pick(1, 'temp', '🌡', '温度传感器')">🌡 温度传感器</span>
+        </div>
+        <h4>选择处理条件：</h4>
+        <div class="pick-row">
+          <span class="pick-btn proc" onclick="pick(2, 'lt', '<', '低于阈值')">数值 &lt; 阈值</span>
+          <span class="pick-btn proc" onclick="pick(2, 'gt', '>', '高于阈值')">数值 &gt; 阈值</span>
+          <span class="pick-btn proc" onclick="pick(2, 'eq', '=', '识别匹配')">识别匹配</span>
+          <span class="pick-btn proc" onclick="pick(2, 'change', 'Δ', '检测到变化')">检测到变化</span>
+        </div>
+        <h4>选择输出：</h4>
+        <div class="pick-row">
+          <span class="pick-btn output" onclick="pick(3, 'pump', '💧', '水泵浇水')">💧 启动水泵</span>
+          <span class="pick-btn output" onclick="pick(3, 'led', '🔆', '点亮 LED')">🔆 点亮 LED</span>
+          <span class="pick-btn output" onclick="pick(3, 'buzzer', '🔔', '蜂鸣器报警')">🔔 蜂鸣器</span>
+          <span class="pick-btn output" onclick="pick(3, 'lock', '🔓', '门锁解锁')">🔓 门锁解锁</span>
+          <span class="pick-btn output" onclick="pick(3, 'push', '📲', '手机推送通知')">📲 手机通知</span>
+        </div>
+      </div>
+
+      <div class="result" id="result">
+        <strong>提示：</strong>选择 3 个组件后，会自动展示你搭建的物联系统功能和工作流程。
+      </div>
+    </div>
+  </section>
+
+  <!-- 示例参考 -->
+  <section class="section">
+    <div class="section-title">三、参考：常见物联系统案例</div>
+    <div class="ex-grid">
+      <div class="ex-card">
+        <h3>🌱 智能花盆</h3>
+        <div class="chain">土壤湿度 → 低于阈值 → 水泵浇水</div>
+        <p>采集土壤湿度，当数值低于设定值时，自动启动水泵浇水。湿度回升后停止。这是教材第 20 课的核心案例。</p>
+      </div>
+      <div class="ex-card">
+        <h3>🚪 RFID 门锁</h3>
+        <div class="chain">RFID 读卡 → 识别匹配 → 门锁解锁</div>
+        <p>读取学生卡 ID，与预存白名单匹配。匹配成功则驱动舵机打开门锁。教材第 12 课内容。</p>
+      </div>
+      <div class="ex-card">
+        <h3>🚶 走廊感应灯</h3>
+        <div class="chain">人体红外 → 检测到变化 → 点亮 LED</div>
+        <p>PIR 传感器检测到人经过，自动开灯；人离开后延时关灯。节能且实用。</p>
+      </div>
+      <div class="ex-card">
+        <h3>🔥 火灾报警器</h3>
+        <div class="chain">温度+烟雾 → 高于阈值 → 蜂鸣器+推送</div>
+        <p>温度持续上升超过 60°C 或烟雾浓度异常，本地蜂鸣器报警，同时向住户手机推送通知。</p>
+      </div>
+      <div class="ex-card">
+        <h3>🚗 ETC 自动收费</h3>
+        <div class="chain">车牌识别 → 识别匹配 → 抬杆+扣费</div>
+        <p>摄像头读取车牌，与车主账户匹配，自动从账户扣款，抬杆放行。</p>
+      </div>
+      <div class="ex-card">
+        <h3>💡 智能灯（光感）</h3>
+        <div class="chain">光敏传感器 → 低于阈值 → 点亮 LED</div>
+        <p>检测环境光照，天黑后自动开灯；白天关闭。用于路灯、夜灯、博物馆展柜等。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 5 课配套交互工具</footer>
+
+<script>
+var state = { 1: null, 2: null, 3: null };
+
+function pick(slot, key, ic, label) {
+  state[slot] = { key: key, ic: ic, label: label };
+  var el = document.getElementById('slot' + slot);
+  el.className = 'slot ' + ['','input','proc','output'][slot] + ' filled';
+  el.innerHTML = '<h4>' + ['','① 输入（感知）','② 处理（条件）','③ 输出（动作）'][slot] + '</h4>' +
+    '<div class="picked"><span class="ic">' + ic + '</span>' + label + '</div>';
+  updateResult();
+}
+
+function updateResult() {
+  var r = document.getElementById('result');
+  if (state[1] && state[2] && state[3]) {
+    r.className = 'result ready';
+    var name = generateName(state[1].key, state[2].key, state[3].key);
+    r.innerHTML = '<strong>🎉 系统搭建完成！</strong><br>这套组合可以实现 <strong>"' + name + '"</strong> 功能。<br>' +
+      '<div class="flow">' + state[1].label + ' → 数据' + 
+      (state[2].key === 'lt' ? ' &lt; 阈值' : state[2].key === 'gt' ? ' &gt; 阈值' : state[2].key === 'eq' ? ' 匹配' : ' 变化') +
+      ' → ' + state[3].label + '</div>';
+  } else {
+    r.className = 'result';
+    var done = (state[1]?1:0)+(state[2]?1:0)+(state[3]?1:0);
+    r.innerHTML = '<strong>已选择 ' + done + '/3 个组件。</strong> 继续选择剩下的部分以完成系统搭建。';
+  }
+}
+
+function generateName(i, p, o) {
+  // Try to match common patterns
+  if (i === 'soil' && p === 'lt' && o === 'pump')   return '智能花盆自动灌溉';
+  if (i === 'soil' && p === 'gt' && o === 'buzzer') return '土壤过湿报警';
+  if (i === 'rfid' && p === 'eq' && o === 'lock')   return 'RFID 刷卡开锁';
+  if (i === 'rfid' && p === 'eq' && o === 'push')   return 'RFID 签到通知';
+  if (i === 'pir'  && p === 'change' && o === 'led')return '走廊感应自动灯';
+  if (i === 'pir'  && p === 'change' && o === 'buzzer') return '入侵警报';
+  if (i === 'pir'  && p === 'change' && o === 'push')   return '门口来人手机通知';
+  if (i === 'light'&& p === 'lt' && o === 'led')    return '光感自动夜灯';
+  if (i === 'light'&& p === 'gt' && o === 'led')    return '强光关灯（节能）';
+  if (i === 'temp' && p === 'gt' && o === 'buzzer') return '高温火警';
+  if (i === 'temp' && p === 'gt' && o === 'push')   return '高温预警推送';
+  if (i === 'temp' && p === 'lt' && o === 'pump')   return '低温保温自动加热';
+  // Default
+  return '自定义物联系统';
+}
+
+window.pick = pick;
+</script>
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>闰年判断器 - 第11课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.flowchart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+  gap: 6px;
+}
+.flow-node {
+  padding: 12px 24px;
+  border-radius: 10px;
+  background: white;
+  border: 2px solid var(--border);
+  min-width: 220px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.4s;
+  position: relative;
+}
+.flow-node.diamond {
+  transform: rotate(45deg);
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+}
+.flow-node.diamond span {
+  transform: rotate(-45deg);
+  display: block;
+  font-size: 13px;
+}
+.flow-node.start, .flow-node.end {
+  background: #F0F7FF;
+  color: var(--primary-dark);
+  border-color: var(--primary);
+  border-radius: 50px;
+}
+.flow-node.active {
+  background: linear-gradient(135deg, var(--accent), #FFA866);
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(255,140,66,0.4);
+  transform: scale(1.05);
+}
+.flow-node.diamond.active { transform: rotate(45deg) scale(1.05); }
+.flow-arrow {
+  width: 2px;
+  height: 18px;
+  background: var(--text-light);
+  position: relative;
+}
+.flow-arrow::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: -4px;
+  border: 5px solid transparent;
+  border-top-color: var(--text-light);
+}
+.flow-row {
+  display: flex;
+  gap: 80px;
+  justify-content: center;
+  align-items: stretch;
+}
+.flow-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.branch-label {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: var(--secondary);
+  color: white;
+}
+.branch-label.no { background: var(--danger); }
+.year-display {
+  font-size: 60px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--primary);
+  letter-spacing: 4px;
+  margin: 16px 0;
+  font-family: 'Courier New', monospace;
+}
+.year-result {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+.year-result.leap { background: #D1FAE5; color: #065F46; }
+.year-result.normal { background: #FEE2E2; color: #C73E32; }
+.calendar-mini {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  max-width: 320px;
+  margin: 12px auto;
+  font-size: 12px;
+}
+.cal-cell {
+  text-align: center;
+  padding: 6px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.cal-cell.head { background: var(--primary); color: white; font-weight: 600; }
+.cal-cell.special { background: var(--accent); color: white; font-weight: 600; }
+.judge-step {
+  background: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 6px 0;
+  border-left: 4px solid var(--border);
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.judge-step.active {
+  border-left-color: var(--accent);
+  background: #FFF4E6;
+}
+.judge-step.pass { border-left-color: var(--secondary); background: #E8F8EE; }
+.judge-step.fail { border-left-color: var(--danger); background: #FEE2E2; opacity: 0.7; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📅 闰年判断器</h1>
+    <div class="subtitle">用多分支结构判断闰年与平年</div>
+    <span class="lesson-tag">第11-12课 · 闰年平年我知道</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>判断规则：</strong>"四年一闰，百年不闰，四百年又闰"——能被4整除但不能被100整除的年份是闰年；能被400整除的年份也是闰年。
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>输入年份：</label>
+        <input type="number" id="yearInput" value="2024" min="1" max="9999" style="width:120px;font-size:18px;">
+      </div>
+      <button onclick="judge()">🔍 判断</button>
+      <button class="btn-secondary" onclick="setYear(2000)">2000</button>
+      <button class="btn-secondary" onclick="setYear(1900)">1900</button>
+      <button class="btn-secondary" onclick="setYear(2024)">2024</button>
+      <button class="btn-secondary" onclick="setYear(2025)">2025</button>
+      <button class="btn-warning" onclick="randomYear()">🎲 随机</button>
+    </div>
+
+    <div class="year-display" id="yearDisplay">2024</div>
+    <div class="year-result" id="yearResult"></div>
+
+    <h3 style="margin:18px 0 10px;font-size:15px;color:var(--text-light);">🔍 判断步骤</h3>
+    <div id="judgeSteps">
+      <div class="judge-step" id="step1">条件1：年份能否被 4 整除？</div>
+      <div class="judge-step" id="step2">条件2：年份能否被 100 整除？</div>
+      <div class="judge-step" id="step3">条件3：年份能否被 400 整除？</div>
+      <div class="judge-step" id="step4">最终结论</div>
+    </div>
+
+    <h3 style="margin:24px 0 10px;font-size:15px;color:var(--text-light);">📊 算法流程图</h3>
+    <div class="flowchart">
+      <div class="flow-node start" id="fStart">开始：输入年份</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node diamond" id="fD1"><span>能被 4 整除？</span></div>
+      <div class="flow-arrow"></div>
+      <div class="flow-row">
+        <div class="flow-branch">
+          <div class="branch-label">是</div>
+          <div class="flow-node diamond" id="fD2"><span>能被 100 整除？</span></div>
+          <div class="flow-arrow"></div>
+          <div class="flow-row">
+            <div class="flow-branch">
+              <div class="branch-label">是</div>
+              <div class="flow-node diamond" id="fD3"><span>能被 400 整除？</span></div>
+              <div class="flow-arrow"></div>
+              <div class="flow-row">
+                <div class="flow-branch">
+                  <div class="branch-label">是</div>
+                  <div class="flow-node" id="fLeap1">闰年</div>
+                </div>
+                <div class="flow-branch">
+                  <div class="branch-label no">否</div>
+                  <div class="flow-node" id="fNormal1">平年</div>
+                </div>
+              </div>
+            </div>
+            <div class="flow-branch">
+              <div class="branch-label no">否</div>
+              <div class="flow-node" id="fLeap2">闰年</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-branch">
+          <div class="branch-label no">否</div>
+          <div class="flow-node" id="fNormal2">平年</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>逻辑表达式：</strong>(年份 % 4 == 0 <strong>且</strong> 年份 % 100 ≠ 0) <strong>或</strong> (年份 % 400 == 0)</p>
+      <p><strong>多分支结构：</strong>这是一种依据多个条件判断得到不同结果的程序结构。在 Python 中通常用 <code>if … elif … else</code> 实现。</p>
+      <p><strong>典型例子：</strong></p>
+      <ul>
+        <li>2000年：能被400整除 → <span style="color:#065F46;font-weight:600;">闰年</span></li>
+        <li>1900年：能被100整除但不能被400整除 → <span style="color:#C73E32;font-weight:600;">平年</span></li>
+        <li>2024年：能被4整除但不能被100整除 → <span style="color:#065F46;font-weight:600;">闰年</span></li>
+        <li>2025年：不能被4整除 → <span style="color:#C73E32;font-weight:600;">平年</span></li>
+      </ul>
+      <p><strong>为什么要这么复杂？</strong>地球绕太阳一周约365.2422天，仅设4年一闰会有偏差，所以100年一不闰、400年又一闰，使日历更精确。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function setYear(y) {
+  document.getElementById('yearInput').value = y;
+  judge();
+}
+
+function randomYear() {
+  setYear(1900 + Math.floor(Math.random() * 200));
+}
+
+function reset() {
+  ['fD1','fD2','fD3','fLeap1','fNormal1','fLeap2','fNormal2'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  ['step1','step2','step3','step4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','pass','fail');
+  });
+}
+
+async function judge() {
+  reset();
+  const year = parseInt(document.getElementById('yearInput').value);
+  if (isNaN(year) || year < 1) {
+    alert('请输入有效年份');
+    return;
+  }
+  document.getElementById('yearDisplay').textContent = year;
+  document.getElementById('yearResult').innerHTML = '<em style="color:var(--text-light);font-size:16px;">判断中...</em>';
+  document.getElementById('yearResult').className = 'year-result';
+
+  const div4 = year % 4 === 0;
+  const div100 = year % 100 === 0;
+  const div400 = year % 400 === 0;
+
+  // step 1
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('fD1').classList.add('active');
+  await sleep(800);
+  if (!div4) {
+    document.getElementById('step1').textContent = `条件1：${year} ÷ 4 = ${(year/4).toFixed(2)} ❌ 不能整除`;
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step1').classList.add('fail');
+    document.getElementById('fD1').classList.remove('active');
+    document.getElementById('fNormal2').classList.add('active');
+    showResult(false, year, '不能被4整除');
+    return;
+  }
+  document.getElementById('step1').textContent = `条件1：${year} ÷ 4 = ${year/4} ✓ 能整除`;
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step1').classList.add('pass');
+  document.getElementById('fD1').classList.remove('active');
+
+  // step 2
+  document.getElementById('step2').classList.add('active');
+  document.getElementById('fD2').classList.add('active');
+  await sleep(800);
+  if (!div100) {
+    document.getElementById('step2').textContent = `条件2：${year} ÷ 100 = ${(year/100).toFixed(2)} ❌ 不能整除`;
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('step2').classList.add('pass');
+    document.getElementById('fD2').classList.remove('active');
+    document.getElementById('fLeap2').classList.add('active');
+    showResult(true, year, '能被4整除但不能被100整除');
+    return;
+  }
+  document.getElementById('step2').textContent = `条件2：${year} ÷ 100 = ${year/100} ✓ 能整除`;
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step2').classList.add('pass');
+  document.getElementById('fD2').classList.remove('active');
+
+  // step 3
+  document.getElementById('step3').classList.add('active');
+  document.getElementById('fD3').classList.add('active');
+  await sleep(800);
+  if (div400) {
+    document.getElementById('step3').textContent = `条件3：${year} ÷ 400 = ${year/400} ✓ 能整除`;
+    document.getElementById('step3').classList.remove('active');
+    document.getElementById('step3').classList.add('pass');
+    document.getElementById('fD3').classList.remove('active');
+    document.getElementById('fLeap1').classList.add('active');
+    showResult(true, year, '能被400整除');
+  } else {
+    document.getElementById('step3').textContent = `条件3：${year} ÷ 400 = ${(year/400).toFixed(2)} ❌ 不能整除`;
+    document.getElementById('step3').classList.remove('active');
+    document.getElementById('step3').classList.add('fail');
+    document.getElementById('fD3').classList.remove('active');
+    document.getElementById('fNormal1').classList.add('active');
+    showResult(false, year, '能被100整除但不能被400整除');
+  }
+}
+
+function showResult(isLeap, year, reason) {
+  const result = document.getElementById('yearResult');
+  if (isLeap) {
+    result.className = 'year-result leap';
+    result.innerHTML = `🎉 ${year} 年是<strong>闰年</strong>（共366天，2月有29天）<br><span style="font-size:14px;font-weight:400;">理由：${reason}</span>`;
+  } else {
+    result.className = 'year-result normal';
+    result.innerHTML = `📅 ${year} 年是<strong>平年</strong>（共365天，2月有28天）<br><span style="font-size:14px;font-weight:400;">理由：${reason}</span>`;
+  }
+  document.getElementById('step4').textContent = `结论：${year}年是${isLeap?'闰年':'平年'}`;
+  document.getElementById('step4').classList.add(isLeap ? 'pass' : 'fail');
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+judge();
+</script>
+</body>
+</html>

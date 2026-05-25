@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第24课 · 在线交流新气象</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第5单元 · 第24课</span>
+    <span class="title">在线交流新气象</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>在线交流<br>新气象</h1>
+<p class="subtitle">第五单元 · 第24课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>社交新特点 · 数字形象</strong></span>
+<span>💡 关键词：<strong>社交媒体 · 网络身份</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">💬</span><div class="card-title">理解社交特点</div><div class="card-desc">认识互联网社交与传统交往的区别。</div></div><div class="card"><span class="card-icon">🆔</span><div class="card-title">构建数字形象</div><div class="card-desc">理解"网络人设"是怎么形成的。</div></div><div class="card"><span class="card-icon">🤝</span><div class="card-title">文明上网</div><div class="card-desc">学会负责任地在线交流。</div></div></div></section>
+<section class="slide"><h2>互联网社交的演变</h2>
+<div class="timeline">
+<div class="tl-item"><div class="tl-year">早期 · 邮件 + 论坛</div><div class="tl-title">慢节奏文字交流</div><div class="tl-desc">BBS、Email、新闻组，主要是文字异步沟通。</div></div>
+<div class="tl-item"><div class="tl-year">2000s · IM + 博客</div><div class="tl-title">QQ + 个人博客</div><div class="tl-desc">即时聊天兴起，博客让个人也能发声。</div></div>
+<div class="tl-item"><div class="tl-year">2010s · 社交媒体</div><div class="tl-title">微博 + 微信 + 朋友圈</div><div class="tl-desc">移动互联网时代，分享变得即时和频繁。</div></div>
+<div class="tl-item"><div class="tl-year">2020s · 短视频 + AI</div><div class="tl-title">抖音 + 小红书 + AI 社交</div><div class="tl-desc">视频成主流形态，AI 数字人参与社交。</div></div>
+</div></section>
+<section class="slide"><h2>互联网社交的新特点</h2><div class="cards"><div class="card"><span class="card-icon">🌍</span><div class="card-title">跨越时空</div><div class="card-desc">和地球另一端的朋友秒级沟通，时差不再是障碍。</div></div><div class="card"><span class="card-icon">🎭</span><div class="card-title">身份多元</div><div class="card-desc">同一人在不同平台可以扮演不同角色：B站UP主、知乎答主、小红书博主。</div></div><div class="card"><span class="card-icon">📢</span><div class="card-title">人人发声</div><div class="card-desc">普通人也能在网上发表意见、影响他人，"自媒体"兴起。</div></div><div class="card"><span class="card-icon">🎁</span><div class="card-title">弱关系连接</div><div class="card-desc">线下交朋友靠"熟人介绍"，网上可以认识完全陌生但兴趣相同的人。</div></div><div class="card"><span class="card-icon">🔄</span><div class="card-title">信息高速传播</div><div class="card-desc">一条消息几小时就能传遍全网，热搜诞生。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">AI 参与</div><div class="card-desc">AI 客服、AI 数字人，连聊天对象都可能是 AI。</div></div></div></section>
+<section class="slide"><h2>数字形象 (Digital Identity)</h2><div class="highlight">🆔 <strong>数字形象 = 你在网上呈现的样子。</strong>包括头像、昵称、签名、发的内容、点赞过的东西、评论过的话…… 拼起来就是"网络上的你"。</div><h3>数字形象的组成</h3><div class="cards"><div class="card"><span class="card-icon">🖼</span><div class="card-title">头像 / 昵称</div><div class="card-desc">别人对你的第一印象。专业 vs 卡通、真名 vs 假名都传递信号。</div></div><div class="card"><span class="card-icon">📝</span><div class="card-title">个人简介 / 签名</div><div class="card-desc">主动展示的标签：学校、爱好、价值观。</div></div><div class="card"><span class="card-icon">📷</span><div class="card-title">发布的内容</div><div class="card-desc">朋友圈、微博、视频，反映你的生活和想法。</div></div><div class="card"><span class="card-icon">👍</span><div class="card-title">互动行为</div><div class="card-desc">点赞、关注、转发、评论，体现你的态度和品味。</div></div><div class="card"><span class="card-icon">📊</span><div class="card-title">行为数据</div><div class="card-desc">上线时间、停留时长、消费习惯，平台都记录着（你看不到）。</div></div></div></section>
+<section class="slide"><h2>数字足迹 (Digital Footprint)</h2>
+<p>你在网上的<strong>每一次点击、每一句话、每一张照片</strong>，都可能<strong>永远存在</strong>。这就是"数字足迹"。</p>
+<div class="compare-row">
+<div class="compare-col"><h3>👣 主动足迹</h3>
+<ul><li>你发的微博、朋友圈</li><li>你写的评论</li><li>你点的赞</li><li>你上传的照片</li></ul></div>
+<div class="compare-col"><h3>👻 被动足迹</h3>
+<ul><li>访问过的网站记录</li><li>购物搜索历史</li><li>位置移动轨迹</li><li>APP 使用时长</li></ul></div>
+</div>
+<div class="highlight">⚠️ <strong>互联网是有记忆的。</strong>10 年前的微博/QQ空间动态，今天可能还能被搜到。求职时，HR 可能会查你的社交账号。<strong>谨慎留下数字足迹</strong>。</div></section>
+<section class="slide"><h2>常见网络社交陷阱</h2><div class="cards"><div class="card"><span class="card-icon">🎣</span><div class="card-title">网恋骗局</div><div class="card-desc">"完美男友/女友"可能是诈骗团伙，最后骗钱跑路。</div></div><div class="card"><span class="card-icon">😢</span><div class="card-title">网络欺凌 / 网暴</div><div class="card-desc">人群匿名暴力，言语攻击让受害者抑郁甚至自杀。</div></div><div class="card"><span class="card-icon">🎭</span><div class="card-title">人肉搜索</div><div class="card-desc">为某个目标，全网搜索其真实身份、家人、住址。</div></div><div class="card"><span class="card-icon">📰</span><div class="card-title">谣言扩散</div><div class="card-desc">未经核实的消息被疯狂转发，造成社会恐慌。</div></div><div class="card"><span class="card-icon">🔓</span><div class="card-title">隐私泄露</div><div class="card-desc">在网上晒身份证、机票、车牌，被恶意利用。</div></div><div class="card"><span class="card-icon">📵</span><div class="card-title">沉迷成瘾</div><div class="card-desc">不停刷短视频、不停刷消息，影响正常生活。</div></div></div><div class="highlight">🛡 <strong>保护自己 6 招：</strong>① 不轻信陌生人 ② 不晒敏感信息 ③ 不参与网暴 ④ 不传播谣言 ⑤ 设置隐私权限 ⑥ 控制使用时长。</div></section>
+<section class="slide"><h2>做"文明数字公民"</h2>
+<div class="highlight">📜 <strong>网络不是法外之地。</strong> 中国《网络安全法》《个人信息保护法》《未成年人保护法》等都对网络言行有约束。</div>
+<h3>文明上网十条建议</h3>
+<ol>
+<li><strong>对自己的话负责：</strong>说出去的话像泼出去的水，截图永远存在</li>
+<li><strong>不发表攻击性、歧视性言论</strong></li>
+<li><strong>不传播未经核实的信息</strong></li>
+<li><strong>尊重他人隐私：</strong>不晒别人的照片、聊天记录</li>
+<li><strong>不参与网络暴力</strong>，看到要劝阻</li>
+<li><strong>遇到困扰主动求助：</strong>家长、老师、报警</li>
+<li><strong>合理控制上网时间</strong></li>
+<li><strong>定期清理过期内容</strong>，管理自己的数字足迹</li>
+<li><strong>保护隐私设置</strong>，了解每个 APP 的隐私权限</li>
+<li><strong>尊重知识产权</strong>，不盗用他人创作</li>
+</ol></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ "数字足迹"指的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">网店的脚印</div>
+<div class="quiz-opt" data-correct="true">在网上留下的所有痕迹</div>
+<div class="quiz-opt" data-correct="false">网速测试结果</div>
+<div class="quiz-opt" data-correct="false">数字签名</div></div>
+<div class="quiz-feedback">✅ 数字足迹是你在网上的一切行为留下的记录，包括主动发的内容和被动产生的数据。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 在网上看到一条让你愤怒的"未核实"消息，最理性的做法是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">立刻转发让更多人知道</div>
+<div class="quiz-opt" data-correct="true">查证后再决定</div>
+<div class="quiz-opt" data-correct="false">在评论区开骂</div>
+<div class="quiz-opt" data-correct="false">截图笑话</div></div>
+<div class="quiz-feedback">✅ "让子弹飞一会儿" —— 不要被情绪左右，先核实事实再决定如何回应。许多"反转"新闻就是因为大众盲目相信第一波消息。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 关于网络欺凌，下列做法<strong>正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">看到加入参战</div>
+<div class="quiz-opt" data-correct="true">截图保留证据并求助</div>
+<div class="quiz-opt" data-correct="false">被骂了不能反抗</div>
+<div class="quiz-opt" data-correct="false">网络上骂人没事</div></div>
+<div class="quiz-feedback">✅ 遭遇网暴时应：保留证据 → 关闭评论/拉黑 → 告诉家长老师 → 必要时报警。网络骂人同样违反《治安管理处罚法》。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>社交新特点</strong>：跨时空、身份多元、人人发声、弱关系、高速传播</li>
+<li><strong>数字形象</strong>：头像+昵称+内容+互动 = 网络上的你</li>
+<li><strong>数字足迹</strong>：互联网是有记忆的，一切痕迹长期存在</li>
+<li><strong>常见陷阱</strong>：网恋骗局、网暴、谣言、人肉、隐私泄露</li>
+<li><strong>文明上网</strong>：法律约束 + 自我约束，做负责任的数字公民</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>盘点你在互联网上的"数字形象"：① 列出你常用的 3 个社交账号；② 思考它们传递了什么信号；③ 删除/修改不合适的内容。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "社交演变", "社交新特点", "数字形象", "数字足迹", "常见陷阱", "文明上网", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

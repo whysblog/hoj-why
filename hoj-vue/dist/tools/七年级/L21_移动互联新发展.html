@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第21课 · 移动互联新发展</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1729; --panel: #1a2340; --panel-2: #232d4f;
+  --accent: #4ed1b8; --accent2: #ffb347; --warn: #ff6b81;
+  --text: #e6eaf5; --muted: #8a96b8; --border: #2c3760;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; overflow: hidden;
+  background-image: radial-gradient(circle at 10% 10%, rgba(78,209,184,.06), transparent 40%), radial-gradient(circle at 90% 90%, rgba(255,179,71,.06), transparent 40%);
+}
+.deck { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
+.topbar .title { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 17px; }
+.topbar .lesson-tag { font-size: 12px; color: var(--accent); background: rgba(78,209,184,.1); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
+.topbar .right { display: flex; gap: 10px; align-items: center; }
+.btn-icon { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.progress { height: 3px; background: var(--panel-2); flex-shrink: 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .4s; }
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 36px 56px; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity .4s, transform .4s; }
+.slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.slide h1 { font-size: 38px; font-weight: 900; margin-bottom: 14px; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+.slide h2 { font-size: 26px; font-weight: 700; margin-bottom: 18px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+.slide h2::before { content: ''; width: 6px; height: 26px; background: linear-gradient(180deg,var(--accent),var(--accent2)); border-radius: 3px; }
+.slide h3 { font-size: 17px; color: var(--accent2); margin: 18px 0 10px; font-weight: 600; }
+.slide p { font-size: 16px; line-height: 1.75; color: var(--text); margin-bottom: 12px; }
+.slide .subtitle { color: var(--muted); font-size: 18px; margin-bottom: 30px; }
+.slide ul, .slide ol { margin-left: 24px; margin-bottom: 12px; }
+.slide li { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 4px; }
+.slide li strong { color: var(--accent2); }
+.bottombar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.btn-nav { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-nav:disabled { opacity: .35; cursor: not-allowed; }
+.counter { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+.toc-overlay { position: absolute; inset: 0; background: rgba(15,23,41,.96); z-index: 20; display: none; flex-direction: column; padding: 36px 56px; overflow-y: auto; }
+.toc-overlay.show { display: flex; }
+.toc-overlay h2 { color: var(--accent); margin-bottom: 24px; font-size: 24px; }
+.toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+.toc-item { padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 12px; }
+.toc-item:hover { border-color: var(--accent); transform: translateX(4px); }
+.toc-num { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+.toc-item.active .toc-num { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #0f1729; }
+.toc-text { font-size: 14px; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--border); padding: 18px; border-radius: 12px; transition: all .25s; }
+.card.hover:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(78,209,184,.15); }
+.card-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+.card-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.timeline { position: relative; padding-left: 32px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent2)); }
+.tl-item { position: relative; margin-bottom: 22px; padding-left: 8px; }
+.tl-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.tl-year { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent2); font-size: 16px; margin-bottom: 4px; }
+.tl-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.quiz { background: var(--panel); border-radius: 14px; padding: 24px; border: 1px solid var(--border); max-width: 720px; margin-bottom: 18px; }
+.quiz-q { font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.6; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; }
+.quiz-opt:hover { border-color: var(--accent); }
+.quiz-opt.correct { border-color: var(--accent); background: rgba(78,209,184,.12); color: var(--accent); }
+.quiz-opt.wrong { border-color: var(--warn); background: rgba(255,107,129,.1); color: var(--warn); }
+.quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.7; border-left: 3px solid var(--accent); display: none; }
+.quiz-feedback.show { display: block; }
+.highlight { background: linear-gradient(135deg, rgba(78,209,184,.12), rgba(255,179,71,.08)); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 16px 0; }
+.highlight strong { color: var(--accent2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin: 20px 0; }
+.stat { padding: 16px; background: var(--panel); border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.title-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title-slide h1 { font-size: 56px; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 22px; }
+.title-slide .meta { margin-top: 36px; display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 14px; }
+.title-slide .meta span strong { color: var(--accent); }
+.kbd { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--accent); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; overflow-x: auto; line-height: 1.6; }
+.tag-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; background: var(--panel-2); color: var(--accent); margin-right: 6px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.compare-col h3 { margin-top: 0; }
+.compare-col.good { border-color: var(--accent); }
+.compare-col.bad { border-color: var(--warn); }
+.compare-col.bad h3 { color: var(--warn); }
+table.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--panel); border-radius: 10px; overflow: hidden; }
+table.tbl th, table.tbl td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+table.tbl th { background: var(--panel-2); color: var(--accent); font-weight: 700; }
+.diagram-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+.url-anatomy { font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.8; padding: 16px 20px; background: var(--bg); border-radius: 8px; margin: 16px 0; word-break: break-all; }
+.url-anatomy .scheme { color: #ff6b81; }
+.url-anatomy .host { color: #4ed1b8; }
+.url-anatomy .port { color: #a8e063; }
+.url-anatomy .path { color: #ffb347; }
+.url-anatomy .query { color: #c397ff; }
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .slide h1 { font-size: 28px; }
+  .title-slide h1 { font-size: 36px; }
+  .topbar { padding: 10px 16px; }
+  .compare-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar">
+    <span class="lesson-tag">第5单元 · 第21课</span>
+    <span class="title">移动互联新发展</span>
+    <div class="right">
+      <button class="btn-icon" id="btnToc" title="目录">☰</button>
+      <button class="btn-icon" id="btnFs" title="全屏">⛶</button>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="stage"><section class="slide title-slide active">
+<h1>移动互联<br>新发展</h1>
+<p class="subtitle">第五单元 · 第21课</p>
+<div class="meta"><span>📅 课时：<strong>1 学时</strong></span>
+<span>🎯 重点：<strong>移动互联特征</strong></span>
+<span>💡 关键词：<strong>5G · 移动支付 · LBS</strong></span></div>
+<p style="margin-top:40px; color: var(--muted); font-size: 13px;">使用 <span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">F</span> 全屏 · <span class="kbd">T</span> 目录</p>
+</section>
+<section class="slide"><h2>学习目标</h2><div class="cards"><div class="card"><span class="card-icon">📱</span><div class="card-title">认识移动互联</div><div class="card-desc">理解移动互联网与传统互联网的区别。</div></div><div class="card"><span class="card-icon">🚀</span><div class="card-title">了解 4G/5G</div><div class="card-desc">知道移动网络代际演进。</div></div><div class="card"><span class="card-icon">💡</span><div class="card-title">感知创新</div><div class="card-desc">体会移动互联对生活方式的改变。</div></div></div></section>
+<section class="slide"><h2>什么是"移动互联网"？</h2><div class="highlight">📱 <strong>移动互联网 = 互联网 + 移动通信 + 智能终端</strong>。让人们随时随地用<strong>手机/平板</strong>接入互联网。</div><h3>三大支柱缺一不可</h3><div class="cards"><div class="card"><span class="card-icon">📡</span><div class="card-title">移动通信网络</div><div class="card-desc">2G→3G→4G→5G，无线网络速度从拨号慢，到今天的"光纤级"。</div></div><div class="card"><span class="card-icon">📱</span><div class="card-title">智能终端</div><div class="card-desc">智能手机、平板、可穿戴设备，性能直追传统电脑。</div></div><div class="card"><span class="card-icon">🏪</span><div class="card-title">移动应用生态</div><div class="card-desc">App Store、华为应用市场，几百万 APP 满足各种需求。</div></div></div></section>
+<section class="slide"><h2>移动通信代际演进</h2>
+<table class="tbl">
+<tr><th>代际</th><th>年代</th><th>速度</th><th>代表应用</th></tr>
+<tr><td>1G</td><td>1980s</td><td>仅模拟语音</td><td>大哥大打电话</td></tr>
+<tr><td>2G</td><td>1990s</td><td>~50kbps</td><td>短信、彩信</td></tr>
+<tr><td>3G</td><td>2008-</td><td>~2Mbps</td><td>QQ、移动浏览</td></tr>
+<tr><td>4G</td><td>2013-</td><td>~100Mbps</td><td>移动视频、微信、电商</td></tr>
+<tr><td>5G</td><td>2019-</td><td>~1Gbps</td><td>云游戏、VR/AR、自动驾驶</td></tr>
+<tr><td>6G</td><td>2030 预计</td><td>~1Tbps</td><td>全息通信、空天地海一体</td></tr>
+</table>
+<h3>5G 的三大特性</h3>
+<ul>
+<li><strong>eMBB（增强移动宽带）：</strong>下载速度是 4G 的 10-100 倍</li>
+<li><strong>uRLLC（超低时延）：</strong>延迟低于 1ms，可用于远程手术、自动驾驶</li>
+<li><strong>mMTC（海量连接）：</strong>每平方公里支持百万设备，万物互联</li>
+</ul>
+<div class="highlight">🇨🇳 <strong>中国成就：</strong>截至 2025 年，中国 5G 基站超 400 万个，占全球 60%+；5G 用户数全球第一。在标准制定、设备研发上达到世界先进水平。</div></section>
+<section class="slide"><h2>移动互联网带来的创新应用</h2><div class="cards"><div class="card"><span class="card-icon">💰</span><div class="card-title">移动支付</div><div class="card-desc">微信支付、支付宝。中国成"无现金社会"，连菜市场都能扫码。</div></div><div class="card"><span class="card-icon">🚗</span><div class="card-title">网约车 / 共享出行</div><div class="card-desc">滴滴、共享单车，解决最后一公里问题。</div></div><div class="card"><span class="card-icon">📍</span><div class="card-title">基于位置服务 (LBS)</div><div class="card-desc">导航、外卖、附近的人，"位置"成为重要信息。</div></div><div class="card"><span class="card-icon">📸</span><div class="card-title">短视频 / 直播</div><div class="card-desc">抖音、快手、B站，"人人都是创作者"。</div></div><div class="card"><span class="card-icon">🥽</span><div class="card-title">AR / VR / 元宇宙</div><div class="card-desc">手机 AR 游戏、VR 看房、3D 试衣，沉浸式体验。</div></div><div class="card"><span class="card-icon">🏠</span><div class="card-title">移动办公</div><div class="card-desc">钉钉、飞书、企业微信，随时随地办公协作。</div></div></div></section>
+<section class="slide"><h2>LBS：位置服务背后的技术</h2><p><strong>LBS（Location-Based Service）</strong>= 基于位置的服务，是移动互联网最有特色的应用。</p><h3>定位的三种方式</h3><div class="cards"><div class="card"><span class="card-icon">🛰</span><div class="card-title">卫星定位</div><div class="card-desc">GPS（美）、北斗（中）、伽利略（欧）、GLONASS（俄）。室外精度 1-10米。</div></div><div class="card"><span class="card-icon">📡</span><div class="card-title">基站定位</div><div class="card-desc">通过手机连接的基站位置估算。精度数十米到数百米。</div></div><div class="card"><span class="card-icon">📶</span><div class="card-title">WiFi 定位</div><div class="card-desc">根据周围 WiFi 信号特征定位。常用于室内导航，精度数米。</div></div></div><div class="highlight">🇨🇳 <strong>北斗导航系统：</strong>中国自主建设的全球卫星导航系统，2020 年完成全球组网，定位精度可达毫米级（短基线），打破了 GPS 垄断。今天你用的高德地图、滴滴打车，背后都有北斗的贡献。</div></section>
+<section class="slide"><h2>移动互联的"信息新特征"</h2><div class="cards"><div class="card"><span class="card-icon">⏰</span><div class="card-title">即时性</div><div class="card-desc">事件发生几分钟内全网皆知，"刚刚"是网络词。</div></div><div class="card"><span class="card-icon">📍</span><div class="card-title">位置感知</div><div class="card-desc">信息与"地点"强关联：附近的人、本地新闻、外卖。</div></div><div class="card"><span class="card-icon">👤</span><div class="card-title">个性化推送</div><div class="card-desc">算法根据你的兴趣自动推送内容（短视频、新闻）。</div></div><div class="card"><span class="card-icon">📷</span><div class="card-title">富媒体化</div><div class="card-desc">不再只是文字，更多图、视频、直播、AR。</div></div><div class="card"><span class="card-icon">👥</span><div class="card-title">社交化</div><div class="card-desc">每条信息都可点赞、转发、评论，传播链条短。</div></div><div class="card"><span class="card-icon">🤖</span><div class="card-title">AI 化</div><div class="card-desc">智能输入法、智能助手、AI 美颜，AI 深入移动应用。</div></div></div><div class="highlight">⚠️ <strong>双刃剑提醒：</strong>个性化推送可能造成"<strong>信息茧房</strong>"——只看到自己喜欢的内容，视野越来越窄。要主动突破，关注多元信息。</div></section>
+<section class="slide"><h2>📝 课堂小测</h2><div class="quiz" id="q1">
+<div class="quiz-q">1️⃣ 中国自主建设的全球卫星导航系统是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">GPS</div>
+<div class="quiz-opt" data-correct="true">北斗</div>
+<div class="quiz-opt" data-correct="false">伽利略</div>
+<div class="quiz-opt" data-correct="false">GLONASS</div></div>
+<div class="quiz-feedback">✅ 北斗导航系统是中国自主建设、独立运行的全球卫星导航系统，2020 年完成全球组网。</div>
+</div><div class="quiz" id="q2">
+<div class="quiz-q">2️⃣ 5G 网络的"超低时延"特性最适合哪种应用？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">看小说</div>
+<div class="quiz-opt" data-correct="true">远程手术</div>
+<div class="quiz-opt" data-correct="false">听音乐</div>
+<div class="quiz-opt" data-correct="false">查天气</div></div>
+<div class="quiz-feedback">✅ 5G uRLLC 特性把延迟降到 1ms 以内，让远程手术、自动驾驶等实时控制成为可能。</div>
+</div><div class="quiz" id="q3">
+<div class="quiz-q">3️⃣ 关于"信息茧房"，下列说法<strong>正确</strong>的是？</div>
+<div class="quiz-options"><div class="quiz-opt" data-correct="false">是好事，能学到喜欢的内容</div>
+<div class="quiz-opt" data-correct="true">是算法推送的副作用，需警惕</div>
+<div class="quiz-opt" data-correct="false">与互联网无关</div>
+<div class="quiz-opt" data-correct="false">只有 5G 时代才有</div></div>
+<div class="quiz-feedback">✅ 算法只推你喜欢的会造成视野狭窄、缺乏多元信息。要主动关注不同立场、不同类型的内容。</div>
+</div></section>
+<section class="slide"><h2>🎓 课堂总结</h2><ul><li><strong>移动互联三支柱</strong>：通信网络 + 智能终端 + 应用生态</li>
+<li><strong>代际演进</strong>：2G(短信) → 3G(浏览) → 4G(视频) → 5G(万物互联)</li>
+<li><strong>典型应用</strong>：移动支付、网约车、LBS、短视频、AR/VR</li>
+<li><strong>北斗</strong>：中国自主全球卫星导航系统</li>
+<li><strong>双刃剑</strong>：享受便利，警惕信息茧房</li></ul><div class="highlight" style="margin-top:24px;">💭 <strong>课后任务：</strong>观察自己一天中使用了哪些"移动专属"功能（如扫码、定位、推送通知），列举至少 5 项。</div></section>
+  </div>
+  <div class="bottombar">
+    <button class="btn-nav" id="btnPrev">← 上一页</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn-nav" id="btnNext">下一页 →</button>
+  </div>
+  <div class="toc-overlay" id="tocOverlay">
+    <h2>📑 目录</h2>
+    <div class="toc-list" id="tocList"></div>
+  </div>
+</div>
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = ["封面", "学习目标", "移动互联是什么", "代际演进", "创新应用", "LBS", "信息新特征", "📝 小测", "🎓 总结"];
+function showSlide(n) {
+  if (n < 0) n = 0;
+  if (n >= totalSlides) n = totalSlides - 1;
+  slides[currentSlide].classList.remove('active');
+  slides[n].classList.add('active');
+  currentSlide = n; updateUI();
+}
+function updateUI() {
+  document.getElementById('counter').textContent = `${currentSlide+1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${(currentSlide+1)/totalSlides*100}%`;
+  document.getElementById('btnPrev').disabled = currentSlide === 0;
+  document.getElementById('btnNext').disabled = currentSlide === totalSlides-1;
+  document.querySelectorAll('.toc-item').forEach((it,i) => it.classList.toggle('active', i === currentSlide));
+}
+document.getElementById('btnPrev').onclick = () => showSlide(currentSlide-1);
+document.getElementById('btnNext').onclick = () => showSlide(currentSlide+1);
+const tocList = document.getElementById('tocList');
+slideTitles.forEach((t,i) => {
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<div class="toc-num">${String(i+1).padStart(2,'0')}</div><div class="toc-text">${t}</div>`;
+  item.onclick = () => { showSlide(i); document.getElementById('tocOverlay').classList.remove('show'); };
+  tocList.appendChild(item);
+});
+document.getElementById('btnToc').onclick = () => document.getElementById('tocOverlay').classList.toggle('show');
+document.getElementById('btnFs').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+document.getElementById('tocOverlay').onclick = (e) => { if (e.target.id === 'tocOverlay') e.target.classList.remove('show'); };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('tocOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('tocOverlay').classList.remove('show');
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); showSlide(currentSlide+1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(currentSlide-1); }
+  else if (e.key === 'Home') showSlide(0);
+  else if (e.key === 'End') showSlide(totalSlides-1);
+  else if (e.key.toLowerCase() === 'f') document.getElementById('btnFs').click();
+  else if (e.key.toLowerCase() === 't') document.getElementById('btnToc').click();
+  else if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+});
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const fb = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.onclick = () => {
+      if (quiz.dataset.done) return;
+      const correct = opt.dataset.correct === 'true';
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+      if (fb) fb.classList.add('show');
+      quiz.dataset.done = '1';
+    };
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

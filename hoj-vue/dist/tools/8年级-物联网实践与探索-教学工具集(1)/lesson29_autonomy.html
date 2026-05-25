@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第29课 · 自主可控意义大 — 国产物联网技术</title>
+<style>
+  :root {
+    --bg: #fef2f2;
+    --bg-2: #fee2e2;
+    --ink: #450a0a;
+    --ink-soft: #7a4a4a;
+    --primary: #dc2626;
+    --primary-2: #ef4444;
+    --accent: #f97316;
+    --green: #10b981;
+    --gold: #d4a017;
+    --line: #fecaca;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(220,38,38,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 风险案例 */
+  .risk-card { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); border-left: 4px solid var(--primary); }
+  .risk-card h3 { color: var(--primary); margin-bottom: 12px; font-size: 17px; }
+  .risk-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .risk-item {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+  }
+  .risk-item h4 { font-size: 13px; margin-bottom: 4px; color: var(--ink); }
+  .risk-item p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .risk-item .scenario {
+    font-style: italic; color: var(--primary); margin-top: 6px; font-size: 11px;
+  }
+
+  /* 技术栈层级 */
+  .stack-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .stack-row {
+    display: grid; grid-template-columns: 100px 1fr 1fr; gap: 14px;
+    padding: 14px 16px; margin-bottom: 8px;
+    background: var(--bg-2); border-radius: 8px; align-items: center;
+  }
+  .stack-level { font-size: 13px; font-weight: 700; color: var(--primary); }
+  .stack-foreign, .stack-domestic {
+    padding: 10px 12px; border-radius: 6px; font-size: 12px;
+    font-family: "JetBrains Mono",monospace;
+  }
+  .stack-foreign {
+    background: rgba(220,38,38,.1); color: var(--primary);
+  }
+  .stack-domestic {
+    background: rgba(16,185,129,.1); color: #047857;
+  }
+  .stack-header {
+    background: var(--ink); color: #fff;
+    padding: 12px 16px; border-radius: 8px;
+    display: grid; grid-template-columns: 100px 1fr 1fr; gap: 14px;
+    font-size: 13px; font-weight: 700; margin-bottom: 10px;
+  }
+  .stack-header > div { padding: 0 12px; }
+
+  /* 我国创新 */
+  .achievements { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .ach-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .ach {
+    background: linear-gradient(135deg, #fef3c7, #fef9e7);
+    padding: 18px; border-radius: 10px;
+    border-top: 4px solid var(--gold);
+  }
+  .ach .ic { font-size: 32px; margin-bottom: 8px; }
+  .ach h4 { font-size: 14px; margin-bottom: 4px; color: #92400e; }
+  .ach p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .ach .badge {
+    display: inline-block; padding: 2px 8px; background: var(--gold); color: #fff;
+    border-radius: 99px; font-size: 10px; margin-top: 6px;
+  }
+
+  /* 我们能做什么 */
+  .actions {
+    background: var(--card); padding: 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .actions ul { padding-left: 22px; font-size: 13px; line-height: 1.9; color: var(--ink-soft); }
+  .actions strong { color: var(--ink); }
+  .actions li { margin-bottom: 6px; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .risk-list { grid-template-columns: 1fr; }
+    .stack-row, .stack-header { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 29 课</span>自主可控意义大</h1>
+  <p class="lead">"<strong>自主可控</strong>"指核心技术、关键设备、关键软件都由本国掌握，<strong>不被外部"卡脖子"</strong>。在物联网这种关乎国计民生的基础设施领域，自主可控关系到国家安全和长远发展。</p>
+</header>
+
+<main>
+
+  <!-- 外部依赖的风险 -->
+  <section class="section">
+    <div class="section-title">一、过度依赖外部技术的风险</div>
+    <div class="risk-card">
+      <h3>⚠ 如果核心技术被卡脖子，会发生什么？</h3>
+      <div class="risk-list">
+        <div class="risk-item">
+          <h4>🚫 供应中断</h4>
+          <p>外国厂商被命令停止供货。整条生产线被迫停产，企业损失惨重。</p>
+          <p class="scenario">📰 案例：2018 年中兴事件，美国禁止芯片供货导致中兴几乎瘫痪。</p>
+        </div>
+        <div class="risk-item">
+          <h4>🔓 数据泄露</h4>
+          <p>关键设备的固件由外国控制，可能存在<strong>后门</strong>。我国敏感数据被悄悄传到境外。</p>
+          <p class="scenario">📰 案例：境外厂商摄像头被发现可远程访问、监听。</p>
+        </div>
+        <div class="risk-item">
+          <h4>🛑 远程禁用</h4>
+          <p>云端服务由外国公司控制，关键时刻"<strong>一键关停</strong>"，国内业务无法运转。</p>
+          <p class="scenario">📰 案例：俄乌冲突中，多家西方云服务下架俄罗斯客户。</p>
+        </div>
+        <div class="risk-item">
+          <h4>💰 价格垄断</h4>
+          <p>核心芯片只有一两家供应商，国内厂商<strong>无议价能力</strong>，被迫接受高价。</p>
+          <p class="scenario">📰 案例：早期高端 CPU、操作系统价格长期被外企主导。</p>
+        </div>
+        <div class="risk-item">
+          <h4>⏸ 升级受限</h4>
+          <p>软件版本由外国控制，<strong>不再为我国市场提供更新</strong>，安全漏洞无人修复。</p>
+          <p class="scenario">📰 案例：某操作系统停止对老旧版本的安全更新。</p>
+        </div>
+        <div class="risk-item">
+          <h4>🎯 网络制裁</h4>
+          <p>关键互联网协议、根域名服务器由外国掌控，可能<strong>切断网络访问</strong>。</p>
+          <p class="scenario">📰 案例：DNS 系统的全球控制权问题。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 技术栈对比 -->
+  <section class="section">
+    <div class="section-title">二、物联网技术栈：国外 vs 国产</div>
+    <div class="stack-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">物联网技术栈包含多层，每一层都需要有自主可控的国产方案：</p>
+      <div class="stack-header">
+        <div>层级</div>
+        <div>常见国外方案</div>
+        <div>国产替代方案</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">📱 终端芯片</div>
+        <div class="stack-foreign">高通 / 联发科 / TI</div>
+        <div class="stack-domestic">海思 / 紫光展锐 / 翱捷</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">💻 操作系统</div>
+        <div class="stack-foreign">Linux / FreeRTOS</div>
+        <div class="stack-domestic">OpenHarmony 开源鸿蒙 / RT-Thread</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">📡 通信协议</div>
+        <div class="stack-foreign">LoRa（美） / Z-Wave</div>
+        <div class="stack-domestic">NB-IoT（3GPP 中国主导）</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">🔐 加密算法</div>
+        <div class="stack-foreign">AES / RSA / SHA</div>
+        <div class="stack-domestic">SM2 / SM3 / SM4 / SM9（国密标准）</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">☁ 云平台</div>
+        <div class="stack-foreign">AWS IoT / Azure IoT</div>
+        <div class="stack-domestic">阿里云 IoT / 华为云 / 腾讯云</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">📍 卫星定位</div>
+        <div class="stack-foreign">GPS（美）</div>
+        <div class="stack-domestic">北斗（BDS）— 全球覆盖</div>
+      </div>
+      <div class="stack-row">
+        <div class="stack-level">🌐 网络设备</div>
+        <div class="stack-foreign">Cisco / Juniper</div>
+        <div class="stack-domestic">华为 / 中兴 / 新华三</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 我国创新成就 -->
+  <section class="section">
+    <div class="section-title">三、我国物联网自主创新成就</div>
+    <div class="achievements">
+      <div class="ach-grid">
+        <div class="ach">
+          <div class="ic">🛰</div>
+          <h4>北斗卫星导航系统</h4>
+          <p>2020 年 7 月全面建成。覆盖全球，定位精度厘米级。已应用于物流、农业、交通、海事等领域。</p>
+          <div class="badge">✓ 完全自主</div>
+        </div>
+        <div class="ach">
+          <div class="ic">📶</div>
+          <h4>5G 与 NB-IoT</h4>
+          <p>我国 5G 基站数量全球第一。NB-IoT（窄带物联网）由我国主导制定，已大规模商用。</p>
+          <div class="badge">✓ 标准主导</div>
+        </div>
+        <div class="ach">
+          <div class="ic">🔐</div>
+          <h4>SM 国密算法</h4>
+          <p>SM2/SM3/SM4/SM9 系列加密标准被 ISO 国际采纳。物联网中已广泛应用。</p>
+          <div class="badge">✓ 国际通用</div>
+        </div>
+        <div class="ach">
+          <div class="ic">⚙</div>
+          <h4>OpenHarmony 鸿蒙</h4>
+          <p>开源分布式操作系统，可适配从手表、家电到汽车、工业设备。海量物联设备已搭载。</p>
+          <div class="badge">✓ 开源生态</div>
+        </div>
+        <div class="ach">
+          <div class="ic">🌐</div>
+          <h4>IPv6 规模化部署</h4>
+          <p>我国 IPv6 活跃用户数全球第一，地址数量储备世界领先。为万物互联打下基础。</p>
+          <div class="badge">✓ 全球领先</div>
+        </div>
+        <div class="ach">
+          <div class="ic">💻</div>
+          <h4>国产 CPU</h4>
+          <p>龙芯、飞腾、海光、鲲鹏等多条 CPU 自主架构路线并进，逐步覆盖服务器到嵌入式。</p>
+          <div class="badge">✓ 全栈布局</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 我们能做什么 -->
+  <section class="section">
+    <div class="section-title">四、作为中学生，我们能做什么</div>
+    <div class="actions">
+      <ul>
+        <li><strong>认识自主可控的意义。</strong>不只是"国货 vs 外货"，而是关系到<strong>国家安全</strong>的根本问题。每当用一次国产工具、关注一次国产芯片新闻，都是在支持。</li>
+        <li><strong>学好基础知识。</strong>数学、物理、编程，是攻克"卡脖子"技术的<strong>基础工具</strong>。今天每一次认真听课、每一道题，都可能成为未来突破核心技术的种子。</li>
+        <li><strong>积极使用国产软硬件。</strong>课堂上学的 OpenHarmony、麒麟 OS、龙芯 CPU、北斗导航、国密算法，可以在生活实践中主动接触和使用。</li>
+        <li><strong>培养"敢为人先"的精神。</strong>核心技术不是买来的，是自己一行行代码、一个个芯片设计出来的。要敢于尝试别人没做过的事情。</li>
+        <li><strong>了解信息安全意识。</strong>不随意使用境外不明来源的物联设备；不在社交平台暴露敏感信息；保护好自己也保护国家数据。</li>
+        <li><strong>关注科技报道。</strong>了解国家科技战略和重大突破，建立对国家科技发展的信心和参与感。</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 29 课配套交互工具</footer>
+
+<script>
+// 无交互逻辑，内容为主
+</script>
+</body>
+</html>

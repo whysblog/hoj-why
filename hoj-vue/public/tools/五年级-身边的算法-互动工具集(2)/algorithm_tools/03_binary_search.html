@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二分法猜数 - 第10课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.range-display {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+}
+.range-bar {
+  position: relative;
+  height: 50px;
+  background: linear-gradient(to right, #E8EDF3 0%, #E8EDF3 100%);
+  border-radius: 25px;
+  margin: 14px 0;
+  overflow: hidden;
+}
+.range-active {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  border-radius: 25px;
+  transition: all 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+.range-mid {
+  position: absolute;
+  top: -8px;
+  width: 4px;
+  height: 66px;
+  background: var(--accent);
+  transition: left 0.5s ease;
+}
+.range-mid::after {
+  content: attr(data-val);
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+.guess-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 14px 0;
+}
+.guess-input input {
+  flex: 1;
+  font-size: 18px;
+  padding: 10px 14px;
+  text-align: center;
+}
+.attempt-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.attempt {
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.attempt.too-high { background: #FEE2E2; color: #C73E32; }
+.attempt.too-low { background: #DBEAFE; color: #1E40AF; }
+.attempt.correct { background: #D1FAE5; color: #065F46; }
+.compare-table {
+  margin: 16px 0;
+}
+.compare-table th { background: var(--primary); color: white; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🎯 二分法猜数游戏</h1>
+    <div class="subtitle">用算法的力量快速找到答案</div>
+    <span class="lesson-tag">第10课 · 猜数游戏有捷径</span>
+    <a href="index.html" class="back-btn">← 返回</a>
+  </div>
+  <div class="content">
+    <div class="intro">
+      <strong>游戏规则：</strong>计算机想了一个数，你来猜！每猜一次会告诉你猜的数比目标"大了"还是"小了"。试试用<strong>二分法</strong>——每次猜中间值，看能用多少次猜对。
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>猜数范围：</label>
+        <select id="rangeSelect">
+          <option value="100" selected>1 - 100</option>
+          <option value="1000">1 - 1000</option>
+          <option value="10000">1 - 10000</option>
+          <option value="100000">1 - 100000</option>
+        </select>
+      </div>
+      <button onclick="newGame()">🎲 新游戏</button>
+      <button class="btn-success" onclick="autoBinarySearch()">⚡ 二分法演示</button>
+    </div>
+
+    <div class="range-display">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="color:var(--primary-dark);">当前范围：<span id="rangeText">1 ~ 100</span></strong>
+        <span class="badge">建议中间值：<span id="midSuggest">50</span></span>
+      </div>
+      <div class="range-bar">
+        <div class="range-active" id="rangeActive" style="left:0%;width:100%;">范围内的数</div>
+        <div class="range-mid" id="rangeMid" data-val="50" style="left:50%;"></div>
+      </div>
+      <div class="range-labels">
+        <span id="lowLabel">1</span>
+        <span id="highLabel">100</span>
+      </div>
+    </div>
+
+    <div class="guess-input">
+      <input type="number" id="guessInput" placeholder="输入你猜的数..." onkeypress="if(event.key==='Enter')makeGuess()">
+      <button onclick="makeGuess()">🎯 猜！</button>
+      <button class="btn-secondary" onclick="useMid()">用中间值</button>
+    </div>
+
+    <div id="result"></div>
+
+    <div class="info-panel">
+      <strong>📊 猜测记录：</strong>
+      <div class="attempt-list" id="attemptList"></div>
+    </div>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>范围大小</th><th>顺序逐个猜（最多）</th><th>二分法（最多）</th><th>效率提升</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1 - 100</td><td>100 次</td><td>7 次</td><td>14倍</td></tr>
+        <tr><td>1 - 1,000</td><td>1,000 次</td><td>10 次</td><td>100倍</td></tr>
+        <tr><td>1 - 10,000</td><td>10,000 次</td><td>14 次</td><td>714倍</td></tr>
+        <tr><td>1 - 1,000,000</td><td>100万 次</td><td>20 次</td><td>5万倍</td></tr>
+        <tr><td>1 - 1亿</td><td>1亿 次（约3年）</td><td>27 次（约27秒）</td><td>极大</td></tr>
+      </tbody>
+    </table>
+
+    <div class="knowledge">
+      <h3>📚 算法小知识</h3>
+      <p><strong>二分法的核心思想：</strong>每次都把查找范围分成两半，根据比较结果选择目标数所在的那一半，迅速缩小范围。</p>
+      <p><strong>算法步骤：</strong></p>
+      <ul>
+        <li>第1步：取中间位置的数与目标数比较，相等则查找成功。</li>
+        <li>第2步：如果中间数大于目标数，就在前半部分继续查找；否则在后半部分查找。</li>
+        <li>第3步：重复以上两步，直到找到答案。</li>
+      </ul>
+      <p><strong>实际应用：</strong>查找监控视频中的事件、字典查单词、找通讯录联系人等都可以用二分法。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let target = 0, low = 1, high = 100, attempts = [], total = 100;
+
+function newGame() {
+  total = parseInt(document.getElementById('rangeSelect').value);
+  target = Math.floor(Math.random() * total) + 1;
+  low = 1;
+  high = total;
+  attempts = [];
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('attemptList').innerHTML = '';
+  document.getElementById('guessInput').disabled = false;
+  document.getElementById('guessInput').value = '';
+  updateDisplay();
+}
+
+function updateDisplay() {
+  document.getElementById('rangeText').textContent = `${low} ~ ${high}`;
+  document.getElementById('lowLabel').textContent = '1';
+  document.getElementById('highLabel').textContent = total;
+  const mid = Math.floor((low + high) / 2);
+  document.getElementById('midSuggest').textContent = mid;
+  const leftPct = ((low - 1) / (total - 1)) * 100;
+  const widthPct = ((high - low) / (total - 1)) * 100;
+  document.getElementById('rangeActive').style.left = leftPct + '%';
+  document.getElementById('rangeActive').style.width = widthPct + '%';
+  document.getElementById('rangeActive').textContent = `范围 ${high - low + 1} 个数`;
+  const midPct = ((mid - 1) / (total - 1)) * 100;
+  document.getElementById('rangeMid').style.left = midPct + '%';
+  document.getElementById('rangeMid').setAttribute('data-val', mid);
+}
+
+function useMid() {
+  document.getElementById('guessInput').value = Math.floor((low + high) / 2);
+}
+
+function makeGuess() {
+  const guess = parseInt(document.getElementById('guessInput').value);
+  if (isNaN(guess) || guess < 1 || guess > total) {
+    alert(`请输入 1 到 ${total} 之间的数`);
+    return;
+  }
+  attempts.push(guess);
+  const list = document.getElementById('attemptList');
+  const span = document.createElement('span');
+  span.className = 'attempt';
+  span.textContent = `第${attempts.length}次：${guess}`;
+  if (guess === target) {
+    span.classList.add('correct');
+    document.getElementById('result').innerHTML = `<div class="success-panel">🎉 恭喜！你用 <strong>${attempts.length}</strong> 次猜中了！目标数是 <strong>${target}</strong>。<br>用二分法最多需要 <strong>${Math.ceil(Math.log2(total))}</strong> 次。</div>`;
+    document.getElementById('guessInput').disabled = true;
+  } else if (guess > target) {
+    span.classList.add('too-high');
+    span.textContent += ' ⬇ 大了';
+    high = Math.min(high, guess - 1);
+  } else {
+    span.classList.add('too-low');
+    span.textContent += ' ⬆ 小了';
+    low = Math.max(low, guess + 1);
+  }
+  list.appendChild(span);
+  updateDisplay();
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').focus();
+}
+
+async function autoBinarySearch() {
+  newGame();
+  document.getElementById('guessInput').disabled = true;
+  while (low <= high) {
+    await new Promise(r => setTimeout(r, 900));
+    const mid = Math.floor((low + high) / 2);
+    document.getElementById('guessInput').value = mid;
+    await new Promise(r => setTimeout(r, 400));
+    makeGuess();
+    if (mid === target) break;
+  }
+}
+
+document.getElementById('rangeSelect').addEventListener('change', newGame);
+newGame();
+</script>
+</body>
+</html>

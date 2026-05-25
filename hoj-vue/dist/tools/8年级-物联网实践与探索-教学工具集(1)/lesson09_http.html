@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第9课 · 互联协议仍沿用 — HTTP 请求响应模拟器</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1f2937;
+    --line: #30363d;
+    --ink: #f0f6fc;
+    --ink-soft: #8b949e;
+    --green: #56d364;
+    --blue: #58a6ff;
+    --orange: #ff9c34;
+    --red: #f85149;
+    --purple: #d2a8ff;
+    --yellow: #f1e05a;
+    --shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image: linear-gradient(135deg, rgba(88,166,255,.04), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255,156,52,.06), transparent 40%);
+    min-height: 100vh;
+  }
+  .mono { font-family: "JetBrains Mono","SF Mono","Menlo","Consolas",monospace; }
+
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--blue); text-decoration: none; border-bottom: 1px dotted var(--blue); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--orange); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--orange); margin-right: 8px; font-size: 14px; }
+
+  /* 客户端-服务器布局 */
+  .client-server {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+    background: var(--panel); padding: 30px; border-radius: 12px; box-shadow: var(--shadow);
+    border: 1px solid var(--line); position: relative;
+  }
+  .endpoint { background: var(--panel-2); border-radius: 10px; padding: 24px; border: 1px solid var(--line); }
+  .endpoint h3 { font-size: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .endpoint .ic { font-size: 22px; }
+  .endpoint.client h3 { color: var(--blue); }
+  .endpoint.server h3 { color: var(--orange); }
+
+  .arrow-area {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 60px; height: 200px;
+  }
+  .arrow-line {
+    position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(180deg, var(--blue), var(--orange));
+    transform: translateX(-50%);
+  }
+  .pkt {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    background: var(--panel); padding: 5px 10px; border-radius: 99px;
+    border: 1px solid var(--blue); font-size: 11px; color: var(--blue);
+    white-space: nowrap; transition: all .8s ease-in-out;
+    z-index: 5;
+  }
+  .pkt.req { top: 0; }
+  .pkt.res { top: 100%; transform: translate(-50%, -100%); border-color: var(--orange); color: var(--orange); }
+  .pkt.flying-down { animation: flyDown 1.5s forwards; }
+  .pkt.flying-up { animation: flyUp 1.5s forwards; }
+  @keyframes flyDown { to { top: 100%; transform: translate(-50%, -100%); } }
+  @keyframes flyUp   { to { top: 0; transform: translate(-50%, 0); } }
+
+  .field-group { display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; color: var(--ink-soft); letter-spacing: 1.5px; text-transform: uppercase; }
+  .field input, .field select {
+    padding: 10px 12px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; font-size: 13px; font-family: var(--font, inherit);
+  }
+  .field input.mono { font-family: "JetBrains Mono", monospace; }
+  .field input:focus, .field select:focus { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+  .send-btn {
+    margin-top: 8px; padding: 12px 18px; background: linear-gradient(135deg, var(--blue), #4990d3);
+    color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;
+    font-weight: 700; letter-spacing: 1px; transition: transform .15s; font-family: inherit;
+  }
+  .send-btn:hover { transform: translateY(-1px); }
+  .send-btn:disabled { opacity: .4; cursor: wait; }
+
+  .req-preview, .res-preview {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px; font-size: 12px; line-height: 1.7; min-height: 80px;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+    font-family: "JetBrains Mono","Consolas",monospace;
+  }
+  .req-preview { color: var(--blue); }
+  .res-preview { color: var(--green); }
+  .res-preview .key { color: var(--purple); }
+  .res-preview .str { color: var(--yellow); }
+  .res-preview .num { color: var(--orange); }
+
+  .status-bar {
+    margin-top: 14px; padding: 10px 14px; background: var(--bg);
+    border-radius: 4px; font-size: 12px; color: var(--ink-soft);
+  }
+  .status-bar.ok { border-left: 3px solid var(--green); color: var(--green); }
+  .status-bar.err { border-left: 3px solid var(--red); color: var(--red); }
+  .status-bar.pending { border-left: 3px solid var(--blue); color: var(--blue); }
+
+  /* 解析结果区 */
+  .parse-display {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px;
+    box-shadow: var(--shadow); margin-top: 16px;
+  }
+  .parse-display h3 { font-size: 16px; color: var(--orange); margin-bottom: 14px; }
+  .oled {
+    background: #050b15; color: var(--green);
+    padding: 20px 24px; border-radius: 6px;
+    font-family: "JetBrains Mono", monospace; font-size: 18px;
+    border: 1px solid #1a2533; min-height: 90px;
+    box-shadow: inset 0 0 30px rgba(86,211,100,.05);
+  }
+  .oled::before { content: "📺 主控板OLED显示屏"; display: block; font-size: 10px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 8px; }
+
+  /* 局限性 */
+  .limit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+  .limit-card {
+    background: var(--panel); padding: 22px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .limit-card h4 { font-size: 15px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); margin-bottom: 12px; }
+  .limit-card.bad h4 { color: var(--red); }
+  .limit-card.good h4 { color: var(--green); }
+  .limit-card p { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  .limit-card .key { display: inline-block; padding: 3px 10px; background: var(--panel-2); border-radius: 4px; font-size: 11px; margin: 4px 4px 0 0; color: var(--ink); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .client-server { grid-template-columns: 1fr; }
+    .arrow-area { display: none; }
+    .limit-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 9 课</span>互联协议仍沿用</h1>
+  <p class="lead">物联网中的数据不仅有传感器采集的数据，还有互联网中的数据。本工具模拟物联设备通过 HTTP 协议调用 API 获取互联网数据的完整流程：发起请求 → 获取 JSON → 解析提取 → 显示在主控板上。</p>
+</header>
+
+<main>
+
+  <!-- HTTP 模拟器 -->
+  <section class="section">
+    <div class="section-title">一、HTTP 请求-响应模拟器</div>
+    <div class="client-server">
+      <div class="arrow-area">
+        <div class="arrow-line"></div>
+        <div id="pkt-req" class="pkt req">📦 请求包</div>
+        <div id="pkt-res" class="pkt res">📦 响应包</div>
+      </div>
+
+      <!-- 客户端 -->
+      <div class="endpoint client">
+        <h3><span class="ic">📟</span>客户端（主控板 / 浏览器）</h3>
+        <div class="field-group">
+          <div class="field">
+            <label>请求方法</label>
+            <select id="method">
+              <option value="GET">GET（获取数据，最常用）</option>
+              <option value="POST">POST（提交数据）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>API 网址（URL）</label>
+            <input class="mono" id="url" value="https://api.weather.example.com/now?city=shanghai" />
+          </div>
+          <div class="field">
+            <label>请求头（Headers）</label>
+            <input class="mono" id="headers" value="Accept: application/json" />
+          </div>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="sendRequest()">▶ 发送请求</button>
+        <div style="margin-top:14px;">
+          <label style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">请求报文预览</label>
+          <div class="req-preview" id="reqPreview">（点击"发送请求"按钮查看）</div>
+        </div>
+      </div>
+
+      <!-- 服务器 -->
+      <div class="endpoint server">
+        <h3><span class="ic">🖥</span>服务器</h3>
+        <div class="field">
+          <label>选择模拟 API</label>
+          <select id="apiChoice" onchange="changeApi()">
+            <option value="weather">🌤 天气预报 API</option>
+            <option value="time">⏰ 当前时间 API</option>
+            <option value="ip">🌐 IP 归属地 API</option>
+            <option value="error">⚠ 模拟错误 (404)</option>
+          </select>
+        </div>
+        <div class="field" style="margin-top:14px;">
+          <label>状态码</label>
+          <div id="statusCode" style="padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink-soft);font-family:monospace;">等待请求...</div>
+        </div>
+        <div style="margin-top:14px;">
+          <label style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">响应报文预览</label>
+          <div class="res-preview" id="resPreview">（等待请求到达）</div>
+        </div>
+        <div class="status-bar pending" id="statusBar">⌛ 待机中</div>
+      </div>
+    </div>
+
+    <!-- 解析结果 -->
+    <div class="parse-display">
+      <h3>📊 数据解析过程（学生终端展示）</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;line-height:1.7;">
+        服务器返回的 JSON 字符串需要用 <code class="mono" style="background:var(--bg);padding:1px 6px;border-radius:3px;color:var(--green)">ujson.loads()</code> 解析为字典对象，再提取需要的字段，最终通过 <code class="mono" style="background:var(--bg);padding:1px 6px;border-radius:3px;color:var(--green)">oled.print()</code> 在主控板显示屏显示。
+      </p>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:14px;align-items:center;">
+        <div>
+          <div style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;margin-bottom:6px;">① 接收到字符串</div>
+          <div class="req-preview mono" id="rawString" style="min-height:100px;">-</div>
+        </div>
+        <div style="text-align:center;color:var(--ink-soft);font-size:24px;">→</div>
+        <div>
+          <div style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;margin-bottom:6px;">② JSON 解析为字典</div>
+          <div class="res-preview mono" id="parsedDict" style="min-height:100px;">-</div>
+        </div>
+        <div style="text-align:center;color:var(--ink-soft);font-size:24px;">→</div>
+        <div>
+          <div style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;margin-bottom:6px;">③ OLED显示提取结果</div>
+          <div class="oled" id="oledFinal">　</div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;background:var(--bg);padding:16px;border-radius:6px;">
+        <div style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;margin-bottom:8px;">💻 对应的 MicroPython 代码</div>
+        <pre class="mono" id="codeBlock" style="color:var(--green);font-size:12px;line-height:1.7;">
+import urequests, ujson
+from educore import oled
+
+wifi.connect("网络名称", "密码")
+url = "https://api.weather.example.com/now?city=shanghai"
+response = urequests.get(url)
+data = ujson.loads(response.text)
+oled.print(data["temp"])</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- HTTP 在物联网中的局限性 -->
+  <section class="section">
+    <div class="section-title">二、HTTP 在物联网中的局限性</div>
+    <p style="color:var(--ink-soft);font-size:14px;line-height:1.7;">
+      HTTP 在传统互联网中表现出色，但在物联网场景下并不完全适合。物联设备为了实时响应远程控制指令，必须不断发送请求询问服务器是否有新指令，这种模式存在很多不足。
+    </p>
+    <div class="limit-grid">
+      <div class="limit-card bad">
+        <h4>❌ HTTP 用于物联网的局限</h4>
+        <p>HTTP 主要面向客户端/服务器模式，<strong>客户端必须主动发起请求</strong>。物联设备为了实时获取指令，需要持续向服务器轮询。</p>
+        <div style="margin-top:10px;">
+          <span class="key">⚡ 能耗高</span>
+          <span class="key">📉 服务器压力大</span>
+          <span class="key">🐌 实时性差</span>
+          <span class="key">📦 报文较重</span>
+        </div>
+      </div>
+      <div class="limit-card good">
+        <h4>✅ 物联场景的协议要求</h4>
+        <p>物联网协议需要满足以下特性，以适应海量、低功耗、实时的物联设备群。</p>
+        <div style="margin-top:10px;">
+          <span class="key">🔋 低功耗</span>
+          <span class="key">📡 低带宽</span>
+          <span class="key">⏱ 低延时</span>
+          <span class="key">🔌 兼容多种设备</span>
+          <span class="key">🛡 高可靠性</span>
+        </div>
+        <p style="margin-top:14px;font-size:12px;color:var(--blue);">→ 这些需求催生了 MQTT 等专门的物联协议（详见<a href="lesson10_mqtt.html" style="color:var(--orange);">第10课工具</a>）</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 9 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+var apis = {
+  weather: {
+    url: "https://api.weather.example.com/now?city=shanghai",
+    status: "200 OK",
+    response: {
+      "code": 200,
+      "city": "上海",
+      "temp": 24,
+      "weather": "多云转晴",
+      "humidity": 68,
+      "wind": "东南风 3级",
+      "updateTime": "2024-07-11 19:58:30"
+    },
+    extract: {
+      key: "temp",
+      label: "气温"
+    },
+    extractMore: [["温度", "temp", "℃"], ["天气", "weather", ""], ["湿度", "humidity", "%"]],
+    code: "import urequests, ujson\nfrom educore import oled\n\nwifi.connect(\"\u7F51\u7EDC\u540D\u79F0\", \"\u5BC6\u7801\")\nurl = \"https://api.weather.example.com/now?city=shanghai\"\nresponse = urequests.get(url)\ndata = ujson.loads(response.text)\noled.print(\"\u6E29\u5EA6:\" + str(data[\"temp\"]) + \"\u2103\")"
+  },
+  time: {
+    url: "https://api.time.example.com/now",
+    status: "200 OK",
+    response: {
+      "sysTime1": "20240711195830",
+      "sysTime2": "2024-07-11 19:58:30",
+      "weekday": 4,
+      "timezone": "+08:00"
+    },
+    extract: {
+      key: "sysTime2",
+      label: "时间"
+    },
+    extractMore: [["时间", "sysTime2", ""]],
+    code: "import urequests, ujson\nfrom educore import oled\n\nresponse = urequests.get(\"https://api.time.example.com/now\")\ndata = ujson.loads(response.text)\noled.print(data[\"sysTime2\"])"
+  },
+  ip: {
+    url: "https://api.ip-info.example.com/locate",
+    status: "200 OK",
+    response: {
+      "ip": "183.45.78.92",
+      "country": "中国",
+      "province": "上海",
+      "city": "上海市",
+      "isp": "中国电信"
+    },
+    extract: {
+      key: "city",
+      label: "归属地"
+    },
+    extractMore: [["城市", "city", ""], ["运营商", "isp", ""]],
+    code: "import urequests, ujson\nresponse = urequests.get(\"https://api.ip-info.example.com/locate\")\ndata = ujson.loads(response.text)\noled.print(data[\"city\"])"
+  },
+  error: {
+    url: "https://api.broken.example.com/missing",
+    status: "404 Not Found",
+    response: {
+      "error": "Resource Not Found",
+      "code": 404
+    },
+    extract: null,
+    extractMore: [],
+    code: "# \u670D\u52A1\u5668\u8FD4\u56DE 404 \u9519\u8BEF\n# response.status_code \u4E0D\u4E3A 200\uFF0C\u9700\u8981\u505A\u9519\u8BEF\u5904\u7406\nif response.status_code == 200:\n    data = ujson.loads(response.text)\nelse:\n    oled.print(\"API \u8C03\u7528\u5931\u8D25\")"
+  }
+};
+function changeApi() {
+  var choice = document.getElementById('apiChoice').value;
+  document.getElementById('url').value = apis[choice].url;
+}
+function syntaxHighlight(json) {
+  return JSON.stringify(json, null, 2).replace(/(&)/g, '&amp;').replace(/("[\w\u4e00-\u9fa5\-_:]+"):/g, '<span class="key">$1</span>:').replace(/: ("[^"]*")/g, ': <span class="str">$1</span>').replace(/: (true|false|null)/g, ': <span class="num">$1</span>').replace(/: (-?\d+\.?\d*)/g, ': <span class="num">$1</span>');
+}
+function sendRequest() {
+  return _sendRequest.apply(this, arguments);
+}
+function _sendRequest() {
+  _sendRequest = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
+    var btn, method, url, headers, choice, api, reqText, reqPkt, resPkt, lines;
+    return _regenerator().w(function (_context) {
+      while (1) switch (_context.n) {
+        case 0:
+          btn = document.getElementById('sendBtn');
+          btn.disabled = true;
+          btn.textContent = "⏳ 发送中...";
+          method = document.getElementById('method').value;
+          url = document.getElementById('url').value;
+          headers = document.getElementById('headers').value;
+          choice = document.getElementById('apiChoice').value;
+          api = apis[choice]; // 1. 显示请求报文
+          reqText = method + " " + url + " HTTP/1.1\nHost: " + (url.split('/')[2] || 'api.example.com') + "\n" + headers + "\nUser-Agent: ESP32-IoT-Device/1.0\nConnection: close";
+          document.getElementById('reqPreview').textContent = reqText;
+          document.getElementById('statusCode').textContent = "🔵 处理中...";
+          document.getElementById('statusCode').style.color = "var(--blue)";
+          document.getElementById('statusBar').className = "status-bar pending";
+          document.getElementById('statusBar').textContent = "🔵 请求已发出，等待服务器响应...";
+
+          // 2. 请求包动画
+          reqPkt = document.getElementById('pkt-req');
+          reqPkt.classList.remove('flying-down');
+          void reqPkt.offsetWidth;
+          reqPkt.classList.add('flying-down');
+          _context.n = 1;
+          return new Promise(function (r) {
+            return setTimeout(r, 1500);
+          });
+        case 1:
+          // 3. 服务器响应
+          document.getElementById('statusCode').textContent = api.status;
+          document.getElementById('statusCode').style.color = api.status.startsWith("2") ? "var(--green)" : "var(--red)";
+          document.getElementById('resPreview').innerHTML = syntaxHighlight(api.response);
+          _context.n = 2;
+          return new Promise(function (r) {
+            return setTimeout(r, 300);
+          });
+        case 2:
+          // 4. 响应包动画
+          resPkt = document.getElementById('pkt-res');
+          resPkt.classList.remove('flying-up');
+          void resPkt.offsetWidth;
+          resPkt.classList.add('flying-up');
+          _context.n = 3;
+          return new Promise(function (r) {
+            return setTimeout(r, 1500);
+          });
+        case 3:
+          // 5. 解析展示
+          document.getElementById('rawString').textContent = JSON.stringify(api.response);
+          document.getElementById('parsedDict').innerHTML = syntaxHighlight(api.response);
+          if (api.extract) {
+            lines = api.extractMore.map(function (_ref) {
+              var label = _ref[0],
+                key = _ref[1],
+                unit = _ref[2];
+              return label + ": " + api.response[key] + unit;
+            }).join('\n');
+            document.getElementById('oledFinal').innerHTML = lines.replace(/\n/g, '<br>');
+            document.getElementById('statusBar').className = "status-bar ok";
+            document.getElementById('statusBar').textContent = "✅ 请求成功，数据已显示在 OLED";
+          } else {
+            document.getElementById('oledFinal').innerHTML = "<span style='color:var(--red);'>API 调用失败 ✗</span>";
+            document.getElementById('statusBar').className = "status-bar err";
+            document.getElementById('statusBar').textContent = "❌ 请求失败：" + api.status;
+          }
+
+          // 6. 更新代码
+          document.getElementById('codeBlock').textContent = api.code;
+          btn.disabled = false;
+          btn.textContent = "▶ 重新发送";
+        case 4:
+          return _context.a(2);
+      }
+    }, _callee);
+  }));
+  return _sendRequest.apply(this, arguments);
+}
+
+</script>
+</body>
+</html>

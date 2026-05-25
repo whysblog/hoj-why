@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第6课 · 数据传输方式多 — 物联协议对比器</title>
+<style>
+  :root {
+    --bg: #0f1822;
+    --panel: #1a2734;
+    --panel-2: #243343;
+    --line: #2f4055;
+    --ink: #e8edf3;
+    --ink-soft: #94a3b8;
+    --accent: #f4a437;
+    --accent-2: #5dc1f5;
+    --tech: #4ec9b0;
+    --warm: #e76f51;
+    --shadow: 0 6px 24px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(244,164,55,.06), transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(93,193,245,.06), transparent 50%);
+    min-height: 100vh;
+  }
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--accent); margin-right: 8px; font-size: 14px; }
+
+  /* --- 共享单车流程 --- */
+  .scenario { background: var(--panel); padding: 28px; border-radius: 10px; box-shadow: var(--shadow); border:1px solid var(--line); }
+  .scenario h3 { font-size: 16px; margin-bottom: 16px; color: var(--accent); }
+  .flow-diagram { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 20px; }
+  .node { background: var(--panel-2); border:1px solid var(--line); border-radius: 8px; padding: 18px 14px; text-align: center; transition: all .25s; cursor: pointer; }
+  .node:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .node .ic { font-size: 30px; }
+  .node .lbl { font-size: 14px; font-weight: 700; margin-top: 8px; }
+  .node .sub { font-size: 11px; color: var(--ink-soft); margin-top: 4px; line-height: 1.4; }
+  .flow-arrows { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; padding: 14px 18px; background: rgba(244,164,55,.08); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 12px; line-height: 1.6; }
+  .flow-arrows .a { color: var(--accent-2); }
+  .flow-arrows code { background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 3px; font-family:"JetBrains Mono","Consolas",monospace; color: var(--tech); }
+
+  /* --- 分类筛选器 --- */
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .filter-bar label { font-size: 13px; color: var(--ink-soft); margin-right: 6px; align-self: center; }
+  .pill {
+    padding: 8px 16px; border-radius: 999px; background: var(--panel-2); color: var(--ink-soft);
+    border: 1px solid var(--line); cursor: pointer; font-size: 13px; transition: all .2s; user-select: none;
+  }
+  .pill:hover { border-color: var(--accent); }
+  .pill.active { background: var(--accent); color: #1a2734; border-color: var(--accent); font-weight: 700; }
+  .pill.active.tech { background: var(--accent-2); }
+
+  /* --- 协议表 --- */
+  .protocol-table {
+    background: var(--panel); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow);
+    border:1px solid var(--line);
+  }
+  .pt-head, .pt-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr 2fr; padding: 14px 18px; align-items: center; gap:12px; }
+  .pt-head { background: var(--panel-2); font-size: 12px; font-weight: 700; color: var(--ink-soft); letter-spacing: 1.5px; border-bottom: 2px solid var(--accent); }
+  .pt-row { border-bottom: 1px solid var(--line); font-size: 13px; transition: background .15s; cursor: pointer; }
+  .pt-row:hover { background: var(--panel-2); }
+  .pt-row:last-child { border-bottom: none; }
+  .pt-row.hidden { display: none; }
+  .pt-name { font-weight: 700; color: var(--accent-2); font-size: 15px; }
+  .pt-name small { display: block; color: var(--ink-soft); font-weight: normal; font-size: 11px; margin-top: 2px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: .5px; }
+  .b-wired { background: rgba(231,111,81,.2); color: #f0a18a; border: 1px solid rgba(231,111,81,.4); }
+  .b-wireless { background: rgba(93,193,245,.2); color: #8dd5f8; border: 1px solid rgba(93,193,245,.4); }
+  .b-near { background: rgba(78,201,176,.2); color: #80dac6; border: 1px solid rgba(78,201,176,.4); }
+  .b-far  { background: rgba(244,164,55,.2); color: #f9c477; border: 1px solid rgba(244,164,55,.4); }
+
+  /* --- 距离条 --- */
+  .range-bar { position: relative; background: rgba(255,255,255,.05); border-radius: 99px; height: 8px; overflow: visible; }
+  .range-fill { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, var(--tech), var(--accent)); border-radius: 99px; }
+  .range-num { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+
+  /* --- 选择器 --- */
+  .selector {
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+    padding: 28px; border-radius: 10px; border:1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+  .selector-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--ink-soft); letter-spacing: 1px; }
+  .field select {
+    padding: 10px 12px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; font-size: 14px; font-family: inherit;
+    cursor: pointer;
+  }
+  .field select:focus { outline: 2px solid var(--accent); }
+  .recommendation { margin-top: 22px; padding: 20px 22px; background: rgba(78,201,176,.08); border-left: 4px solid var(--tech); border-radius: 4px; font-size: 14px; line-height: 1.8; }
+  .recommendation strong { color: var(--tech); }
+  .recommendation .reco-list { margin-top: 6px; }
+  .reco-tag { display: inline-block; margin: 4px 6px 0 0; padding: 4px 12px; background: var(--tech); color: #0f1822; font-weight: 700; border-radius: 4px; font-size: 13px; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .flow-diagram, .selector-form { grid-template-columns: 1fr; }
+    .pt-head { display: none; }
+    .pt-row { grid-template-columns: 1fr 1fr; gap: 8px; padding: 14px; }
+    .pt-row > div::before { content: attr(data-label) ": "; color: var(--ink-soft); font-size: 11px; display: block; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 6 课</span>数据传输方式多</h1>
+  <p class="lead">物联网中的数据传输方式既有传统的互联网通信方式，也有适应低功耗、大规模连接的新型通信方式。本工具帮助你认识传输方式分类（按介质 / 按距离），对比常见物联协议，并根据应用场景做出合理选择。</p>
+</header>
+
+<main>
+
+  <!-- 共享单车场景 -->
+  <section class="section">
+    <div class="section-title">一、共享单车物联系统中的数据流转</div>
+    <div class="scenario">
+      <h3>从扫码到开锁，数据是怎样"旅行"的？</h3>
+      <div class="flow-diagram">
+        <div class="node">
+          <div class="ic">🚲</div>
+          <div class="lbl">共享单车</div>
+          <div class="sub">车载位置传感器、车锁、蓝牙模块</div>
+        </div>
+        <div class="node">
+          <div class="ic">☁️</div>
+          <div class="lbl">云端服务器</div>
+          <div class="sub">汇集所有车辆数据、处理用户请求</div>
+        </div>
+        <div class="node">
+          <div class="ic">📱</div>
+          <div class="lbl">用户手机APP</div>
+          <div class="sub">显示附近车辆、扫码、支付</div>
+        </div>
+      </div>
+      <div class="flow-arrows">
+        <div><span class="a">①  车 → 服务器</span><br>NB-IoT 接入互联网，<code>MQTT</code> 上报实时位置</div>
+        <div><span class="a">②  手机 → 服务器</span><br>移动通信网络，<code>HTTP</code> 上传用户位置 / 开锁请求</div>
+        <div><span class="a">③  服务器 → 车</span><br><code>MQTT</code> 远程下发开锁命令</div>
+        <div><span class="a">④  手机 ↔ 车（辅助开锁）</span><br><code>蓝牙</code> 近距离配对，确保操作真实有效</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 传输方式分类 -->
+  <section class="section">
+    <div class="section-title">二、常见物联协议对比（点击下方分类筛选）</div>
+    
+    <div class="filter-bar">
+      <label>按介质：</label>
+      <span class="pill active" data-filter="medium" data-value="all">全部</span>
+      <span class="pill" data-filter="medium" data-value="wired">有线传输</span>
+      <span class="pill" data-filter="medium" data-value="wireless">无线传输</span>
+    </div>
+    <div class="filter-bar">
+      <label>按距离：</label>
+      <span class="pill active tech" data-filter="distance" data-value="all">全部</span>
+      <span class="pill tech" data-filter="distance" data-value="near">近距离通信</span>
+      <span class="pill tech" data-filter="distance" data-value="far">远距离通信</span>
+    </div>
+
+    <div class="protocol-table">
+      <div class="pt-head">
+        <div>协议 / 技术</div>
+        <div>介质</div>
+        <div>距离</div>
+        <div>典型范围</div>
+        <div>速率</div>
+        <div>典型应用</div>
+      </div>
+      <div id="protoList"></div>
+    </div>
+  </section>
+
+  <!-- 场景选择器 -->
+  <section class="section">
+    <div class="section-title">三、根据场景选择合适的协议</div>
+    <div class="selector">
+      <p style="color:var(--ink-soft);font-size:13px;margin-bottom:16px;line-height:1.7;">"现实中没有哪一种通信技术能满足所有的通信需求。"<br>请根据实际需求设置以下参数，工具会为你推荐合适的传输方式。</p>
+      <div class="selector-form">
+        <div class="field">
+          <label>距离需求</label>
+          <select id="opt-distance">
+            <option value="contact">接触式（≤10cm）</option>
+            <option value="few-meters" selected>几米内</option>
+            <option value="dozens">几十米</option>
+            <option value="km">几公里</option>
+            <option value="long">数十公里</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>功耗要求</label>
+          <select id="opt-power">
+            <option value="any">不敏感</option>
+            <option value="low" selected>电池供电（低功耗）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>速率需求</label>
+          <select id="opt-speed">
+            <option value="low" selected>低（仅传少量数据）</option>
+            <option value="mid">中等（语音/控制）</option>
+            <option value="high">高（视频/大文件）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>是否需要移动</label>
+          <select id="opt-mobile">
+            <option value="no">固定位置</option>
+            <option value="yes" selected>需要移动</option>
+          </select>
+        </div>
+      </div>
+      <div class="recommendation" id="recoBox">
+        <strong>💡 推荐方案 →</strong>
+        <div class="reco-list" id="recoList"></div>
+        <div id="recoReason" style="margin-top:10px;color:var(--ink-soft);font-size:13px;"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 6 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+var protocols = [{
+  name: "以太网",
+  en: "Ethernet",
+  medium: "wired",
+  distance: "near",
+  range: "100m",
+  rangePct: 5,
+  speed: "≤10 Gbps",
+  apps: "路由器互联、办公网络、机柜服务器"
+}, {
+  name: "USB",
+  en: "Universal Serial Bus",
+  medium: "wired",
+  distance: "near",
+  range: "≤5m",
+  rangePct: 1,
+  speed: "480Mb~40Gb/s",
+  apps: "主控板与电脑连接、烧录程序"
+}, {
+  name: "串行通信",
+  en: "Serial(UART)",
+  medium: "wired",
+  distance: "near",
+  range: "≤15m",
+  rangePct: 1,
+  speed: "几Kb~几Mb/s",
+  apps: "传感器与主控板内部、调试日志输出"
+}, {
+  name: "RFID",
+  en: "Radio Frequency ID",
+  medium: "wireless",
+  distance: "near",
+  range: "几cm~几m",
+  rangePct: 2,
+  speed: "无固定值",
+  apps: "门禁卡、ETC高速收费、物品标识"
+}, {
+  name: "NFC",
+  en: "Near Field Communication",
+  medium: "wireless",
+  distance: "near",
+  range: "≤10cm",
+  rangePct: 0,
+  speed: "≤424kb/s",
+  apps: "手机一碰传、刷卡支付、公交卡"
+}, {
+  name: "蓝牙",
+  en: "Bluetooth",
+  medium: "wireless",
+  distance: "near",
+  range: "10~300m",
+  rangePct: 6,
+  speed: "≤2 Mb/s",
+  apps: "耳机、音箱、翻页笔、智能手环"
+}, {
+  name: "ZigBee",
+  en: "蜂舞协议",
+  medium: "wireless",
+  distance: "near",
+  range: "10~75m",
+  rangePct: 5,
+  speed: "≤250 Kb/s",
+  apps: "智能家居灯光、低功耗组网"
+}, {
+  name: "Wi-Fi",
+  en: "无线局域网",
+  medium: "wireless",
+  distance: "near",
+  range: "几十米~百米",
+  rangePct: 7,
+  speed: "≤9.6 Gb/s (Wi-Fi 6)",
+  apps: "家庭/办公无线网络、视频流"
+}, {
+  name: "NB-IoT",
+  en: "窄带物联网",
+  medium: "wireless",
+  distance: "far",
+  range: "几公里~几十公里",
+  rangePct: 35,
+  speed: "≤250 Kb/s",
+  apps: "共享单车、抄表、智能井盖（低功耗广覆盖）"
+}, {
+  name: "LoRa",
+  en: "远距离无线电",
+  medium: "wireless",
+  distance: "far",
+  range: "几公里~十几公里",
+  rangePct: 30,
+  speed: "≤50 Kb/s",
+  apps: "农业监测、远程抄表、物流追踪"
+}, {
+  name: "4G/5G",
+  en: "移动通信",
+  medium: "wireless",
+  distance: "far",
+  range: "几公里~几十公里",
+  rangePct: 40,
+  speed: "4G≤1Gb/s · 5G≤10Gb/s",
+  apps: "手机、车联网、视频直播"
+}, {
+  name: "光纤",
+  en: "Optical Fiber",
+  medium: "wired",
+  distance: "far",
+  range: "≥100km",
+  rangePct: 90,
+  speed: "≤Tb/s 级别",
+  apps: "骨干网、城域网、长距离传输"
+}];
+
+// === 渲染表格 ===
+var list = document.getElementById('protoList');
+protocols.forEach(function (p) {
+  var row = document.createElement('div');
+  row.className = 'pt-row';
+  row.dataset.medium = p.medium;
+  row.dataset.distance = p.distance;
+  row.innerHTML = "\n    <div class=\"pt-name\" data-label=\"\u534F\u8BAE\">" + p.name + "<small>" + p.en + "</small></div>\n    <div data-label=\"\u4ECB\u8D28\"><span class=\"badge " + (p.medium === 'wired' ? 'b-wired' : 'b-wireless') + "\">" + (p.medium === 'wired' ? '有线' : '无线') + "</span></div>\n    <div data-label=\"\u8DDD\u79BB\"><span class=\"badge " + (p.distance === 'near' ? 'b-near' : 'b-far') + "\">" + (p.distance === 'near' ? '近距离' : '远距离') + "</span></div>\n    <div data-label=\"\u8303\u56F4\">\n      <div class=\"range-num\">" + p.range + "</div>\n      <div class=\"range-bar\"><div class=\"range-fill\" style=\"width:" + p.rangePct + "%\"></div></div>\n    </div>\n    <div data-label=\"\u901F\u7387\" style=\"font-size:12px;\">" + p.speed + "</div>\n    <div data-label=\"\u5E94\u7528\" style=\"color:var(--ink-soft);font-size:12px;line-height:1.5;\">" + p.apps + "</div>\n  ";
+  list.appendChild(row);
+});
+
+// === 筛选 ===
+var filterMedium = 'all',
+  filterDist = 'all';
+document.querySelectorAll('.pill').forEach(function (p) {
+  p.addEventListener('click', function () {
+    var filter = p.dataset.filter,
+      value = p.dataset.value;
+    document.querySelectorAll(".pill[data-filter=\"" + filter + "\"]").forEach(function (x) {
+      return x.classList.remove('active');
+    });
+    p.classList.add('active');
+    if (filter === 'medium') filterMedium = value;
+    if (filter === 'distance') filterDist = value;
+    document.querySelectorAll('.pt-row').forEach(function (row) {
+      var okM = filterMedium === 'all' || row.dataset.medium === filterMedium;
+      var okD = filterDist === 'all' || row.dataset.distance === filterDist;
+      row.classList.toggle('hidden', !(okM && okD));
+    });
+  });
+});
+
+// === 智能推荐 ===
+function recommend() {
+  var dist = document.getElementById('opt-distance').value;
+  var power = document.getElementById('opt-power').value;
+  var speed = document.getElementById('opt-speed').value;
+  var mobile = document.getElementById('opt-mobile').value;
+  var recs = [];
+  var reason = '';
+  if (dist === 'contact') {
+    recs.push('NFC');
+    reason = '极近距离（≤10cm）适合 NFC 一碰传，常用于刷卡支付、设备配对。';
+  } else if (dist === 'few-meters') {
+    if (power === 'low' && speed === 'low') {
+      recs.push('蓝牙(BLE)', 'RFID', 'ZigBee');
+      reason = '几米范围 + 低功耗，适合蓝牙低功耗（BLE）、RFID、ZigBee。';
+    } else if (speed === 'high') {
+      recs.push('Wi-Fi', '蓝牙');
+      reason = '几米范围 + 较高速率，Wi-Fi/蓝牙较为合适。';
+    } else {
+      recs.push('蓝牙', 'Wi-Fi');
+      reason = '几米范围、综合考虑，蓝牙或 Wi-Fi 都是常见选择。';
+    }
+  } else if (dist === 'dozens') {
+    if (power === 'low') {
+      recs.push('ZigBee', '蓝牙(扩展)');
+      reason = '几十米 + 低功耗，ZigBee 是低功耗组网的优选。';
+    } else {
+      recs.push('Wi-Fi', '蓝牙 5.0');
+      reason = '几十米范围，Wi-Fi 速率高，蓝牙 5.0 距离更远。';
+    }
+  } else if (dist === 'km') {
+    if (power === 'low' && speed === 'low') {
+      recs.push('NB-IoT', 'LoRa');
+      reason = '几公里 + 低功耗 + 低速率，NB-IoT/LoRa 是物联网领域典型选择，可"一节电池用数年"。';
+    } else {
+      recs.push('4G LTE', '5G');
+      reason = '几公里，需要较高速率，移动通信网络（4G/5G）合适。';
+    }
+  } else if (dist === 'long') {
+    if (speed === 'low') {
+      recs.push('NB-IoT', 'LoRa');
+      reason = '数十公里 + 低速率，NB-IoT 借助现有蜂窝基础设施可实现广覆盖。';
+    } else {
+      recs.push('4G/5G', '光纤');
+      reason = '数十公里 + 高速，骨干使用光纤，移动接入用 4G/5G。';
+    }
+  }
+  if (mobile === 'no' && (dist === 'few-meters' || dist === 'dozens')) {
+    recs.unshift('以太网（如条件允许）');
+    reason = '【固定位置】优先考虑以太网（有线）：稳定、不易受干扰。' + reason;
+  }
+  document.getElementById('recoList').innerHTML = recs.map(function (r) {
+    return "<span class=\"reco-tag\">" + r + "</span>";
+  }).join('');
+  document.getElementById('recoReason').textContent = reason;
+}
+['opt-distance', 'opt-power', 'opt-speed', 'opt-mobile'].forEach(function (id) {
+  document.getElementById(id).addEventListener('change', recommend);
+});
+recommend();
+
+</script>
+</body>
+</html>

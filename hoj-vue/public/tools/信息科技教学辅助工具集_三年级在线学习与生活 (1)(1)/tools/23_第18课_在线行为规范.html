@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>在线行为规范 — 第18课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3ff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#5b21b6,#7c3aed);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#5b21b6;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#7c3aed;color:white;border-color:#5b21b6}
+.intro{background:linear-gradient(135deg,#ede9fe,#ddd6fe);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#5b21b6;margin-bottom:8px;font-size:20px}.intro p{color:#4c1d95;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:42px}.tool-card h4{color:#5b21b6;margin:8px 0 4px;font-size:14px}.tool-card p{color:#4c1d95;font-size:12px;line-height:1.5}
+
+/* 时间规划 */
+.time-planner{background:white;padding:18px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.time-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.time-row label{font-size:14px;color:#475569;min-width:80px}
+.time-row input[type=range]{flex:1}
+.time-row .val{font-weight:700;color:#5b21b6;font-size:15px;min-width:60px;text-align:right}
+.time-vis{position:relative;height:30px;background:#ede9fe;border-radius:6px;display:flex;overflow:hidden;margin-top:14px}
+.time-seg{height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:600;transition:width .3s}
+.recommend-box{margin-top:14px;padding:14px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-radius:8px;color:#15803d;font-size:13px;line-height:1.7}
+.recommend-box.warn{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e}
+.recommend-box.bad{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#b91c1c}
+
+/* 隐私自查 */
+.privacy-check{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.privacy-check{grid-template-columns:1fr}}
+.privacy-item{background:white;padding:14px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer;transition:all .2s;border:2px solid transparent}
+.privacy-item:hover{transform:translateY(-2px);border-color:#7c3aed}
+.privacy-item.dangerous{border-color:#ef4444}
+.privacy-item .label{font-weight:600;font-size:14px;margin-bottom:6px}
+.privacy-item .desc{font-size:12px;color:#475569;line-height:1.5}
+.danger-stamp{display:none;color:#b91c1c;font-weight:700;font-size:13px;margin-top:6px}
+.privacy-item.dangerous .danger-stamp{display:block}
+
+/* 转发判断 */
+.forward-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.forward-list{grid-template-columns:1fr}}
+.forward-card{background:white;border-radius:10px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.forward-card .quote{background:#faf5ff;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;line-height:1.6;margin-bottom:10px}
+.forward-card .btns{display:flex;gap:8px}
+.fb{flex:1;padding:8px;border:1.5px solid #cbd5e1;background:white;border-radius:6px;cursor:pointer;font-size:13px}
+.fb.go:hover{background:#dcfce7;border-color:#22c55e;color:#15803d}
+.fb.stop:hover{background:#fee2e2;border-color:#ef4444;color:#b91c1c}
+.fb.selected.right{background:#dcfce7;border-color:#22c55e;color:#15803d;font-weight:600}
+.fb.selected.wrong{background:#fee2e2;border-color:#ef4444;color:#b91c1c;font-weight:600}
+.forward-explain{display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.6}
+.forward-card.done .forward-explain{display:block}
+.forward-explain.r{background:#dcfce7;color:#15803d}
+.forward-explain.w{background:#fee2e2;color:#b91c1c}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>📜 在线行为规范</h1>
+    <div class="lesson">第 18 课 · 第五单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>本课导入</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>合理安排时间</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>保护个人隐私</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>转发要谨慎</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>📜 本课导入</h2>
+      <div class="lead">现实生活有规则，网络世界也一样——做"小公民"，懂规矩</div>
+      <div class="intro">
+        <h3>🤔 想一想</h3>
+        <p>过马路要看红绿灯，进图书馆要保持安静——这都是规则。<b>上网也有规则</b>：要管理好时间、要保护个人隐私、要谨慎转发、要尊重他人。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">⏰</div><h4>时间管理</h4><p>不沉迷网络</p></div>
+        <div class="tool-card"><div class="icon">🔒</div><h4>隐私保护</h4><p>不暴露个人信息</p></div>
+        <div class="tool-card"><div class="icon">🔄</div><h4>谨慎转发</h4><p>不传谣言</p></div>
+        <div class="tool-card"><div class="icon">🤝</div><h4>尊重他人</h4><p>不网络欺凌</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>⏰ 合理安排上网时间</h2>
+      <div class="lead">拖动滑块，规划你的一天</div>
+      <div class="time-planner">
+        <div class="time-row">
+          <label>📚 学习</label>
+          <input type="range" id="t_study" min="0" max="8" value="2" step="0.5" oninput="updateTime()">
+          <span class="val" id="v_study">2 小时</span>
+        </div>
+        <div class="time-row">
+          <label>🎮 娱乐上网</label>
+          <input type="range" id="t_play" min="0" max="8" value="0.5" step="0.5" oninput="updateTime()">
+          <span class="val" id="v_play">0.5 小时</span>
+        </div>
+        <div class="time-row">
+          <label>🏃 户外运动</label>
+          <input type="range" id="t_sport" min="0" max="6" value="1" step="0.5" oninput="updateTime()">
+          <span class="val" id="v_sport">1 小时</span>
+        </div>
+        <div class="time-row">
+          <label>📖 阅读</label>
+          <input type="range" id="t_read" min="0" max="4" value="0.5" step="0.5" oninput="updateTime()">
+          <span class="val" id="v_read">0.5 小时</span>
+        </div>
+        <div class="time-row">
+          <label>😴 睡眠</label>
+          <input type="range" id="t_sleep" min="6" max="12" value="10" step="0.5" oninput="updateTime()">
+          <span class="val" id="v_sleep">10 小时</span>
+        </div>
+        <div style="margin-top:14px;font-size:13px;color:#475569;">📊 24 小时分配可视化：</div>
+        <div class="time-vis" id="timeVis"></div>
+        <div class="recommend-box" id="recommend">
+          🌟 这样安排很合理！注意按时上下床、按时三餐。
+        </div>
+      </div>
+      <div class="know">
+        <h3>💡 推荐的上网时间</h3>
+        <p>三年级学生（8-9岁）每天娱乐上网建议<b>不超过 30 分钟</b>，且每用 30 分钟要远眺 5 分钟。学习用网另外安排，不要占用睡眠时间。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🔒 保护个人隐私</h2>
+      <div class="lead">下面哪些信息发在网上有风险？点击查看判断</div>
+      <div class="privacy-check" id="privacyCheck"></div>
+      <div class="know">
+        <h3>🛡️ 隐私保护小贴士</h3>
+        <p>① <b>设置强密码</b>：不要用生日、123456 等弱密码<br>② <b>头像不用真人</b>：可用卡通、风景代替<br>③ <b>分组可见</b>：朋友圈对家人、对同学可设置不同范围<br>④ <b>定期检查</b>：登录账号检查是否有异常登录</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🔄 转发要谨慎</h2>
+      <div class="lead">下面这些消息你会转发吗？</div>
+      <div class="forward-list" id="forwardList"></div>
+      <div class="know">
+        <h3>💡 转发"四问"</h3>
+        <p>转发前问问自己：<br>
+        ① <b>真的吗</b>？是不是来自正规媒体？<br>
+        ② <b>对吗</b>？内容是否符合常识？<br>
+        ③ <b>该吗</b>？转发会不会伤害到他人？<br>
+        ④ <b>必要吗</b>？真的需要让更多人知道吗？</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课重点</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">⏰</div><h4>时间有度</h4><p>每天上网时间合理</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🔒</div><h4>隐私要严</h4><p>不暴露个人信息</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🔄</div><h4>转发谨慎</h4><p>核实后再转发</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🤝</div><h4>尊重他人</h4><p>友善文明</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 做"网络好少年"</h3>
+        <p>《全国青少年网络文明公约》：要善于网上学习，不浏览不良信息；要诚实友好交流，不侮辱欺诈他人；要增强自护意识，不随意约会网友；要维护网络安全，不破坏网络秩序；要有益身心健康，不沉溺虚拟时空。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+function updateTime() {
+  const vals = {
+    study: parseFloat(document.getElementById('t_study').value),
+    play: parseFloat(document.getElementById('t_play').value),
+    sport: parseFloat(document.getElementById('t_sport').value),
+    read: parseFloat(document.getElementById('t_read').value),
+    sleep: parseFloat(document.getElementById('t_sleep').value),
+  };
+  Object.keys(vals).forEach(k => document.getElementById('v_' + k).textContent = vals[k] + ' 小时');
+  const total = Object.values(vals).reduce((s,v) => s+v, 0);
+  const other = Math.max(0, 24 - total);
+  const colors = { study: '#3b82f6', play: '#ec4899', sport: '#22c55e', read: '#f59e0b', sleep: '#7c3aed', other: '#94a3b8' };
+  const labels = { study: '学习', play: '娱乐', sport: '运动', read: '阅读', sleep: '睡眠', other: '其他' };
+  const items = { ...vals, other };
+  const vis = document.getElementById('timeVis');
+  vis.innerHTML = Object.entries(items).filter(([k,v])=>v>0).map(([k,v]) => 
+    `<div class="time-seg" style="width:${v/24*100}%;background:${colors[k]};">${v >= 1.5 ? labels[k]+v+'h' : ''}</div>`
+  ).join('');
+  
+  // 推荐评分
+  const rec = document.getElementById('recommend');
+  if (vals.play > 1.5) {
+    rec.className = 'recommend-box bad';
+    rec.innerHTML = '⚠️ 娱乐时间太长了！建议每天不超过 1 小时';
+  } else if (vals.sleep < 9) {
+    rec.className = 'recommend-box warn';
+    rec.innerHTML = '⚠️ 三年级学生建议每天睡眠 9-11 小时';
+  } else if (vals.sport < 0.5) {
+    rec.className = 'recommend-box warn';
+    rec.innerHTML = '⚠️ 户外运动太少！每天至少要 1 小时哦';
+  } else if (vals.play <= 0.5 && vals.sleep >= 10 && vals.sport >= 1) {
+    rec.className = 'recommend-box';
+    rec.innerHTML = '🌟 时间分配很合理！继续保持健康生活习惯。';
+  } else {
+    rec.className = 'recommend-box';
+    rec.innerHTML = '👌 时间安排不错，注意劳逸结合。';
+  }
+}
+updateTime();
+
+// 隐私自查
+const privacyItems = [
+  { label: '✅ 自己的昵称、动漫头像', desc: '可以适度发布，不涉及真实身份', dangerous: false },
+  { label: '⚠️ 真实姓名 + 学校 + 班级', desc: '陌生人可以借此找到你', dangerous: true },
+  { label: '⚠️ 家庭住址、门牌号', desc: '严重隐私泄露，可能引发安全问题', dangerous: true },
+  { label: '⚠️ 父母电话、身份证号', desc: '可能被诈骗分子利用', dangerous: true },
+  { label: '✅ 学习心得、读书笔记', desc: '正能量的学习内容', dangerous: false },
+  { label: '⚠️ 自己的清晰人脸照', desc: '可能被 AI 换脸滥用', dangerous: true },
+  { label: '✅ 风景照、宠物照', desc: '没有个人身份信息的内容', dangerous: false },
+  { label: '⚠️ 出行计划、定位打卡', desc: '让人知道你的具体位置', dangerous: true },
+];
+
+document.getElementById('privacyCheck').innerHTML = privacyItems.map(p => `
+  <div class="privacy-item ${p.dangerous?'dangerous':''}">
+    <div class="label">${p.label}</div>
+    <div class="desc">${p.desc}</div>
+    <div class="danger-stamp">⛔ 请勿在公开场合发布</div>
+  </div>
+`).join('');
+
+// 转发判断
+const forwardCases = [
+  { quote: '《钟南山院士最新提醒：今年流感来势汹汹，转发救人！》（无任何信源）', should: false, reason: '可疑信源、夸张标题。这类"提醒"大多是谣言' },
+  { quote: '人民日报：神舟十八号航天员凯旋归来 🚀', should: true, reason: '官方权威媒体，真实可信，可以转发' },
+  { quote: '《震惊！某地学校发生重大事故！》（看不到具体来源）', should: false, reason: '无具体来源的"震惊体"通常是谣言' },
+  { quote: '班主任老师在班级群发的"周五开家长会"通知', should: true, reason: '来自班主任的真实通知，应当转发给爸妈' },
+  { quote: '"转发此条消息可以治疗近视，10 万次就有奇迹"', should: false, reason: '完全没有科学依据，是迷信传播' },
+  { quote: '《我国成功发射风云四号气象卫星》（央视新闻）', should: true, reason: '权威媒体的真实科技新闻，传播正能量' },
+];
+
+document.getElementById('forwardList').innerHTML = forwardCases.map((c, i) => `
+  <div class="forward-card" id="fc-${i}">
+    <div class="quote">📢 ${c.quote}</div>
+    <div class="btns">
+      <button class="fb go" onclick="judgeForward(${i}, true)">📤 转发</button>
+      <button class="fb stop" onclick="judgeForward(${i}, false)">🛑 不转发</button>
+    </div>
+    <div class="forward-explain ${c.should?'r':'w'}">💡 ${c.reason}</div>
+  </div>
+`).join('');
+
+function judgeForward(i, choice) {
+  const card = document.getElementById('fc-' + i);
+  const isCorrect = choice === forwardCases[i].should;
+  card.classList.add('done');
+  const btns = card.querySelectorAll('.fb');
+  btns.forEach((b, bi) => {
+    const isThisGo = bi === 0;
+    if ((isThisGo && choice) || (!isThisGo && !choice)) {
+      b.classList.add('selected', isCorrect ? 'right' : 'wrong');
+    }
+  });
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === ' ') && e.target.tagName !== 'INPUT') n();
+  if (e.key === 'ArrowLeft' && e.target.tagName !== 'INPUT') p();
+});
+</script>
+</body>
+</html>

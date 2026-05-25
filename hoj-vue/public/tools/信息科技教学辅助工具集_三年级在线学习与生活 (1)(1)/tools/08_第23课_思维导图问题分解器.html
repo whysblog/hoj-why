@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>思维导图问题分解器 — 第23课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #cffafe 0%, #ecfeff 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1300px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #0e7490; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.toolbar {
+  background: white; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.btn {
+  padding: 8px 14px; border: 1.5px solid #a5f3fc; border-radius: 8px;
+  background: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s;
+}
+.btn:hover { background: #ecfeff; border-color: #06b6d4; }
+.btn.primary { background: #06b6d4; color: white; border-color: #0891b2; }
+.btn.primary:hover { background: #0891b2; }
+.btn.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.btn.success { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+
+.template-row {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  border-top: 1px solid #f1f5f9; margin-top: 8px; padding-top: 10px;
+}
+
+.canvas-area {
+  background: white; border-radius: 14px; padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  overflow: auto;
+  min-height: 600px;
+  position: relative;
+}
+
+.mindmap-container {
+  position: relative; min-width: 100%; min-height: 560px;
+}
+svg.connector {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 1;
+}
+.node-wrap {
+  position: relative; z-index: 2;
+}
+.node {
+  background: white; border: 2px solid #06b6d4; border-radius: 12px;
+  padding: 8px 14px; font-size: 14px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(6,182,212,.15);
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: all .2s; user-select: none;
+  max-width: 260px; min-width: 80px;
+}
+.node:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,182,212,.25); }
+.node.root {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: white; font-weight: 700; font-size: 16px;
+  border: none; padding: 10px 18px;
+  box-shadow: 0 4px 14px rgba(8,145,178,.4);
+}
+.node.level-1 {
+  background: linear-gradient(135deg, #67e8f9, #22d3ee);
+  color: #0e3a47; font-weight: 600; border: none;
+}
+.node.level-2 {
+  background: white; color: #0e7490;
+}
+.node.level-3 {
+  background: #f0fdfa; color: #0f766e; border-color: #5eead4;
+  font-size: 13px;
+}
+.node-text { display: inline-block; }
+.node-text[contenteditable] { outline: none; padding: 0 2px; }
+.node-text[contenteditable]:focus { background: rgba(255,255,255,.7); border-radius: 4px; }
+.node-add {
+  width: 22px; height: 22px; border-radius: 50%; background: #06b6d4; color: white;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  font-size: 14px; font-weight: bold; line-height: 1;
+  opacity: 0; transition: opacity .15s;
+}
+.node:hover .node-add { opacity: 1; }
+.node.root .node-add { background: white; color: #0e7490; }
+.node-del {
+  width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  font-size: 11px; opacity: 0; transition: opacity .15s; margin-left: -2px;
+}
+.node:hover .node-del { opacity: 1; }
+.node.root .node-del { display: none; }
+
+.example-panel {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;
+}
+@media (max-width: 700px) { .example-panel { grid-template-columns: 1fr; } }
+.example-card {
+  background: white; padding: 16px 18px; border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.example-card h4 { color: #0e7490; margin-bottom: 8px; font-size: 15px; }
+.example-card p { color: #475569; font-size: 13px; line-height: 1.6; }
+
+.knowledge {
+  background: white; border-radius: 14px; padding: 22px; margin-top: 16px;
+  border-left: 5px solid #06b6d4; box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.knowledge h3 { color: #0e7490; margin-bottom: 10px; font-size: 17px; }
+.knowledge p { color: #475569; line-height: 1.8; font-size: 14px; }
+.knowledge .formula {
+  background: #ecfeff; padding: 12px 16px; border-radius: 8px; margin: 10px 0;
+  color: #0e7490; font-weight: 600; line-height: 1.7;
+}
+.compute-thinking {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;
+  margin-top: 12px;
+}
+.ct-card {
+  background: linear-gradient(135deg, #ecfeff, #cffafe); padding: 12px 14px;
+  border-radius: 10px; border-left: 3px solid #06b6d4;
+}
+.ct-card strong { color: #0e7490; display: block; margin-bottom: 4px; font-size: 13px; }
+.ct-card span { color: #475569; font-size: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧠 思维导图问题分解器</h1>
+    <div class="subtitle">配套课时：第23课 分解描述问题 · 体验"把大问题分解成小问题"的计算思维</div>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn primary" onclick="addRootChild()">+ 添加分支</button>
+    <button class="btn" onclick="exportMap()">📋 导出文本</button>
+    <button class="btn danger" onclick="resetEmpty()">🗑 清空</button>
+    <span style="font-size:12px;color:#64748b;margin-left:auto;">提示：把鼠标移到节点上 → 点 ➕ 添加子节点 / 点 ✕ 删除 / 双击文字编辑</span>
+  </div>
+
+  <div class="toolbar template-row">
+    <span style="font-size:13px;color:#64748b;">📋 加载示例：</span>
+    <button class="btn success" onclick="loadTemplate('book')">好书分享</button>
+    <button class="btn success" onclick="loadTemplate('trip')">家庭出游计划</button>
+    <button class="btn success" onclick="loadTemplate('study')">数学学科知识</button>
+    <button class="btn success" onclick="loadTemplate('birthday')">生日聚会筹备</button>
+  </div>
+
+  <div class="canvas-area">
+    <div class="mindmap-container" id="mindmap">
+      <svg class="connector" id="connectorSvg"></svg>
+      <div class="node-wrap" id="nodeLayer"></div>
+    </div>
+  </div>
+
+  <div class="knowledge">
+    <h3>💡 科学小知识 · 计算思维之"问题分解"</h3>
+    <p>
+      面对一个看起来很难的大问题，如果我们把它拆分成若干个小问题，每个小问题都能独立解决，最后把这些小答案组合起来，大问题就解决了。这种思考方法叫做<b>"分而治之"（Divide and Conquer）</b>，是计算机科学最重要的思想之一。
+    </p>
+    <div class="formula">
+      🎯 大问题 = 小问题 1 + 小问题 2 + 小问题 3 + ……
+    </div>
+    <p><b>计算思维的四个核心要素：</b></p>
+    <div class="compute-thinking">
+      <div class="ct-card"><strong>🔍 抽象</strong><span>提取问题的关键信息，忽略不重要的细节</span></div>
+      <div class="ct-card"><strong>🧩 分解</strong><span>把大问题拆成更小的、能解决的子问题</span></div>
+      <div class="ct-card"><strong>🔄 模式识别</strong><span>找出相似的子问题，复用同样的方法</span></div>
+      <div class="ct-card"><strong>📐 算法设计</strong><span>设计步骤化的解决方案</span></div>
+    </div>
+    <p style="margin-top:12px;">
+      <b>📖 思维导图的作用：</b>把分解的过程"画出来"——中心是大问题，向外延伸的分支是小问题，每个小问题还可以再延伸。这种<b>树形结构</b>让我们的思路一目了然。
+    </p>
+  </div>
+</div>
+
+<script>
+let nodeIdSeq = 0;
+let mindmap = null;
+
+// ===== 模板数据 =====
+const templates = {
+  book: {
+    title: '好书分享', icon: '📚',
+    children: [
+      { title: '分享哪些书', icon: '📖', children: [
+        { title: '《十万个为什么》', icon: '❓', children: [] },
+        { title: '《西游记》', icon: '🐒', children: [] },
+        { title: '《查理九世》', icon: '🎩', children: [] },
+      ]},
+      { title: '分享理由', icon: '💡', children: [
+        { title: '内容生动有趣', icon: '✨', children: [] },
+        { title: '学到很多知识', icon: '🎓', children: [] },
+        { title: '激发想象力', icon: '🌟', children: [] },
+      ]},
+      { title: '分享方式', icon: '🎨', children: [
+        { title: '数字小报', icon: '📰', children: [] },
+        { title: '演示文稿', icon: '📊', children: [] },
+        { title: '视频介绍', icon: '🎬', children: [] },
+      ]},
+      { title: '展示形式', icon: '🎤', children: [
+        { title: '班级展示', icon: '👥', children: [] },
+        { title: '上传校园网', icon: '🌐', children: [] },
+      ]},
+    ]
+  },
+  trip: {
+    title: '家庭出游', icon: '🚗',
+    children: [
+      { title: '去哪里', icon: '📍', children: [
+        { title: '海边', icon: '🏖️', children: [] },
+        { title: '山区', icon: '⛰️', children: [] },
+        { title: '城市游', icon: '🏙️', children: [] },
+      ]},
+      { title: '什么时候', icon: '📅', children: [
+        { title: '出发日期', icon: '🗓️', children: [] },
+        { title: '游玩天数', icon: '⏱️', children: [] },
+      ]},
+      { title: '怎么去', icon: '🚆', children: [
+        { title: '高铁', icon: '🚄', children: [] },
+        { title: '飞机', icon: '✈️', children: [] },
+        { title: '自驾', icon: '🚙', children: [] },
+      ]},
+      { title: '住哪里', icon: '🏨', children: [
+        { title: '查询酒店', icon: '🔍', children: [] },
+        { title: '预订房间', icon: '📞', children: [] },
+      ]},
+      { title: '带什么', icon: '🎒', children: [
+        { title: '换洗衣物', icon: '👕', children: [] },
+        { title: '常用药品', icon: '💊', children: [] },
+        { title: '证件钱包', icon: '💳', children: [] },
+      ]},
+    ]
+  },
+  study: {
+    title: '数学知识', icon: '➕',
+    children: [
+      { title: '数与代数', icon: '🔢', children: [
+        { title: '整数', icon: '', children: [] },
+        { title: '分数', icon: '', children: [] },
+        { title: '小数', icon: '', children: [] },
+      ]},
+      { title: '图形与几何', icon: '📐', children: [
+        { title: '平面图形', icon: '', children: [] },
+        { title: '立体图形', icon: '', children: [] },
+        { title: '面积体积', icon: '', children: [] },
+      ]},
+      { title: '统计与概率', icon: '📊', children: [
+        { title: '统计图', icon: '', children: [] },
+        { title: '可能性', icon: '', children: [] },
+      ]},
+      { title: '解决问题', icon: '🤔', children: [
+        { title: '分析数量关系', icon: '', children: [] },
+        { title: '列式计算', icon: '', children: [] },
+      ]},
+    ]
+  },
+  birthday: {
+    title: '生日聚会', icon: '🎂',
+    children: [
+      { title: '邀请谁', icon: '👯', children: [
+        { title: '同学好友', icon: '', children: [] },
+        { title: '亲戚长辈', icon: '', children: [] },
+      ]},
+      { title: '在哪办', icon: '🏠', children: [
+        { title: '家里', icon: '', children: [] },
+        { title: '餐厅', icon: '', children: [] },
+      ]},
+      { title: '准备什么', icon: '🎁', children: [
+        { title: '生日蛋糕', icon: '🎂', children: [] },
+        { title: '装饰布置', icon: '🎈', children: [] },
+        { title: '美食饮料', icon: '🍔', children: [] },
+      ]},
+      { title: '玩什么', icon: '🎮', children: [
+        { title: '小游戏', icon: '', children: [] },
+        { title: '看电影', icon: '', children: [] },
+      ]},
+    ]
+  }
+};
+
+function createNode(title, icon, level, children = []) {
+  return { id: ++nodeIdSeq, title, icon, level, children, expanded: true };
+}
+
+function loadTemplate(key) {
+  const t = templates[key];
+  nodeIdSeq = 0;
+  mindmap = createNode(t.title, t.icon, 0);
+  function build(srcChildren, parent, level) {
+    srcChildren.forEach(c => {
+      const node = createNode(c.title, c.icon, level);
+      parent.children.push(node);
+      if (c.children) build(c.children, node, level + 1);
+    });
+  }
+  build(t.children, mindmap, 1);
+  render();
+}
+
+function resetEmpty() {
+  if (!confirm('确定清空当前的思维导图吗？')) return;
+  nodeIdSeq = 0;
+  mindmap = createNode('我的大问题', '🎯', 0);
+  render();
+}
+
+function findNode(id, node = mindmap) {
+  if (node.id === id) return node;
+  for (let c of node.children) {
+    const r = findNode(id, c);
+    if (r) return r;
+  }
+  return null;
+}
+function findParent(id, node = mindmap, parent = null) {
+  if (node.id === id) return parent;
+  for (let c of node.children) {
+    const r = findParent(id, c, node);
+    if (r !== undefined && r !== null) return r;
+    if (r === null && c.id === id) return node;
+  }
+  return null;
+}
+
+function addChild(parentId) {
+  const parent = findNode(parentId);
+  if (!parent) return;
+  const newNode = createNode('新节点', '', parent.level + 1);
+  parent.children.push(newNode);
+  render();
+  // 自动聚焦新节点
+  setTimeout(() => {
+    const el = document.querySelector(`[data-id="${newNode.id}"] .node-text`);
+    if (el) {
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }, 50);
+}
+
+function deleteNode(id) {
+  if (id === mindmap.id) return;
+  function rm(node) {
+    const idx = node.children.findIndex(c => c.id === id);
+    if (idx >= 0) { node.children.splice(idx, 1); return true; }
+    for (let c of node.children) if (rm(c)) return true;
+    return false;
+  }
+  rm(mindmap);
+  render();
+}
+
+function addRootChild() {
+  addChild(mindmap.id);
+}
+
+// ===== 渲染：水平树形布局 =====
+function render() {
+  const layer = document.getElementById('nodeLayer');
+  const svg = document.getElementById('connectorSvg');
+  layer.innerHTML = '';
+  svg.innerHTML = '';
+  
+  // 第一步：分配位置（基于子节点高度）
+  // 每个节点的"高度"= 自身（含子树）占用的行数
+  function computeHeight(node) {
+    if (!node.expanded || node.children.length === 0) return 1;
+    return node.children.reduce((s, c) => s + computeHeight(c), 0);
+  }
+  
+  const ROW = 48; // 每行高度（叶子节点）
+  const COL = 220; // 每列宽度
+  const totalHeight = Math.max(computeHeight(mindmap) * ROW, 540);
+  
+  function layout(node, x, yStart, yEnd) {
+    const cy = (yStart + yEnd) / 2;
+    node._x = x;
+    node._y = cy;
+    if (node.expanded && node.children.length > 0) {
+      const totH = computeHeight(node);
+      let cursor = yStart;
+      node.children.forEach(c => {
+        const h = computeHeight(c);
+        const childYStart = cursor;
+        const childYEnd = cursor + (h / totH) * (yEnd - yStart);
+        layout(c, x + COL, childYStart, childYEnd);
+        cursor = childYEnd;
+      });
+    }
+  }
+  
+  layout(mindmap, 30, 0, totalHeight);
+  
+  const container = document.getElementById('mindmap');
+  container.style.height = (totalHeight + 60) + 'px';
+  
+  // 计算最大 x（决定容器宽度）
+  let maxX = 0;
+  function findMaxX(node) {
+    maxX = Math.max(maxX, node._x);
+    node.children.forEach(findMaxX);
+  }
+  findMaxX(mindmap);
+  container.style.minWidth = (maxX + 280) + 'px';
+  
+  // 渲染节点
+  function renderNode(node) {
+    const wrap = document.createElement('div');
+    wrap.style.position = 'absolute';
+    wrap.style.left = node._x + 'px';
+    wrap.style.top = node._y + 'px';
+    wrap.style.transform = 'translateY(-50%)';
+    wrap.dataset.id = node.id;
+    
+    const lvlClass = node.level === 0 ? 'root' : (node.level === 1 ? 'level-1' : (node.level === 2 ? 'level-2' : 'level-3'));
+    wrap.innerHTML = `
+      <div class="node ${lvlClass}">
+        ${node.icon ? `<span style="font-size:1.1em;">${node.icon}</span>` : ''}
+        <span class="node-text" contenteditable="true" data-id="${node.id}">${escape(node.title)}</span>
+        <span class="node-add" onclick="addChild(${node.id})" title="添加子节点">+</span>
+        ${node.id !== mindmap.id ? `<span class="node-del" onclick="deleteNode(${node.id})" title="删除">×</span>` : ''}
+      </div>
+    `;
+    layer.appendChild(wrap);
+    
+    if (node.expanded) {
+      node.children.forEach(renderNode);
+    }
+  }
+  renderNode(mindmap);
+  
+  // 监听文字编辑
+  layer.querySelectorAll('.node-text').forEach(el => {
+    el.addEventListener('blur', e => {
+      const id = parseInt(e.target.dataset.id);
+      const node = findNode(id);
+      if (node) {
+        const newText = e.target.innerText.trim() || '未命名';
+        if (node.title !== newText) {
+          node.title = newText;
+          // 不重新渲染（保持编辑状态），但更新 SVG 不必要
+        }
+      }
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+    });
+  });
+  
+  // 渲染连线
+  svg.setAttribute('width', container.scrollWidth);
+  svg.setAttribute('height', container.scrollHeight);
+  function drawConnections(node) {
+    if (!node.expanded) return;
+    node.children.forEach(c => {
+      const x1 = node._x + 100;
+      const y1 = node._y;
+      const x2 = c._x;
+      const y2 = c._y;
+      const midX = (x1 + x2) / 2;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const colors = ['#0e7490', '#06b6d4', '#22d3ee', '#67e8f9'];
+      const color = colors[Math.min(node.level, colors.length - 1)];
+      path.setAttribute('d', `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`);
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', node.level === 0 ? 3 : 2);
+      path.setAttribute('fill', 'none');
+      svg.appendChild(path);
+      drawConnections(c);
+    });
+  }
+  drawConnections(mindmap);
+}
+
+function escape(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function exportMap() {
+  function dump(node, indent) {
+    let out = ' '.repeat(indent * 2) + (indent === 0 ? '🎯 ' : (indent === 1 ? '├─ ' : '   '.repeat(indent-1) + '├─ ')) + (node.icon ? node.icon + ' ' : '') + node.title + '\n';
+    node.children.forEach(c => out += dump(c, indent + 1));
+    return out;
+  }
+  const text = dump(mindmap, 0);
+  alert('思维导图文本格式：\n\n' + text + '\n（可复制到记事本保存）');
+}
+
+// 初始化
+loadTemplate('book');
+</script>
+</body>
+</html>

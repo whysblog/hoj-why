@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>输入-处理-输出体验馆 - 第2课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.ipo-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 12px;
+  align-items: stretch;
+  margin: 20px 0;
+}
+.ipo-box {
+  padding: 22px 16px;
+  border-radius: 14px;
+  text-align: center;
+  border: 2.5px solid;
+  background: white;
+  position: relative;
+  transition: all 0.35s;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.ipo-box.input { border-color: var(--secondary); background: #E8F8EE; }
+.ipo-box.process { border-color: var(--primary); background: #F0F7FF; }
+.ipo-box.output { border-color: var(--accent); background: #FFF4E6; }
+.ipo-box .label {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+}
+.ipo-box.input .label { background: var(--secondary); }
+.ipo-box.process .label { background: var(--primary); }
+.ipo-box.output .label { background: var(--accent); }
+.ipo-icon { font-size: 38px; margin-bottom: 8px; }
+.ipo-content { font-size: 15px; color: var(--text); font-weight: 500; }
+.ipo-content strong { color: var(--primary-dark); }
+.ipo-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--primary);
+}
+.ipo-box.flash {
+  animation: pulse 0.6s ease;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 24px rgba(74,144,226,0.3); }
+}
+
+.calc-area {
+  background: linear-gradient(135deg, #F0F7FF, #E8F4FD);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+.num-input-grp {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 16px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+.num-input-grp input {
+  width: 100px;
+  font-size: 22px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+.big-result {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--secondary);
+  padding: 12px;
+  background: white;
+  border-radius: 10px;
+  display: inline-block;
+  min-width: 100px;
+  margin-top: 10px;
+}
+
+/* 24点 */
+.game24 {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.cards-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 14px 0;
+  flex-wrap: wrap;
+}
+.game-card {
+  width: 64px; height: 90px;
+  background: linear-gradient(135deg, white, #F0F7FF);
+  border: 2.5px solid var(--primary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.game-card.used { opacity: 0.3; pointer-events: none; }
+.game-card.selected {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-6px);
+}
+.expr-display {
+  font-size: 20px;
+  font-weight: 600;
+  padding: 14px;
+  background: #F0F7FF;
+  border-radius: 8px;
+  margin: 12px 0;
+  min-height: 50px;
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+.op-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.op-buttons button {
+  width: 50px;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔄 输入-处理-输出体验馆</h1>
+    <div class="subtitle">认识算法的基本流程</div>
+    <span class="lesson-tag">第2课 · 算法认识与体验</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar" style="width:16.6%"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="slide-subtitle">认识算法的"三步走"基本流程</div>
+        <div class="objective-card">
+          <h4>🎯 通过本课学习,你将能够:</h4>
+          <ol>
+            <li>理解算法的<strong>"输入—处理—输出"</strong>基本流程</li>
+            <li>用自然语言描述简单事情中的算法步骤</li>
+            <li>识别生活中和数学运算中的输入、处理、输出</li>
+            <li>初步形成<strong>"按流程解决问题"</strong>的思维</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="slide" data-title="复习引入">
+        <div class="slide-title"><span class="num">2</span>从做菜说起</div>
+        <div class="slide-subtitle">上节课的西红柿炒鸡蛋,藏着算法的"三步走"</div>
+        <div class="ipo-flow">
+          <div class="ipo-box input">
+            <span class="label">输入</span>
+            <div class="ipo-icon">🥚🍅</div>
+            <div class="ipo-content">原材料<br><small>鸡蛋、西红柿、油、调味料</small></div>
+          </div>
+          <div class="ipo-arrow">→</div>
+          <div class="ipo-box process">
+            <span class="label">处理</span>
+            <div class="ipo-icon">🔪🍳</div>
+            <div class="ipo-content">按菜谱炒菜<br><small>切、炒、加调料</small></div>
+          </div>
+          <div class="ipo-arrow">→</div>
+          <div class="ipo-box output">
+            <span class="label">输出</span>
+            <div class="ipo-icon">🍽️</div>
+            <div class="ipo-content">完成的菜肴<br><small>西红柿炒鸡蛋</small></div>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>💡 发现规律:</strong>不管做什么事情,几乎都能拆成"<strong>输入→处理→输出</strong>"三个阶段。这就是<strong>算法的基本流程</strong>!
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:两数相加">
+        <div class="slide-title"><span class="num">3</span>互动 1:两数相加的算法</div>
+        <div class="slide-subtitle">输入两个数字,看算法如何"处理"并"输出"结果</div>
+        <div class="calc-area">
+          <div class="num-input-grp">
+            <input type="number" id="numA" value="35" onchange="runAdd()"> +
+            <input type="number" id="numB" value="47" onchange="runAdd()"> =
+            <span class="big-result" id="addResult">82</span>
+          </div>
+          <button onclick="runAddAnimated()" class="btn-success" style="margin-top:10px;">▶ 重新执行算法</button>
+        </div>
+        <div class="ipo-flow" id="addFlow" style="margin-top:18px;">
+          <div class="ipo-box input" id="addInput">
+            <span class="label">输入</span>
+            <div class="ipo-icon">🔢</div>
+            <div class="ipo-content"><strong id="dispA">35</strong> 和 <strong id="dispB">47</strong></div>
+          </div>
+          <div class="ipo-arrow">→</div>
+          <div class="ipo-box process" id="addProcess">
+            <span class="label">处理</span>
+            <div class="ipo-icon">➕</div>
+            <div class="ipo-content">数位对齐<br>逐位相加<br>满十进位</div>
+          </div>
+          <div class="ipo-arrow">→</div>
+          <div class="ipo-box output" id="addOutput">
+            <span class="label">输出</span>
+            <div class="ipo-icon">✨</div>
+            <div class="ipo-content">两数之和:<br><strong id="dispSum" style="font-size:22px; color:var(--accent);">82</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:24点">
+        <div class="slide-title"><span class="num">4</span>互动 2:24 点游戏</div>
+        <div class="slide-subtitle">把 4 个数通过 + - × ÷ 算成 24 — 体会算法步骤的不同</div>
+        <div class="game24">
+          <div style="text-align:center; margin-bottom:10px;">
+            <strong>抽到的 4 张数字卡:</strong>
+          </div>
+          <div class="cards-row" id="cardsRow"></div>
+          <div class="expr-display" id="exprDisplay">点击数字卡和运算符,组成等于 24 的算式</div>
+          <div class="op-buttons">
+            <button onclick="addOp('+')">+</button>
+            <button onclick="addOp('-')">−</button>
+            <button onclick="addOp('*')">×</button>
+            <button onclick="addOp('/')">÷</button>
+            <button onclick="addOp('(')">(</button>
+            <button onclick="addOp(')')">)</button>
+          </div>
+          <div style="text-align:center; margin-top:12px;">
+            <button onclick="checkExpr()">✓ 检查</button>
+            <button onclick="resetGame()" class="btn-secondary">🔄 重新出牌</button>
+            <button onclick="clearExpr()" class="btn-secondary">⌫ 清空</button>
+          </div>
+          <div id="gameResult" style="text-align:center; margin-top:14px; min-height:30px; font-weight:600;"></div>
+        </div>
+        <div class="info-panel">
+          <strong>🤔 思考:</strong>同样的 4 个数字 (输入),通过<strong>不同的步骤</strong>(处理) 也能算出 24 (输出)。这说明<strong>同一个问题可能有不同的算法</strong>!
+        </div>
+      </div>
+
+      <div class="slide" data-title="概念总结">
+        <div class="slide-title"><span class="num">5</span>算法的基本流程</div>
+        <div class="slide-subtitle">三个阶段缺一不可</div>
+        <div class="concept-grid">
+          <div class="concept-card" style="border-left:5px solid var(--secondary);">
+            <h4>🥚 输入(Input)</h4>
+            <p><strong>给算法的"原材料"</strong>:数字、文字、图片、声音……都可以是输入数据。</p>
+            <p style="margin-top:6px;"><em>例:做菜需要的食材;计算需要的数字。</em></p>
+          </div>
+          <div class="concept-card" style="border-left:5px solid var(--primary);">
+            <h4>⚙️ 处理(Process)</h4>
+            <p>按照<strong>有序步骤</strong>对输入数据进行加工、计算、判断、转换。这是算法的<strong>核心部分</strong>。</p>
+            <p style="margin-top:6px;"><em>例:切菜炒菜;数字相加。</em></p>
+          </div>
+          <div class="concept-card" style="border-left:5px solid var(--accent);">
+            <h4>✨ 输出(Output)</h4>
+            <p>处理完成后的<strong>结果</strong>:可以是答案、显示在屏幕上的文字、或最终的成果。</p>
+            <p style="margin-top:6px;"><em>例:做好的菜;两数之和。</em></p>
+          </div>
+        </div>
+        <div class="success-panel">
+          <strong>📌 重要提醒:</strong>有些算法可以<strong>零输入</strong>(比如自动控制系统),但<strong>"处理"和"输出"是必须的</strong>。
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="slide-subtitle">回顾今天学到了什么</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>算法的基本流程:<strong>输入 → 处理 → 输出</strong></li>
+            <li>同一个问题可以有<strong>不同的算法</strong>(像 24 点的多种解法)</li>
+            <li>无论是做菜、计算还是玩游戏,都可以用<strong>"三步走"</strong>来分析</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后小任务</h3>
+          <p>找一件你今天做过的事(比如<strong>查天气</strong>、<strong>挑零食</strong>、<strong>解一道数学题</strong>),试着画出它的"输入—处理—输出"图。</p>
+        </div>
+        <div style="text-align:center; margin-top:30px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+// ============ 两数相加演示 ============
+function runAdd() {
+  const a = parseInt(document.getElementById('numA').value) || 0;
+  const b = parseInt(document.getElementById('numB').value) || 0;
+  const sum = a + b;
+  document.getElementById('addResult').textContent = sum;
+  document.getElementById('dispA').textContent = a;
+  document.getElementById('dispB').textContent = b;
+  document.getElementById('dispSum').textContent = sum;
+}
+
+function runAddAnimated() {
+  runAdd();
+  const boxes = ['addInput', 'addProcess', 'addOutput'];
+  boxes.forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).classList.add('flash');
+      setTimeout(() => document.getElementById(id).classList.remove('flash'), 600);
+    }, i * 700);
+  });
+}
+
+// ============ 24 点游戏 ============
+let cards = [];
+let usedCards = new Set();
+let expr = '';
+
+function genCards() {
+  // 优先生成 3×8 / 4×6 / 2×12 类组合,确保有解
+  const presets = [
+    [3, 8, 4, 6], [2, 4, 6, 9], [3, 3, 8, 8], [5, 5, 5, 1],
+    [1, 4, 5, 6], [4, 4, 7, 7], [2, 3, 6, 8], [6, 6, 6, 4],
+    [3, 4, 8, 8], [2, 2, 6, 9], [1, 6, 7, 8], [3, 3, 7, 7]
+  ];
+  return presets[Math.floor(Math.random() * presets.length)];
+}
+
+function resetGame() {
+  cards = genCards();
+  usedCards.clear();
+  expr = '';
+  renderCards();
+  updateExpr();
+  document.getElementById('gameResult').textContent = '';
+}
+
+function renderCards() {
+  const row = document.getElementById('cardsRow');
+  row.innerHTML = cards.map((c, i) =>
+    '<div class="game-card' + (usedCards.has(i) ? ' used' : '') +
+    '" onclick="pickCard(' + i + ')">' + c + '</div>'
+  ).join('');
+}
+
+function pickCard(i) {
+  if (usedCards.has(i)) return;
+  expr += cards[i];
+  usedCards.add(i);
+  renderCards();
+  updateExpr();
+}
+
+function addOp(op) {
+  // 显示符号:* → ×, / → ÷
+  const display = op === '*' ? '×' : op === '/' ? '÷' : op;
+  expr += op;
+  updateExpr();
+}
+
+function updateExpr() {
+  const display = document.getElementById('exprDisplay');
+  if (!expr) {
+    display.textContent = '点击数字卡和运算符,组成等于 24 的算式';
+    display.style.color = 'var(--text-light)';
+    return;
+  }
+  display.textContent = expr.replace(/\*/g, ' × ').replace(/\//g, ' ÷ ').replace(/\+/g, ' + ').replace(/-/g, ' − ');
+  display.style.color = 'var(--primary-dark)';
+}
+
+function clearExpr() {
+  expr = '';
+  usedCards.clear();
+  renderCards();
+  updateExpr();
+  document.getElementById('gameResult').textContent = '';
+}
+
+function checkExpr() {
+  const result = document.getElementById('gameResult');
+  if (usedCards.size !== 4) {
+    result.style.color = 'var(--danger)';
+    result.innerHTML = '⚠️ 必须使用全部 4 张数字卡,每张只能用一次';
+    return;
+  }
+  // 安全求值:只允许数字和+-*/() 字符
+  if (!/^[\d+\-*/().\s]+$/.test(expr)) {
+    result.style.color = 'var(--danger)';
+    result.innerHTML = '⚠️ 算式中包含不允许的字符';
+    return;
+  }
+  try {
+    const val = Function('"use strict"; return (' + expr + ')')();
+    if (Math.abs(val - 24) < 0.0001) {
+      result.style.color = 'var(--secondary)';
+      result.innerHTML = '🎉 完美! 结果正好是 24!';
+    } else {
+      result.style.color = 'var(--accent)';
+      result.innerHTML = '✗ 结果是 ' + (Math.round(val * 100) / 100) + ',不是 24,再试试~';
+    }
+  } catch (e) {
+    result.style.color = 'var(--danger)';
+    result.innerHTML = '⚠️ 算式有误,请检查括号和运算符';
+  }
+}
+
+resetGame();
+</script>
+</body>
+</html>

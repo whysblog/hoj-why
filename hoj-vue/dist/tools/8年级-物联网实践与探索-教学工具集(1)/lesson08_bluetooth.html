@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第8课 · 巧用蓝牙做工具 — 蓝牙原理与配对模拟</title>
+<style>
+  :root {
+    --bg: #f0f5ff;
+    --bg-2: #e0eaff;
+    --ink: #0f1c3a;
+    --ink-soft: #4a5876;
+    --primary: #1e40af;
+    --primary-2: #3b82f6;
+    --accent: #06b6d4;
+    --green: #10b981;
+    --line: #c9d4eb;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(30,64,175,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image: radial-gradient(circle at 20% 0%, rgba(59,130,246,.06), transparent 50%);
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 蓝牙特性 */
+  .feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .feat {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow); text-align: center;
+  }
+  .feat .ic { font-size: 32px; margin-bottom: 6px; }
+  .feat h4 { font-size: 13px; margin-bottom: 4px; color: var(--primary); }
+  .feat p { font-size: 11px; color: var(--ink-soft); line-height: 1.6; }
+  .feat .num { font-size: 18px; font-weight: 700; color: var(--ink); font-family: "JetBrains Mono",monospace; margin: 4px 0; }
+
+  /* 配对模拟器 */
+  .pair-sim {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .scene {
+    background: linear-gradient(160deg, #e0eaff, #c7d2fe);
+    border-radius: 10px; padding: 20px; min-height: 340px;
+    position: relative; overflow: hidden;
+  }
+  .scene svg { width: 100%; height: 320px; }
+  .log {
+    margin-top: 14px; background: #0f1c3a; color: #93c5fd; padding: 14px;
+    border-radius: 6px; font-family: "JetBrains Mono",monospace; font-size: 12px;
+    height: 120px; overflow-y: auto; line-height: 1.6;
+  }
+  .log .ts { color: #64748b; }
+  .log .ok { color: #6ee7b7; }
+  .log .info { color: #93c5fd; }
+  .log .warn { color: #fbbf24; }
+  .controls { margin-top: 14px; display: flex; gap: 10px; }
+  .btn {
+    padding: 10px 18px; border-radius: 6px; border: 1.5px solid var(--primary);
+    background: var(--primary); color: #fff; cursor: pointer; font-size: 13px;
+    font-family: inherit; transition: all .15s;
+  }
+  .btn:hover { background: var(--primary-2); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.secondary { background: var(--card); color: var(--primary); }
+
+  /* 步骤说明 */
+  .steps-card {
+    background: var(--card); padding: 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .step {
+    display: grid; grid-template-columns: 60px 1fr; gap: 16px; padding: 14px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .step:last-child { border: none; }
+  .step .num {
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; background: var(--primary); color: #fff;
+    border-radius: 50%; font-weight: 700; font-size: 16px;
+  }
+  .step h4 { font-size: 14px; margin-bottom: 4px; }
+  .step p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  /* 应用场景 */
+  .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .app {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); text-align: center;
+    transition: all .2s;
+  }
+  .app:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .app .ic { font-size: 36px; margin-bottom: 8px; }
+  .app h4 { font-size: 13px; margin-bottom: 4px; color: var(--primary); }
+  .app p { font-size: 11px; color: var(--ink-soft); line-height: 1.6; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .feat-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 8 课</span>巧用蓝牙做工具</h1>
+  <p class="lead">蓝牙（Bluetooth）是一种近距离无线通信技术，广泛应用于<strong>手机、耳机、键盘、智能家居、健康监测</strong>等场景。本课带你了解蓝牙的关键特性、配对过程，并通过动画模拟蓝牙设备从扫描到连接的完整流程。</p>
+</header>
+
+<main>
+
+  <!-- 蓝牙特性 -->
+  <section class="section">
+    <div class="section-title">一、蓝牙关键特性</div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="ic">📶</div>
+        <h4>有效距离</h4>
+        <div class="num">10 米</div>
+        <p>典型 BLE 设备约 10-100 米，墙壁等障碍会缩短范围</p>
+      </div>
+      <div class="feat">
+        <div class="ic">📡</div>
+        <h4>工作频率</h4>
+        <div class="num">2.4 GHz</div>
+        <p>使用全球通用的 ISM 频段，无需申请许可</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🔋</div>
+        <h4>功耗</h4>
+        <div class="num">极低</div>
+        <p>BLE（蓝牙低功耗）一颗纽扣电池可用数月至数年</p>
+      </div>
+      <div class="feat">
+        <div class="ic">⚡</div>
+        <h4>传输速率</h4>
+        <div class="num">1-3 Mbps</div>
+        <p>支持音频、控制指令、小数据；不适合大文件传输</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 配对模拟 -->
+  <section class="section">
+    <div class="section-title">二、蓝牙配对过程模拟</div>
+    <div class="pair-sim">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;">蓝牙设备之间需要先<strong>配对（Pair）</strong>才能建立连接。整个过程包括 4 步：扫描 → 选择 → 配对 → 连接。点击"开始配对"观察完整流程：</p>
+      <div class="scene">
+        <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+          <!-- 手机 -->
+          <g transform="translate(60 80)">
+            <rect x="0" y="0" width="100" height="170" fill="#fff" stroke="#1e40af" stroke-width="3" rx="14"/>
+            <rect x="8" y="20" width="84" height="130" fill="#0f1c3a" rx="3"/>
+            <circle cx="50" cy="160" r="5" fill="#94a3b8"/>
+            <text id="phoneScreen" x="50" y="85" font-size="11" fill="#93c5fd" text-anchor="middle">📱 手机</text>
+            <text x="50" y="-8" font-size="11" fill="#1e40af" text-anchor="middle" font-weight="700">手机</text>
+          </g>
+          <!-- 蓝牙耳机 -->
+          <g transform="translate(440 80)">
+            <ellipse cx="50" cy="90" rx="44" ry="65" fill="#fff" stroke="#06b6d4" stroke-width="3"/>
+            <circle cx="50" cy="60" r="14" fill="#06b6d4"/>
+            <text x="50" y="65" font-size="11" fill="#fff" text-anchor="middle">🎧</text>
+            <text id="speakerLabel" x="50" y="105" font-size="10" fill="#06b6d4" text-anchor="middle">未配对</text>
+            <text x="50" y="-8" font-size="11" fill="#06b6d4" text-anchor="middle" font-weight="700">蓝牙耳机</text>
+            <!-- 广播指示 -->
+            <circle id="advCircle" cx="50" cy="60" r="14" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0"/>
+          </g>
+          <!-- 信号 -->
+          <g id="signal" opacity="0">
+            <path d="M 160 165 Q 300 100 440 165" fill="none" stroke="#06b6d4" stroke-width="2" stroke-dasharray="6 4"/>
+            <text x="300" y="90" font-size="11" fill="#1e40af" text-anchor="middle" id="signalLabel" font-weight="700">扫描中...</text>
+          </g>
+          <!-- 连接成功 -->
+          <g id="connection" opacity="0">
+            <line x1="160" y1="165" x2="440" y2="165" stroke="#10b981" stroke-width="3"/>
+            <text x="300" y="155" font-size="13" fill="#10b981" text-anchor="middle" font-weight="700">🔗 已连接</text>
+          </g>
+        </svg>
+      </div>
+      <div class="log" id="log">
+        <div class="info">[准备就绪] 点击"开始配对"模拟连接过程...</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn" onclick="startPair()">▶ 开始配对</button>
+        <button class="btn secondary" onclick="resetSim()">重置</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 配对步骤详解 -->
+  <section class="section">
+    <div class="section-title">三、配对四步详解</div>
+    <div class="steps-card">
+      <div class="step">
+        <div class="num">1</div>
+        <div>
+          <h4>设备广播（Advertise）</h4>
+          <p>蓝牙耳机等"从设备"启动后，会<strong>周期性发送广播包</strong>，包含设备名称、MAC 地址、可连接状态等信息，告诉周围"我在这里，可以连接我"。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div>
+          <h4>扫描发现（Scan）</h4>
+          <p>手机等"主设备"打开蓝牙后，进入<strong>扫描模式</strong>，监听周围所有蓝牙设备的广播包，并把发现的设备名称列出来供用户选择。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div>
+          <h4>请求配对（Pairing）</h4>
+          <p>用户在手机上点击想要连接的设备，手机向对方发起<strong>配对请求</strong>。如有 PIN 码验证需求（如蓝牙键盘），双方交换密钥确认身份。配对信息会保存，下次自动连接。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div>
+          <h4>建立连接（Connect）</h4>
+          <p>配对成功后建立<strong>加密通信链路</strong>，双方进入"已连接"状态。此后可以双向传输音频、控制指令、状态等数据。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section class="section">
+    <div class="section-title">四、蓝牙在物联网中的应用</div>
+    <div class="apps">
+      <div class="app"><div class="ic">🎧</div><h4>无线耳机/音箱</h4><p>无线音频传输，最广泛的蓝牙应用</p></div>
+      <div class="app"><div class="ic">⌨</div><h4>键盘/鼠标</h4><p>无线办公外设，省去线缆</p></div>
+      <div class="app"><div class="ic">⌚</div><h4>智能手环</h4><p>与手机同步步数、心率数据</p></div>
+      <div class="app"><div class="ic">🩺</div><h4>医疗设备</h4><p>血压计、血糖仪连接手机</p></div>
+      <div class="app"><div class="ic">🏠</div><h4>智能家居</h4><p>蓝牙灯泡、温控器配置</p></div>
+      <div class="app"><div class="ic">📍</div><h4>蓝牙标签</h4><p>iBeacon 室内定位、物品防丢</p></div>
+      <div class="app"><div class="ic">🚗</div><h4>车载系统</h4><p>手机连车载播放电话、音乐</p></div>
+      <div class="app"><div class="ic">🤖</div><h4>编程小车</h4><p>蓝牙遥控玩具、教学机器人</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 8 课配套交互工具</footer>
+
+<script>
+// ============ 配对动画（ES5） ============
+var stepTimer = null;
+var advTimer = null;
+var advPhase = 0;
+
+function logMsg(html) {
+  var l = document.getElementById('log');
+  var ts = new Date().toTimeString().slice(0,8);
+  l.innerHTML += '<div><span class="ts">[' + ts + ']</span> ' + html + '</div>';
+  l.scrollTop = l.scrollHeight;
+}
+
+function resetSim() {
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  if (advTimer) { clearInterval(advTimer); advTimer = null; }
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('signal').setAttribute('opacity', 0);
+  document.getElementById('connection').setAttribute('opacity', 0);
+  document.getElementById('advCircle').setAttribute('opacity', 0);
+  document.getElementById('phoneScreen').textContent = '📱 手机';
+  document.getElementById('speakerLabel').textContent = '未配对';
+  document.getElementById('speakerLabel').setAttribute('fill', '#06b6d4');
+  document.getElementById('log').innerHTML = '<div class="info">[准备就绪] 点击"开始配对"模拟连接过程...</div>';
+}
+
+function startPair() {
+  resetSim();
+  document.getElementById('startBtn').disabled = true;
+
+  // Step 1: 广播
+  logMsg('<span class="info">[第1步]</span> 蓝牙耳机开机，开始广播自己的存在...');
+  document.getElementById('advCircle').setAttribute('opacity', 0.8);
+  advPhase = 0;
+  advTimer = setInterval(function () {
+    advPhase = (advPhase + 0.05) % 1;
+    document.getElementById('advCircle').setAttribute('r', String(14 + advPhase * 35));
+    document.getElementById('advCircle').setAttribute('opacity', String((0.7 * (1 - advPhase)).toFixed(2)));
+  }, 50);
+
+  // Step 2: 扫描
+  stepTimer = setTimeout(function () {
+    logMsg('<span class="info">[第2步]</span> 手机打开蓝牙，开始扫描周围设备...');
+    document.getElementById('signal').setAttribute('opacity', 1);
+    document.getElementById('signalLabel').textContent = '扫描中...';
+    document.getElementById('phoneScreen').textContent = '🔍 扫描中';
+
+    // Step 3: 发现
+    stepTimer = setTimeout(function () {
+      logMsg('<span class="ok">[第2步]</span> 发现设备：<strong>蓝牙耳机 BT-X1</strong>（信号强度 -42dBm）');
+      document.getElementById('phoneScreen').textContent = '📋 BT-X1';
+
+      // Step 4: 请求配对
+      stepTimer = setTimeout(function () {
+        logMsg('<span class="info">[第3步]</span> 用户选择"蓝牙耳机 BT-X1"，发起配对请求...');
+        document.getElementById('signalLabel').textContent = '配对中...';
+        document.getElementById('phoneScreen').textContent = '🔄 配对';
+
+        // Step 5: 密钥交换
+        stepTimer = setTimeout(function () {
+          logMsg('<span class="info">[第3步]</span> 交换密钥，验证设备身份...');
+
+          // Step 6: 完成连接
+          stepTimer = setTimeout(function () {
+            clearInterval(advTimer); advTimer = null;
+            logMsg('<span class="ok">[第4步]</span> 配对成功！建立加密通信链路。');
+            document.getElementById('signal').setAttribute('opacity', 0);
+            document.getElementById('advCircle').setAttribute('opacity', 0);
+            document.getElementById('connection').setAttribute('opacity', 1);
+            document.getElementById('phoneScreen').textContent = '🎵 已连接';
+            document.getElementById('speakerLabel').textContent = '✓ 已连接';
+            document.getElementById('speakerLabel').setAttribute('fill', '#10b981');
+            logMsg('<span class="ok">[完成]</span> 现在可以开始无线音频传输 🎵');
+            document.getElementById('startBtn').disabled = false;
+          }, 1500);
+        }, 1300);
+      }, 1500);
+    }, 1500);
+  }, 1500);
+}
+
+window.startPair = startPair;
+window.resetSim = resetSim;
+</script>
+</body>
+</html>

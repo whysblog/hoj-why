@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第9课 二维码伴我生活 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#fb8c00;
+  --theme-dark:#e65100;
+  --theme-light:#fff3e0;
+  --bg:#fff8f0;
+}
+.qr-anatomy{
+  display:flex;gap:20px;align-items:flex-start;
+  margin:16px 0;flex-wrap:wrap;
+}
+.qr-display{
+  flex-shrink:0;
+  background:#fff;border-radius:12px;
+  padding:18px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+.qr-display svg{display:block}
+.qr-labels{flex:1;min-width:240px}
+.qr-label-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;
+  border-bottom:1px dashed #eceff1;
+}
+.qr-label-item:last-child{border-bottom:none}
+.qr-label-item .dot{
+  width:16px;height:16px;
+  border-radius:50%;
+  flex-shrink:0;margin-top:4px;
+}
+.qr-label-item h4{
+  color:var(--theme-dark);
+  font-size:14px;margin-bottom:2px;
+}
+.qr-label-item p{font-size:13px;color:#607d8b;margin:0}
+.scene-card{
+  background:linear-gradient(135deg,#fff3e0 0%,#ffe0b2 100%);
+  border-radius:12px;padding:14px 18px;
+  margin:10px 0;
+  display:flex;gap:14px;align-items:center;
+}
+.scene-card .scene-icon{
+  font-size:32px;
+  background:#fff;
+  width:54px;height:54px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.scene-card h4{color:var(--theme-dark);font-size:15px;margin-bottom:2px}
+.scene-card p{font-size:13px;color:#37474f;margin:0}
+.safety-tip{
+  background:#ffebee;border-left:4px solid #e53935;
+  padding:14px 16px;border-radius:8px;
+  margin:10px 0;
+  display:flex;gap:10px;
+}
+.safety-tip .tip-icon{font-size:24px;flex-shrink:0}
+.safety-tip .tip-content h4{color:#c62828;font-size:15px;margin-bottom:4px}
+.safety-tip .tip-content p{font-size:13px;color:#37474f;margin:0}
+.error-demo{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+  text-align:center;
+}
+.error-demo .qr-row{
+  display:flex;gap:14px;justify-content:center;
+  flex-wrap:wrap;margin:14px 0;
+}
+.error-demo .qr-box{
+  text-align:center;
+  background:#fafafa;
+  border-radius:10px;
+  padding:14px;
+}
+.error-demo .qr-box svg{margin-bottom:6px}
+.error-demo .qr-box .status{
+  font-size:13px;font-weight:bold;
+}
+.error-demo .qr-box.ok .status{color:#43a047}
+.error-demo .qr-box.broken .status{color:#fb8c00}
+.error-demo .qr-box.too-broken .status{color:#e53935}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第二单元 · 第9课</span>
+    <h1>📱 二维码伴我生活</h1>
+    <p>解密二维码的结构、容错原理与安全使用</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">🔍 二维码结构</button>
+    <button class="nav-btn" data-slide="2">🛡️ 神奇的容错</button>
+    <button class="nav-btn" data-slide="3">⚠️ 安全使用</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      你见过下面这些场景吗？
+      <ul style="margin-top:6px">
+        <li>📱 妈妈用手机扫一扫付钱</li>
+        <li>🍱 餐厅扫码点餐</li>
+        <li>🎫 进公园扫码取票</li>
+        <li>📦 快递包裹上的小方块</li>
+      </ul>
+      它们都用到了同一种神奇的编码：<b>二维码</b>！
+    </div>
+
+    <p>二维码（QR Code）是 <b>1994 年</b>由日本人发明的，"QR"是"Quick Response（快速响应）"的缩写。
+    它只需要<b>一秒钟</b>就能被扫描识别，比传统条形码<b>容量大几百倍</b>！</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>了解二维码的<b>基本结构</b>和工作原理</li>
+      <li>理解二维码的<b>容错</b>机制</li>
+      <li>学会<b>安全使用</b>二维码，识别风险</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>二维码的结构</h2>
+
+    <p>二维码看起来就是一堆黑白方块，其实它<b>每个部分都有用</b>！</p>
+
+    <div class="qr-anatomy">
+      <div class="qr-display">
+        <svg width="200" height="200" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+          <rect width="21" height="21" fill="#fff"/>
+          <!-- 三个定位点 -->
+          <g fill="#1565c0">
+            <!-- 左上 -->
+            <rect x="0" y="0" width="7" height="7"/>
+            <rect x="1" y="1" width="5" height="5" fill="#fff"/>
+            <rect x="2" y="2" width="3" height="3" fill="#1565c0"/>
+            <!-- 右上 -->
+            <rect x="14" y="0" width="7" height="7"/>
+            <rect x="15" y="1" width="5" height="5" fill="#fff"/>
+            <rect x="16" y="2" width="3" height="3" fill="#1565c0"/>
+            <!-- 左下 -->
+            <rect x="0" y="14" width="7" height="7"/>
+            <rect x="1" y="15" width="5" height="5" fill="#fff"/>
+            <rect x="2" y="16" width="3" height="3" fill="#1565c0"/>
+          </g>
+          <!-- 对齐点 -->
+          <g fill="#e91e63">
+            <rect x="13" y="13" width="5" height="5"/>
+            <rect x="14" y="14" width="3" height="3" fill="#fff"/>
+            <rect x="15" y="15" width="1" height="1" fill="#e91e63"/>
+          </g>
+          <!-- 时序线 -->
+          <g fill="#43a047">
+            <rect x="6" y="8" width="1" height="1"/>
+            <rect x="6" y="10" width="1" height="1"/>
+            <rect x="6" y="12" width="1" height="1"/>
+            <rect x="8" y="6" width="1" height="1"/>
+            <rect x="10" y="6" width="1" height="1"/>
+            <rect x="12" y="6" width="1" height="1"/>
+          </g>
+          <!-- 数据区（随机点） -->
+          <g fill="#212121">
+            <rect x="8" y="8" width="1" height="1"/>
+            <rect x="10" y="8" width="1" height="1"/>
+            <rect x="11" y="9" width="1" height="1"/>
+            <rect x="9" y="10" width="1" height="1"/>
+            <rect x="8" y="11" width="1" height="1"/>
+            <rect x="10" y="11" width="1" height="1"/>
+            <rect x="11" y="11" width="1" height="1"/>
+            <rect x="8" y="13" width="1" height="1"/>
+            <rect x="12" y="9" width="1" height="1"/>
+            <rect x="9" y="12" width="1" height="1"/>
+            <rect x="9" y="8" width="1" height="1"/>
+            <rect x="13" y="10" width="1" height="1"/>
+            <rect x="11" y="13" width="1" height="1"/>
+            <rect x="13" y="8" width="1" height="1"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="qr-labels">
+        <div class="qr-label-item">
+          <span class="dot" style="background:#1565c0"></span>
+          <div>
+            <h4>三个大方块 · 定位点</h4>
+            <p>就算二维码倒着、歪着，扫码器也能<b>准确找到方向</b></p>
+          </div>
+        </div>
+        <div class="qr-label-item">
+          <span class="dot" style="background:#e91e63"></span>
+          <div>
+            <h4>小方块 · 对齐点</h4>
+            <p>帮助校正图像的<b>变形</b>，曲面贴的也能扫</p>
+          </div>
+        </div>
+        <div class="qr-label-item">
+          <span class="dot" style="background:#43a047"></span>
+          <div>
+            <h4>虚线 · 时序模式</h4>
+            <p>告诉扫码器<b>方格的大小</b>，相当于"尺子"</p>
+          </div>
+        </div>
+        <div class="qr-label-item">
+          <span class="dot" style="background:#212121"></span>
+          <div>
+            <h4>其余区域 · 数据区</h4>
+            <p>真正存储信息的地方：网址、文字、数字……</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 神奇的事实</h4>
+      一个普通的二维码可以存 <b>4296 个字符</b>，相当于一篇短文！
+      而且<b>转任意角度</b>都能扫描成功——这都要归功于那三个定位点。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>神奇的容错</h2>
+
+    <p>你有没有想过：二维码<b>被划了一道</b>、被<b>弄脏</b>了，为什么<b>还能扫出来</b>？</p>
+
+    <div class="info-box">
+      <h4>💡 因为二维码有"容错"能力！</h4>
+      二维码在编码时，会<b>多放一些"备份信息"</b>。即使部分内容损坏了，扫码器也能<b>根据备份还原</b>出原始内容。
+      这种"<b>有点错也能识别</b>"的能力，就叫<b>容错</b>。
+    </div>
+
+    <div class="error-demo">
+      <h4 style="color:var(--theme-dark);margin-bottom:8px">三种破损程度</h4>
+      <div class="qr-row">
+        <div class="qr-box ok">
+          <svg width="100" height="100" viewBox="0 0 21 21" style="image-rendering:pixelated">
+            <rect width="21" height="21" fill="#fff"/>
+            <g fill="#000">
+              <rect x="0" y="0" width="7" height="7"/>
+              <rect x="1" y="1" width="5" height="5" fill="#fff"/>
+              <rect x="2" y="2" width="3" height="3"/>
+              <rect x="14" y="0" width="7" height="7"/>
+              <rect x="15" y="1" width="5" height="5" fill="#fff"/>
+              <rect x="16" y="2" width="3" height="3"/>
+              <rect x="0" y="14" width="7" height="7"/>
+              <rect x="1" y="15" width="5" height="5" fill="#fff"/>
+              <rect x="2" y="16" width="3" height="3"/>
+              <rect x="13" y="13" width="5" height="5"/>
+              <rect x="14" y="14" width="3" height="3" fill="#fff"/>
+              <rect x="15" y="15" width="1" height="1"/>
+              <rect x="8" y="8" width="1" height="1"/>
+              <rect x="10" y="8" width="1" height="1"/>
+              <rect x="9" y="10" width="1" height="1"/>
+              <rect x="11" y="11" width="1" height="1"/>
+              <rect x="8" y="11" width="1" height="1"/>
+            </g>
+          </svg>
+          <div class="status">✓ 完整</div>
+        </div>
+        <div class="qr-box broken">
+          <svg width="100" height="100" viewBox="0 0 21 21" style="image-rendering:pixelated">
+            <rect width="21" height="21" fill="#fff"/>
+            <g fill="#000">
+              <rect x="0" y="0" width="7" height="7"/>
+              <rect x="1" y="1" width="5" height="5" fill="#fff"/>
+              <rect x="2" y="2" width="3" height="3"/>
+              <rect x="14" y="0" width="7" height="7"/>
+              <rect x="15" y="1" width="5" height="5" fill="#fff"/>
+              <rect x="16" y="2" width="3" height="3"/>
+              <rect x="0" y="14" width="7" height="7"/>
+              <rect x="1" y="15" width="5" height="5" fill="#fff"/>
+              <rect x="2" y="16" width="3" height="3"/>
+              <rect x="13" y="13" width="5" height="5"/>
+              <rect x="14" y="14" width="3" height="3" fill="#fff"/>
+              <rect x="15" y="15" width="1" height="1"/>
+              <rect x="8" y="8" width="1" height="1"/>
+              <rect x="10" y="8" width="1" height="1"/>
+            </g>
+            <rect x="8" y="10" width="6" height="2" fill="#999"/>
+          </svg>
+          <div class="status">⚠ 部分破损 · 仍可扫</div>
+        </div>
+        <div class="qr-box too-broken">
+          <svg width="100" height="100" viewBox="0 0 21 21" style="image-rendering:pixelated">
+            <rect width="21" height="21" fill="#fff"/>
+            <g fill="#000">
+              <rect x="0" y="14" width="7" height="7"/>
+              <rect x="1" y="15" width="5" height="5" fill="#fff"/>
+              <rect x="2" y="16" width="3" height="3"/>
+            </g>
+            <rect x="0" y="0" width="14" height="14" fill="#ccc"/>
+            <rect x="13" y="13" width="8" height="8" fill="#ccc"/>
+          </svg>
+          <div class="status">✗ 损坏严重 · 无法识别</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#607d8b;margin-top:8px">
+        二维码通常分 4 个容错等级：L (7%)、M (15%)、Q (25%)、H (30%)。
+        等级越高，<b>能修复的破损越多</b>，但能存的信息就少一点。
+      </p>
+    </div>
+
+    <div class="info-box tip">
+      <h4>💭 这就是为什么……</h4>
+      你在商店看到的二维码，中间常常有店铺 LOGO 也能扫——因为<b>被遮挡的部分小于容错率</b>！
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>安全使用二维码</h2>
+
+    <p>二维码很方便，但也有<b>风险</b>。坏人可能制作假二维码骗人！</p>
+
+    <div class="scene-card">
+      <span class="scene-icon">💸</span>
+      <div>
+        <h4>风险一：被换的支付码</h4>
+        <p>有的小偷把店主的收款码<b>偷偷换成自己的</b>，你扫码付的钱就到小偷账户了！</p>
+      </div>
+    </div>
+
+    <div class="scene-card">
+      <span class="scene-icon">🚫</span>
+      <div>
+        <h4>风险二：钓鱼网站</h4>
+        <p>二维码扫出来是一个<b>假网站</b>，骗你输入账号密码。</p>
+      </div>
+    </div>
+
+    <div class="scene-card">
+      <span class="scene-icon">🦠</span>
+      <div>
+        <h4>风险三：恶意程序</h4>
+        <p>扫码后让你下载 APP，结果是<b>病毒程序</b>，偷你的资料。</p>
+      </div>
+    </div>
+
+    <h3>🛡️ 安全扫码"四不要"</h3>
+
+    <div class="safety-tip">
+      <span class="tip-icon">🚫</span>
+      <div class="tip-content">
+        <h4>不要扫陌生人给的二维码</h4>
+        <p>路边小广告、不明邮件里的码 → 一律不扫</p>
+      </div>
+    </div>
+
+    <div class="safety-tip">
+      <span class="tip-icon">🚫</span>
+      <div class="tip-content">
+        <h4>不要扫小心被换的码</h4>
+        <p>共享单车、街边贴的码，留意有没有被覆盖、有没有划痕</p>
+      </div>
+    </div>
+
+    <div class="safety-tip">
+      <span class="tip-icon">🚫</span>
+      <div class="tip-content">
+        <h4>不要轻易输入个人信息</h4>
+        <p>扫码后让你填身份证、家庭住址 → 立即关闭</p>
+      </div>
+    </div>
+
+    <div class="safety-tip">
+      <span class="tip-icon">🚫</span>
+      <div class="tip-content">
+        <h4>不要自己尝试支付</h4>
+        <p>没有大人陪同时，不要扫描和支付有关的码</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🔍</span>
+        <h4>结构组成</h4>
+        <p>定位点、对齐点、时序线、数据区</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🛡️</span>
+        <h4>容错能力</h4>
+        <p>损坏部分仍可识别（最高 30%）</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">⚠️</span>
+        <h4>安全使用</h4>
+        <p>不扫陌生码、不填私密信息</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">📱</span>
+        <h4>用处广泛</h4>
+        <p>支付、登录、信息分享</p>
+      </div>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      请和爸爸妈妈一起，找一找<b>家里身边</b>的二维码：
+      <ul style="margin-top:6px">
+        <li>食品包装上的</li>
+        <li>书本封底的</li>
+        <li>快递单上的</li>
+        <li>身份证背面的（你有 ID 吗？）</li>
+      </ul>
+      和家人讨论：扫这些码<b>安全吗</b>？为什么？
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      二维码和身份证都用了一个秘密武器——<b>校验码</b>！
+      它能自动发现编码错误。下节课<b>《数据错误及时验》</b>，揭秘校验码的奥秘！
+      <br>
+      📝 <a href="tool_checksum.html" style="color:var(--theme-dark)">点这里直接体验校验码计算工具 →</a>
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

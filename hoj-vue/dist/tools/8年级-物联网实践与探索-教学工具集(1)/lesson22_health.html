@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第22课 · 健康生活新设备 — 智能健康穿戴</title>
+<style>
+  :root {
+    --bg: #faf5ff;
+    --bg-2: #f3e8ff;
+    --ink: #1e1b4b;
+    --ink-soft: #5b5076;
+    --primary: #7c3aed;
+    --accent: #ec4899;
+    --red: #dc2626;
+    --green: #10b981;
+    --line: #ddd0f5;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(124,58,237,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 健康仪表盘 */
+  .dash-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .dash-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; align-items: stretch; }
+  .watch {
+    background: linear-gradient(160deg, #1e1b4b, #312e81);
+    border-radius: 30px; padding: 18px; text-align: center;
+    box-shadow: 0 8px 28px rgba(30,27,75,.3);
+    color: #fff;
+  }
+  .watch .strap { background: #312e81; width: 60px; height: 16px; margin: 0 auto -6px; border-radius: 4px; }
+  .watch .face {
+    background: #0f0a23; border-radius: 24px; padding: 22px 16px; margin: 8px 0;
+    border: 3px solid #4c1d95;
+  }
+  .watch .time {
+    font-family: "JetBrains Mono",monospace; font-size: 18px; color: #c4b5fd;
+    margin-bottom: 8px;
+  }
+  .watch .big-metric {
+    font-size: 48px; font-weight: 700; color: #ec4899; font-family: "JetBrains Mono",monospace;
+    line-height: 1;
+  }
+  .watch .big-metric .unit { font-size: 14px; color: #c4b5fd; margin-left: 2px; }
+  .watch .label { font-size: 11px; color: #a78bfa; margin-top: 4px; letter-spacing: 2px; }
+  .watch .pulse {
+    width: 100px; height: 24px; margin: 8px auto;
+  }
+  .watch .pulse path { stroke: #ec4899; stroke-width: 1.5; fill: none; }
+
+  .metrics-side { display: flex; flex-direction: column; gap: 12px; }
+  .m-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .m-card {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+    border-left: 3px solid var(--primary);
+  }
+  .m-card .ic { font-size: 22px; margin-bottom: 4px; }
+  .m-card h4 { font-size: 11px; color: var(--ink-soft); letter-spacing: 1px; margin-bottom: 4px; }
+  .m-card .v { font-size: 20px; font-weight: 700; color: var(--primary); font-family: "JetBrains Mono",monospace; }
+  .m-card .v .u { font-size: 12px; color: var(--ink-soft); margin-left: 2px; }
+  .m-card .progress { background: rgba(124,58,237,.15); height: 4px; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .m-card .progress div { height: 100%; background: var(--primary); border-radius: 2px; transition: width .5s; }
+  .scene-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+  }
+  .scene-btn {
+    padding: 8px 14px; background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-family: inherit; color: var(--ink);
+  }
+  .scene-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .insight {
+    margin-top: 14px; padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.7;
+  }
+  .insight.ok { background: rgba(16,185,129,.1); color: #047857; }
+  .insight.warn { background: rgba(245,158,11,.15); color: #92400e; }
+
+  /* 设备 */
+  .devices-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .device {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-top: 4px solid var(--primary);
+  }
+  .device .ic { font-size: 32px; margin-bottom: 8px; }
+  .device h4 { font-size: 14px; margin-bottom: 4px; color: var(--primary); }
+  .device p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .device .tech { margin-top: 8px; font-size: 10px; color: var(--accent); }
+
+  /* 算法/原理 */
+  .principle {
+    background: var(--card); padding: 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .p-row { display: grid; grid-template-columns: auto 1fr; gap: 18px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+  .p-row:last-child { border: none; }
+  .p-row .ic { font-size: 36px; }
+  .p-row h4 { font-size: 14px; color: var(--primary); margin-bottom: 4px; }
+  .p-row p { font-size: 13px; color: var(--ink-soft); line-height: 1.8; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .dash-row { grid-template-columns: 1fr; }
+    .m-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 22 课</span>健康生活新设备</h1>
+  <p class="lead">智能手环、智能手表、智能体脂秤……健康类物联设备正在<strong>把医院的检测设备搬到我们手腕上</strong>，让健康管理从"事后看病"变成"日常监测"。本课带你体验智能手表的核心健康监测功能。</p>
+</header>
+
+<main>
+
+  <!-- 仪表盘 -->
+  <section class="section">
+    <div class="section-title">一、智能手表健康仪表盘</div>
+    <div class="dash-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px;">点击下方场景按钮，观察不同状态下手表显示的健康数据变化：</p>
+      <div class="dash-row">
+        <div class="watch">
+          <div class="strap"></div>
+          <div class="face">
+            <div class="time" id="watchTime">14:36</div>
+            <svg class="pulse" viewBox="0 0 100 24">
+              <path id="pulsePath" d="M 0 12 L 20 12 L 25 4 L 30 20 L 35 12 L 60 12 L 65 4 L 70 20 L 75 12 L 100 12"/>
+            </svg>
+            <div class="big-metric"><span id="watchHr">72</span><span class="unit">bpm</span></div>
+            <div class="label">心率 HEART RATE</div>
+          </div>
+          <div class="strap"></div>
+        </div>
+        <div class="metrics-side">
+          <div class="m-row">
+            <div class="m-card">
+              <div class="ic">👣</div>
+              <h4>今日步数</h4>
+              <div class="v"><span id="vSteps">6234</span><span class="u">步</span></div>
+              <div class="progress"><div id="prSteps" style="width:62%;"></div></div>
+            </div>
+            <div class="m-card">
+              <div class="ic">🔥</div>
+              <h4>消耗卡路里</h4>
+              <div class="v"><span id="vCal">285</span><span class="u">kcal</span></div>
+              <div class="progress"><div id="prCal" style="width:48%;"></div></div>
+            </div>
+          </div>
+          <div class="m-row">
+            <div class="m-card">
+              <div class="ic">💤</div>
+              <h4>昨晚睡眠</h4>
+              <div class="v"><span id="vSleep">7.5</span><span class="u">小时</span></div>
+              <div class="progress"><div id="prSleep" style="width:94%;"></div></div>
+            </div>
+            <div class="m-card">
+              <div class="ic">🫁</div>
+              <h4>血氧饱和度</h4>
+              <div class="v"><span id="vSpo2">97</span><span class="u">%</span></div>
+              <div class="progress"><div id="prSpo2" style="width:97%;"></div></div>
+            </div>
+          </div>
+          <div class="m-row">
+            <div class="m-card">
+              <div class="ic">😰</div>
+              <h4>压力指数</h4>
+              <div class="v"><span id="vStress">32</span><span class="u">/100</span></div>
+              <div class="progress"><div id="prStress" style="width:32%;"></div></div>
+            </div>
+            <div class="m-card">
+              <div class="ic">🌡</div>
+              <h4>体温</h4>
+              <div class="v"><span id="vTemp">36.5</span><span class="u">℃</span></div>
+              <div class="progress"><div id="prTemp" style="width:50%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-row">
+        <button class="scene-btn active" id="b_rest" onclick="setScene('rest')">😌 静息状态</button>
+        <button class="scene-btn" id="b_walk" onclick="setScene('walk')">🚶 步行中</button>
+        <button class="scene-btn" id="b_run" onclick="setScene('run')">🏃 跑步训练</button>
+        <button class="scene-btn" id="b_sleep" onclick="setScene('sleep')">😴 睡眠中</button>
+        <button class="scene-btn" id="b_anxious" onclick="setScene('anxious')">😰 压力大</button>
+        <button class="scene-btn" id="b_fever" onclick="setScene('fever')">🤒 发烧异常</button>
+      </div>
+      <div class="insight ok" id="insightBar">😌 心率 72 bpm 处于静息正常范围。建议保持当前状态。</div>
+    </div>
+  </section>
+
+  <!-- 健康设备 -->
+  <section class="section">
+    <div class="section-title">二、其他常见健康监测设备</div>
+    <div class="devices-grid">
+      <div class="device"><div class="ic">⌚</div><h4>智能手环/手表</h4><p>心率、步数、睡眠、血氧。最普及的健康监测设备。</p><div class="tech">光电心率 + 加速度计</div></div>
+      <div class="device"><div class="ic">⚖</div><h4>智能体脂秤</h4><p>体重、体脂率、肌肉量、骨量、内脏脂肪。同步到健康 APP。</p><div class="tech">生物电阻抗法</div></div>
+      <div class="device"><div class="ic">💉</div><h4>智能血糖仪</h4><p>糖尿病患者居家监测。CGM 连续血糖监测器可贴在皮肤上 14 天。</p><div class="tech">电化学传感器</div></div>
+      <div class="device"><div class="ic">🩺</div><h4>智能血压计</h4><p>测量收缩压/舒张压，蓝牙同步手机。家庭高血压管理的基础工具。</p><div class="tech">振荡法</div></div>
+      <div class="device"><div class="ic">💊</div><h4>智能药盒</h4><p>记录服药情况，到点提醒。漏服会推送通知给家人。</p><div class="tech">称重/红外传感器</div></div>
+      <div class="device"><div class="ic">🛏</div><h4>智能床垫</h4><p>监测心率、呼吸、翻身次数，分析睡眠质量。</p><div class="tech">压电薄膜传感器</div></div>
+      <div class="device"><div class="ic">🪥</div><h4>智能牙刷</h4><p>陀螺仪检测刷牙姿势，提醒覆盖盲区。儿童牙齿养成神器。</p><div class="tech">陀螺仪 + 蓝牙</div></div>
+      <div class="device"><div class="ic">📞</div><h4>老人一键报警</h4><p>跌倒检测：加速度计判断异常坠落。一键拨打家人或急救。</p><div class="tech">加速度 + GPS + 4G</div></div>
+    </div>
+  </section>
+
+  <!-- 工作原理 -->
+  <section class="section">
+    <div class="section-title">三、心率监测的工作原理（PPG）</div>
+    <div class="principle">
+      <div class="p-row">
+        <div class="ic">💡</div>
+        <div>
+          <h4>① 绿光照射</h4>
+          <p>手表背面的<strong>绿色 LED</strong>照射皮肤。绿光会被血液中的血红蛋白吸收，能很好地穿透皮肤但被血液阻挡。</p>
+        </div>
+      </div>
+      <div class="p-row">
+        <div class="ic">📷</div>
+        <div>
+          <h4>② 光电检测</h4>
+          <p>旁边的<strong>光电二极管</strong>检测返回的光强。心脏跳动让血管中的血液流量周期性变化，反射光强也跟着周期性变化。</p>
+        </div>
+      </div>
+      <div class="p-row">
+        <div class="ic">📊</div>
+        <div>
+          <h4>③ 信号处理</h4>
+          <p>主控芯片把光强变化转化为<strong>波形信号</strong>（类似心电图），数出每分钟波峰数量就是<strong>心率（bpm）</strong>。</p>
+        </div>
+      </div>
+      <div class="p-row">
+        <div class="ic">🧠</div>
+        <div>
+          <h4>④ AI 分析</h4>
+          <p>结合<strong>加速度计</strong>判断用户在静息还是运动；结合<strong>陀螺仪</strong>检测姿势变化；结合<strong>血氧饱和度</strong>评估健康状况。多传感器融合给出更可靠的健康建议。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 22 课配套交互工具</footer>
+
+<script>
+var scenes = {
+  rest:    { hr: 72,  steps: 6234, cal: 285, sleep: 7.5, spo2: 97, stress: 32, temp: 36.5, insight: '😌 心率 72 bpm 处于静息正常范围。建议保持当前状态。', cls: 'ok' },
+  walk:    { hr: 95,  steps: 7530, cal: 320, sleep: 7.5, spo2: 98, stress: 28, temp: 36.6, insight: '🚶 步行中心率正常。继续保持每日 8000+ 步的目标。', cls: 'ok' },
+  run:     { hr: 158, steps: 9120, cal: 520, sleep: 7.5, spo2: 99, stress: 50, temp: 37.1, insight: '🏃 运动中心率 158 bpm（约最大心率 75%），属于有氧训练区间。',  cls: 'ok' },
+  sleep:   { hr: 56,  steps: 6234, cal: 285, sleep: 7.5, spo2: 96, stress: 20, temp: 36.3, insight: '😴 深睡眠状态，心率 56 bpm，睡眠质量良好。',                   cls: 'ok' },
+  anxious: { hr: 92,  steps: 6234, cal: 285, sleep: 5.2, spo2: 97, stress: 78, temp: 36.5, insight: '😰 压力指数偏高（78/100）。建议尝试呼吸训练放松。',           cls: 'warn' },
+  fever:   { hr: 105, steps: 4120, cal: 200, sleep: 6.0, spo2: 94, stress: 65, temp: 38.4, insight: '🤒 体温 38.4°C 偏高，心率加快、血氧 94% 略低。建议就医检查。', cls: 'warn' }
+};
+
+function setScene(name) {
+  var keys = ['rest','walk','run','sleep','anxious','fever'];
+  for (var i = 0; i < keys.length; i++) {
+    document.getElementById('b_' + keys[i]).className = 'scene-btn' + (keys[i] === name ? ' active' : '');
+  }
+  var s = scenes[name];
+  document.getElementById('watchHr').textContent = s.hr;
+  document.getElementById('vSteps').textContent = s.steps;
+  document.getElementById('vCal').textContent = s.cal;
+  document.getElementById('vSleep').textContent = s.sleep;
+  document.getElementById('vSpo2').textContent = s.spo2;
+  document.getElementById('vStress').textContent = s.stress;
+  document.getElementById('vTemp').textContent = s.temp;
+  document.getElementById('prSteps').style.width = Math.min(100, s.steps / 10000 * 100) + '%';
+  document.getElementById('prCal').style.width = Math.min(100, s.cal / 600 * 100) + '%';
+  document.getElementById('prSleep').style.width = Math.min(100, s.sleep / 8 * 100) + '%';
+  document.getElementById('prSpo2').style.width = s.spo2 + '%';
+  document.getElementById('prStress').style.width = s.stress + '%';
+  document.getElementById('prTemp').style.width = ((s.temp - 35) / 4 * 100) + '%';
+  document.getElementById('insightBar').className = 'insight ' + s.cls;
+  document.getElementById('insightBar').innerHTML = s.insight;
+}
+
+// Update watch time
+setInterval(function () {
+  var d = new Date();
+  var h = d.getHours(), m = d.getMinutes();
+  document.getElementById('watchTime').textContent = (h<10?'0':'')+h + ':' + (m<10?'0':'')+m;
+}, 30000);
+var d0 = new Date();
+document.getElementById('watchTime').textContent = (d0.getHours()<10?'0':'')+d0.getHours() + ':' + (d0.getMinutes()<10?'0':'')+d0.getMinutes();
+
+window.setScene = setScene;
+</script>
+</body>
+</html>

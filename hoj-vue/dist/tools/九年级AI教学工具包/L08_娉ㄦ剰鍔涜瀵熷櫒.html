@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第8课 · 注意力分布观察器</title>
+<style>
+  :root {
+    --bg: #0f1729;
+    --panel: #1a2440;
+    --panel-2: #243054;
+    --ink: #e6ecf5;
+    --muted: #8b9bbf;
+    --accent: #fbbf24;
+    --accent-2: #60a5fa;
+    --good: #34d399;
+    --warn: #f87171;
+    --line: #2d3a5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f1729 0%, #141e3a 100%);
+    color: var(--ink); min-height: 100vh; line-height: 1.6;
+  }
+  header {
+    padding: 24px 36px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .title { display: flex; align-items: baseline; gap: 14px; }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .tag {
+    font-size: 12px; padding: 3px 10px;
+    background: var(--accent); color: #0f1729;
+    border-radius: 999px; font-weight: 600;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main {
+    padding: 24px 36px 40px; max-width: 1400px; margin: 0 auto;
+    display: grid; grid-template-columns: 380px 1fr; gap: 20px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px;
+  }
+  .panel h2 {
+    margin: 0 0 14px; font-size: 15px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+  
+  button {
+    background: var(--accent); color: #0f1729; border: none; border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(251,191,36,0.3); }
+  button.secondary {
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+  }
+  button.secondary:hover { background: var(--panel-2); box-shadow: none; }
+  button.danger {
+    background: transparent; color: var(--warn); border: 1px solid var(--warn);
+  }
+
+  .input-section input {
+    width: 100%; background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 9px 12px; font-family: inherit; font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .input-section input:focus { outline: none; border-color: var(--accent-2); }
+
+  .controls { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .controls button { flex: 1; padding: 8px 14px; font-size: 13px; min-width: 100px; }
+
+  .step {
+    background: var(--panel-2); padding: 14px; border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .step .step-num {
+    color: var(--accent); font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;
+  }
+
+  /* 注意力可视化 */
+  .att-chain {
+    display: flex; gap: 0; align-items: center;
+    flex-wrap: wrap; margin: 14px 0;
+    background: #0f1729; padding: 16px; border-radius: 10px;
+    border: 1px solid var(--line);
+    min-height: 120px;
+  }
+  .word-block {
+    display: flex; flex-direction: column; align-items: center;
+    margin: 0 4px;
+  }
+  .word-block .score {
+    font-size: 11px; color: var(--muted);
+    background: var(--panel-2); padding: 2px 8px;
+    border-radius: 999px; margin-bottom: 4px;
+    font-family: ui-monospace, monospace;
+    border: 1px solid var(--line);
+  }
+  .word-block .word {
+    font-size: 20px; padding: 8px 14px;
+    background: var(--panel-2); border-radius: 8px;
+    border: 2px solid var(--line);
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  .word-block.high .word {
+    background: var(--accent); color: #0f1729; border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(251,191,36,0.4);
+  }
+  .word-block.med .word {
+    background: rgba(251,191,36,0.25); border-color: rgba(251,191,36,0.5);
+  }
+  .word-block.low .word {
+    opacity: 0.55;
+  }
+  .word-block.start .word {
+    border-color: var(--good);
+  }
+
+  /* 滑块行 */
+  .score-row {
+    display: grid; grid-template-columns: 60px 1fr 50px;
+    gap: 10px; align-items: center; margin: 6px 0;
+    font-size: 13px;
+  }
+  .score-row .word-label {
+    text-align: center; font-weight: 600;
+    background: var(--panel-2); padding: 5px 8px; border-radius: 5px;
+  }
+  .score-row input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    height: 6px; background: var(--panel-2); border-radius: 3px;
+    outline: none;
+  }
+  .score-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; background: var(--accent);
+    border-radius: 50%; cursor: pointer;
+  }
+  .score-row input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; background: var(--accent);
+    border-radius: 50%; cursor: pointer; border: none;
+  }
+  .score-row .val {
+    text-align: right; font-family: monospace; color: var(--accent);
+  }
+
+  /* 热力图 */
+  .heatmap-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    margin-top: 14px;
+  }
+  .heatmap-table th, .heatmap-table td {
+    padding: 6px 8px; border: 1px solid var(--line);
+    text-align: center; font-family: monospace;
+  }
+  .heatmap-table th {
+    background: var(--panel-2); color: var(--accent);
+    font-weight: 600;
+  }
+  .heatmap-table th.row-h {
+    text-align: right; padding-right: 10px;
+  }
+
+  .help {
+    color: var(--muted); font-size: 12.5px;
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent-2);
+    padding: 10px 14px; border-radius: 6px;
+    margin: 12px 0;
+  }
+
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  .compare-card {
+    background: var(--panel-2); padding: 14px; border-radius: 10px;
+  }
+  .compare-card h3 {
+    margin: 0 0 8px; font-size: 13px;
+  }
+  .compare-card.no-att h3 { color: var(--warn); }
+  .compare-card.with-att h3 { color: var(--good); }
+
+  .preset-words {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+  }
+  .preset-word {
+    background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--ink); padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; cursor: pointer;
+  }
+  .preset-word:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 880px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>注意力分布观察器</h1>
+    <span class="tag">第 8 课</span>
+  </div>
+  <div class="subtitle">通过"接力造句"模拟注意力机制 · 看懂模型如何聚焦关键信息</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>① 接力造句</h2>
+    <div class="input-section">
+      <label style="font-size:13px; color:var(--muted);">添加一个新词:</label>
+      <input type="text" id="newWord" placeholder="输入一个词,然后按回车" onkeydown="if(event.key==='Enter') addWord()">
+      
+      <div style="margin-top: 4px; font-size: 12px; color: var(--muted);">或快速添加:</div>
+      <div class="preset-words">
+        <span class="preset-word" onclick="quickAdd('小猫')">小猫</span>
+        <span class="preset-word" onclick="quickAdd('是')">是</span>
+        <span class="preset-word" onclick="quickAdd('一种')">一种</span>
+        <span class="preset-word" onclick="quickAdd('动物')">动物</span>
+        <span class="preset-word" onclick="quickAdd('喜欢')">喜欢</span>
+        <span class="preset-word" onclick="quickAdd('吃')">吃</span>
+        <span class="preset-word" onclick="quickAdd('鱼')">鱼</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button onclick="addWord()">+ 添加</button>
+      <button class="secondary" onclick="loadDemo()">加载示例</button>
+      <button class="danger secondary" onclick="reset()">清空</button>
+    </div>
+
+    <h2 style="margin-top: 24px;">② 分配注意力</h2>
+    <div style="font-size: 12.5px; color: var(--muted); margin-bottom: 8px;">
+      为每个已添加的词调整重要性(总和会自动归一化为 100%)
+    </div>
+    <div id="scoreEditor"></div>
+    <div class="controls">
+      <button class="secondary" onclick="autoBalance()" style="flex:1; min-width:auto;">📊 平均分配</button>
+      <button class="secondary" onclick="emphasizeFirst()" style="flex:1; min-width:auto;">🎯 重点放在主语</button>
+    </div>
+
+    <div class="help">
+      💡 <b>注意力机制核心:</b> 在生成下一个词时,模型会自动判断前面哪些词更"重要",并据此分配权重。重要的词分数高,影响下一个词的选择。
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>③ 注意力可视化</h2>
+    <div class="att-chain" id="attChain">
+      <span style="color: var(--muted); margin: auto;">— 添加词后会显示注意力分布 —</span>
+    </div>
+    <div style="font-size: 12px; color: var(--muted); text-align: center; margin-top: -8px;">
+      ↑ 颜色越亮、字号越大,代表分到的注意力越多
+    </div>
+
+    <h2 style="margin-top: 24px;">④ 对比体验:有/无注意力</h2>
+    <div class="compare-grid">
+      <div class="compare-card no-att">
+        <h3>❌ 无注意力(教材活动 1)</h3>
+        <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">
+          每个人只能看到上一个人写的词,不知道全句重点。结果易混乱:
+        </div>
+        <div style="font-size: 16px; line-height: 1.8; padding: 8px; background:var(--bg); border-radius: 6px;">
+          <span style="color:var(--good)">小猫</span> → 是 → 一种 → <span style="color:var(--warn)">树木</span> → 很 → <span style="color:var(--warn)">奇怪</span>
+        </div>
+        <div style="font-size: 12px; color: var(--warn); margin-top: 6px;">
+          ⚠ 上下文丢失,后面偏离主题
+        </div>
+      </div>
+      <div class="compare-card with-att">
+        <h3>✓ 有注意力(教材活动 2)</h3>
+        <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">
+          每个人能看到全部词及其分数,聚焦重点:
+        </div>
+        <div style="font-size: 16px; line-height: 1.8; padding: 8px; background:var(--bg); border-radius: 6px;">
+          <span style="color:var(--accent); font-weight:700;">小猫</span><sup style="color:var(--accent);">30</sup> 是<sup style="color:var(--muted)">5</sup> 动物<sup style="color:var(--muted)">5</sup> 喜欢<sup style="color:var(--accent-2)">20</sup> 吃<sup style="color:var(--accent)">40</sup> <span style="color:var(--good); font-weight:700;">鱼</span>
+        </div>
+        <div style="font-size: 12px; color: var(--good); margin-top: 6px;">
+          ✓ "小猫"和"吃"高权重,引导后续选"鱼"
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 24px;">⑤ 注意力矩阵(Self-Attention)</h2>
+    <div style="font-size: 12.5px; color: var(--muted); margin-bottom: 8px;">
+      在真实模型(如 Transformer)中,每生成一个词时,都会重新计算它对前面所有词的注意力。
+    </div>
+    <div id="heatmapWrap"></div>
+  </section>
+</main>
+
+<script>
+  let chain = [];  // [{word, score}]
+
+  function addWord() {
+    const inp = document.getElementById('newWord');
+    const w = inp.value.trim();
+    if (!w) return;
+    chain.push({word: w, score: 50});
+    inp.value = '';
+    autoBalance();
+    render();
+  }
+  
+  function quickAdd(w) {
+    chain.push({word: w, score: 50});
+    autoBalance();
+    render();
+  }
+
+  function loadDemo() {
+    chain = [
+      {word: '小猫', score: 30},
+      {word: '是', score: 5},
+      {word: '动物', score: 5},
+      {word: '喜欢', score: 20},
+      {word: '吃', score: 40}
+    ];
+    render();
+  }
+
+  function reset() {
+    chain = [];
+    render();
+  }
+
+  function autoBalance() {
+    if (chain.length === 0) return;
+    const each = Math.round(100 / chain.length);
+    let total = 0;
+    chain.forEach((c, i) => {
+      c.score = i === chain.length - 1 ? 100 - total : each;
+      total += c.score;
+    });
+    render();
+  }
+
+  function emphasizeFirst() {
+    if (chain.length === 0) return;
+    if (chain.length === 1) { chain[0].score = 100; render(); return; }
+    chain[0].score = 50;
+    const rest = 50 / (chain.length - 1);
+    for (let i = 1; i < chain.length; i++) chain[i].score = rest;
+    normalize();
+    render();
+  }
+
+  function normalize() {
+    let total = chain.reduce((s, c) => s + c.score, 0);
+    if (total === 0) return;
+    chain.forEach(c => c.score = Math.round(c.score / total * 100));
+    // 修正
+    let diff = 100 - chain.reduce((s, c) => s + c.score, 0);
+    if (chain.length) chain[chain.length - 1].score += diff;
+  }
+
+  function updateScore(i, val) {
+    chain[i].score = parseInt(val);
+    normalize();
+    render();
+  }
+
+  function delWord(i) {
+    chain.splice(i, 1);
+    normalize();
+    render();
+  }
+
+  function render() {
+    // 编辑器
+    const editor = document.getElementById('scoreEditor');
+    if (chain.length === 0) {
+      editor.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding: 14px;">还没有词,请先添加</div>';
+    } else {
+      editor.innerHTML = chain.map((c, i) => `
+        <div class="score-row">
+          <span class="word-label">${c.word}</span>
+          <input type="range" min="0" max="100" value="${c.score}" oninput="updateScore(${i}, this.value)">
+          <span class="val">${c.score}</span>
+        </div>
+      `).join('');
+    }
+
+    // 链式注意力图
+    const at = document.getElementById('attChain');
+    if (chain.length === 0) {
+      at.innerHTML = '<span style="color: var(--muted); margin: auto;">— 添加词后会显示注意力分布 —</span>';
+    } else {
+      const max = Math.max(...chain.map(c => c.score));
+      at.innerHTML = chain.map((c, i) => {
+        let cls = '';
+        if (c.score === max && max > 0) cls = 'high';
+        else if (c.score >= max * 0.5) cls = 'med';
+        else if (c.score < max * 0.2) cls = 'low';
+        if (i === 0) cls += ' start';
+        const fontSize = 16 + c.score * 0.3;
+        return `<div class="word-block ${cls}">
+          <span class="score">${c.score}%</span>
+          <span class="word" style="font-size: ${fontSize}px;">${c.word}</span>
+        </div>`;
+      }).join('<span style="color:var(--muted); margin: 0 4px;">→</span>');
+    }
+
+    // 自注意力热力图
+    renderHeatmap();
+  }
+
+  function renderHeatmap() {
+    const wrap = document.getElementById('heatmapWrap');
+    if (chain.length < 2) {
+      wrap.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding: 20px; background:#0f1729; border-radius: 8px; border: 1px solid var(--line);">添加 2 个或以上词后,显示注意力矩阵</div>';
+      return;
+    }
+    
+    // 构造一个示例性自注意力矩阵: row[i][j] 表示生成第i个词时对第j个词的注意力
+    // 简化模型: 越靠后的词越多上下文,主语词通常受关注度高
+    const n = chain.length;
+    const M = [];
+    for (let i = 0; i < n; i++) {
+      const row = [];
+      let sum = 0;
+      for (let j = 0; j <= i; j++) {
+        // 用一个简单启发式: 主语权重 + 邻近权重
+        const v = chain[j].score + (1 - Math.abs(i - j) / n) * 30;
+        row.push(v);
+        sum += v;
+      }
+      // 归一化
+      for (let j = 0; j <= i; j++) row[j] = row[j] / sum;
+      while (row.length < n) row.push(null);
+      M.push(row);
+    }
+    
+    let html = '<table class="heatmap-table"><tr><th></th>';
+    chain.forEach(c => html += `<th>${c.word}</th>`);
+    html += '</tr>';
+    for (let i = 0; i < n; i++) {
+      html += `<tr><th class="row-h" style="background:var(--panel-2);"><span style="color:var(--accent-2);">生成${i+1}<br>(${chain[i].word})</span></th>`;
+      for (let j = 0; j < n; j++) {
+        if (M[i][j] === null) {
+          html += `<td style="background: rgba(0,0,0,0.3); color: var(--muted);">—</td>`;
+        } else {
+          const intensity = M[i][j];
+          const pct = (intensity * 100).toFixed(0);
+          const bg = `rgba(251,191,36,${intensity * 0.9})`;
+          const color = intensity > 0.5 ? '#0f1729' : 'var(--ink)';
+          html += `<td style="background: ${bg}; color: ${color}; font-weight: ${intensity > 0.4 ? 700 : 400};">${pct}%</td>`;
+        }
+      }
+      html += '</tr>';
+    }
+    html += '</table>';
+    html += '<div style="font-size: 11.5px; color: var(--muted); margin-top: 6px; text-align: center;">每行 = 生成第i个词时,对第j个词的注意力(行内总和=100%)。 颜色越亮,关注越强。</div>';
+    wrap.innerHTML = html;
+  }
+
+  render();
+</script>
+
+</body>
+</html>

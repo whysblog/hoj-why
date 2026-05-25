@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第20课 · 反馈控制有算法 — 智能花盆灌溉决策模拟器</title>
+<style>
+  :root {
+    --bg: #f0f7f4;
+    --bg-2: #e1eee6;
+    --ink: #1a3a2e;
+    --ink-soft: #4a6c5e;
+    --green: #2d8659;
+    --green-2: #3da171;
+    --soil: #7d5a3a;
+    --water: #2563eb;
+    --sun: #f59e0b;
+    --line: #c8d8ce;
+    --card: #ffffff;
+    --shadow: 0 4px 20px rgba(20,60,40,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image: radial-gradient(circle at 80% 0%, rgba(45,134,89,.07), transparent 50%);
+    min-height: 100vh;
+  }
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--green); text-decoration: none; border-bottom: 1px dotted var(--green); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--sun); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--green); margin-right: 8px; font-size: 14px; }
+
+  /* 反馈环图 */
+  .loop-card {
+    background: var(--card); padding: 30px; border-radius: 12px; box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+  .loop-card svg { width: 100%; max-height: 280px; }
+
+  /* 模拟器主体 */
+  .sim {
+    background: var(--card); padding: 30px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    display: grid; grid-template-columns: 320px 1fr 360px; gap: 24px;
+  }
+
+  /* 花盆可视化 */
+  .pot-area {
+    background: linear-gradient(180deg, #e6f4ff 0%, #f4e9d7 70%, #d4b890 100%);
+    border-radius: 12px; padding: 16px; position: relative; overflow: hidden;
+    min-height: 480px;
+  }
+  .pot-area svg { width: 100%; height: 460px; }
+  .pot-area .weather-icon {
+    position: absolute; top: 12px; left: 12px;
+    font-size: 36px;
+  }
+  .pot-area .light-bar {
+    position: absolute; top: 16px; right: 16px;
+    background: rgba(255,255,255,.7); padding: 6px 10px; border-radius: 6px;
+    font-size: 11px; color: var(--ink); font-family: monospace;
+  }
+
+  /* 控制面板 */
+  .control {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .ctl-group {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+  }
+  .ctl-group h4 {
+    font-size: 13px; color: var(--ink-soft); letter-spacing: 1px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .ctl-group label {
+    display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 4px;
+  }
+  .ctl-group input[type=range] { width: 100%; }
+  .ctl-group .val {
+    font-family: "JetBrains Mono",monospace; font-weight: 700; color: var(--green);
+  }
+  .ctl-group select {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px;
+    font-size: 13px; font-family: inherit; background: var(--card);
+  }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preset-btn {
+    padding: 6px 12px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 4px; font-size: 11px; cursor: pointer; transition: all .15s;
+  }
+  .preset-btn:hover { border-color: var(--green); }
+
+  /* 决策面板 */
+  .decision {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .deci-card {
+    background: var(--bg-2); padding: 16px; border-radius: 8px;
+  }
+  .deci-card h4 { font-size: 13px; letter-spacing: 1px; color: var(--ink-soft); margin-bottom: 10px; }
+  .deci-result {
+    background: linear-gradient(135deg, var(--green), var(--green-2));
+    color: #fff; padding: 18px; border-radius: 10px; text-align: center;
+    box-shadow: 0 4px 14px rgba(45,134,89,.3);
+  }
+  .deci-result.no {
+    background: linear-gradient(135deg, #6b7280, #94a3b8);
+    box-shadow: 0 4px 14px rgba(107,114,128,.3);
+  }
+  .deci-result .ic { font-size: 36px; }
+  .deci-result .lbl { font-size: 18px; font-weight: 700; margin-top: 4px; letter-spacing: 1px; }
+  .deci-result .reason { font-size: 12px; opacity: .9; margin-top: 6px; line-height: 1.5; }
+
+  .branches {
+    background: var(--card); padding: 14px; border-radius: 6px; border: 1px solid var(--line);
+    font-family: "JetBrains Mono",monospace; font-size: 12px; line-height: 1.8;
+  }
+  .branches .step { padding: 4px 8px; border-left: 2px solid transparent; transition: all .2s; }
+  .branches .step.active { background: rgba(245,158,11,.12); border-left-color: var(--sun); color: var(--ink); font-weight: 700; }
+  .branches .step.passed { color: #94a3b8; text-decoration: line-through; }
+  .branches .kw { color: var(--green); }
+  .branches .num { color: var(--water); }
+
+  /* 执行器卡片 */
+  .actuators {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+  }
+  .actuators .row {
+    display: grid; grid-template-columns: 1fr auto; padding: 8px 0;
+    border-bottom: 1px dashed var(--line); font-size: 13px; align-items: center;
+  }
+  .actuators .row:last-child { border: none; }
+  .actuators .row .name { display: flex; align-items: center; gap: 8px; }
+  .actuators .row .ic { font-size: 18px; }
+  .actuators .row .state {
+    padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 700;
+    background: var(--ink-soft); color: #fff;
+  }
+  .actuators .row .state.on  { background: var(--green); }
+  .actuators .row .state.off { background: #94a3b8; }
+
+  /* 代码区 */
+  .code-display {
+    background: #1a3a2e; color: #b6e0c4; padding: 18px;
+    border-radius: 8px; font-family: "JetBrains Mono",monospace; font-size: 12px;
+    line-height: 1.8; margin-top: 18px; overflow-x: auto;
+  }
+  .code-display .kw { color: #ff9c34; }
+  .code-display .str { color: #fbbf24; }
+  .code-display .num { color: #5db9f5; }
+  .code-display .com { color: #6b7280; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 1100px) {
+    .sim { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 20 课</span>反馈控制有算法</h1>
+  <p class="lead">智能花盆通过<strong>反馈控制</strong>实现自动浇水：传感器持续采集土壤湿度→程序根据上下限判断→驱动水泵浇水→湿度变化形成新的反馈。本工具基于教材中的灌溉决策算法，可调节湿度、天气、光照等参数，观察决策分支如何走向「灌溉」或「不灌溉」。</p>
+</header>
+
+<main>
+
+  <!-- 反馈环 -->
+  <section class="section">
+    <div class="section-title">一、反馈控制环路</div>
+    <div class="loop-card">
+      <svg viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2d8659"/>
+          </marker>
+        </defs>
+        <!-- 4个节点 -->
+        <g transform="translate(60 80)">
+          <rect x="0" y="0" width="160" height="80" rx="10" fill="#fff" stroke="#2d8659" stroke-width="2"/>
+          <text x="80" y="32" font-size="13" fill="#1a3a2e" text-anchor="middle" font-weight="700">① 数据采集</text>
+          <text x="80" y="52" font-size="11" fill="#4a6c5e" text-anchor="middle">湿度/光照传感器</text>
+        </g>
+        <g transform="translate(260 80)">
+          <rect x="0" y="0" width="160" height="80" rx="10" fill="#fff" stroke="#f59e0b" stroke-width="2"/>
+          <text x="80" y="32" font-size="13" fill="#1a3a2e" text-anchor="middle" font-weight="700">② 数据分析</text>
+          <text x="80" y="52" font-size="11" fill="#4a6c5e" text-anchor="middle">与上下限对比</text>
+        </g>
+        <g transform="translate(460 80)">
+          <rect x="0" y="0" width="160" height="80" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+          <text x="80" y="32" font-size="13" fill="#1a3a2e" text-anchor="middle" font-weight="700">③ 决策算法</text>
+          <text x="80" y="52" font-size="11" fill="#4a6c5e" text-anchor="middle">if/elif/else 分支</text>
+        </g>
+        <g transform="translate(660 80)">
+          <rect x="0" y="0" width="160" height="80" rx="10" fill="#fff" stroke="#ef4444" stroke-width="2"/>
+          <text x="80" y="32" font-size="13" fill="#1a3a2e" text-anchor="middle" font-weight="700">④ 执行器动作</text>
+          <text x="80" y="52" font-size="11" fill="#4a6c5e" text-anchor="middle">水泵 / 蜂鸣器</text>
+        </g>
+        <!-- 箭头 -->
+        <line x1="220" y1="120" x2="260" y2="120" stroke="#2d8659" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="420" y1="120" x2="460" y2="120" stroke="#2d8659" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="120" x2="660" y2="120" stroke="#2d8659" stroke-width="2" marker-end="url(#arrow)"/>
+        <!-- 反馈回路 -->
+        <path d="M 740 160 L 740 200 L 140 200 L 140 160" stroke="#2d8659" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+        <text x="440" y="225" font-size="12" fill="#2d8659" text-anchor="middle" font-style="italic">⏎ 反馈：浇水后湿度变化，再次触发新的采集与决策</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 模拟器 -->
+  <section class="section">
+    <div class="section-title">二、智能花盆决策模拟器</div>
+    <div class="sim">
+
+      <!-- 控制面板 -->
+      <div class="control">
+        <div class="ctl-group">
+          <h4>🌱 土壤湿度（hum）</h4>
+          <label>当前值：<span class="val" id="humVal">2500</span></label>
+          <input type="range" id="hum" min="1000" max="4000" step="50" value="2500" oninput="update()"/>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">
+            ⚠ 注意：电阻式湿度计中数值<strong>越小越湿润</strong><br>
+            上限 hum_max = <span class="val">3000</span>（干燥）<br>
+            下限 hum_min = <span class="val" id="humMinDisp">2000</span>（湿润）
+          </div>
+        </div>
+        <div class="ctl-group">
+          <h4>🌤 天气预报（tq）</h4>
+          <label>未来两天</label>
+          <select id="tq" onchange="update()">
+            <option value="晴,晴">晴 → 晴</option>
+            <option value="晴,多云">晴 → 多云</option>
+            <option value="阴,多云">阴 → 多云</option>
+            <option value="多云,小雨" selected>多云 → 小雨 🌧</option>
+            <option value="小雨,中雨">小雨 → 中雨 🌧🌧</option>
+            <option value="大雨,雷阵雨">大雨 → 雷阵雨 ⛈</option>
+          </select>
+        </div>
+        <div class="ctl-group">
+          <h4>💡 光照强度（lgt）</h4>
+          <label>当前光照：<span class="val" id="lgtVal">800</span> lux</label>
+          <input type="range" id="lgt" min="0" max="3000" step="50" value="800" oninput="update()"/>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">
+            光照 &gt; 1200 时蒸发快，<br>系统会临时提高湿度下限至 2500
+          </div>
+        </div>
+        <div class="ctl-group">
+          <h4>⚡ 快速预设</h4>
+          <div class="preset-row">
+            <button class="preset-btn" onclick="preset(2800,'晴,晴',1500)">干燥+晴朗</button>
+            <button class="preset-btn" onclick="preset(2200,'多云,小雨',600)">中等+雨预报</button>
+            <button class="preset-btn" onclick="preset(1800,'晴,晴',1800)">湿润+强光</button>
+            <button class="preset-btn" onclick="preset(3500,'晴,晴',1000)">极干旱</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 花盆 -->
+      <div class="pot-area">
+        <div class="weather-icon" id="weatherIcon">⛅</div>
+        <div class="light-bar">☀ 光照: <span id="lgtBar">800 lux</span></div>
+        <svg viewBox="0 0 320 460" xmlns="http://www.w3.org/2000/svg">
+          <!-- 太阳 -->
+          <circle id="sunCircle" cx="260" cy="60" r="22" fill="#fbbf24" opacity="0.9"/>
+          <!-- 植物 -->
+          <g id="plant" transform="translate(160 270)">
+            <!-- 茎 -->
+            <line x1="0" y1="0" x2="0" y2="-110" stroke="#3da171" stroke-width="3"/>
+            <!-- 叶子 -->
+            <ellipse cx="-26" cy="-50" rx="22" ry="11" fill="#3da171" transform="rotate(-30 -26 -50)"/>
+            <ellipse cx="26" cy="-70" rx="22" ry="11" fill="#3da171" transform="rotate(30 26 -70)"/>
+            <ellipse cx="-22" cy="-90" rx="20" ry="10" fill="#3da171" transform="rotate(-40 -22 -90)"/>
+            <ellipse cx="0" cy="-115" rx="18" ry="9" fill="#3da171" transform="rotate(0 0 -115)"/>
+          </g>
+          <!-- 花盆 -->
+          <path d="M 80 290 L 90 410 L 230 410 L 240 290 Z" fill="#a36a40" stroke="#7d5a3a" stroke-width="2"/>
+          <path d="M 78 290 L 80 270 L 240 270 L 242 290 Z" fill="#b8835a" stroke="#7d5a3a" stroke-width="2"/>
+          <!-- 土壤 -->
+          <path id="soil" d="M 88 290 L 92 380 L 228 380 L 232 290 Z" fill="#7d5a3a"/>
+          <!-- 湿度可视化（土壤变深） -->
+          <path id="soilWet" d="M 88 290 L 92 380 L 228 380 L 232 290 Z" fill="#3a2818" opacity="0.5"/>
+          
+          <!-- 水泵 -->
+          <g id="pump" transform="translate(40 200)">
+            <rect x="0" y="0" width="36" height="50" fill="#5d6470" stroke="#3a3f4a" stroke-width="1.5" rx="3"/>
+            <circle cx="18" cy="25" r="10" fill="#94a3b8" stroke="#3a3f4a" stroke-width="1"/>
+            <text x="18" y="29" font-size="11" text-anchor="middle" fill="#fff">💧</text>
+            <text x="18" y="68" font-size="9" text-anchor="middle" fill="#1a3a2e" font-weight="700">水泵</text>
+          </g>
+          
+          <!-- 水管 -->
+          <path d="M 76 215 L 130 215 L 130 295" stroke="#5d6470" stroke-width="3" fill="none"/>
+          
+          <!-- 水滴动画 -->
+          <g id="waterDrops" opacity="0"></g>
+          
+          <!-- 雨滴动画 -->
+          <g id="rainDrops" opacity="0"></g>
+          
+          <!-- 状态文字 -->
+          <text id="statusText" x="160" y="450" font-size="13" text-anchor="middle" fill="#1a3a2e" font-weight="700">等待决策...</text>
+        </svg>
+      </div>
+
+      <!-- 决策面板 -->
+      <div class="decision">
+        <div class="deci-card">
+          <h4>🤖 决策结果</h4>
+          <div class="deci-result" id="deciResult">
+            <div class="ic">💧</div>
+            <div class="lbl">灌溉</div>
+            <div class="reason">湿度处于中间区，且未来无雨</div>
+          </div>
+        </div>
+        <div class="deci-card">
+          <h4>🔍 决策分支跟踪</h4>
+          <div class="branches" id="branchesBox"></div>
+        </div>
+        <div class="actuators">
+          <h4 style="font-size:13px;letter-spacing:1px;color:var(--ink-soft);margin-bottom:10px;">⚙ 执行器状态</h4>
+          <div class="row">
+            <div class="name"><span class="ic">💧</span>水泵 / 电机</div>
+            <span class="state off" id="actPump">OFF</span>
+          </div>
+          <div class="row">
+            <div class="name"><span class="ic">🔔</span>蜂鸣器</div>
+            <span class="state off" id="actBuzzer">OFF</span>
+          </div>
+          <div class="row">
+            <div class="name"><span class="ic">💡</span>指示灯（LED）</div>
+            <span class="state off" id="actLed">OFF</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 完整代码 -->
+    <div class="code-display">
+<span class="com"># 教材第20课灌溉决策算法（MicroPython）</span>
+hum_max = <span class="num">3000</span>
+hum_min = <span class="num">2000</span>
+
+hum = soil_humid().read()       <span class="com"># 读取土壤湿度</span>
+tq  = weather().forecast()      <span class="com"># 读取未来两天天气</span>
+lgt = light().read()            <span class="com"># 读取光照强度</span>
+
+<span class="kw">if</span> hum &gt; hum_max:                        <span class="com"># 干旱：必须浇水</span>
+    pump.on()
+<span class="kw">elif</span> hum &gt; hum_min:                      <span class="com"># 介于上下限</span>
+    <span class="kw">if</span> <span class="str">"雨"</span> <span class="kw">in</span> tq[<span class="num">0</span>] <span class="kw">or</span> <span class="str">"雨"</span> <span class="kw">in</span> tq[<span class="num">1</span>]:    <span class="com"># 即将下雨</span>
+        pump.off()                       <span class="com"># 不浇水（节水）</span>
+    <span class="kw">else</span>:
+        pump.on()                        <span class="com"># 浇水</span>
+    
+    <span class="kw">if</span> lgt &gt; <span class="num">1200</span>:                       <span class="com"># 光照强：蒸发快</span>
+        hum_min = <span class="num">2500</span>                   <span class="com"># 提高下限</span>
+    <span class="kw">else</span>:
+        hum_min = <span class="num">2000</span>                   <span class="com"># 恢复下限</span>
+<span class="kw">else</span>:                                    <span class="com"># 已经很湿润</span>
+    pump.off()
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 20 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+var HUM_MAX = 3000;
+var HUM_MIN = 2000;
+function preset(h, t, l) {
+  document.getElementById('hum').value = h;
+  document.getElementById('tq').value = t;
+  document.getElementById('lgt').value = l;
+  update();
+}
+function update() {
+  var hum = +document.getElementById('hum').value;
+  var tq = document.getElementById('tq').value.split(',');
+  var lgt = +document.getElementById('lgt').value;
+
+  // 显示当前数值
+  document.getElementById('humVal').textContent = hum;
+  document.getElementById('lgtVal').textContent = lgt;
+  document.getElementById('lgtBar').textContent = lgt + ' lux';
+
+  // 天气图标
+  var isRain = tq[0].includes('雨') || tq[1].includes('雨');
+  var weatherIcon = isRain ? '🌧' : tq[0].includes('阴') || tq[0].includes('多云') ? '☁' : '☀';
+  document.getElementById('weatherIcon').textContent = weatherIcon;
+
+  // 太阳大小（根据光照）
+  var sunR = 14 + lgt / 200;
+  var sun = document.getElementById('sunCircle');
+  sun.setAttribute('r', Math.min(sunR, 28));
+  sun.setAttribute('opacity', Math.min(0.4 + lgt / 3000 * 0.6, 1));
+
+  // 决策算法（教材原版逻辑）
+  var decision,
+    reason,
+    pumpOn = false;
+  var branches = [];
+  branches.push({
+    cond: "hum (" + hum + ") &gt; hum_max (" + HUM_MAX + ")",
+    active: hum > HUM_MAX
+  });
+  if (hum > HUM_MAX) {
+    decision = "灌溉";
+    pumpOn = true;
+    reason = "\u571F\u58E4\u8FC7\u4E8E\u5E72\u65F1\uFF08hum=" + hum + " > hum_max=3000\uFF09\uFF0C\u7ACB\u5373\u6D47\u6C34\u3002";
+    branches.push({
+      cond: "\u2192 pump.on() <span style=\"color:#fbbf24\">[\u9A71\u52A8\u6C34\u6CF5]</span>",
+      active: true
+    });
+  } else {
+    branches.push({
+      cond: "elif hum (" + hum + ") &gt; hum_min (" + HUM_MIN + ")",
+      active: hum > HUM_MIN
+    });
+    if (hum > HUM_MIN) {
+      // 中间区：检查天气
+      branches.push({
+        cond: "&nbsp;&nbsp;if \"\u96E8\" in tq[0]/tq[1] \u2192 " + (isRain ? "True" : "False"),
+        active: true
+      });
+      if (isRain) {
+        decision = "不灌溉";
+        pumpOn = false;
+        reason = "\u4E2D\u7B49\u6E7F\u5EA6\uFF08" + hum + "\uFF09\uFF0C\u4F46\u672A\u6765\u6709\u96E8\uFF08" + tq.join(' → ') + "\uFF09\uFF0C\u8282\u7EA6\u7528\u6C34\u3002";
+        branches.push({
+          cond: "&nbsp;&nbsp;&nbsp;&nbsp;pump.off() <span style=\"color:#fbbf24\">[\u4E0D\u6D47\u6C34]</span>",
+          active: true
+        });
+      } else {
+        decision = "灌溉";
+        pumpOn = true;
+        reason = "\u4E2D\u7B49\u6E7F\u5EA6\uFF08" + hum + "\uFF09\uFF0C\u672A\u6765\u65E0\u96E8\uFF0C\u6D47\u6C34\u4FDD\u6301\u571F\u58E4\u6E7F\u6DA6\u3002";
+        branches.push({
+          cond: "&nbsp;&nbsp;&nbsp;&nbsp;pump.on() <span style=\"color:#fbbf24\">[\u6D47\u6C34]</span>",
+          active: true
+        });
+      }
+      // 光照下限调整
+      if (lgt > 1200) {
+        HUM_MIN = 2500;
+        branches.push({
+          cond: "&nbsp;&nbsp;if lgt (" + lgt + ") &gt; 1200 \u2192 hum_min = 2500 <span style=\"color:#fbbf24\">[\u63D0\u9AD8\u4E0B\u9650]</span>",
+          active: true
+        });
+      } else {
+        HUM_MIN = 2000;
+        branches.push({
+          cond: "&nbsp;&nbsp;else \u2192 hum_min = 2000",
+          active: false
+        });
+      }
+    } else {
+      decision = "不灌溉";
+      pumpOn = false;
+      reason = "\u571F\u58E4\u5DF2\u8DB3\u591F\u6E7F\u6DA6\uFF08hum=" + hum + " \u2264 hum_min=" + HUM_MIN + "\uFF09\uFF0C\u65E0\u9700\u6D47\u6C34\u3002";
+      branches.push({
+        cond: "else (\u5DF2\u5145\u5206\u6E7F\u6DA6) \u2192 pump.off() <span style=\"color:#fbbf24\">[\u4E0D\u6D47\u6C34]</span>",
+        active: true
+      });
+    }
+  }
+  document.getElementById('humMinDisp').textContent = HUM_MIN;
+
+  // 渲染决策结果
+  var deci = document.getElementById('deciResult');
+  if (pumpOn) {
+    deci.classList.remove('no');
+    deci.innerHTML = "<div class=\"ic\">\uD83D\uDCA7</div><div class=\"lbl\">" + decision + "</div><div class=\"reason\">" + reason + "</div>";
+  } else {
+    deci.classList.add('no');
+    var ic = isRain ? '🌧' : '✓';
+    deci.innerHTML = "<div class=\"ic\">" + ic + "</div><div class=\"lbl\">" + decision + "</div><div class=\"reason\">" + reason + "</div>";
+  }
+
+  // 渲染分支
+  document.getElementById('branchesBox').innerHTML = branches.map(function (b) {
+    return "<div class=\"step " + (b.active ? 'active' : 'passed') + "\">" + b.cond + "</div>";
+  }).join('');
+
+  // 状态文字
+  document.getElementById('statusText').textContent = pumpOn ? '💧 水泵启动 — 正在浇水' : isRain ? '🌧 即将下雨 — 等待自然降雨' : '✓ 土壤水分充足';
+
+  // 执行器
+  document.getElementById('actPump').className = 'state ' + (pumpOn ? 'on' : 'off');
+  document.getElementById('actPump').textContent = pumpOn ? 'ON' : 'OFF';
+  document.getElementById('actBuzzer').className = 'state ' + (hum > HUM_MAX ? 'on' : 'off');
+  document.getElementById('actBuzzer').textContent = hum > HUM_MAX ? '响铃(干旱)' : 'OFF';
+  document.getElementById('actLed').className = 'state ' + (hum > HUM_MAX ? 'on' : 'off');
+  document.getElementById('actLed').textContent = hum > HUM_MAX ? '红灯' : 'OFF';
+
+  // 土壤颜色（湿度可视化：hum 越小越湿润）
+  var wetness = Math.max(0, Math.min(1, (3000 - hum) / 1500));
+  document.getElementById('soilWet').setAttribute('opacity', wetness * 0.7);
+
+  // 水滴动画
+  var drops = document.getElementById('waterDrops');
+  if (pumpOn) {
+    drops.setAttribute('opacity', 1);
+    drops.innerHTML = "\n      <circle cx=\"130\" cy=\"305\" r=\"3\" fill=\"#2563eb\"><animate attributeName=\"cy\" from=\"295\" to=\"370\" dur=\"0.8s\" repeatCount=\"indefinite\"/><animate attributeName=\"opacity\" from=\"1\" to=\"0\" dur=\"0.8s\" repeatCount=\"indefinite\"/></circle>\n      <circle cx=\"130\" cy=\"305\" r=\"3\" fill=\"#2563eb\"><animate attributeName=\"cy\" from=\"295\" to=\"370\" dur=\"0.8s\" begin=\"0.3s\" repeatCount=\"indefinite\"/><animate attributeName=\"opacity\" from=\"1\" to=\"0\" dur=\"0.8s\" begin=\"0.3s\" repeatCount=\"indefinite\"/></circle>\n      <circle cx=\"130\" cy=\"305\" r=\"3\" fill=\"#2563eb\"><animate attributeName=\"cy\" from=\"295\" to=\"370\" dur=\"0.8s\" begin=\"0.6s\" repeatCount=\"indefinite\"/><animate attributeName=\"opacity\" from=\"1\" to=\"0\" dur=\"0.8s\" begin=\"0.6s\" repeatCount=\"indefinite\"/></circle>\n    ";
+  } else {
+    drops.setAttribute('opacity', 0);
+    drops.innerHTML = '';
+  }
+
+  // 雨滴
+  var rain = document.getElementById('rainDrops');
+  if (isRain && !pumpOn) {
+    rain.setAttribute('opacity', 1);
+    var rainHtml = '';
+    for (var i = 0; i < 12; i++) {
+      var x = 30 + i * 25;
+      var delay = i * 0.15;
+      rainHtml += "<line x1=\"" + x + "\" y1=\"0\" x2=\"" + (x - 3) + "\" y2=\"20\" stroke=\"#2563eb\" stroke-width=\"1.5\" opacity=\"0.7\"><animate attributeName=\"y1\" from=\"0\" to=\"280\" dur=\"1s\" begin=\"" + delay + "s\" repeatCount=\"indefinite\"/><animate attributeName=\"y2\" from=\"20\" to=\"300\" dur=\"1s\" begin=\"" + delay + "s\" repeatCount=\"indefinite\"/></line>";
+    }
+    rain.innerHTML = rainHtml;
+  } else {
+    rain.setAttribute('opacity', 0);
+    rain.innerHTML = '';
+  }
+}
+update();
+
+</script>
+</body>
+</html>

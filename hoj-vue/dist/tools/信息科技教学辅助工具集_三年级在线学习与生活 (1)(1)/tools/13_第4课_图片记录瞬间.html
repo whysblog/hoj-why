@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>图片记录瞬间 — 第4课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #fffbeb; color: #1e293b; }
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 230px; background: linear-gradient(180deg, #b45309, #f59e0b); color: white; padding: 24px 16px; flex-shrink: 0; }
+.sidebar h1 { font-size: 16px; margin-bottom: 4px; }
+.sidebar .lesson { font-size: 12px; opacity: .8; margin-bottom: 22px; }
+.nav-item { padding: 12px 14px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 14px; transition: all .2s; display: flex; align-items: center; gap: 10px; }
+.nav-item:hover { background: rgba(255,255,255,.12); }
+.nav-item.active { background: rgba(255,255,255,.22); font-weight: 600; }
+.nav-item .num { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+.slide { display: none; animation: fadeIn .4s; }
+.slide.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide h2 { color: #b45309; font-size: 28px; margin-bottom: 8px; }
+.slide .lead { color: #64748b; margin-bottom: 24px; font-size: 15px; }
+.controls { position: fixed; bottom: 24px; right: 32px; display: flex; gap: 8px; }
+.ctrl-btn { padding: 10px 20px; background: white; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.ctrl-btn.primary { background: #f59e0b; color: white; border-color: #b45309; }
+.intro-card { background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 28px 32px; border-radius: 16px; margin-bottom: 20px; }
+.intro-card h3 { color: #b45309; font-size: 22px; margin-bottom: 8px; }
+.intro-card p { color: #78350f; line-height: 1.7; }
+.knowledge { background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 8px; margin-top: 18px; }
+.knowledge h3 { color: #1e40af; font-size: 15px; margin-bottom: 6px; }
+.knowledge p { color: #1e3a8a; font-size: 14px; line-height: 1.7; }
+
+.devices-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-top: 14px; }
+.dev-card { background: white; border-radius: 12px; padding: 18px 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+.dev-card .icon { font-size: 50px; }
+.dev-card .name { font-weight: 600; margin: 8px 0 4px; }
+.dev-card .pros { font-size: 12px; color: #16a34a; margin-top: 4px; }
+.dev-card .cons { font-size: 12px; color: #dc2626; margin-top: 2px; }
+
+.composition-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.comp-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.04); cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+.comp-card:hover { transform: translateY(-2px); border-color: #f59e0b; }
+.comp-card.active { border-color: #b45309; background: #fef3c7; }
+.comp-frame { aspect-ratio: 4/3; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 8px; position: relative; overflow: hidden; margin-bottom: 8px; }
+.comp-frame .subject { position: absolute; font-size: 38px; transform: translate(-50%, -50%); }
+.comp-frame .grid-line { position: absolute; background: rgba(255,255,255,.5); }
+.comp-frame .grid-line.h1 { top: 33.3%; left: 0; right: 0; height: 1px; }
+.comp-frame .grid-line.h2 { top: 66.6%; left: 0; right: 0; height: 1px; }
+.comp-frame .grid-line.v1 { left: 33.3%; top: 0; bottom: 0; width: 1px; }
+.comp-frame .grid-line.v2 { left: 66.6%; top: 0; bottom: 0; width: 1px; }
+.comp-card h4 { color: #b45309; margin-bottom: 4px; font-size: 14px; }
+.comp-card p { color: #78350f; font-size: 12px; line-height: 1.5; }
+
+.orient-demo { display: flex; gap: 16px; flex-wrap: wrap; }
+.orient-card { flex: 1; min-width: 240px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.orient-card h4 { color: #b45309; margin-bottom: 10px; }
+.scene-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.scene-tag { padding: 4px 10px; background: #fef3c7; color: #92400e; border-radius: 12px; font-size: 12px; }
+
+.rules-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .rules-list { grid-template-columns: 1fr; } }
+.rule-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); border-left: 4px solid; }
+.rule-card.bad { border-color: #ef4444; }
+.rule-card.good { border-color: #22c55e; }
+.rule-card .icon { font-size: 28px; }
+.rule-card .text { color: #475569; margin: 8px 0; font-size: 14px; line-height: 1.6; }
+.rule-card .verdict { font-weight: 600; font-size: 13px; }
+.rule-card.bad .verdict { color: #b91c1c; }
+.rule-card.good .verdict { color: #15803d; }
+
+.song { background: linear-gradient(135deg, #fef9c3, #fde68a); padding: 20px; border-radius: 12px; text-align: center; }
+.song h3 { color: #b45309; margin-bottom: 12px; }
+.song p { color: #78350f; line-height: 2; font-size: 16px; }
+
+@media (max-width: 800px) { .app { flex-direction: column; } .sidebar { width: 100%; } .main { padding: 20px; padding-bottom: 100px; } .controls { bottom: 12px; right: 12px; left: 12px; justify-content: center; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>📷 图片记录瞬间</h1>
+    <div class="lesson">第 4 课 · 第二单元</div>
+    <div class="nav-item active" onclick="goSlide(0)"><span class="num">1</span>本课导入</div>
+    <div class="nav-item" onclick="goSlide(1)"><span class="num">2</span>了解拍摄设备</div>
+    <div class="nav-item" onclick="goSlide(2)"><span class="num">3</span>构图技巧</div>
+    <div class="nav-item" onclick="goSlide(3)"><span class="num">4</span>横拍 vs 竖拍</div>
+    <div class="nav-item" onclick="goSlide(4)"><span class="num">5</span>拍照小儿歌</div>
+    <div class="nav-item" onclick="goSlide(5)"><span class="num">6</span>文明拍照</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>本课导入</h2>
+      <div class="lead">一幅好图片可以给人视觉享受、留下美好回忆</div>
+      <div class="intro-card">
+        <h3>📸 拍照不只是按个键</h3>
+        <p>同一个景物，不同人拍出来的图片差别很大。本课我们一起学习拍摄技巧，做到 <b>"主题鲜明、主体清晰、画面美观"</b>。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📷 了解拍摄设备</h2>
+      <div class="lead">每种设备都有自己的特点，根据需要选择</div>
+      <div class="devices-row">
+        <div class="dev-card">
+          <div class="icon">📱</div>
+          <div class="name">手机</div>
+          <div class="pros">✓ 随身携带、操作简单</div>
+          <div class="cons">✗ 长焦弱、画质有限</div>
+        </div>
+        <div class="dev-card">
+          <div class="icon">📲</div>
+          <div class="name">平板计算机</div>
+          <div class="pros">✓ 屏幕大、便于查看</div>
+          <div class="cons">✗ 不方便单手拍摄</div>
+        </div>
+        <div class="dev-card">
+          <div class="icon">📷</div>
+          <div class="name">数字照相机</div>
+          <div class="pros">✓ 画质好、变焦强</div>
+          <div class="cons">✗ 需要单独携带</div>
+        </div>
+        <div class="dev-card">
+          <div class="icon">🎥</div>
+          <div class="name">摄像机</div>
+          <div class="pros">✓ 视频专业</div>
+          <div class="cons">✗ 主要拍视频</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎯 拍照构图技巧</h2>
+      <div class="lead">点击下方构图，看看每种构图的特点</div>
+      <div class="composition-grid">
+        <div class="comp-card" onclick="selectComp(this, 0)">
+          <div class="comp-frame">
+            <div class="subject" style="left:50%;top:50%;">🌻</div>
+          </div>
+          <h4>① 中心式构图</h4>
+          <p>主体放在画面正中央，最稳定、突出</p>
+        </div>
+        <div class="comp-card" onclick="selectComp(this, 1)">
+          <div class="comp-frame">
+            <div class="grid-line h1"></div><div class="grid-line h2"></div>
+            <div class="grid-line v1"></div><div class="grid-line v2"></div>
+            <div class="subject" style="left:33.3%;top:33.3%;">🌻</div>
+          </div>
+          <h4>② 三分法构图</h4>
+          <p>主体放在 1/3 位置上，更有美感</p>
+        </div>
+        <div class="comp-card" onclick="selectComp(this, 2)">
+          <div class="comp-frame">
+            <div class="subject" style="left:30%;top:50%;">🌻</div>
+            <div class="subject" style="left:70%;top:50%;">🌻</div>
+          </div>
+          <h4>③ 对称式构图</h4>
+          <p>左右或上下对称，画面平衡协调</p>
+        </div>
+        <div class="comp-card" onclick="selectComp(this, 3)">
+          <div class="comp-frame" style="background:linear-gradient(135deg,#86efac 0%, #fef3c7 50%, #fde68a 100%);">
+            <div style="position:absolute;left:0;top:50%;right:0;height:1px;background:white;opacity:.6;"></div>
+            <div class="subject" style="left:50%;top:30%;font-size:30px;">☀️</div>
+          </div>
+          <h4>④ 地平线构图</h4>
+          <p>风景照中地平线放在 1/3 处</p>
+        </div>
+      </div>
+      <div id="compTip" style="margin-top:14px;padding:12px 16px;background:white;border-radius:10px;color:#475569;font-size:14px;line-height:1.6;display:none;"></div>
+    </div>
+
+    <div class="slide">
+      <h2>📐 横拍 vs 竖拍</h2>
+      <div class="lead">不同的场景适合不同的方向</div>
+      <div class="orient-demo">
+        <div class="orient-card">
+          <h4>↔️ 横拍：视野更宽广</h4>
+          <div style="width:100%;aspect-ratio:16/9;background:linear-gradient(180deg,#bfdbfe 0%, #fef3c7 50%, #86efac 100%);border-radius:8px;margin-bottom:10px;"></div>
+          <p style="font-size:13px;color:#475569;margin-bottom:8px;">📸 适合的场景：</p>
+          <div class="scene-row">
+            <span class="scene-tag">🌅 风景</span>
+            <span class="scene-tag">🏞️ 草原</span>
+            <span class="scene-tag">🌊 大海</span>
+            <span class="scene-tag">👥 集体合影</span>
+            <span class="scene-tag">🏛️ 建筑群</span>
+          </div>
+        </div>
+        <div class="orient-card">
+          <h4>↕️ 竖拍：纵深感更强</h4>
+          <div style="width:60%;aspect-ratio:9/16;background:linear-gradient(180deg,#bfdbfe 0%, #fef3c7 70%, #86efac 100%);border-radius:8px;margin:0 auto 10px;"></div>
+          <p style="font-size:13px;color:#475569;margin-bottom:8px;">📸 适合的场景：</p>
+          <div class="scene-row">
+            <span class="scene-tag">🏔️ 山峰</span>
+            <span class="scene-tag">🌳 大树</span>
+            <span class="scene-tag">🏢 高楼</span>
+            <span class="scene-tag">🚶 人像全身</span>
+            <span class="scene-tag">📜 文档</span>
+          </div>
+        </div>
+      </div>
+      <div class="knowledge">
+        <h3>💡 拍照前先想一想</h3>
+        <p>主体是横向延伸还是纵向延伸？拍摄后准备发朋友圈（竖屏）还是用作壁纸（横屏）？想清楚再按下"拍照"按钮。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎵 拍照小儿歌</h2>
+      <div class="lead">把口诀记牢，每次拍照都是好作品</div>
+      <div class="song">
+        <h3>📸 拍照口诀</h3>
+        <p>
+          🤲 双手持机稳又平，<br>
+          👆 手指对焦轻触屏。<br>
+          📐 横拍竖拍先想好，<br>
+          📷 轻点按钮图片成。
+        </p>
+      </div>
+      <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div style="background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+          <div style="font-size:36px;">🤲</div>
+          <div style="font-weight:600;color:#b45309;margin-top:6px;">稳住设备</div>
+          <p style="font-size:12px;color:#64748b;margin-top:4px;">双手紧握，避免抖动</p>
+        </div>
+        <div style="background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+          <div style="font-size:36px;">👆</div>
+          <div style="font-weight:600;color:#b45309;margin-top:6px;">点击对焦</div>
+          <p style="font-size:12px;color:#64748b;margin-top:4px;">先点主体让它清晰</p>
+        </div>
+        <div style="background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+          <div style="font-size:36px;">🎯</div>
+          <div style="font-weight:600;color:#b45309;margin-top:6px;">主题鲜明</div>
+          <p style="font-size:12px;color:#64748b;margin-top:4px;">想清楚要拍什么</p>
+        </div>
+        <div style="background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+          <div style="font-size:36px;">✨</div>
+          <div style="font-weight:600;color:#b45309;margin-top:6px;">画面整洁</div>
+          <p style="font-size:12px;color:#64748b;margin-top:4px;">去掉无关的物品</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🤝 文明拍照的规则</h2>
+      <div class="lead">拍照不仅是技术活，也是文明素养的体现</div>
+      <div class="rules-list">
+        <div class="rule-card bad">
+          <div class="icon">🚫</div>
+          <div class="text">在"军事重地 禁止拍照"的标志前继续拍摄</div>
+          <div class="verdict">❌ 错误：违反规定</div>
+        </div>
+        <div class="rule-card bad">
+          <div class="icon">🌳</div>
+          <div class="text">爬上树拍照、为拍照踩踏花草</div>
+          <div class="verdict">❌ 错误：危险且破坏环境</div>
+        </div>
+        <div class="rule-card bad">
+          <div class="icon">🌹</div>
+          <div class="text">摘下公园里的花做拍照道具</div>
+          <div class="verdict">❌ 错误：损害公共财物</div>
+        </div>
+        <div class="rule-card good">
+          <div class="icon">🤝</div>
+          <div class="text">拍摄他人前先征得同意</div>
+          <div class="verdict">✓ 正确：尊重他人肖像权</div>
+        </div>
+        <div class="rule-card good">
+          <div class="icon">📜</div>
+          <div class="text">遵守博物馆等场所的"禁止拍照"规定</div>
+          <div class="verdict">✓ 正确：守规则讲文明</div>
+        </div>
+        <div class="rule-card good">
+          <div class="icon">⏱️</div>
+          <div class="text">不长时间遮挡他人视线</div>
+          <div class="verdict">✓ 正确：考虑他人感受</div>
+        </div>
+      </div>
+      <div class="knowledge">
+        <h3>💡 文明拍照三要点</h3>
+        <p>① <b>遵守规定</b>：注意标识标牌；<br>② <b>遵守公共秩序</b>：不破坏环境，不影响他人；<br>③ <b>尊重他人</b>：拍摄他人前先征得同意。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="prevSlide()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="nextSlide()">下一页 →</button>
+</div>
+
+<script>
+const compTips = [
+  '中心式构图：主体放在画面正中央，画面最稳定。<br>适用于：突出某个特定主体（人物、花朵、建筑等）',
+  '三分法构图：把画面横竖各分三等分，主体放在 1/3 线的交点上。这是最经典的构图方式，画面有韵味。',
+  '对称式构图：画面元素左右对称或上下对称，给人和谐、平衡的感觉。<br>适用于：建筑、倒影等场景',
+  '地平线构图：把地平线放在画面的 1/3 或 2/3 处（不是正中间）。<br>适用于：海景、草原、日出日落等',
+];
+function selectComp(card, i) {
+  document.querySelectorAll('.comp-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  const t = document.getElementById('compTip');
+  t.innerHTML = '💡 ' + compTips[i];
+  t.style.display = 'block';
+}
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function goSlide(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((n, idx) => n.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextSlide() { if (cur < slides.length - 1) goSlide(cur + 1); }
+function prevSlide() { if (cur > 0) goSlide(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+</script>
+</body>
+</html>

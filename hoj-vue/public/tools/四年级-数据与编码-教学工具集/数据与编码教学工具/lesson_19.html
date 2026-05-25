@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第19课 数据安全意识强 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#7b1fa2;
+  --theme-dark:#6a1b9a;
+  --theme-light:#f3e5f5;
+  --bg:#faf5fc;
+}
+.risk-card{
+  background:#fff;border-radius:12px;
+  padding:14px;margin:10px 0;
+  border-left:5px solid #ef5350;
+  display:flex;gap:12px;
+}
+.risk-card .risk-icon{
+  font-size:32px;flex-shrink:0;
+  background:#ffebee;
+  width:54px;height:54px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.risk-card h4{color:#c62828;font-size:15px;margin-bottom:4px}
+.risk-card p{font-size:13px;color:#37474f;margin:0;line-height:1.6}
+.private-data-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;margin:14px 0;
+}
+.private-item{
+  background:#fff;border-radius:10px;
+  padding:14px;text-align:center;
+  border:2px solid #f0f0f0;
+  cursor:pointer;transition:all .2s;
+}
+.private-item.reveal{
+  background:linear-gradient(135deg,#ffcdd2,#ffebee);
+  border-color:#e53935;
+}
+.private-item .pi-icon{font-size:32px;display:block;margin-bottom:4px}
+.private-item h4{font-size:14px;color:var(--theme-dark);margin-bottom:2px}
+.private-item .pi-desc{font-size:11px;color:#607d8b}
+.scenario-quiz{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.quiz-q{
+  padding:14px;
+  background:#fafafa;
+  border-radius:8px;
+  margin-bottom:10px;
+}
+.quiz-q .q-text{
+  font-weight:bold;color:var(--theme-dark);
+  margin-bottom:8px;font-size:14px;
+}
+.quiz-q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt-btn{
+  padding:8px 14px;
+  border:2px solid #e0e0e0;
+  border-radius:6px;
+  background:#fff;cursor:pointer;
+  font-family:inherit;font-size:13px;
+  transition:all .2s;
+}
+.opt-btn:hover{border-color:var(--theme)}
+.opt-btn.correct{background:#e8f5e9;border-color:#43a047;color:#2e7d32}
+.opt-btn.wrong{background:#ffebee;border-color:#e53935;color:#c62828}
+.opt-btn .ans-mark{display:none;margin-left:6px}
+.opt-btn.correct .ans-mark,
+.opt-btn.wrong .ans-mark{display:inline}
+.quiz-q .feedback{
+  display:none;
+  margin-top:8px;
+  padding:8px 12px;
+  border-radius:6px;
+  font-size:13px;
+}
+.quiz-q.answered .feedback{display:block}
+.feedback.right{background:#e8f5e9;color:#2e7d32}
+.feedback.wrong{background:#ffebee;color:#c62828}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第四单元 · 第19课</span>
+    <h1>🔐 数据安全意识强</h1>
+    <p>认识身边的数据安全风险，提高数据保护意识</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">🔒 哪些是隐私</button>
+    <button class="nav-btn" data-slide="2">⚠️ 安全风险</button>
+    <button class="nav-btn" data-slide="3">🎮 情景判断</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box warn">
+      <h4>⚠️ 真实事件</h4>
+      新闻报道：一名小学生在网上玩游戏，被陌生人骗去了<b>家庭住址</b>和<b>爸爸妈妈的电话</b>，
+      结果<b>家里被坏人盯上</b>，差点出大事！
+      <br><br>
+      这就是<b>数据安全意识不够</b>带来的危险。
+    </div>
+
+    <p>在信息时代，<b>数据就是财富，也是隐私</b>。你不经意泄露的一条信息，
+    都可能被坏人利用！</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>识别哪些是<b>个人隐私数据</b>，不能随便告诉别人</li>
+      <li>了解常见的<b>数据安全风险</b></li>
+      <li>培养<b>数据安全意识</b>，做聪明的小网民</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>哪些是个人隐私？</h2>
+
+    <p>点一下每个卡片，看看它是不是<b>不能随便给陌生人</b>的隐私 ↓</p>
+
+    <div class="private-data-grid">
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">🆔</span>
+        <h4>身份证号</h4>
+        <div class="pi-desc">绝对不能！</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">🏠</span>
+        <h4>家庭住址</h4>
+        <div class="pi-desc">不能告诉陌生人</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">📞</span>
+        <h4>父母电话</h4>
+        <div class="pi-desc">非常重要</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">🏫</span>
+        <h4>学校班级</h4>
+        <div class="pi-desc">谨慎告知</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">📸</span>
+        <h4>个人照片</h4>
+        <div class="pi-desc">不要随便发</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">🔑</span>
+        <h4>账号密码</h4>
+        <div class="pi-desc">绝对保密</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">🏦</span>
+        <h4>银行卡号</h4>
+        <div class="pi-desc">最最重要</div>
+      </div>
+      <div class="private-item" data-private="1">
+        <span class="pi-icon">👨‍👩‍👧</span>
+        <h4>家人情况</h4>
+        <div class="pi-desc">不轻易透露</div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 重要提示</h4>
+      <b>个人隐私数据</b> = 可以唯一识别你这个人，或者关系到你<b>安全/财产</b>的数据。
+      <br>
+      记住：<b>"陌生人问，绝不答；网上发，先三思！"</b>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>常见的数据安全风险</h2>
+
+    <div class="risk-card">
+      <span class="risk-icon">🎣</span>
+      <div>
+        <h4>钓鱼诈骗</h4>
+        <p>假冒"老师"、"客服"、"中奖通知"，骗你输入个人信息或汇款</p>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <span class="risk-icon">🦠</span>
+      <div>
+        <h4>病毒木马</h4>
+        <p>不明 APP、不明链接里藏着病毒，安装后会偷走你的数据</p>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <span class="risk-icon">📱</span>
+      <div>
+        <h4>过度授权</h4>
+        <p>很多 APP 要求"读取通讯录""读取位置"——它们真的需要吗？</p>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <span class="risk-icon">👀</span>
+      <div>
+        <h4>窃听窥视</h4>
+        <p>公共 Wi-Fi 上聊天、转账，可能被旁边的坏人偷看</p>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <span class="risk-icon">📤</span>
+      <div>
+        <h4>朋友圈晒</h4>
+        <p>晒机票、晒身份证、晒娃，可能暴露你的行程、身份、家庭</p>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <span class="risk-icon">🗑️</span>
+      <div>
+        <h4>随意丢弃</h4>
+        <p>旧手机、旧快递盒上的标签，可能被人捡走获取信息</p>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      <h4>⚠️ 一个真实例子</h4>
+      有的小朋友<b>在网上炫耀家里的房子、车子</b>，结果坏人知道了，趁家里没人时来偷东西！
+      <br>
+      <b>炫富 = 给坏人画地图！</b>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>情景判断</h2>
+
+    <p>下面这些情景，应该怎么做？点选答案 ↓</p>
+
+    <div class="scenario-quiz" id="quizArea"></div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">🔒</span>
+        <h4>知隐私</h4>
+        <p>身份证、家庭、密码不外传</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🚨</span>
+        <h4>识风险</h4>
+        <p>钓鱼、病毒、过度授权</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🛡️</span>
+        <h4>会拒绝</h4>
+        <p>陌生人问个人信息→拒绝</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">👨‍👩‍👧</span>
+        <h4>找大人</h4>
+        <p>遇到可疑情况告诉家长</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 数据安全口诀</h4>
+      <ol>
+        <li>个人信息不乱给</li>
+        <li>陌生链接不乱点</li>
+        <li>不明 APP 不乱装</li>
+        <li>奇怪事情告父母</li>
+      </ol>
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      知道了风险，怎么<b>具体保护</b>数据呢？
+      下节课《保护数据小妙招》，教你实用的安全方法！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const QUIZ = [
+  {
+    q:'陌生网友说"加你 QQ 玩游戏，告诉我你家地址，我寄礼物给你"，怎么办？',
+    opts:[
+      {t:'告诉他地址',correct:false,fb:'❌ 危险！陌生人不能信！'},
+      {t:'坚决拒绝并告诉父母',correct:true,fb:'✅ 正确！不向陌生人透露任何家庭信息'},
+      {t:'告诉同学的地址',correct:false,fb:'❌ 不能用别人的信息开玩笑'}
+    ]
+  },
+  {
+    q:'收到一条短信："你中奖了！点击链接领取一万元"，应该？',
+    opts:[
+      {t:'立刻点击',correct:false,fb:'❌ 这是钓鱼短信！千万别点'},
+      {t:'转发给同学一起领',correct:false,fb:'❌ 这样会害了同学'},
+      {t:'删除短信，不予理会',correct:true,fb:'✅ 正确！天上不会掉馅饼，可疑的链接坚决不点'}
+    ]
+  },
+  {
+    q:'妈妈给你买了新手机，背面贴着她的身份证号方便售后。你应该？',
+    opts:[
+      {t:'让全班同学看新手机',correct:false,fb:'❌ 别人能看到妈妈的身份证号！危险'},
+      {t:'提醒妈妈撕掉或贴起来',correct:true,fb:'✅ 太棒了！身份证号属于隐私数据'},
+      {t:'拍照发到班级群',correct:false,fb:'❌ 千万不要！会泄露隐私'}
+    ]
+  },
+  {
+    q:'小区里有个叔叔说"叔叔是新搬来的，你妈妈电话给我一下，我有事找她"，怎么做？',
+    opts:[
+      {t:'告诉他妈妈电话',correct:false,fb:'❌ 危险！陌生人不能给电话'},
+      {t:'让他打 110 找警察叔叔',correct:false,fb:'⚠️ 不太合适，但比直接给电话好'},
+      {t:'说"我妈妈在家，您去敲门吧"，赶快回家告诉妈妈',correct:true,fb:'✅ 聪明！既不泄露信息，又能让家长警觉'}
+    ]
+  }
+];
+
+const quizArea = document.getElementById('quizArea');
+quizArea.innerHTML = QUIZ.map((q,i)=>`
+  <div class="quiz-q" data-idx="${i}">
+    <div class="q-text">${i+1}. ${q.q}</div>
+    <div class="opts">
+      ${q.opts.map((o,j)=>`
+        <button class="opt-btn" data-correct="${o.correct}" data-fb="${o.fb}">
+          ${o.t} <span class="ans-mark">${o.correct?'✓':'✗'}</span>
+        </button>
+      `).join('')}
+    </div>
+    <div class="feedback"></div>
+  </div>
+`).join('');
+
+quizArea.querySelectorAll('.quiz-q').forEach(qDiv=>{
+  qDiv.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(qDiv.classList.contains('answered')) return;
+      qDiv.classList.add('answered');
+      const correct = btn.dataset.correct === 'true';
+      btn.classList.add(correct ? 'correct' : 'wrong');
+      const fb = qDiv.querySelector('.feedback');
+      fb.textContent = btn.dataset.fb;
+      fb.classList.add(correct ? 'right' : 'wrong');
+      // 显示正确答案
+      if(!correct){
+        qDiv.querySelectorAll('.opt-btn').forEach(b=>{
+          if(b.dataset.correct === 'true') b.classList.add('correct');
+        });
+      }
+    });
+  });
+});
+
+document.querySelectorAll('.private-item').forEach(item=>{
+  item.addEventListener('click',()=>item.classList.add('reveal'));
+});
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

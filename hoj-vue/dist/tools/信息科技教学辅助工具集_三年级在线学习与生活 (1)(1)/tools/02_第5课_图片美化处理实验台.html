@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>图片美化处理实验台 — 第5课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #b45309; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+.workspace { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
+.image-area {
+  background: white; border-radius: 16px; padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  display: flex; flex-direction: column; align-items: center;
+}
+.image-stage {
+  width: 100%; min-height: 360px; background: #f1f5f9; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  position: relative;
+}
+.preview-img {
+  max-width: 100%; max-height: 420px; transition: filter .25s, transform .3s;
+  object-fit: contain;
+}
+.image-meta { margin-top: 14px; color: #64748b; font-size: 13px; }
+.controls {
+  background: white; border-radius: 16px; padding: 22px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.controls h3 { color: #b45309; font-size: 16px; margin: 0 0 12px; }
+.section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
+.section:last-child { border-bottom: none; }
+.slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+.slider-row label { width: 60px; color: #475569; }
+.slider-row input[type="range"] { flex: 1; }
+.slider-row .val { width: 36px; text-align: right; color: #b45309; font-weight: 600; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white;
+  cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s;
+}
+.btn:hover { border-color: #f59e0b; background: #fef3c7; }
+.btn.active { background: #f59e0b; color: white; border-color: #d97706; }
+.btn-primary {
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;
+  padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
+}
+.image-thumbs { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.thumb {
+  width: 60px; height: 60px; border-radius: 8px; cursor: pointer; overflow: hidden;
+  border: 3px solid transparent; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; font-size: 30px; background: #f1f5f9;
+}
+.thumb.active { border-color: #f59e0b; }
+.thumb:hover { transform: scale(1.05); }
+.knowledge {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-left: 4px solid #16a34a;
+  border-radius: 8px; padding: 14px 18px; margin-top: 16px;
+}
+.knowledge h4 { color: #14532d; font-size: 14px; margin-bottom: 6px; }
+.knowledge p { color: #14532d; font-size: 13px; line-height: 1.7; }
+.watermark-input { width: 100%; padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: 13px; }
+.watermark {
+  position: absolute; bottom: 10px; right: 14px; color: rgba(255,255,255,.85);
+  font-size: 18px; font-weight: 600; text-shadow: 1px 1px 3px rgba(0,0,0,.6); pointer-events: none;
+  letter-spacing: 1px;
+}
+.frame-overlay {
+  position: absolute; inset: 0; pointer-events: none; border-radius: 12px;
+}
+.frame-classic { box-shadow: inset 0 0 0 14px #92400e, inset 0 0 0 18px #fef3c7; }
+.frame-cute { box-shadow: inset 0 0 0 12px #ec4899, inset 0 0 0 16px #fce7f3; }
+.frame-modern { box-shadow: inset 0 0 0 8px #1e293b; }
+.frame-none {}
+.tag { display: inline-block; padding: 3px 10px; background: #fef3c7; color: #b45309; border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎨 图片美化处理实验台</h1>
+    <div class="subtitle">配套课时：第5课 美化处理图片 · 体验旋转、裁剪、亮度、滤镜、相框、水印等数字图像处理操作</div>
+  </header>
+
+  <div class="workspace">
+    <div class="image-area">
+      <div class="image-stage" id="imageStage">
+        <img id="previewImg" class="preview-img" alt="预览图">
+        <div class="frame-overlay" id="frameOverlay"></div>
+        <div class="watermark" id="watermarkBox" style="display:none;"></div>
+      </div>
+      <div class="image-meta" id="imageMeta">原图（未处理）</div>
+      <div class="image-thumbs">
+        <div class="thumb active" data-img="🌸" onclick="setImage('🌸','春日花朵')">🌸</div>
+        <div class="thumb" data-img="🏫" onclick="setImage('🏫','校园建筑')">🏫</div>
+        <div class="thumb" data-img="🌅" onclick="setImage('🌅','清晨日出')">🌅</div>
+        <div class="thumb" data-img="🐼" onclick="setImage('🐼','可爱熊猫')">🐼</div>
+        <div class="thumb" data-img="🍰" onclick="setImage('🍰','美味蛋糕')">🍰</div>
+        <div class="thumb" data-img="🎈" onclick="setImage('🎈','彩色气球')">🎈</div>
+      </div>
+    </div>
+
+    <div class="controls">
+
+      <div class="section">
+        <h3>🔄 调整图片</h3>
+        <div class="slider-row">
+          <label>亮度</label>
+          <input type="range" id="brightness" min="40" max="160" value="100" oninput="applyFilter()">
+          <div class="val" id="brightnessVal">100%</div>
+        </div>
+        <div class="slider-row">
+          <label>对比度</label>
+          <input type="range" id="contrast" min="40" max="160" value="100" oninput="applyFilter()">
+          <div class="val" id="contrastVal">100%</div>
+        </div>
+        <div class="slider-row">
+          <label>饱和度</label>
+          <input type="range" id="saturate" min="0" max="200" value="100" oninput="applyFilter()">
+          <div class="val" id="saturateVal">100%</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="rotate(-90)">↺ 左旋转</button>
+          <button class="btn" onclick="rotate(90)">↻ 右旋转</button>
+          <button class="btn" onclick="flipH()">↔ 水平翻转</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>✨ 滤镜效果</h3>
+        <div class="btn-row" id="filterBtns">
+          <button class="btn active" data-filter="none" onclick="setFilter('none', this)">原图</button>
+          <button class="btn" data-filter="vintage" onclick="setFilter('vintage', this)">老照片</button>
+          <button class="btn" data-filter="bw" onclick="setFilter('bw', this)">黑白</button>
+          <button class="btn" data-filter="warm" onclick="setFilter('warm', this)">暖色</button>
+          <button class="btn" data-filter="cool" onclick="setFilter('cool', this)">冷色</button>
+          <button class="btn" data-filter="watercolor" onclick="setFilter('watercolor', this)">水彩</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>🖼️ 添加相框</h3>
+        <div class="btn-row">
+          <button class="btn active" onclick="setFrame('frame-none', this)">无相框</button>
+          <button class="btn" onclick="setFrame('frame-classic', this)">古典</button>
+          <button class="btn" onclick="setFrame('frame-cute', this)">可爱</button>
+          <button class="btn" onclick="setFrame('frame-modern', this)">简约</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>💧 添加水印</h3>
+        <input type="text" class="watermark-input" id="watermarkText" placeholder="例如：©小华 / 三(2)班" oninput="updateWatermark()">
+        <div style="margin-top: 8px; color: #64748b; font-size: 12px;">💡 水印能保护著作权，让别人知道这是你的作品</div>
+      </div>
+
+      <button class="btn-primary" style="width:100%;" onclick="resetAll()">🔁 重置全部</button>
+    </div>
+  </div>
+
+  <div class="knowledge">
+    <h4>💡 科学小知识 · 数字图像处理原理</h4>
+    <p>
+    <span class="tag">像素</span>每张数字图片都是由许许多多的小方块（叫"像素"）组成的，每个像素有自己的颜色。<br>
+    <span class="tag">滤镜</span>滤镜就是按一定规则修改每个像素的颜色值。比如"黑白滤镜"是把彩色变成灰度。<br>
+    <span class="tag">无损操作</span>旋转、翻转不会丢失画质；过度调整亮度/裁剪可能导致信息丢失。<br>
+    <span class="tag">著作权</span>处理他人图片要先征得同意；发布个人图片时建议加水印或模糊隐私信息。
+    </p>
+  </div>
+</div>
+
+<script>
+// 当前状态
+let currentEmoji = '🌸';
+let rotation = 0, flipped = false;
+let currentFilter = 'none';
+let currentFrame = 'frame-none';
+
+// 把 emoji 渲染成 SVG 图（这样可以用 CSS filter）
+function renderImage(emoji) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+    <defs>
+      <radialGradient id="bg" cx="50%" cy="40%">
+        <stop offset="0%" stop-color="#fef3c7"/>
+        <stop offset="100%" stop-color="#fde68a"/>
+      </radialGradient>
+    </defs>
+    <rect width="400" height="400" fill="url(#bg)"/>
+    <text x="200" y="220" font-size="220" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
+  </svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+function setImage(emoji, name) {
+  currentEmoji = emoji;
+  document.getElementById('previewImg').src = renderImage(emoji);
+  document.getElementById('imageMeta').textContent = `当前图片：${name}`;
+  document.querySelectorAll('.thumb').forEach(t => t.classList.toggle('active', t.dataset.img === emoji));
+}
+
+function applyFilter() {
+  const b = document.getElementById('brightness').value;
+  const c = document.getElementById('contrast').value;
+  const s = document.getElementById('saturate').value;
+  document.getElementById('brightnessVal').textContent = b + '%';
+  document.getElementById('contrastVal').textContent = c + '%';
+  document.getElementById('saturateVal').textContent = s + '%';
+  let extra = '';
+  switch(currentFilter) {
+    case 'vintage': extra = ' sepia(0.7) contrast(1.1)'; break;
+    case 'bw': extra = ' grayscale(1)'; break;
+    case 'warm': extra = ' hue-rotate(-15deg) saturate(1.3)'; break;
+    case 'cool': extra = ' hue-rotate(180deg) saturate(0.9)'; break;
+    case 'watercolor': extra = ' blur(1.2px) saturate(1.4) contrast(0.9)'; break;
+  }
+  const transform = `rotate(${rotation}deg) scaleX(${flipped ? -1 : 1})`;
+  const img = document.getElementById('previewImg');
+  img.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)${extra}`;
+  img.style.transform = transform;
+}
+
+function rotate(deg) { rotation = (rotation + deg) % 360; applyFilter(); }
+function flipH() { flipped = !flipped; applyFilter(); }
+
+function setFilter(name, btn) {
+  currentFilter = name;
+  document.querySelectorAll('#filterBtns .btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function setFrame(name, btn) {
+  currentFrame = name;
+  document.getElementById('frameOverlay').className = 'frame-overlay ' + name;
+  btn.parentElement.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function updateWatermark() {
+  const text = document.getElementById('watermarkText').value.trim();
+  const wm = document.getElementById('watermarkBox');
+  if (text) { wm.textContent = text; wm.style.display = 'block'; } else { wm.style.display = 'none'; }
+}
+
+function resetAll() {
+  document.getElementById('brightness').value = 100;
+  document.getElementById('contrast').value = 100;
+  document.getElementById('saturate').value = 100;
+  rotation = 0; flipped = false;
+  currentFilter = 'none';
+  document.querySelectorAll('#filterBtns .btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#filterBtns .btn[data-filter="none"]').classList.add('active');
+  setFrame('frame-none', document.querySelector('.btn-row .btn'));
+  document.getElementById('watermarkText').value = '';
+  updateWatermark();
+  applyFilter();
+}
+
+// 初始化
+setImage('🌸', '春日花朵');
+applyFilter();
+</script>
+</body>
+</html>

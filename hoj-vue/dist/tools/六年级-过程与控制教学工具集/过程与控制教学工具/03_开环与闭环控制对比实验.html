@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开环 vs 闭环控制对比实验 · 第10、11、12课</title>
+<style>
+  :root {
+    --primary: #059669;
+    --primary-dark: #047857;
+    --open-color: #f59e0b;
+    --closed-color: #059669;
+    --bg: #f0fdf4;
+    --card: #ffffff;
+    --text: #064e3b;
+    --muted: #6b7280;
+    --border: #d1fae5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(5, 150, 105, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+
+  .control-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+  }
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .control-group label {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .control-group .val {
+    background: #1f2937;
+    color: #6ee7b7;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 50px;
+    text-align: center;
+  }
+  .control-group input[type="range"] {
+    width: 140px;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #d1fae5;
+    border-radius: 3px;
+    outline: none;
+  }
+  .control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    transition: transform 0.15s, background 0.2s;
+  }
+  .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+  .btn.disturb {
+    background: #ef4444;
+  }
+  .btn.disturb:hover { background: #dc2626; }
+  .btn.reset {
+    background: white;
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+  }
+  .btn.reset:hover { background: var(--bg); transform: translateY(-1px); }
+
+  .systems-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) { .systems-grid { grid-template-columns: 1fr; } }
+
+  .system-card {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    border: 2px solid var(--border);
+  }
+  .system-card.open { border-top: 4px solid var(--open-color); }
+  .system-card.closed { border-top: 4px solid var(--closed-color); }
+  .system-card h2 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .system-card .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: white;
+    margin-bottom: 14px;
+  }
+  .open .badge { background: var(--open-color); }
+  .closed .badge { background: var(--closed-color); }
+
+  .room-vis {
+    background: linear-gradient(180deg, #fef3c7 0%, #fed7aa 100%);
+    height: 130px;
+    border-radius: 10px;
+    margin: 14px 0;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: background 0.6s;
+  }
+  .room-vis .therm {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-family: "Courier New", monospace;
+  }
+  .room-vis .ac-icon {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 26px;
+  }
+  .room-vis .target-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: rgba(5, 150, 105, 0.6);
+    border-top: 1.5px dashed var(--primary);
+    z-index: 1;
+  }
+  .room-vis .target-label {
+    position: absolute;
+    right: 8px;
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: translateY(-100%);
+  }
+
+  canvas {
+    width: 100%;
+    height: 180px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fafafa;
+  }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+  }
+  .flow .step {
+    flex: 1;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 12px;
+    min-width: 60px;
+  }
+  .flow .step.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .flow .arrow { color: var(--muted); font-weight: bold; }
+
+  .feedback-line {
+    display: none;
+    padding: 8px 12px;
+    background: #ecfdf5;
+    border: 1px dashed var(--primary);
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--primary-dark);
+    text-align: center;
+  }
+  .closed .feedback-line { display: block; }
+
+  .info-box {
+    background: #ecfdf5;
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    margin-top: 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--primary-dark);
+    line-height: 1.7;
+  }
+  .legend {
+    display: flex; gap: 12px; font-size: 11px; color: var(--muted);
+    margin-top: 6px; justify-content: center;
+  }
+  .legend span::before { content: "■"; margin-right: 3px; }
+  .legend .actual::before { color: #2563eb; }
+  .legend .target::before { color: var(--primary); }
+  .legend .disturb-mark::before { color: #ef4444; }
+
+  .compare-table {
+    margin-top: 24px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .compare-table h3 { font-size: 16px; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  th { background: #f9fafb; color: var(--text); font-weight: 600; }
+  td.label { color: var(--muted); width: 30%; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第三单元 · 第10、11、12课</span>
+    <h1>开环 vs 闭环控制对比实验</h1>
+    <p>同时观察两个空调控制系统：一个无反馈（开环），一个有反馈（闭环）。比较谁能更稳定地维持目标温度</p>
+  </div>
+
+  <div class="control-bar">
+    <div class="control-group">
+      <label>初始室温</label>
+      <input type="range" id="initTemp" min="15" max="40" value="32">
+      <span class="val" id="initTempVal">32°C</span>
+    </div>
+    <div class="control-group">
+      <label>目标温度（阈值）</label>
+      <input type="range" id="targetTemp" min="18" max="30" value="26">
+      <span class="val" id="targetTempVal">26°C</span>
+    </div>
+    <button class="btn" id="startBtn" onclick="startSim()">▶ 开始实验</button>
+    <button class="btn disturb" id="disturbBtn" onclick="addDisturb()" disabled>🌪 添加干扰（开窗）</button>
+    <button class="btn reset" onclick="resetSim()">↺ 重置</button>
+  </div>
+
+  <div class="systems-grid">
+    <!-- 开环控制 -->
+    <div class="system-card open">
+      <h2>系统 A：开环控制</h2>
+      <div class="badge">无反馈 · 按设定时间运行</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
+        类似闹钟、定时电饭锅：按预定时间制冷，<b>不检测室温变化</b>
+      </p>
+
+      <div class="room-vis" id="roomA">
+        <div class="ac-icon" id="acA-icon">🌬️</div>
+        <div class="target-line" id="targetA"><div class="target-label" id="targetA-label">目标 26°C</div></div>
+        <div class="therm" id="thermA">32°C</div>
+      </div>
+
+      <div class="flow">
+        <div class="step" id="A-input">输入<br>定时</div>
+        <span class="arrow">→</span>
+        <div class="step" id="A-calc">计算</div>
+        <span class="arrow">→</span>
+        <div class="step" id="A-output">输出<br>制冷</div>
+      </div>
+
+      <canvas id="chartA"></canvas>
+      <div class="legend">
+        <span class="actual">实际温度</span>
+        <span class="target">目标温度</span>
+        <span class="disturb-mark">干扰发生</span>
+      </div>
+
+      <div style="margin-top: 14px; font-size: 13px;">
+        <b>状态：</b><span id="statusA" style="color: var(--muted);">未开始</span>
+      </div>
+    </div>
+
+    <!-- 闭环控制 -->
+    <div class="system-card closed">
+      <h2>系统 B：闭环控制</h2>
+      <div class="badge">有反馈 · 自动调节</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
+        类似真空调：温度传感器持续检测，<b>根据反馈自动开停</b>
+      </p>
+
+      <div class="room-vis" id="roomB">
+        <div class="ac-icon" id="acB-icon">🌬️</div>
+        <div class="target-line" id="targetB"><div class="target-label" id="targetB-label">目标 26°C</div></div>
+        <div class="therm" id="thermB">32°C</div>
+      </div>
+
+      <div class="flow">
+        <div class="step" id="B-input">输入<br>阈值</div>
+        <span class="arrow">→</span>
+        <div class="step" id="B-calc">计算<br>比较</div>
+        <span class="arrow">→</span>
+        <div class="step" id="B-output">输出<br>制冷</div>
+      </div>
+      <div class="feedback-line">
+        ↑ 反馈：温度传感器检测到的当前温度送回输入端
+      </div>
+
+      <canvas id="chartB"></canvas>
+      <div class="legend">
+        <span class="actual">实际温度</span>
+        <span class="target">目标温度</span>
+        <span class="disturb-mark">干扰发生</span>
+      </div>
+
+      <div style="margin-top: 14px; font-size: 13px;">
+        <b>状态：</b><span id="statusB" style="color: var(--muted);">未开始</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-table">
+    <h3>📊 控制方式对比</h3>
+    <table>
+      <thead>
+        <tr><th>对比项</th><th style="color: var(--open-color);">开环控制</th><th style="color: var(--closed-color);">闭环控制</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="label">是否有反馈</td><td>无</td><td>有</td></tr>
+        <tr><td class="label">系统结构</td><td>简单</td><td>较复杂</td></tr>
+        <tr><td class="label">抗干扰能力</td><td>弱</td><td>强</td></tr>
+        <tr><td class="label">输出精度</td><td>较差</td><td>较好</td></tr>
+        <tr><td class="label">典型例子</td><td>闹钟、电风扇、定时浇灌</td><td>空调、冰箱、恒温饮水机</td></tr>
+        <tr><td class="label">能否自我调节</td><td>不能</td><td>能</td></tr>
+      </tbody>
+    </table>
+    <div class="info-box">
+      <strong>实验提示：</strong>实验过程中点击"添加干扰（开窗）"按钮，模拟外界突然涌入热空气。可以看到：开环控制系统不会"察觉"到干扰，会按原计划停止；闭环控制系统能自动重新启动制冷，把温度拉回目标值。这就是<b>反馈对系统的优化作用</b>。
+    </div>
+  </div>
+</div>
+
+<script>
+const initSlider = document.getElementById('initTemp');
+const targetSlider = document.getElementById('targetTemp');
+const initVal = document.getElementById('initTempVal');
+const targetVal = document.getElementById('targetTempVal');
+const startBtn = document.getElementById('startBtn');
+const disturbBtn = document.getElementById('disturbBtn');
+
+let simulating = false;
+let timer = null;
+let tempA, tempB;
+let historyA, historyB;
+let timeStep;
+let openLoopRunTime; // 开环系统按预设时间运行
+const openLoopDuration = 25; // 开环系统运行 25 个时间步
+let disturbMarks = [];
+
+function syncLabels() {
+  initVal.textContent = initSlider.value + '°C';
+  targetVal.textContent = targetSlider.value + '°C';
+  document.getElementById('targetA-label').textContent = '目标 ' + targetSlider.value + '°C';
+  document.getElementById('targetB-label').textContent = '目标 ' + targetSlider.value + '°C';
+
+  if (!simulating) {
+    tempA = +initSlider.value;
+    tempB = +initSlider.value;
+    document.getElementById('thermA').textContent = tempA.toFixed(1) + '°C';
+    document.getElementById('thermB').textContent = tempB.toFixed(1) + '°C';
+    updateRoomBg('A', tempA);
+    updateRoomBg('B', tempB);
+    drawTargetLines();
+  }
+}
+initSlider.addEventListener('input', syncLabels);
+targetSlider.addEventListener('input', syncLabels);
+
+function updateRoomBg(which, temp) {
+  const room = document.getElementById('room' + which);
+  const target = +targetSlider.value;
+  const diff = temp - target;
+  if (diff > 4) {
+    room.style.background = 'linear-gradient(180deg, #fef3c7 0%, #fed7aa 100%)';
+  } else if (diff > 1) {
+    room.style.background = 'linear-gradient(180deg, #fef9c3 0%, #fde68a 100%)';
+  } else if (diff < -3) {
+    room.style.background = 'linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%)';
+  } else {
+    room.style.background = 'linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%)';
+  }
+}
+
+function drawTargetLines() {
+  // 在房间可视化中放置目标线（基于 15-40°C 范围映射）
+  const target = +targetSlider.value;
+  const minT = 15, maxT = 40;
+  const ratio = (target - minT) / (maxT - minT); // 0..1
+  // y 位置：温度高在房间顶部低空气，低温在底部 — 用反向：温度高 → 顶部
+  const yPercent = (1 - ratio) * 100;
+  document.getElementById('targetA').style.top = yPercent + '%';
+  document.getElementById('targetB').style.top = yPercent + '%';
+}
+
+function startSim() {
+  if (simulating) return;
+  simulating = true;
+  startBtn.disabled = true;
+  disturbBtn.disabled = false;
+  tempA = +initSlider.value;
+  tempB = +initSlider.value;
+  historyA = [tempA];
+  historyB = [tempB];
+  timeStep = 0;
+  openLoopRunTime = 0;
+  disturbMarks = [];
+
+  timer = setInterval(simStep, 220);
+}
+
+function resetSim() {
+  if (timer) clearInterval(timer);
+  simulating = false;
+  startBtn.disabled = false;
+  disturbBtn.disabled = true;
+  tempA = +initSlider.value;
+  tempB = +initSlider.value;
+  historyA = [];
+  historyB = [];
+  disturbMarks = [];
+  timeStep = 0;
+  openLoopRunTime = 0;
+  document.getElementById('thermA').textContent = tempA.toFixed(1) + '°C';
+  document.getElementById('thermB').textContent = tempB.toFixed(1) + '°C';
+  document.getElementById('statusA').textContent = '未开始';
+  document.getElementById('statusB').textContent = '未开始';
+  document.getElementById('acA-icon').textContent = '🌬️';
+  document.getElementById('acB-icon').textContent = '🌬️';
+  document.querySelectorAll('.flow .step').forEach(s => s.classList.remove('active'));
+  updateRoomBg('A', tempA);
+  updateRoomBg('B', tempB);
+  drawCharts();
+}
+
+function addDisturb() {
+  if (!simulating) return;
+  // 干扰：温度上升
+  tempA += 4;
+  tempB += 4;
+  disturbMarks.push(timeStep);
+}
+
+function simStep() {
+  timeStep++;
+  const target = +targetSlider.value;
+
+  // === 开环控制 ===
+  // 开环：只按时间运行制冷，不检测温度
+  if (openLoopRunTime < openLoopDuration) {
+    // 制冷中
+    tempA -= 0.5; // 制冷
+    document.getElementById('acA-icon').textContent = '❄️';
+    document.getElementById('statusA').textContent = '空调制冷中（按预设时间）';
+    activateFlow('A', ['A-input','A-calc','A-output']);
+    openLoopRunTime++;
+  } else {
+    // 时间到，停止
+    document.getElementById('acA-icon').textContent = '⏸️';
+    document.getElementById('statusA').textContent = '预设时间结束，停止运行（即使温度不达标）';
+    activateFlow('A', []);
+  }
+  // 自然回温（环境影响）
+  tempA += 0.08;
+
+  // === 闭环控制 ===
+  // 闭环：检测温度并比较
+  if (tempB > target + 0.3) {
+    tempB -= 0.5;
+    document.getElementById('acB-icon').textContent = '❄️';
+    document.getElementById('statusB').textContent = `检测到 ${tempB.toFixed(1)}°C > ${target}°C，启动制冷`;
+    activateFlow('B', ['B-input','B-calc','B-output']);
+  } else if (tempB < target - 0.3) {
+    document.getElementById('acB-icon').textContent = '⏸️';
+    document.getElementById('statusB').textContent = `检测到 ${tempB.toFixed(1)}°C < ${target}°C，停止制冷`;
+    activateFlow('B', ['B-input','B-calc']);
+  } else {
+    document.getElementById('acB-icon').textContent = '✓';
+    document.getElementById('statusB').textContent = `温度稳定在目标范围 (${target}°C ± 0.3)`;
+    activateFlow('B', ['B-input','B-calc']);
+  }
+  tempB += 0.08; // 环境影响
+
+  // 更新显示
+  document.getElementById('thermA').textContent = tempA.toFixed(1) + '°C';
+  document.getElementById('thermB').textContent = tempB.toFixed(1) + '°C';
+  updateRoomBg('A', tempA);
+  updateRoomBg('B', tempB);
+
+  historyA.push(tempA);
+  historyB.push(tempB);
+  if (historyA.length > 80) historyA.shift();
+  if (historyB.length > 80) historyB.shift();
+
+  drawCharts();
+
+  if (timeStep > 200) {
+    clearInterval(timer);
+    simulating = false;
+    startBtn.disabled = false;
+    disturbBtn.disabled = true;
+  }
+}
+
+function activateFlow(which, ids) {
+  document.querySelectorAll(`#${which}-input, #${which}-calc, #${which}-output`).forEach(s => s.classList.remove('active'));
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  });
+}
+
+function drawCharts() {
+  drawChart('chartA', historyA);
+  drawChart('chartB', historyB);
+}
+
+function drawChart(id, history) {
+  const canvas = document.getElementById(id);
+  const w = canvas.width = canvas.offsetWidth;
+  const h = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  const minT = 15, maxT = 40;
+  const target = +targetSlider.value;
+
+  // 网格
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = (h / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+
+  // 目标温度线
+  const targetY = h - ((target - minT) / (maxT - minT)) * h;
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(0, targetY); ctx.lineTo(w, targetY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#059669';
+  ctx.font = '10px sans-serif';
+  ctx.fillText(target + '°C', 4, targetY - 3);
+
+  // 干扰标记
+  if (history.length > 0) {
+    const startTime = timeStep - history.length + 1;
+    disturbMarks.forEach(d => {
+      if (d >= startTime) {
+        const x = ((d - startTime) / Math.max(history.length - 1, 1)) * w;
+        ctx.strokeStyle = '#ef4444';
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+  }
+
+  // 数据曲线
+  if (history.length > 1) {
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    history.forEach((v, i) => {
+      const x = (w / (history.length - 1)) * i;
+      const y = h - ((v - minT) / (maxT - minT)) * h;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // 当前点
+    const lastX = w;
+    const lastY = h - ((history[history.length-1] - minT) / (maxT - minT)) * h;
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3.5, 0, 2*Math.PI);
+    ctx.fill();
+  }
+}
+
+// 初始化
+syncLabels();
+window.addEventListener('resize', drawCharts);
+drawCharts();
+</script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>智能搜索关键词训练器 — 第9课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #ddd6fe 0%, #ede9fe 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #6d28d9; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.search-box {
+  background: white; border-radius: 16px; padding: 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05); margin-bottom: 20px;
+}
+.search-input-wrap { display: flex; gap: 10px; }
+.search-input {
+  flex: 1; padding: 14px 18px; font-size: 16px;
+  border: 2px solid #e2e8f0; border-radius: 10px; outline: none; transition: border .2s;
+}
+.search-input:focus { border-color: #8b5cf6; }
+.search-btn {
+  padding: 0 28px; background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;
+}
+.search-btn:hover { opacity: .9; }
+.suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.suggestion {
+  padding: 6px 14px; background: #f5f3ff; color: #6d28d9; border-radius: 16px;
+  cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent;
+}
+.suggestion:hover { background: #ede9fe; border-color: #8b5cf6; }
+
+.search-stats {
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-radius: 12px;
+  padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 30px; flex-wrap: wrap; align-items: center;
+}
+.stat { display: flex; flex-direction: column; }
+.stat .num { color: #6d28d9; font-size: 22px; font-weight: 700; }
+.stat .label { color: #64748b; font-size: 12px; }
+.precision-bar {
+  flex: 1; min-width: 200px; height: 14px; background: #f1f5f9; border-radius: 7px; overflow: hidden;
+}
+.precision-fill {
+  height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+  width: 0%; transition: width .6s ease; border-radius: 7px;
+}
+
+.results { display: flex; flex-direction: column; gap: 12px; }
+.result-card {
+  background: white; border-radius: 12px; padding: 18px 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04); transition: all .2s;
+  border-left: 4px solid #e2e8f0;
+}
+.result-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+.result-card.high { border-left-color: #10b981; }
+.result-card.medium { border-left-color: #f59e0b; }
+.result-card.low { border-left-color: #ef4444; }
+.result-title { color: #6d28d9; font-size: 16px; margin-bottom: 4px; font-weight: 600; }
+.result-url { color: #16a34a; font-size: 12px; margin-bottom: 6px; }
+.result-snippet { color: #475569; font-size: 14px; line-height: 1.6; }
+.result-meta { margin-top: 8px; display: flex; gap: 12px; font-size: 12px; color: #94a3b8; }
+.result-meta .relevance { font-weight: 600; }
+.relevance.high { color: #10b981; }
+.relevance.medium { color: #f59e0b; }
+.relevance.low { color: #ef4444; }
+.source-tag { padding: 2px 8px; border-radius: 4px; background: #f1f5f9; font-size: 11px; }
+.source-tag.official { background: #dbeafe; color: #1e40af; }
+
+.empty {
+  background: white; border-radius: 12px; padding: 40px; text-align: center; color: #64748b;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.empty .icon { font-size: 60px; margin-bottom: 12px; }
+
+.knowledge {
+  background: white; border-radius: 16px; padding: 22px; margin-top: 20px;
+  border-left: 5px solid #8b5cf6; box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.knowledge h3 { color: #6d28d9; margin-bottom: 10px; font-size: 17px; }
+.knowledge .law { background: #f5f3ff; padding: 12px 16px; border-radius: 8px; margin-top: 10px; }
+.knowledge .law strong { color: #6d28d9; }
+.knowledge p { color: #475569; font-size: 14px; line-height: 1.7; }
+
+.tip-row { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.tip-card { background: #f8fafc; padding: 12px 14px; border-radius: 8px; font-size: 13px; }
+.tip-card strong { color: #6d28d9; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔍 智能搜索关键词训练器</h1>
+    <div class="subtitle">配套课时：第9课 在线搜索资源 · 体验关键词的精准度如何影响搜索结果</div>
+  </header>
+
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <input type="text" class="search-input" id="searchInput" placeholder="输入关键词进行搜索（试试不同的精准度）..." onkeydown="if(event.key==='Enter') doSearch()">
+      <button class="search-btn" onclick="doSearch()">🔍 搜索</button>
+    </div>
+    <div class="suggestions">
+      <span style="color:#64748b;font-size:13px;align-self:center;">试试这些：</span>
+      <span class="suggestion" onclick="trySearch('戏曲')">戏曲</span>
+      <span class="suggestion" onclick="trySearch('中国戏曲')">中国戏曲</span>
+      <span class="suggestion" onclick="trySearch('中国戏曲种类')">中国戏曲种类</span>
+      <span class="suggestion" onclick="trySearch('京剧')">京剧</span>
+      <span class="suggestion" onclick="trySearch('天气')">天气</span>
+      <span class="suggestion" onclick="trySearch('北京今日天气')">北京今日天气</span>
+      <span class="suggestion" onclick="trySearch('恐龙')">恐龙</span>
+    </div>
+  </div>
+
+  <div class="search-stats" id="searchStats" style="display:none;">
+    <div class="stat">
+      <div class="num" id="resultCount">0</div>
+      <div class="label">大约结果数</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="relevanceScore">—</div>
+      <div class="label">关键词精准度</div>
+    </div>
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:12px;color:#64748b;margin-bottom:6px;">精准度条</div>
+      <div class="precision-bar"><div class="precision-fill" id="precisionFill"></div></div>
+    </div>
+  </div>
+
+  <div id="results" class="results"></div>
+
+  <div id="emptyState" class="empty">
+    <div class="icon">🔎</div>
+    <h3>开始你的搜索探索</h3>
+    <p style="margin-top:10px;font-size:14px;">输入"戏曲"和"中国戏曲种类"试试，对比一下结果有什么不同</p>
+  </div>
+
+  <div class="knowledge">
+    <h3>💡 科学小知识 · 关键词精准度</h3>
+    <p>同样是关于戏曲的问题，搜"戏曲"会返回全世界戏曲的结果（信息过多），搜"中国戏曲种类"会精准返回想要的内容。<strong>关键词越具体，结果越精准。</strong></p>
+    <div class="law">
+      <strong>📐 数学原理：</strong>搜索引擎用"<strong>TF-IDF</strong>"等算法判断结果与关键词的相关性。关键词数量越多、越具体，搜索引擎越能筛选出真正相关的网页。<br>
+      <strong>简单理解：</strong>关键词数 ↑ → 候选结果数 ↓ → 相关度 ↑
+    </div>
+    <div class="tip-row">
+      <div class="tip-card"><strong>🎯 技巧 1</strong> 用2-4个关键词，比单个词更精准</div>
+      <div class="tip-card"><strong>🛡️ 技巧 2</strong> 优先看官方网站、政府机构发布的信息</div>
+      <div class="tip-card"><strong>📂 技巧 3</strong> 切换"图片/视频/地图"类别，按需搜索</div>
+      <div class="tip-card"><strong>🤔 技巧 4</strong> 信息有真假，多看几个来源对比</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 模拟搜索数据库
+const database = [
+  // 戏曲相关（涵盖中国&世界）
+  { title: "京剧 - 中国国粹百科", url: "kepu.gov.cn/jingju", snippet: "京剧是中国五大戏曲剧种之一，有'国粹'之称。源于清代徽剧入京。", tags: ["戏曲","中国戏曲","京剧","中国戏曲种类"], official: true, source: "中国科普网" },
+  { title: "豫剧 - 河南地方戏曲", url: "gov.cn/yuju", snippet: "豫剧是中国五大剧种之一，发源于河南，又称河南梆子。", tags: ["戏曲","中国戏曲","中国戏曲种类","豫剧"], official: true, source: "河南文化网" },
+  { title: "越剧 - 浙江特色戏曲", url: "zj.gov.cn/yueju", snippet: "越剧是中国第二大剧种，发源于浙江嵊州，以唱腔优美著称。", tags: ["戏曲","中国戏曲","中国戏曲种类","越剧"], official: true, source: "浙江文化" },
+  { title: "黄梅戏 - 安徽传统戏曲", url: "anhuiculture.cn/hmx", snippet: "黄梅戏原名黄梅采茶调，发源于湖北黄梅，发展于安徽安庆。", tags: ["戏曲","中国戏曲","中国戏曲种类","黄梅戏"], official: true, source: "安徽文化网" },
+  { title: "评剧 - 北方主要剧种", url: "culture.cn/pingju", snippet: "评剧产生于河北唐山一带，是中国北方主要剧种之一。", tags: ["戏曲","中国戏曲","中国戏曲种类","评剧"], official: false, source: "戏曲文化网" },
+  { title: "昆曲 - 百戏之祖", url: "kepu.gov.cn/kunqu", snippet: "昆曲又称昆腔，是中国最古老的剧种之一，被誉为'百戏之祖'。", tags: ["戏曲","中国戏曲","昆曲"], official: true, source: "国家文化网" },
+  { title: "意大利歌剧 - 西方戏曲", url: "operaworld.com/italy", snippet: "意大利歌剧起源于16世纪末的佛罗伦萨，是西方戏剧的重要形式。", tags: ["戏曲","歌剧","世界戏曲"], official: false, source: "歌剧世界" },
+  { title: "日本能剧 - 日本传统戏曲", url: "japanart.jp/noh", snippet: "能剧是日本最古老的传统戏剧形式之一，已被联合国教科文组织列为非遗。", tags: ["戏曲","世界戏曲","日本戏曲"], official: false, source: "日本艺术" },
+  { title: "印度卡塔卡利舞剧", url: "indianculture.in/kathakali", snippet: "卡塔卡利是印度南部喀拉拉邦的传统戏剧形式，融合舞蹈与戏曲。", tags: ["戏曲","世界戏曲","印度戏曲"], official: false, source: "印度文化" },
+  { title: "中国戏曲学院 - 招生信息", url: "nacta.edu.cn", snippet: "中国戏曲学院是中央部委直属高校，培养戏曲人才。", tags: ["戏曲","中国戏曲"], official: true, source: "中国戏曲学院" },
+  // 天气
+  { title: "中国天气网 - 全国实时天气预报", url: "weather.com.cn", snippet: "中国天气网由中国气象局公共气象服务中心主办，提供权威天气预报。", tags: ["天气","北京今日天气","北京天气"], official: true, source: "中国气象局" },
+  { title: "北京天气预报 - 24小时", url: "weather.com.cn/beijing", snippet: "北京今日多云转晴，温度18-26℃，东南风3级。空气质量良好。", tags: ["天气","北京天气","北京今日天气"], official: true, source: "中国气象局" },
+  { title: "上海天气预报", url: "weather.com.cn/shanghai", snippet: "上海今日小雨，温度16-22℃。", tags: ["天气","上海天气"], official: true, source: "中国气象局" },
+  { title: "全球天气预报地图", url: "weatherworld.com", snippet: "查看世界各国主要城市的实时天气。", tags: ["天气","世界天气"], official: false, source: "全球天气网" },
+  // 恐龙
+  { title: "霸王龙 - 恐龙百科", url: "kepu.gov.cn/dinosaur", snippet: "霸王龙生活在约6800万年前，是体型最大的肉食恐龙之一。", tags: ["恐龙","霸王龙"], official: true, source: "中国科普网" },
+  { title: "三角龙的故事", url: "natmuseum.cn", snippet: "三角龙以其头部三只角而得名，是白垩纪晚期的植食性恐龙。", tags: ["恐龙","三角龙"], official: true, source: "国家博物馆" },
+];
+
+let currentQuery = '';
+
+function trySearch(q) {
+  document.getElementById('searchInput').value = q;
+  doSearch();
+}
+
+function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  currentQuery = q;
+  
+  // 计算关键词数与字符数
+  const keywords = q.split(/\s+/).filter(Boolean);
+  const charLen = q.replace(/\s/g, '').length;
+  
+  // 匹配数据
+  const matched = database.map(item => {
+    let score = 0;
+    // tag 完全匹配 +3
+    item.tags.forEach(t => {
+      if (t === q) score += 5;
+      else if (t.includes(q)) score += 3;
+      else if (q.includes(t) && t.length >= 2) score += 1;
+    });
+    // 标题/摘要包含 +1
+    if (item.title.includes(q)) score += 2;
+    if (item.snippet.includes(q)) score += 1;
+    // 子词匹配
+    keywords.forEach(k => {
+      if (k.length >= 1) {
+        item.tags.forEach(t => { if (t.includes(k)) score += 0.5; });
+        if (item.title.includes(k)) score += 0.5;
+        if (item.snippet.includes(k)) score += 0.3;
+      }
+    });
+    return { ...item, score };
+  }).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
+
+  // 模拟"大约结果数"：单字符关键词→数百万；两个字→数十万；具体→几千；非常具体→几十
+  let approxCount;
+  if (charLen <= 1) approxCount = '约 ' + Math.floor(8000000 + Math.random()*4000000).toLocaleString();
+  else if (charLen <= 2) approxCount = '约 ' + Math.floor(800000 + Math.random()*400000).toLocaleString();
+  else if (charLen <= 4) approxCount = '约 ' + Math.floor(60000 + Math.random()*30000).toLocaleString();
+  else if (charLen <= 6) approxCount = '约 ' + Math.floor(2000 + Math.random()*1500).toLocaleString();
+  else approxCount = '约 ' + Math.floor(50 + Math.random()*150).toLocaleString();
+  
+  // 精准度计算（启发式）
+  let precision;
+  if (charLen <= 1) precision = 15;
+  else if (charLen <= 2) precision = 35;
+  else if (charLen <= 4) precision = 60;
+  else if (charLen <= 6) precision = 85;
+  else precision = 95;
+  
+  let precLabel = '低';
+  if (precision >= 80) precLabel = '高';
+  else if (precision >= 50) precLabel = '中';
+  
+  // 显示统计
+  document.getElementById('searchStats').style.display = 'flex';
+  document.getElementById('resultCount').textContent = approxCount;
+  document.getElementById('relevanceScore').textContent = precLabel;
+  document.getElementById('precisionFill').style.width = precision + '%';
+
+  // 显示结果
+  const resultsBox = document.getElementById('results');
+  document.getElementById('emptyState').style.display = 'none';
+  
+  if (matched.length === 0) {
+    resultsBox.innerHTML = `<div class="empty"><div class="icon">😕</div><h3>没有找到相关结果</h3><p style="margin-top:10px;font-size:14px;">试试用其他关键词，例如"戏曲"、"天气"、"恐龙"</p></div>`;
+    return;
+  }
+
+  // 限制显示数量：精准度高时少而精，精准度低时多而杂
+  const showCount = precision >= 80 ? Math.min(matched.length, 4)
+                  : precision >= 50 ? Math.min(matched.length, 6)
+                  : Math.min(matched.length, 8);
+  
+  const top = matched.slice(0, showCount);
+
+  resultsBox.innerHTML = top.map(item => {
+    const relClass = item.score >= 5 ? 'high' : item.score >= 2 ? 'medium' : 'low';
+    const relText = item.score >= 5 ? '高度相关' : item.score >= 2 ? '部分相关' : '弱相关';
+    return `
+      <div class="result-card ${relClass}">
+        <div class="result-title">${highlight(item.title, q, keywords)}</div>
+        <div class="result-url">🔗 ${item.url}</div>
+        <div class="result-snippet">${highlight(item.snippet, q, keywords)}</div>
+        <div class="result-meta">
+          <span class="source-tag ${item.official ? 'official' : ''}">${item.official ? '✓ 官方' : ''} ${item.source}</span>
+          <span class="relevance ${relClass}">● ${relText}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function highlight(text, q, keywords) {
+  let result = text;
+  if (q && text.includes(q)) {
+    result = result.split(q).join(`<mark style="background:#fef08a;padding:0 2px;border-radius:2px;">${q}</mark>`);
+  } else {
+    keywords.forEach(k => {
+      if (k.length >= 2 && result.includes(k)) {
+        result = result.split(k).join(`<mark style="background:#fef08a;padding:0 2px;border-radius:2px;">${k}</mark>`);
+      }
+    });
+  }
+  return result;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>数据分包传输演示器 · 第4课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;
+  --panel:#1a2340;
+  --panel2:#222d50;
+  --line:#2d3a63;
+  --text:#e6eaf5;
+  --muted:#8a96b8;
+  --accent:#4ed1b8;
+  --accent2:#ffb347;
+  --warn:#ff6b81;
+  --send:#5b9cff;
+  --recv:#9d7bff;
+  --shadow:0 8px 30px rgba(0,0,0,.3);
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 70% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);
+  min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:24px}
+header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:18px;flex-wrap:wrap;gap:10px;
+}
+h1{
+  font-size:26px;margin:0;font-weight:700;letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lesson-tag{
+  font-size:12px;color:var(--muted);
+  border:1px solid var(--line);padding:4px 10px;border-radius:999px;
+  background:rgba(255,255,255,.02);
+}
+.subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:18px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.card{
+  background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+  border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;box-shadow:var(--shadow);
+}
+.card h2{font-size:15px;margin:0 0 12px;color:var(--accent)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input[type=text],textarea,select{
+  width:100%;background:#0c1426;color:var(--text);
+  border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  font-family:inherit;font-size:14px;outline:none;
+  transition:border-color .2s;
+}
+textarea{min-height:70px;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center}
+.row input[type=range]{flex:1}
+.row .val{font-family:'JetBrains Mono',monospace;color:var(--accent);min-width:30px;text-align:right}
+button{
+  background:linear-gradient(135deg,var(--accent) 0%,#3ab8a0 100%);
+  color:#0a1226;border:0;border-radius:8px;padding:10px 16px;
+  font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;
+  transition:transform .1s,box-shadow .2s;
+}
+button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(78,209,184,.3)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+button.secondary{
+  background:transparent;color:var(--text);border:1px solid var(--line);
+}
+button.secondary:hover{border-color:var(--accent);box-shadow:none}
+.btn-row{display:flex;gap:10px;margin-top:6px}
+.stage{
+  position:relative;height:520px;background:#0a1226;
+  border-radius:var(--r);border:1px solid var(--line);overflow:hidden;
+  background-image:
+    linear-gradient(rgba(78,209,184,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(78,209,184,.04) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.node{
+  position:absolute;width:90px;height:90px;
+  background:linear-gradient(180deg,#1f2b4f,#162043);
+  border:2px solid var(--line);border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+  transform:translate(-50%,-50%);
+}
+.node.sender{border-color:var(--send)}
+.node.recv{border-color:var(--recv)}
+.node-icon{font-size:24px;margin-bottom:4px}
+.node-label{font-size:11px;color:var(--muted);font-weight:500}
+.node-name{font-size:13px;font-weight:700;color:var(--text);margin-top:2px}
+.line{
+  position:absolute;height:2px;background:rgba(255,255,255,.07);
+  transform-origin:left center;pointer-events:none;
+}
+.packet{
+  position:absolute;width:46px;height:34px;
+  background:linear-gradient(135deg,var(--accent2),#ff8c42);
+  color:#1a1208;font-size:11px;font-weight:700;
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(255,179,71,.4);
+  transform:translate(-50%,-50%);
+  z-index:2;
+  font-family:'JetBrains Mono',monospace;
+}
+.packet .pno{font-size:9px;color:rgba(0,0,0,.6);position:absolute;top:1px;right:3px}
+.received-bar{
+  margin-top:14px;background:#0c1426;border:1px solid var(--line);
+  border-radius:8px;padding:12px;min-height:60px;
+}
+.received-bar h3{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:500}
+.recv-slot{
+  display:inline-flex;width:38px;height:38px;
+  background:#172040;border:1px dashed var(--line);
+  border-radius:6px;margin:3px;
+  align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--muted);position:relative;
+}
+.recv-slot.filled{
+  background:linear-gradient(135deg,var(--accent),#3ab8a0);
+  color:#0a1226;border-style:solid;border-color:var(--accent);
+  font-weight:700;
+}
+.recv-slot .sn{
+  position:absolute;top:-7px;right:-7px;
+  background:var(--send);color:#fff;font-size:9px;
+  width:14px;height:14px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.assembled{
+  margin-top:10px;padding:10px;background:#0c1426;border-radius:6px;
+  border:1px solid var(--line);font-family:'JetBrains Mono',monospace;
+  font-size:13px;color:var(--accent);min-height:20px;word-break:break-all;
+}
+.legend{
+  display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);
+}
+.legend i{
+  display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;
+}
+.note{
+  font-size:12px;color:var(--muted);background:rgba(78,209,184,.06);
+  border-left:3px solid var(--accent);padding:10px 12px;border-radius:6px;
+  margin-top:10px;line-height:1.6;
+}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stat{
+  background:#0c1426;border:1px solid var(--line);
+  border-radius:8px;padding:10px;text-align:center;
+}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--accent);font-weight:700}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(78,209,184,.5)}
+  50%{box-shadow:0 0 0 10px rgba(78,209,184,0)}
+}
+.node.active{animation:pulse 1s infinite}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>数据分包传输演示器</h1>
+      <div class="subtitle">理解"分包思想"与"存储转发"——网络如何把数据传到远方</div>
+    </div>
+    <span class="lesson-tag">第二单元 · 第4课《数据分包灵活传》</span>
+  </header>
+
+  <div class="layout">
+    <aside class="card">
+      <h2>实验设置</h2>
+      <div class="field">
+        <label>要传输的内容</label>
+        <textarea id="msgInput" maxlength="40">树影婆娑如梦</textarea>
+      </div>
+      <div class="field">
+        <label>传输速度 <span style="color:var(--accent2)">（每跳毫秒）</span></label>
+        <div class="row">
+          <input id="speed" type="range" min="200" max="1500" value="600" step="100">
+          <span class="val" id="speedVal">600</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>路径选择</label>
+        <select id="routeMode">
+          <option value="random">随机路由（模拟真实网络）</option>
+          <option value="same">所有数据包走相同路径</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button id="startBtn">▶ 开始传输</button>
+        <button id="resetBtn" class="secondary">↻ 重置</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-val" id="totalCount">0</div>
+          <div class="stat-label">数据包总数</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val" id="receivedCount">0</div>
+          <div class="stat-label">已接收</div>
+        </div>
+      </div>
+
+      <div class="note">
+        💡 <b>核心概念：</b><br>
+        ① <b>存储转发</b>——数据经过多个节点接力传输<br>
+        ② <b>分包</b>——大数据切成小包独立传输<br>
+        ③ <b>编号重组</b>——接收端按编号还原原始数据
+      </div>
+    </aside>
+
+    <section class="card">
+      <h2>传输过程可视化</h2>
+      <div class="stage" id="stage"></div>
+      <div class="legend">
+        <span><i style="background:var(--send)"></i>发送者</span>
+        <span><i style="background:var(--recv)"></i>接收者</span>
+        <span><i style="background:#1f2b4f;border:1px solid var(--line)"></i>中间节点（路由器）</span>
+        <span><i style="background:linear-gradient(135deg,var(--accent2),#ff8c42)"></i>数据包</span>
+      </div>
+
+      <div class="received-bar">
+        <h3>接收端缓冲区（按编号排列）</h3>
+        <div id="recvSlots"></div>
+        <div class="assembled" id="assembled">等待接收数据...</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+const speed = document.getElementById('speed');
+const speedVal = document.getElementById('speedVal');
+const routeMode = document.getElementById('routeMode');
+const msgInput = document.getElementById('msgInput');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const totalCount = document.getElementById('totalCount');
+const receivedCount = document.getElementById('receivedCount');
+const recvSlots = document.getElementById('recvSlots');
+const assembled = document.getElementById('assembled');
+
+speed.oninput = ()=> speedVal.textContent = speed.value;
+
+// node positions in a grid layout
+const nodes = [
+  {id:'S', x:8, y:50, name:'发送者', icon:'📤', cls:'sender'},
+  {id:'R1',x:30,y:20, name:'路由R1',icon:'🔄'},
+  {id:'R2',x:30,y:80, name:'路由R2',icon:'🔄'},
+  {id:'R3',x:55,y:35, name:'路由R3',icon:'🔄'},
+  {id:'R4',x:55,y:65, name:'路由R4',icon:'🔄'},
+  {id:'R5',x:75,y:50, name:'路由R5',icon:'🔄'},
+  {id:'D', x:92,y:50, name:'接收者', icon:'📥', cls:'recv'},
+];
+
+// network edges - each node connects to several others
+const edges = [
+  ['S','R1'],['S','R2'],
+  ['R1','R3'],['R1','R4'],
+  ['R2','R3'],['R2','R4'],
+  ['R3','R5'],['R4','R5'],
+  ['R3','R4'],
+  ['R5','D'],
+  ['R4','D'],
+  ['R3','D'],
+];
+
+const adj = {};
+edges.forEach(([a,b])=>{
+  adj[a]=adj[a]||[];adj[b]=adj[b]||[];
+  adj[a].push(b);adj[b].push(a);
+});
+
+function drawNetwork(){
+  stage.innerHTML='';
+  // edges
+  const sw = stage.clientWidth, sh = stage.clientHeight;
+  edges.forEach(([a,b])=>{
+    const na = nodes.find(n=>n.id===a), nb = nodes.find(n=>n.id===b);
+    const x1 = na.x*sw/100, y1 = na.y*sh/100;
+    const x2 = nb.x*sw/100, y2 = nb.y*sh/100;
+    const dx = x2-x1, dy = y2-y1;
+    const len = Math.hypot(dx,dy);
+    const ang = Math.atan2(dy,dx)*180/Math.PI;
+    const line = document.createElement('div');
+    line.className='line';
+    line.style.left=x1+'px';line.style.top=y1+'px';
+    line.style.width=len+'px';
+    line.style.transform=`rotate(${ang}deg)`;
+    stage.appendChild(line);
+  });
+  // nodes
+  nodes.forEach(n=>{
+    const el = document.createElement('div');
+    el.className='node '+(n.cls||'');
+    el.id='n_'+n.id;
+    el.style.left=n.x+'%';el.style.top=n.y+'%';
+    el.innerHTML = `<div class="node-icon">${n.icon}</div>
+      <div class="node-name">${n.name}</div>
+      <div class="node-label">${n.id}</div>`;
+    stage.appendChild(el);
+  });
+}
+
+// random path from S to D using BFS-like random walk
+function randomPath(){
+  const start='S',end='D';
+  let path=[start];
+  let cur=start;
+  let visited=new Set([start]);
+  while(cur!==end){
+    const next = adj[cur].filter(n=>!visited.has(n));
+    if(next.length===0){ // backtrack
+      path.pop();
+      if(path.length===0)return ['S','R1','R3','R5','D'];
+      cur=path[path.length-1];
+      continue;
+    }
+    // bias toward nodes closer to D (higher x)
+    const sortedByX = next.sort((a,b)=>{
+      const na = nodes.find(n=>n.id===a).x;
+      const nb = nodes.find(n=>n.id===b).x;
+      return nb-na;
+    });
+    // pick from top 2 randomly to add variety
+    const pool = sortedByX.slice(0,Math.min(2,sortedByX.length));
+    const pick = pool[Math.floor(Math.random()*pool.length)];
+    path.push(pick);
+    visited.add(pick);
+    cur=pick;
+    if(path.length>10)break; // safety
+  }
+  return path;
+}
+
+let timers = [];
+function clearAll(){
+  timers.forEach(clearTimeout);timers=[];
+  document.querySelectorAll('.packet').forEach(p=>p.remove());
+  document.querySelectorAll('.node').forEach(n=>n.classList.remove('active'));
+}
+
+// helpers for percent->px on stage
+function pct(node){
+  return {x:node.x*stage.clientWidth/100, y:node.y*stage.clientHeight/100};
+}
+
+function getNode(id){return nodes.find(n=>n.id===id);}
+
+function transmitPacket(content,seq,total,path,onArrive){
+  const pkt = document.createElement('div');
+  pkt.className='packet';
+  pkt.innerHTML = `${content}<span class="pno">${seq}</span>`;
+  const start = pct(getNode(path[0]));
+  pkt.style.left=start.x+'px';pkt.style.top=start.y+'px';
+  stage.appendChild(pkt);
+
+  const ms = parseInt(speed.value,10);
+  let step = 0;
+  const moveNext = ()=>{
+    step++;
+    if(step>=path.length){
+      pkt.remove();
+      onArrive();
+      return;
+    }
+    const target = pct(getNode(path[step]));
+    pkt.style.transition=`left ${ms}ms ease, top ${ms}ms ease`;
+    pkt.style.left=target.x+'px';pkt.style.top=target.y+'px';
+    // light up node when arriving
+    timers.push(setTimeout(()=>{
+      const ne = document.getElementById('n_'+path[step]);
+      if(ne){ne.classList.add('active');setTimeout(()=>ne.classList.remove('active'),300);}
+      moveNext();
+    },ms));
+  };
+  // small delay so transition triggers
+  timers.push(setTimeout(moveNext,30));
+}
+
+function start(){
+  clearAll();
+  const text = msgInput.value.trim();
+  if(!text){alert('请输入要传输的内容');return;}
+  const chars = Array.from(text); // unicode-safe split
+  totalCount.textContent = chars.length;
+  receivedCount.textContent = '0';
+
+  // build receive slots
+  recvSlots.innerHTML='';
+  const buffer = new Array(chars.length).fill(null);
+  for(let i=0;i<chars.length;i++){
+    const s = document.createElement('span');
+    s.className='recv-slot';s.id='rs_'+i;
+    s.innerHTML=`<span class="sn">${i+1}</span>`;
+    recvSlots.appendChild(s);
+  }
+  assembled.textContent='等待接收...';
+  startBtn.disabled = true;
+
+  const sharedPath = randomPath();
+  let received = 0;
+  // shuffle send order to demonstrate out-of-order delivery
+  const sendOrder = Array.from({length:chars.length},(_,i)=>i)
+    .sort(()=>Math.random()-0.5);
+
+  sendOrder.forEach((idx,i)=>{
+    timers.push(setTimeout(()=>{
+      const path = routeMode.value==='same' ? sharedPath : randomPath();
+      transmitPacket(chars[idx],idx+1,chars.length,path,()=>{
+        // arrived at D
+        buffer[idx] = chars[idx];
+        const slot = document.getElementById('rs_'+idx);
+        slot.classList.add('filled');
+        // show character; keep sequence badge
+        slot.innerHTML = chars[idx]+`<span class="sn">${idx+1}</span>`;
+        received++;
+        receivedCount.textContent = received;
+        if(received===chars.length){
+          assembled.textContent = '✓ 重组完成：'+buffer.join('');
+          startBtn.disabled = false;
+        }
+      });
+    },i*200));
+  });
+}
+
+function reset(){
+  clearAll();
+  totalCount.textContent='0';
+  receivedCount.textContent='0';
+  recvSlots.innerHTML='';
+  assembled.textContent='等待接收数据...';
+  startBtn.disabled=false;
+}
+
+startBtn.onclick = start;
+resetBtn.onclick = reset;
+window.addEventListener('resize',drawNetwork);
+drawNetwork();
+</script>
+</body>
+</html>

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>密码强度分析器 — 第29课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fee2e2 0%, #fef3c7 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px; margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+h1 { color: #b91c1c; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+
+.main-card {
+  background: white; border-radius: 16px; padding: 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05); margin-bottom: 20px;
+}
+
+.input-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.password-input {
+  flex: 1; padding: 14px 18px; font-size: 18px; font-family: 'SF Mono', Consolas, monospace;
+  border: 2px solid #e2e8f0; border-radius: 10px; outline: none; transition: all .2s;
+  letter-spacing: 2px;
+}
+.password-input:focus { border-color: #ef4444; }
+.toggle-btn {
+  padding: 0 16px; background: white; border: 2px solid #e2e8f0;
+  border-radius: 10px; cursor: pointer; font-size: 18px;
+}
+
+.strength-meter {
+  height: 14px; background: #f1f5f9; border-radius: 7px; overflow: hidden; margin-bottom: 8px;
+}
+.strength-fill {
+  height: 100%; transition: width .4s, background .4s; border-radius: 7px;
+}
+.strength-label {
+  display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 18px;
+}
+.strength-label .level { font-weight: 700; }
+
+.metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.metric-card {
+  background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 14px 16px;
+  border-radius: 10px; text-align: center;
+}
+.metric-card .num { color: #92400e; font-size: 22px; font-weight: 700; }
+.metric-card .label { color: #78350f; font-size: 12px; margin-top: 4px; }
+.metric-card.danger { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+.metric-card.danger .num, .metric-card.danger .label { color: #991b1b; }
+.metric-card.success { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+.metric-card.success .num, .metric-card.success .label { color: #065f46; }
+
+.charset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.charset-tag {
+  padding: 5px 12px; border-radius: 16px; font-size: 13px; font-weight: 500;
+  background: #f1f5f9; color: #94a3b8;
+}
+.charset-tag.active { background: #dcfce7; color: #166534; }
+
+.warnings { margin-bottom: 18px; }
+.warning {
+  padding: 10px 14px; background: #fee2e2; border-left: 3px solid #ef4444;
+  border-radius: 6px; margin-bottom: 8px; font-size: 13px; color: #991b1b;
+}
+.warning.tip { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+.warning.success { background: #dcfce7; border-color: #22c55e; color: #166534; }
+
+.weak-list-section { background: #fef2f2; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+.weak-list-section h3 { color: #991b1b; font-size: 16px; margin-bottom: 10px; }
+.weak-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px;
+}
+.weak-item {
+  padding: 6px 10px; background: white; border-radius: 6px;
+  text-align: center; border: 1px solid #fecaca;
+}
+
+.suggestion-box {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-radius: 12px;
+  padding: 20px; margin-bottom: 20px;
+}
+.suggestion-box h3 { color: #6d28d9; margin-bottom: 12px; font-size: 16px; }
+.gen-btn {
+  padding: 10px 18px; background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+  margin: 5px; font-size: 14px;
+}
+.gen-btn:hover { opacity: .92; }
+.generated {
+  margin-top: 12px; padding: 14px; background: white; border-radius: 8px;
+  font-family: 'SF Mono', Consolas, monospace; font-size: 18px; letter-spacing: 2px;
+  text-align: center; color: #6d28d9; font-weight: 600; border: 2px dashed #8b5cf6;
+  min-height: 50px; display: flex; align-items: center; justify-content: center;
+}
+
+.knowledge {
+  background: white; border-radius: 16px; padding: 24px; margin-top: 20px;
+  border-left: 5px solid #ef4444; box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.knowledge h3 { color: #b91c1c; margin-bottom: 12px; }
+.knowledge p { color: #475569; line-height: 1.8; font-size: 14px; }
+.knowledge .formula {
+  background: #fef3c7; padding: 12px 16px; border-radius: 8px; margin: 10px 0;
+  font-family: 'SF Mono', Consolas, monospace; color: #92400e;
+}
+.knowledge ul { padding-left: 22px; margin-top: 8px; }
+.knowledge li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔐 密码强度分析器</h1>
+    <div class="subtitle">配套课时：第29课 了解自主可控 · 用科学方法检测密码强度，体会"自主可控"的安全意义</div>
+  </header>
+
+  <div class="main-card">
+    <h2 style="color:#b91c1c;margin-bottom:14px;font-size:18px;">🔍 输入一个密码进行分析</h2>
+    <div class="input-row">
+      <input type="text" class="password-input" id="pwdInput" placeholder="例如：123456 或 Sun@2025Cat" 
+             oninput="analyze()" autocomplete="off" spellcheck="false">
+      <button class="toggle-btn" onclick="toggleType()" id="toggleBtn">👁️</button>
+    </div>
+
+    <div class="strength-meter"><div class="strength-fill" id="strengthFill" style="width:0%"></div></div>
+    <div class="strength-label">
+      <span>密码强度：<span class="level" id="strengthLevel">—</span></span>
+      <span style="color:#64748b;" id="entropyText">熵值 0 bit</span>
+    </div>
+
+    <div class="metrics" id="metricsBox">
+      <div class="metric-card"><div class="num" id="lengthNum">0</div><div class="label">密码长度</div></div>
+      <div class="metric-card"><div class="num" id="charsetNum">0</div><div class="label">字符空间</div></div>
+      <div class="metric-card"><div class="num" id="combinations">—</div><div class="label">组合可能数</div></div>
+      <div class="metric-card" id="crackCard"><div class="num" id="crackTime">—</div><div class="label">破解所需时间</div></div>
+    </div>
+
+    <div style="margin-bottom:8px;color:#475569;font-size:13px;">字符种类：</div>
+    <div class="charset-row">
+      <span class="charset-tag" id="tag-lower">a–z 小写字母</span>
+      <span class="charset-tag" id="tag-upper">A–Z 大写字母</span>
+      <span class="charset-tag" id="tag-digit">0–9 数字</span>
+      <span class="charset-tag" id="tag-symbol">!@# 符号</span>
+      <span class="charset-tag" id="tag-cjk">汉字/Unicode</span>
+    </div>
+
+    <div class="warnings" id="warningsBox"></div>
+  </div>
+
+  <div class="suggestion-box">
+    <h3>✨ 生成自主可控的密码</h3>
+    <p style="color:#5b21b6;font-size:14px;margin-bottom:10px;">
+      自主可控 = "自己设计的规则" + "别人不容易猜到"。试试下面两种规则：
+    </p>
+    <button class="gen-btn" onclick="genWord()">🎲 单词+数字+动物</button>
+    <button class="gen-btn" onclick="genPoem()">📜 古诗首字母缩写</button>
+    <button class="gen-btn" onclick="genCustom()">🎨 字母+数字+符号组合</button>
+    <div class="generated" id="generated">点击上方按钮，生成一个示例密码…</div>
+  </div>
+
+  <div class="weak-list-section">
+    <h3>⚠️ 黑客最爱的弱密码（不要使用！）</h3>
+    <div class="weak-grid" id="weakGrid"></div>
+  </div>
+
+  <div class="knowledge">
+    <h3>📐 科学小知识 · 密码安全的数学</h3>
+    <p>
+    <b>1. 密码熵（Entropy）</b>：衡量密码复杂度的科学指标，单位是 bit（比特）。熵越大，密码越难破解。
+    </p>
+    <div class="formula">熵 = 长度 × log₂(字符空间大小)</div>
+    <p>
+    举例：6 位纯数字密码，字符空间 = 10，熵 = 6 × log₂(10) ≈ 19.9 bit；<br>
+    8 位"大小写字母+数字+符号"，字符空间 ≈ 94，熵 = 8 × log₂(94) ≈ 52.4 bit。<br>
+    熵每增加 1 bit，破解难度翻倍！
+    </p>
+    <p style="margin-top:12px;"><b>2. 破解时间估算（暴力破解）</b>：假设黑客每秒尝试 10 亿次：</p>
+    <div class="formula">平均破解时间 = (字符空间 ^ 长度) ÷ 2 ÷ 10⁹ 秒</div>
+    <p>
+    <b>3. 自主可控的密码 = 自主设计 + 别人难猜：</b>
+    </p>
+    <ul>
+      <li>"123456"虽是自己设的，但人人都猜得到 → <b>不可控</b></li>
+      <li>用自己原创的规则（如喜欢的诗的首字母+生日数字）→ <b>自主可控</b></li>
+      <li>不同账号用不同密码，定期更换</li>
+    </ul>
+    <p style="margin-top:10px;"><b>4. 推而广之：</b>从一个小小的密码，到 5G、芯片、卫星导航——能不能<b>自主</b>研发、能不能<b>可控</b>地使用，关系到国家安全。</p>
+  </div>
+</div>
+
+<script>
+const weakPasswords = new Set([
+  '123456','12345','123456789','111111','1234567','12345678','password','qwerty',
+  'abc123','000000','iloveyou','admin','password1','welcome','123123','qwerty123',
+  '1q2w3e4r','sunshine','passw0rd','dragon','master','monkey','letmein','login',
+  '654321','666666','888888','aaa111','abcabc','abcdef','111111','11111111',
+  'qweasd','jtwmydtsgx','5201314','asdfgh','zxcvbn','p@ssword','passwd',
+  '123qwe','a1b2c3','112233','aaaaaa','11111','1234','000000','7777777',
+]);
+
+const wordList = ['sun','moon','star','cloud','rain','wind','fire','snow','tree','sea'];
+const animalList = ['cat','dog','bird','fish','tiger','panda','rabbit','lion','bear','fox'];
+
+// 渲染弱密码列表
+document.getElementById('weakGrid').innerHTML = 
+  ['123456','111111','12345678','password','qwerty','abc123','000000','iloveyou','admin','5201314','aaa111','abcabc','asdfgh','zxcvbn','p@ssword'].map(p => `<div class="weak-item">${p}</div>`).join('');
+
+let visible = true;
+function toggleType() {
+  visible = !visible;
+  document.getElementById('pwdInput').type = visible ? 'text' : 'password';
+  document.getElementById('toggleBtn').textContent = visible ? '👁️' : '🙈';
+}
+
+function analyze() {
+  const pwd = document.getElementById('pwdInput').value;
+  const len = pwd.length;
+  
+  // 字符集分析
+  const hasLower = /[a-z]/.test(pwd);
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasDigit = /[0-9]/.test(pwd);
+  const hasSymbol = /[^a-zA-Z0-9\u4e00-\u9fa5]/.test(pwd);
+  const hasCJK = /[\u4e00-\u9fa5]/.test(pwd);
+  
+  document.getElementById('tag-lower').classList.toggle('active', hasLower);
+  document.getElementById('tag-upper').classList.toggle('active', hasUpper);
+  document.getElementById('tag-digit').classList.toggle('active', hasDigit);
+  document.getElementById('tag-symbol').classList.toggle('active', hasSymbol);
+  document.getElementById('tag-cjk').classList.toggle('active', hasCJK);
+  
+  // 字符空间
+  let charset = 0;
+  if (hasLower) charset += 26;
+  if (hasUpper) charset += 26;
+  if (hasDigit) charset += 10;
+  if (hasSymbol) charset += 32;
+  if (hasCJK) charset += 3500; // 常用汉字
+  
+  // 熵值（bit）
+  const entropy = len > 0 && charset > 0 ? len * Math.log2(charset) : 0;
+  
+  // 计算组合数（指数表示）
+  let combinations = '—';
+  if (len > 0 && charset > 0) {
+    const exp = Math.log10(Math.pow(charset, len));
+    if (exp < 6) combinations = Math.round(Math.pow(charset, len)).toLocaleString();
+    else if (exp < 100) combinations = '10^' + Math.round(exp);
+    else combinations = '10^' + Math.round(exp);
+  }
+  
+  // 破解时间
+  let crackText = '—';
+  let crackClass = '';
+  if (len > 0 && charset > 0) {
+    // 假设每秒 10^9 次（10亿次）
+    const totalSeconds = Math.pow(charset, len) / 2 / 1e9;
+    crackText = formatTime(totalSeconds);
+    if (totalSeconds < 1) crackClass = 'danger';
+    else if (totalSeconds < 86400 * 30) crackClass = 'danger';
+    else if (totalSeconds < 86400 * 365 * 100) crackClass = '';
+    else crackClass = 'success';
+  }
+  
+  // 弱密码检测
+  const isWeak = weakPasswords.has(pwd.toLowerCase());
+  const isKeyboard = /^(qwerty|asdfgh|zxcvbn|qwertyuiop|asdfghjkl)/i.test(pwd);
+  const isSequence = /(0123|1234|2345|3456|4567|5678|6789|abcd|bcde|cdef|defg)/i.test(pwd);
+  const isRepeat = /^(.)\1+$/.test(pwd);
+  const isAllDigit = pwd.length > 0 && /^[0-9]+$/.test(pwd);
+  const looksLikeBirthday = /^(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/.test(pwd);
+  
+  // 强度评分（综合熵 + 弱密码惩罚）
+  let score = entropy;
+  if (isWeak) score = Math.min(score, 8);
+  if (isKeyboard) score = Math.min(score, 12);
+  if (isSequence) score = Math.min(score, 18);
+  if (isRepeat) score = Math.min(score, 6);
+  if (looksLikeBirthday) score = Math.min(score, 18);
+  
+  let level, color, fillPct;
+  if (len === 0) { level = '—'; color = '#94a3b8'; fillPct = 0; }
+  else if (score < 25) { level = '🔴 极弱'; color = '#dc2626'; fillPct = 15; }
+  else if (score < 40) { level = '🟠 较弱'; color = '#ea580c'; fillPct = 35; }
+  else if (score < 60) { level = '🟡 一般'; color = '#ca8a04'; fillPct = 60; }
+  else if (score < 80) { level = '🟢 较强'; color = '#16a34a'; fillPct = 85; }
+  else { level = '💪 极强'; color = '#15803d'; fillPct = 100; }
+  
+  // 更新 UI
+  document.getElementById('strengthLevel').textContent = level;
+  document.getElementById('strengthLevel').style.color = color;
+  document.getElementById('entropyText').textContent = '熵值 ' + entropy.toFixed(1) + ' bit';
+  document.getElementById('strengthFill').style.width = fillPct + '%';
+  document.getElementById('strengthFill').style.background = color;
+  
+  document.getElementById('lengthNum').textContent = len;
+  document.getElementById('charsetNum').textContent = charset;
+  document.getElementById('combinations').textContent = combinations;
+  document.getElementById('crackTime').textContent = crackText;
+  document.getElementById('crackCard').className = 'metric-card ' + crackClass;
+  
+  // 警告信息
+  const warns = [];
+  if (len === 0) {
+    document.getElementById('warningsBox').innerHTML = '';
+    return;
+  }
+  if (isWeak) warns.push({ type:'warning', text:'❌ 这是黑客字典中的常见密码，几秒钟就能被破解！' });
+  if (isKeyboard) warns.push({ type:'warning', text:'❌ 这是键盘上相邻字符的组合，非常容易被猜到。' });
+  if (isSequence) warns.push({ type:'warning', text:'❌ 包含连续的字母或数字（如 1234、abcd），不安全。' });
+  if (isRepeat) warns.push({ type:'warning', text:'❌ 重复字符密码（如 1111），瞬间被破解。' });
+  if (looksLikeBirthday) warns.push({ type:'warning', text:'⚠️ 看起来像生日，亲友很容易猜到。' });
+  if (len < 6) warns.push({ type:'warning', text:'⚠️ 密码太短了！建议至少 8 位。' });
+  if (!hasUpper && !hasLower && !hasSymbol && hasDigit) warns.push({ type:'tip', text:'💡 纯数字密码很容易破解，加点字母或符号会更安全。' });
+  if ((hasLower||hasUpper) && !hasDigit && !hasSymbol) warns.push({ type:'tip', text:'💡 建议加入数字和符号，让密码更难猜。' });
+  if (warns.length === 0 && len >= 8) warns.push({ type:'success', text:'✅ 这个密码看起来很不错！是一个自主可控的好密码。' });
+  
+  document.getElementById('warningsBox').innerHTML = warns.map(w => 
+    `<div class="warning ${w.type}">${w.text}</div>`).join('');
+}
+
+function formatTime(seconds) {
+  if (seconds < 0.001) return '瞬间破解';
+  if (seconds < 1) return '不到 1 秒';
+  if (seconds < 60) return Math.round(seconds) + ' 秒';
+  if (seconds < 3600) return Math.round(seconds / 60) + ' 分钟';
+  if (seconds < 86400) return Math.round(seconds / 3600) + ' 小时';
+  if (seconds < 86400 * 30) return Math.round(seconds / 86400) + ' 天';
+  if (seconds < 86400 * 365) return Math.round(seconds / 86400 / 30) + ' 个月';
+  if (seconds < 86400 * 365 * 100) return Math.round(seconds / 86400 / 365) + ' 年';
+  if (seconds < 86400 * 365 * 1e6) return (seconds / 86400 / 365 / 1000).toFixed(1) + ' 千年';
+  if (seconds < 86400 * 365 * 1e12) return (seconds / 86400 / 365 / 1e6).toFixed(1) + ' 百万年';
+  return '宇宙年龄级别（破解不可能）';
+}
+
+// 生成密码
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function genWord() {
+  const w = pickRandom(wordList);
+  const n = Math.floor(Math.random() * 900) + 100;
+  const a = pickRandom(animalList);
+  const result = w + n + a;
+  showGenerated(result);
+}
+
+function genPoem() {
+  const poems = [
+    { text: '举头望明月，低头思故乡', code: 'jtwmydtsgx' },
+    { text: '春眠不觉晓，处处闻啼鸟', code: 'cmbjxccwtn' },
+    { text: '白日依山尽，黄河入海流', code: 'brysjhhrhl' },
+    { text: '锄禾日当午，汗滴禾下土', code: 'chrdwhdhxt' },
+    { text: '空山不见人，但闻人语响', code: 'ksbjrdwryx' },
+  ];
+  const p = pickRandom(poems);
+  const n = Math.floor(Math.random() * 90) + 10;
+  const result = p.code + n;
+  showGenerated(result, '原诗：' + p.text);
+}
+
+function genCustom() {
+  const lower = 'abcdefghjkmnpqrstuvwxyz';
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const digit = '23456789';
+  const symbol = '!@#$%^&*-_+=';
+  const all = lower + upper + digit + symbol;
+  let result = '';
+  // 至少各类一个
+  result += pickRandom(lower);
+  result += pickRandom(upper);
+  result += pickRandom(digit);
+  result += pickRandom(symbol);
+  // 再加 4-6 个
+  const total = 10;
+  for (let i = result.length; i < total; i++) result += pickRandom(all);
+  // 打乱
+  result = result.split('').sort(() => Math.random() - 0.5).join('');
+  showGenerated(result);
+}
+
+function showGenerated(pwd, hint) {
+  const box = document.getElementById('generated');
+  box.innerHTML = pwd + (hint ? `<br><span style="font-size:11px;color:#64748b;margin-top:6px;display:block;">（${hint}）</span>` : '') 
+    + `<button onclick="useGenerated('${pwd.replace(/'/g, "\\'")}')" style="margin-left:10px;padding:4px 10px;font-size:12px;background:#8b5cf6;color:white;border:none;border-radius:4px;cursor:pointer;">用它</button>`;
+}
+
+function useGenerated(pwd) {
+  document.getElementById('pwdInput').value = pwd;
+  analyze();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 初始化
+analyze();
+</script>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>过河谜题模拟器 - 第24课</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.river-scene {
+  background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 30%, #4A90E2 30%, #4A90E2 70%, #87CEEB 70%, #87CEEB 100%);
+  border-radius: 14px;
+  padding: 20px;
+  min-height: 280px;
+  position: relative;
+}
+.bank {
+  background: linear-gradient(135deg, #8FBC8F, #6B8E5B);
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 80px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 8px;
+  position: relative;
+}
+.bank-label {
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  background: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+.bank.left { margin-bottom: 80px; }
+.bank.right { margin-top: 80px; }
+
+.person-token {
+  font-size: 32px;
+  cursor: pointer;
+  transition: all 0.25s;
+  user-select: none;
+  position: relative;
+}
+.person-token:hover { transform: scale(1.15) translateY(-2px); }
+.person-token.selected {
+  filter: drop-shadow(0 0 8px gold);
+  transform: scale(1.2) translateY(-3px);
+}
+.person-token .role-tag {
+  position: absolute;
+  bottom: -4px; left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.boat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, #8B4513, #654321);
+  border-radius: 50px 50px 8px 8px;
+  padding: 8px 18px;
+  min-width: 120px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: left 1.2s ease, transform 1.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.boat::before {
+  content: '🚣';
+  position: absolute;
+  top: -28px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+}
+.boat.at-left { left: 18%; }
+.boat.at-right { left: 82%; }
+.boat .passenger { font-size: 26px; }
+
+.river-status {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.river-status strong { color: var(--primary-dark); }
+
+.move-history {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 13px;
+  border: 1.5px solid var(--border);
+}
+.move-history h4 {
+  color: var(--primary-dark);
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.move-history .move-item {
+  padding: 4px 8px;
+  border-left: 3px solid var(--primary);
+  margin-bottom: 4px;
+  background: #FAFBFC;
+  font-size: 12.5px;
+}
+
+.scenario-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.scenario-selector button {
+  padding: 8px 14px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.scenario-selector button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.decomp-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 14px;
+  align-items: center;
+  margin: 14px 0;
+}
+.decomp-flow .arr { font-size: 28px; color: var(--primary); text-align: center; }
+.decomp-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.decomp-card.big { border-color: var(--accent); background: #FFF4E6; }
+.decomp-card.small { border-color: var(--secondary); background: #E8F8EE; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🚣 过河谜题模拟器</h1>
+    <div class="subtitle">把大问题分解成小问题 — 规划算法的思想</div>
+    <span class="lesson-tag">第24课 · 多人过河巧安排</span>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+    <a href="index.html" class="back-btn">← 返回目录</a>
+  </div>
+
+  <div class="slide-nav">
+    <button class="slide-nav-btn" onclick="prevSlide()" id="prevBtn">← 上一页</button>
+    <div class="slide-counter">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 页</div>
+    <div class="slide-progress"><div class="slide-progress-bar" id="progressBar"></div></div>
+    <div class="slide-dots" id="slideDots"></div>
+    <button class="slide-nav-btn" onclick="nextSlide()" id="nextBtn">下一页 →</button>
+  </div>
+
+  <div class="content">
+    <div class="slide-container">
+
+      <div class="slide active" data-title="学习目标">
+        <div class="slide-title"><span class="num">1</span>学习目标</div>
+        <div class="objective-card">
+          <h4>🎯 本课学习要点:</h4>
+          <ol>
+            <li>认识<strong>规划算法</strong>的应用</li>
+            <li>学会把<strong>大问题分解成小问题</strong>来解决</li>
+            <li>体会"<strong>找规律</strong>"在算法设计中的作用</li>
+            <li>通过经典过河问题,培养逻辑思考能力</li>
+          </ol>
+        </div>
+        <div class="info-panel">
+          <strong>📚 关于经典:</strong>过河问题是世界著名的逻辑谜题,几百年来吸引无数人思考!
+        </div>
+      </div>
+
+      <div class="slide" data-title="情境引入">
+        <div class="slide-title"><span class="num">2</span>情境:探险队过河</div>
+        <div class="scenario-box">
+          <span class="label">🏕 探险情境</span>
+          <p style="margin-top:10px;"><strong>10 个成年人</strong>组成的探险队遇到一条<strong>又宽又深</strong>的河。河上没桥,也没法游过去。</p>
+          <p style="margin-top:8px;">这时,2 个少年划着一条小船过来,愿意帮忙。但是…</p>
+          <div style="background:#FDECEA; padding:10px; border-radius:8px; margin-top:10px; font-weight:600; color:var(--danger);">
+            ⚠️ 船很小,每次只能载 <strong>1 个成年人</strong> 或 <strong>2 个少年</strong>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🤔 思考问题:</strong>怎么才能让 10 个成年人都过河,2 个少年最后还能划船离开?
+        </div>
+        <div class="decomp-flow">
+          <div class="decomp-card big">
+            <div style="font-size:34px;">🤔</div>
+            <strong>大问题</strong><br>
+            <small>10 个成年人过河</small>
+          </div>
+          <div class="arr">→</div>
+          <div class="decomp-card small">
+            <div style="font-size:34px;">💡</div>
+            <strong>小问题</strong><br>
+            <small>1 个成年人过河<br>(重复 10 次)</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="解题思路">
+        <div class="slide-title"><span class="num">3</span>关键:解决"1 个成年人"的过河</div>
+        <div class="slide-subtitle">只要这一步解决了,大问题就迎刃而解</div>
+
+        <div style="background:white; border:1.5px solid var(--border); border-radius:12px; padding:18px;">
+          <h4 style="color:var(--primary-dark); margin-bottom:12px;">📋 1 个成年人过河的 4 步</h4>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:12px; align-items:center; background:#F0F7FF; padding:10px; border-radius:8px;">
+              <div style="background:var(--primary); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">1</div>
+              <div>2 个少年一起划船到<strong>对岸</strong>。</div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; background:#F0F7FF; padding:10px; border-radius:8px;">
+              <div style="background:var(--primary); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">2</div>
+              <div>少年 A 划船回来,少年 B <strong>留在对岸</strong>。</div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; background:#E8F8EE; padding:10px; border-radius:8px;">
+              <div style="background:var(--secondary); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">3</div>
+              <div><strong>1 个成年人</strong>划船到对岸!🎉</div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; background:#F0F7FF; padding:10px; border-radius:8px;">
+              <div style="background:var(--primary); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">4</div>
+              <div>少年 B 划船回来,两个少年汇合,准备下一轮。</div>
+            </div>
+          </div>
+          <div style="margin-top:14px; padding:12px; background:#FFF9E6; border-radius:8px; text-align:center;">
+            <strong>🔁 重复 10 次</strong> = 10 个成年人全部过河
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="互动:亲手过河">
+        <div class="slide-title"><span class="num">4</span>🎮 互动:亲手解过河谜题</div>
+        <div class="slide-subtitle">选择一个场景,点击人物上船,再点击船切换岸边</div>
+
+        <div class="scenario-selector">
+          <button class="active" onclick="loadScene('explorers')">🏕 10 人 + 2 少年</button>
+          <button onclick="loadScene('farmer')">👨‍🌾 农夫狐狼菜</button>
+        </div>
+
+        <div class="river-scene">
+          <div class="bank left" id="bankLeft">
+            <div class="bank-label">📍 左岸</div>
+          </div>
+          <div class="boat at-left" id="boat" onclick="toggleBoatSide()">
+            <span style="font-size:11px; color:white; font-weight:600;">点击划船</span>
+          </div>
+          <div class="bank right" id="bankRight">
+            <div class="bank-label">🏁 右岸(目标)</div>
+          </div>
+        </div>
+
+        <div class="river-status" id="riverStatus">点击人物让 ta 上船,点击船切换岸边。每次最多载 2 人(成人 1 人)</div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:14px;">
+          <div>
+            <button class="btn-success" onclick="autoSolve()">▶ 自动演示经典解法</button>
+            <button class="btn-secondary" onclick="resetScene()">🔄 重置</button>
+            <button class="btn-secondary" onclick="showHint()">💡 提示</button>
+          </div>
+          <div class="move-history">
+            <h4>📜 移动记录 <span style="font-weight:400; color:var(--text-light);">步骤 <strong id="stepCount">0</strong></span></h4>
+            <div id="moveList" style="color:var(--text-light); font-size:12px;">暂无移动</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-title="算法思想">
+        <div class="slide-title"><span class="num">5</span>分解 + 规划 + 循环</div>
+        <div class="slide-subtitle">解决复杂问题的"三板斧"</div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>🔨 分解</h4>
+            <p>把<strong>难解的大问题</strong>(10 人过河)<strong>拆成小问题</strong>(1 人过河),问题变简单!</p>
+          </div>
+          <div class="concept-card">
+            <h4>📋 规划</h4>
+            <p>有<strong>计划</strong>地朝目标推进,每一步都为下一步做准备。</p>
+          </div>
+          <div class="concept-card">
+            <h4>🔁 循环</h4>
+            <p>当小问题的解法<strong>相同</strong>时,用循环结构反复执行就可以了。</p>
+          </div>
+        </div>
+        <div class="info-panel">
+          <strong>🚀 思维拓展:</strong>20 人过河?100 人过河?同样的算法,<strong>循环更多次</strong>就行 — 这就是计算机的强项!
+        </div>
+      </div>
+
+      <div class="slide" data-title="课堂总结">
+        <div class="slide-title"><span class="num">6</span>本课小结</div>
+        <div class="success-panel">
+          <strong>🌟 你今天学到了:</strong>
+          <ul style="margin-left:20px; margin-top:8px; line-height:2;">
+            <li>用<strong>"分解"</strong>把大问题变成小问题</li>
+            <li>找到小问题的<strong>固定解法</strong>,再用<strong>循环</strong>反复执行</li>
+            <li>解决了经典的<strong>过河谜题</strong>(2 种!)</li>
+          </ul>
+        </div>
+        <div class="knowledge">
+          <h3>🚀 课后思考</h3>
+          <p>1. 农夫狐狼菜的过河,共需要<strong>7 步</strong>,能用算法描述吗?</p>
+          <p>2. 生活中还有哪些"大问题"可以分解成"小问题"来解决?(比如:打扫教室、复习考试…)</p>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="goToSlide(0)" class="btn-secondary">↺ 回到第 1 页</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="slides.js"></script>
+<script>
+// ============ 场景数据 ============
+const SCENES = {
+  explorers: {
+    name: '探险队过河',
+    // 角色: id, emoji, label, type (adult/teen)
+    chars: [
+      { id: 'a1', emoji: '👨', label: '成1', type: 'adult' },
+      { id: 'a2', emoji: '👨', label: '成2', type: 'adult' },
+      { id: 'a3', emoji: '👨', label: '成3', type: 'adult' },
+      { id: 'a4', emoji: '👨', label: '成4', type: 'adult' },
+      { id: 'a5', emoji: '👩', label: '成5', type: 'adult' },
+      { id: 'a6', emoji: '👨', label: '成6', type: 'adult' },
+      { id: 'a7', emoji: '👩', label: '成7', type: 'adult' },
+      { id: 'a8', emoji: '👨', label: '成8', type: 'adult' },
+      { id: 'a9', emoji: '👨', label: '成9', type: 'adult' },
+      { id: 'a10', emoji: '👩', label: '成10', type: 'adult' },
+      { id: 't1', emoji: '🧒', label: '少A', type: 'teen' },
+      { id: 't2', emoji: '🧒', label: '少B', type: 'teen' }
+    ],
+    rules: function(boat) {
+      // 船上最多 1 成人 或 2 少年
+      const adults = boat.filter(id => id.startsWith('a')).length;
+      const teens = boat.filter(id => id.startsWith('t')).length;
+      if (boat.length === 0) return { ok: false, msg: '船是空的,请让人上船' };
+      if (adults > 1) return { ok: false, msg: '船每次只能载 1 个成年人' };
+      if (adults === 1 && teens > 0) return { ok: false, msg: '成人上船时,不能再带少年' };
+      if (teens > 2) return { ok: false, msg: '船每次最多载 2 个少年' };
+      return { ok: true };
+    },
+    checkWin: function(left) {
+      const noAdultsLeft = !left.some(id => id.startsWith('a'));
+      const twoTeensLeft = left.filter(id => id.startsWith('t')).length === 2;
+      return noAdultsLeft && twoTeensLeft;
+    },
+    winMsg: '🎉 太棒了! 10 个成年人都过河了,2 个少年也在左岸,谜题完成!'
+  },
+  farmer: {
+    name: '农夫狐狼菜',
+    chars: [
+      { id: 'farmer', emoji: '👨‍🌾', label: '人', type: 'farmer' },
+      { id: 'wolf', emoji: '🐺', label: '狼', type: 'wolf' },
+      { id: 'sheep', emoji: '🐑', label: '羊', type: 'sheep' },
+      { id: 'cabbage', emoji: '🥬', label: '菜', type: 'cabbage' }
+    ],
+    rules: function(boat) {
+      const hasF = boat.includes('farmer');
+      if (boat.length === 0) return { ok: false, msg: '船是空的' };
+      if (!hasF) return { ok: false, msg: '只有农夫会划船,船上必须有农夫' };
+      if (boat.length > 2) return { ok: false, msg: '船最多容纳农夫 + 1 件物品' };
+      return { ok: true };
+    },
+    bankCheck: function(bank, otherBank) {
+      // 农夫不在的那一岸,狼和羊、羊和菜不能在一起
+      if (!bank.includes('farmer')) {
+        if (bank.includes('wolf') && bank.includes('sheep')) return { ok: false, msg: '⚠️ 农夫不在,狼会吃羊! 已自动撤销' };
+        if (bank.includes('sheep') && bank.includes('cabbage')) return { ok: false, msg: '⚠️ 农夫不在,羊会吃菜! 已自动撤销' };
+      }
+      return { ok: true };
+    },
+    checkWin: function(left) {
+      return left.length === 0;
+    },
+    winMsg: '🎉 太棒了! 农夫、狼、羊、菜都安全过河!'
+  }
+};
+
+let curScene = 'explorers';
+let leftBank = [];
+let rightBank = [];
+let boatPos = 'left';
+let boatCargo = [];
+let selected = null;
+let moveCount = 0;
+let history = [];
+let lastState = null;
+
+function loadScene(key) {
+  curScene = key;
+  document.querySelectorAll('.scenario-selector button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  resetScene();
+}
+
+function resetScene() {
+  leftBank = SCENES[curScene].chars.map(c => c.id);
+  rightBank = [];
+  boatPos = 'left';
+  boatCargo = [];
+  selected = null;
+  moveCount = 0;
+  history = [];
+  document.getElementById('riverStatus').textContent = SCENES[curScene].name + ': 点击人物让 ta 上船,点击船切换岸边';
+  document.getElementById('stepCount').textContent = '0';
+  document.getElementById('moveList').innerHTML = '<em style="color:var(--text-light);">暂无移动</em>';
+  render();
+}
+
+function render() {
+  const boatHtml = boatCargo.map(id => {
+    const ch = SCENES[curScene].chars.find(c => c.id === id);
+    return '<span class="passenger" onclick="event.stopPropagation(); unboard(\'' + id + '\')" title="点击下船">' + ch.emoji + '</span>';
+  }).join('');
+  const boatEl = document.getElementById('boat');
+  boatEl.innerHTML = (boatHtml || '<span style="font-size:11px; color:white; font-weight:600;">点击划船</span>');
+  boatEl.className = 'boat at-' + boatPos;
+
+  renderBank('Left', leftBank);
+  renderBank('Right', rightBank);
+}
+
+function renderBank(side, list) {
+  const el = document.getElementById('bank' + side);
+  el.innerHTML = '<div class="bank-label">' + (side === 'Left' ? '📍 左岸' : '🏁 右岸(目标)') + '</div>';
+  list.forEach(id => {
+    const ch = SCENES[curScene].chars.find(c => c.id === id);
+    const tok = document.createElement('span');
+    tok.className = 'person-token' + (selected === id ? ' selected' : '');
+    tok.textContent = ch.emoji;
+    tok.title = ch.label + ' (点击上船)';
+    tok.innerHTML += '<span class="role-tag">' + ch.label + '</span>';
+    tok.onclick = () => board(id, side.toLowerCase());
+    el.appendChild(tok);
+  });
+}
+
+function board(id, side) {
+  // 只有当 boat 在该岸时才能上船
+  if (boatPos !== side) {
+    document.getElementById('riverStatus').textContent = '⚠️ 船不在你这一岸,先把船划过来!';
+    return;
+  }
+  if (boatCargo.length >= 3) {
+    document.getElementById('riverStatus').textContent = '⚠️ 船快满了!';
+    return;
+  }
+  const bank = side === 'left' ? leftBank : rightBank;
+  const idx = bank.indexOf(id);
+  if (idx === -1) return;
+  bank.splice(idx, 1);
+  boatCargo.push(id);
+  render();
+}
+
+function unboard(id) {
+  const idx = boatCargo.indexOf(id);
+  if (idx === -1) return;
+  boatCargo.splice(idx, 1);
+  if (boatPos === 'left') leftBank.push(id);
+  else rightBank.push(id);
+  render();
+}
+
+function toggleBoatSide() {
+  // 检查规则
+  const check = SCENES[curScene].rules(boatCargo);
+  if (!check.ok) {
+    document.getElementById('riverStatus').textContent = check.msg;
+    return;
+  }
+
+  // 保存状态以便回退
+  lastState = {
+    left: [...leftBank],
+    right: [...rightBank],
+    pos: boatPos,
+    cargo: [...boatCargo]
+  };
+
+  // 划船
+  boatPos = boatPos === 'left' ? 'right' : 'left';
+
+  // 卸下乘客到新岸
+  const newBank = boatPos === 'left' ? leftBank : rightBank;
+  boatCargo.forEach(id => newBank.push(id));
+  const moveDesc = '船从' + (lastState.pos === 'left' ? '左岸' : '右岸') + '到' + (boatPos === 'left' ? '左岸' : '右岸') +
+    ',载: ' + boatCargo.map(id => SCENES[curScene].chars.find(c => c.id === id).label).join(', ');
+  boatCargo = [];
+  moveCount++;
+  history.push(moveDesc);
+
+  // 检查农夫场景的特殊规则:不在场时狼吃羊、羊吃菜
+  if (curScene === 'farmer') {
+    const otherBank = boatPos === 'left' ? rightBank : leftBank;
+    const check2 = SCENES[curScene].bankCheck(otherBank, []);
+    if (!check2.ok) {
+      // 撤销
+      leftBank = lastState.left;
+      rightBank = lastState.right;
+      boatPos = lastState.pos;
+      boatCargo = lastState.cargo;
+      moveCount--;
+      history.pop();
+      document.getElementById('riverStatus').innerHTML = '<span style="color:var(--danger); font-weight:600;">' + check2.msg + '</span>';
+      render();
+      return;
+    }
+  }
+
+  document.getElementById('riverStatus').textContent = '✓ ' + moveDesc;
+  document.getElementById('stepCount').textContent = moveCount;
+  const ml = document.getElementById('moveList');
+  ml.innerHTML = history.map((h, i) => '<div class="move-item">' + (i+1) + '. ' + h + '</div>').join('');
+  ml.scrollTop = ml.scrollHeight;
+
+  render();
+
+  // 检查胜利
+  if (SCENES[curScene].checkWin(leftBank)) {
+    setTimeout(() => {
+      document.getElementById('riverStatus').innerHTML = '<span style="color:var(--secondary); font-weight:700;">' + SCENES[curScene].winMsg + ' 共 ' + moveCount + ' 步</span>';
+    }, 800);
+  }
+}
+
+function showHint() {
+  const hints = {
+    explorers: '💡 提示: 先让 2 个少年一起划到对岸 → 1 个少年回来 → 1 个成年人过去 → 对岸的少年回来。重复这个过程!',
+    farmer: '💡 提示: 关键是"羊"不能和"狼"或"菜"单独相处。第一步先把羊送过去!'
+  };
+  document.getElementById('riverStatus').innerHTML = hints[curScene];
+}
+
+// 自动演示
+async function autoSolve() {
+  resetScene();
+  if (curScene === 'explorers') {
+    const steps = [
+      { board: ['t1', 't2'], side: 'left', desc: '2 个少年一起划到对岸' },
+      { board: ['t1'], side: 'right', desc: '少年 A 划回来' },
+      // 重复 10 次:成人过去 + 少年回来 + 2 个少年过去 + 1 个少年回来
+    ];
+    // 简化:演示 2 个成人过河
+    const adults = ['a1', 'a2'];
+    const story = [];
+    for (let i = 0; i < adults.length; i++) {
+      story.push({ board: [adults[i]], side: 'left', desc: '成年人 ' + (i+1) + ' 上船' });
+      story.push({ row: true });
+      story.push({ board: ['t2'], side: 'right', desc: '少年 B 上船' });
+      story.push({ row: true });
+      if (i < adults.length - 1) {
+        story.push({ board: ['t1', 't2'], side: 'left', desc: '2 个少年再次出发' });
+        story.push({ row: true });
+        story.push({ board: ['t1'], side: 'right', desc: '少年 A 划回来' });
+        story.push({ row: true });
+      }
+    }
+    document.getElementById('riverStatus').innerHTML = '<span style="color:var(--primary);">▶ 演示前 2 个成年人过河(完整需重复 10 次)</span>';
+    // 先让 2 个少年过去
+    leftBank.splice(leftBank.indexOf('t1'), 1);
+    leftBank.splice(leftBank.indexOf('t2'), 1);
+    boatCargo = ['t1', 't2'];
+    render();
+    await sleep(700);
+    toggleBoatSide();
+    await sleep(1300);
+    for (let i = 0; i < adults.length; i++) {
+      // 少年A回来
+      rightBank.splice(rightBank.indexOf('t1'), 1);
+      boatCargo = ['t1'];
+      render();
+      await sleep(500);
+      toggleBoatSide();
+      await sleep(1300);
+      // 成年人过去
+      leftBank.splice(leftBank.indexOf(adults[i]), 1);
+      boatCargo = [adults[i]];
+      render();
+      await sleep(500);
+      toggleBoatSide();
+      await sleep(1300);
+      // 少年B回来
+      rightBank.splice(rightBank.indexOf('t2'), 1);
+      boatCargo = ['t2'];
+      render();
+      await sleep(500);
+      toggleBoatSide();
+      await sleep(1300);
+      // 2 个少年再过去
+      if (i < adults.length - 1) {
+        leftBank.splice(leftBank.indexOf('t1'), 1);
+        leftBank.splice(leftBank.indexOf('t2'), 1);
+        boatCargo = ['t1', 't2'];
+        render();
+        await sleep(500);
+        toggleBoatSide();
+        await sleep(1300);
+      }
+    }
+    document.getElementById('riverStatus').innerHTML = '<span style="color:var(--secondary); font-weight:600;">✓ 演示了 2 个成年人过河。同样的方法重复 10 次,所有人都能过河!</span>';
+  } else if (curScene === 'farmer') {
+    document.getElementById('riverStatus').innerHTML = '<span style="color:var(--primary);">▶ 演示经典 7 步解法...</span>';
+    const sequence = [
+      { cargo: ['farmer', 'sheep'], desc: '农夫带羊过河' },
+      { cargo: ['farmer'], desc: '农夫单独回来' },
+      { cargo: ['farmer', 'wolf'], desc: '农夫带狼过河' },
+      { cargo: ['farmer', 'sheep'], desc: '农夫带羊回来' },
+      { cargo: ['farmer', 'cabbage'], desc: '农夫带菜过河' },
+      { cargo: ['farmer'], desc: '农夫单独回来' },
+      { cargo: ['farmer', 'sheep'], desc: '农夫带羊过河,完成!' }
+    ];
+    for (const step of sequence) {
+      const fromBank = boatPos === 'left' ? leftBank : rightBank;
+      step.cargo.forEach(id => {
+        const idx = fromBank.indexOf(id);
+        if (idx >= 0) fromBank.splice(idx, 1);
+      });
+      boatCargo = [...step.cargo];
+      render();
+      await sleep(700);
+      toggleBoatSide();
+      await sleep(1200);
+    }
+  }
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+resetScene();
+</script>
+</body>
+</html>

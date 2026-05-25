@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第2课 获取数据有方法 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#00897b;
+  --theme-dark:#00695c;
+  --theme-light:#e0f2f1;
+  --bg:#f0f7f6;
+}
+.method-flow{
+  display:flex;flex-wrap:wrap;gap:14px;
+  margin:18px 0;
+  justify-content:center;
+}
+.method-step{
+  background:#fff;
+  border:2px solid var(--theme-light);
+  border-radius:14px;
+  padding:18px;
+  flex:1;min-width:200px;
+  max-width:240px;
+  text-align:center;
+  position:relative;
+}
+.method-step .step-circle{
+  width:60px;height:60px;
+  margin:0 auto 10px;
+  background:linear-gradient(135deg,var(--theme),var(--theme-dark));
+  color:#fff;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;
+}
+.method-step h4{color:var(--theme-dark);margin-bottom:8px;font-size:16px}
+.method-step .scene{
+  font-size:13px;color:#607d8b;
+  background:#fafafa;
+  padding:6px 10px;
+  border-radius:6px;
+  margin-top:8px;
+}
+.example-box{
+  background:#fff;
+  border-radius:10px;
+  padding:14px 16px;
+  margin:10px 0;
+  border-left:4px solid var(--theme);
+  display:flex;align-items:flex-start;gap:14px;
+}
+.example-box .ex-icon{font-size:28px;flex-shrink:0}
+.example-box .ex-content{flex:1}
+.example-box .ex-title{
+  font-weight:bold;color:var(--theme-dark);
+  margin-bottom:4px;font-size:15px;
+}
+.example-box .ex-desc{font-size:13px;color:#607d8b}
+.try-input{
+  background:#fff;
+  border-radius:10px;
+  padding:16px;
+}
+.try-input .row{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:10px;
+}
+.try-input label{
+  min-width:100px;
+  color:var(--theme-dark);
+  font-weight:bold;
+  font-size:14px;
+}
+.try-input input{
+  flex:1;padding:8px 12px;
+  border:2px solid #e0e0e0;
+  border-radius:6px;
+  font-family:inherit;
+  font-size:14px;
+}
+.try-input input:focus{outline:none;border-color:var(--theme)}
+.data-result{
+  background:var(--theme-light);
+  border-radius:8px;
+  padding:14px;
+  margin-top:14px;
+  font-size:14px;
+  color:var(--theme-dark);
+  min-height:60px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第一单元 · 第2课</span>
+    <h1>🔍 获取数据有方法</h1>
+    <p>学习多种获取数据的方法，做一个会"找数据"的小达人</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前思考</button>
+    <button class="nav-btn" data-slide="1">📋 四大方法</button>
+    <button class="nav-btn" data-slide="2">📊 实例对比</button>
+    <button class="nav-btn" data-slide="3">🎮 我来试一试</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前思考</h2>
+    
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      老师布置任务：要做一份《四(1)班同学最喜欢的水果》的调查报告。
+      你打算<b>怎么获取</b>这些数据呢？
+      <br><br>
+      <b>A.</b> 直接问每位同学 &nbsp;&nbsp; <b>B.</b> 上网搜索 &nbsp;&nbsp;
+      <b>C.</b> 自己猜测 &nbsp;&nbsp; <b>D.</b> 看气象台数据
+    </div>
+
+    <h3>💡 答案揭晓</h3>
+    <p>显然只有 <b>A 直接问</b> 是对的！因为不同的数据，需要不同的<b>获取方法</b>。</p>
+    <p>这节课，我们就来学习获取数据的<b>四种主要方法</b>。</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>掌握获取数据的<b>四种基本方法</b>：观察、测量、调查、查询</li>
+      <li>学会根据<b>不同情境</b>选择合适的方法</li>
+      <li>能用合适的方法获取一些简单的数据</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>获取数据的四大方法</h2>
+    
+    <div class="method-flow">
+      <div class="method-step">
+        <div class="step-circle">👀</div>
+        <h4>观察法</h4>
+        <p style="font-size:13px;color:#607d8b">用眼睛直接看到</p>
+        <div class="scene">看天气、看颜色、看花开了几朵</div>
+      </div>
+      <div class="method-step">
+        <div class="step-circle">📏</div>
+        <h4>测量法</h4>
+        <p style="font-size:13px;color:#607d8b">用工具准确测量</p>
+        <div class="scene">尺子量身高、秒表计时、温度计</div>
+      </div>
+      <div class="method-step">
+        <div class="step-circle">📋</div>
+        <h4>调查法</h4>
+        <p style="font-size:13px;color:#607d8b">询问别人收集</p>
+        <div class="scene">问卷调查、采访、举手统计</div>
+      </div>
+      <div class="method-step">
+        <div class="step-circle">💻</div>
+        <h4>查询法</h4>
+        <p style="font-size:13px;color:#607d8b">从已有资料中查找</p>
+        <div class="scene">网络搜索、查书、查字典</div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 重要提示</h4>
+      获取数据时，要考虑<b>三件事</b>：
+      <br>① 这个数据<b>能不能直接看到</b>？→ 用观察法
+      <br>② 需要<b>很准确的数值</b>吗？→ 用测量法
+      <br>③ 数据在<b>别人那里</b>？→ 用调查法
+      <br>④ 数据是<b>历史的、远方的</b>？→ 用查询法
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>实例对比</h2>
+    <p>同样是获取数据，不同情境用的方法完全不同 ↓</p>
+
+    <div class="example-box">
+      <span class="ex-icon">🌤️</span>
+      <div class="ex-content">
+        <div class="ex-title">今天的天气如何？</div>
+        <div class="ex-desc"><b>观察法</b> → 直接抬头看看天空，云多不多、太阳大不大</div>
+      </div>
+    </div>
+
+    <div class="example-box">
+      <span class="ex-icon">📐</span>
+      <div class="ex-content">
+        <div class="ex-title">我的课桌有多长？</div>
+        <div class="ex-desc"><b>测量法</b> → 用尺子量，得到 120 cm 这样准确的数字</div>
+      </div>
+    </div>
+
+    <div class="example-box">
+      <span class="ex-icon">🍓</span>
+      <div class="ex-content">
+        <div class="ex-title">全班最喜欢的水果是什么？</div>
+        <div class="ex-desc"><b>调查法</b> → 设计问卷或举手统计，让每位同学投票</div>
+      </div>
+    </div>
+
+    <div class="example-box">
+      <span class="ex-icon">🏛️</span>
+      <div class="ex-content">
+        <div class="ex-title">长城有多长？</div>
+        <div class="ex-desc"><b>查询法</b> → 上网或翻书查资料：约 21196.18 千米</div>
+      </div>
+    </div>
+
+    <div class="example-box">
+      <span class="ex-icon">🌡️</span>
+      <div class="ex-content">
+        <div class="ex-title">教室里温度是多少？</div>
+        <div class="ex-desc"><b>测量法</b> → 用温度计读数（如果只想知道"冷不冷"，观察法也行）</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <h4>💡 小思考</h4>
+      为什么"今天的天气"用观察法，"教室温度"却用测量法？
+      <br>
+      因为天气是<b>大致情况</b>（晴/阴/雨），观察就够了；
+      而温度需要<b>具体数字</b>，必须测量才能得到。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>我来试一试</h2>
+    <p>下面这些数据，你打算用什么方法获取？点击答案查看 ↓</p>
+
+    <div class="try-input">
+      <div id="quizArea"></div>
+    </div>
+
+    <div class="info-box tip" style="margin-top:18px">
+      <h4>🌟 小工具任务</h4>
+      请选择两个你最感兴趣的"问题"，回家后真的去<b>获取数据</b>！
+      <br>例如：用<b>调查法</b>问问家里 5 个人最喜欢的颜色，再用<b>观察法</b>看看小区门口一小时内有多少辆汽车经过。
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>方法</th><th>什么时候用</th><th>例子</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>👀 <b>观察法</b></td><td>能直接看到</td><td>天气、颜色、数量</td></tr>
+        <tr><td>📏 <b>测量法</b></td><td>需要精确数值</td><td>长度、重量、温度、时间</td></tr>
+        <tr><td>📋 <b>调查法</b></td><td>问别人才知道</td><td>喜好、意见、个人信息</td></tr>
+        <tr><td>💻 <b>查询法</b></td><td>书本网络上的</td><td>历史、地理、科学数据</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box success">
+      <h4>🌟 核心要点</h4>
+      获取数据的方法不止一种！要根据数据的<b>类型和需要的准确程度</b>，
+      选择最合适的方法。有时候，<b>多种方法结合使用</b>，能得到更全面的数据。
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box tip">
+      上网查到的数据就一定<b>可信</b>吗？万一查到错的怎么办？
+      <br>
+      下节课《寻找可靠数据源》，我们一起学会分辨"数据真假"！
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const QUIZ_ITEMS = [
+  {icon:'🏃',q:'你跑 100 米用了多长时间？',a:'测量法',hint:'需要准确的秒数，所以用秒表测量'},
+  {icon:'🦋',q:'公园里今天有多少只蝴蝶？',a:'观察法',hint:'看到就数，没法测量'},
+  {icon:'🐼',q:'全国一共有多少只大熊猫？',a:'查询法',hint:'我们看不到、数不过来，要查权威资料'},
+  {icon:'👫',q:'班里同学的生日是哪一天？',a:'调查法',hint:'每个人不同，要问'},
+  {icon:'⚖️',q:'一本数学书有多重？',a:'测量法',hint:'用秤准确称重'},
+  {icon:'🌍',q:'地球离月亮有多远？',a:'查询法',hint:'要查科学资料'},
+  {icon:'🌧️',q:'今天会不会下雨？',a:'查询法',hint:'查询天气预报'},
+  {icon:'👀',q:'教室里今天来了几位同学？',a:'观察法',hint:'看一看、数一数'}
+];
+
+const quizArea = document.getElementById('quizArea');
+quizArea.innerHTML = QUIZ_ITEMS.map((item,i)=>`
+  <div style="background:#fafafa;border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;border-left:4px solid #cfd8dc" data-idx="${i}">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:22px">${item.icon}</span>
+      <span style="flex:1;font-size:14px">${item.q}</span>
+      <span style="font-size:12px;color:#90a4ae" class="reveal">点击查看 →</span>
+    </div>
+    <div class="answer" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #e0e0e0;font-size:13px;color:#00695c">
+      <b>答案：${item.a}</b> — ${item.hint}
+    </div>
+  </div>
+`).join('');
+
+quizArea.querySelectorAll('[data-idx]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    el.style.borderLeftColor = 'var(--theme)';
+    el.style.background = 'var(--theme-light)';
+    el.querySelector('.answer').style.display = 'block';
+    el.querySelector('.reveal').style.display = 'none';
+  });
+});
+
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

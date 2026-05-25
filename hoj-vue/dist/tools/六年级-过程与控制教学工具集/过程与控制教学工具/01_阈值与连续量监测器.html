@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阈值与连续量监测器 · 第5课</title>
+<style>
+  :root {
+    --primary: #0891b2;
+    --primary-dark: #0e7490;
+    --accent: #f97316;
+    --danger: #dc2626;
+    --safe: #16a34a;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(8, 145, 178, 0.2);
+  }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 26px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    border: 1px solid var(--border);
+  }
+  .card h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  .control-row {
+    margin-bottom: 18px;
+  }
+  .control-row label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--muted);
+  }
+  .control-row .value {
+    font-weight: 600;
+    color: var(--text);
+    font-family: "Courier New", monospace;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: linear-gradient(to right, #cffafe, #67e8f9);
+    border-radius: 4px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+  }
+  .display {
+    background: #0f172a;
+    color: #67e8f9;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin: 16px 0;
+    font-family: "Courier New", monospace;
+  }
+  .display .num {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .display .unit {
+    font-size: 16px;
+    margin-left: 4px;
+    opacity: 0.8;
+  }
+  .display .label {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.6;
+    letter-spacing: 1px;
+  }
+  .status {
+    padding: 16px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    transition: all 0.3s;
+    margin-top: 12px;
+  }
+  .status.safe { background: #dcfce7; color: #166534; border: 2px solid #86efac; }
+  .status.danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 2px solid #fca5a5;
+    animation: blink 0.6s infinite alternate;
+  }
+  @keyframes blink {
+    from { opacity: 1; }
+    to { opacity: 0.7; }
+  }
+  .scenario-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .scenario-tabs button {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .scenario-tabs button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .scenario-tabs button:hover:not(.active) {
+    background: #f1f5f9;
+  }
+  canvas {
+    width: 100%;
+    height: 220px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fafafa;
+  }
+  .info-box {
+    background: #ecfeff;
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    margin-top: 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #0e7490;
+  }
+  .info-box strong { color: #155e75; }
+  .legend {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .legend span::before {
+    content: "■";
+    margin-right: 4px;
+  }
+  .legend .data::before { color: var(--primary); }
+  .legend .threshold::before { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="tag">第二单元 · 第5课</span>
+    <h1>阈值与连续量监测器</h1>
+    <p>体验连续量数据的变化，理解阈值在控制系统中的作用</p>
+  </div>
+
+  <div class="grid">
+    <!-- 左侧：控制区 -->
+    <div class="card">
+      <h2>监测系统控制台</h2>
+
+      <div class="scenario-tabs">
+        <button class="active" data-scene="noise">噪声监测</button>
+        <button data-scene="temp">温度监测</button>
+        <button data-scene="water">水位监测</button>
+      </div>
+
+      <div class="control-row">
+        <label>
+          <span>当前数据（输入）</span>
+          <span class="value" id="dataValue">35 dB</span>
+        </label>
+        <input type="range" id="dataSlider" min="0" max="100" value="35">
+      </div>
+
+      <div class="control-row">
+        <label>
+          <span>阈值设置</span>
+          <span class="value" id="thresholdValue">55 dB</span>
+        </label>
+        <input type="range" id="thresholdSlider" min="0" max="100" value="55">
+      </div>
+
+      <div class="display">
+        <div><span class="num" id="numDisplay">35</span><span class="unit" id="unitDisplay">dB</span></div>
+        <div class="label" id="dataLabel">实时采集数据</div>
+      </div>
+
+      <div class="status safe" id="statusBox">
+        ✓ 数据正常，未超过阈值
+      </div>
+
+      <div class="info-box">
+        <strong>知识点：</strong>连续量是在一定范围内连续变化的数据（如温度、声音、水位）。阈值是一个参考值，控制系统通过比较数据与阈值，判断是否需要采取动作。
+      </div>
+    </div>
+
+    <!-- 右侧：可视化 -->
+    <div class="card">
+      <h2>数据变化趋势</h2>
+      <canvas id="chart"></canvas>
+      <div class="legend">
+        <span class="data">实时数据</span>
+        <span class="threshold">阈值线</span>
+      </div>
+
+      <div class="info-box" style="margin-top: 20px;">
+        <strong>对比一下：</strong>
+        <ul style="margin-top: 8px; padding-left: 20px;">
+          <li>波形图（左下） → 适合表示<b>连续量</b></li>
+          <li>散点图（间断的点） → 适合表示<b>开关量</b></li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">
+          <b>判断流程：</b>
+        </div>
+        <div id="flowDisplay" style="background: #f1f5f9; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px;">
+          检测数据 → 与阈值比较 → 输出"正常"
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const scenarios = {
+    noise: { unit: 'dB', min: 0, max: 100, defaultData: 35, defaultThreshold: 55, label: '噪声数据', overMsg: '⚠ 噪声超标！触发警报', safeMsg: '✓ 环境安静，未超过阈值' },
+    temp:  { unit: '°C', min: 0, max: 100, defaultData: 22, defaultThreshold: 38, label: '温度数据', overMsg: '⚠ 温度过高！启动制冷', safeMsg: '✓ 温度正常' },
+    water: { unit: 'cm', min: 0, max: 100, defaultData: 30, defaultThreshold: 70, label: '水位数据', overMsg: '⚠ 水位超限！停止注水', safeMsg: '✓ 水位正常' }
+  };
+
+  let current = 'noise';
+  const dataSlider = document.getElementById('dataSlider');
+  const thresholdSlider = document.getElementById('thresholdSlider');
+  const dataValue = document.getElementById('dataValue');
+  const thresholdValue = document.getElementById('thresholdValue');
+  const numDisplay = document.getElementById('numDisplay');
+  const unitDisplay = document.getElementById('unitDisplay');
+  const dataLabel = document.getElementById('dataLabel');
+  const statusBox = document.getElementById('statusBox');
+  const flowDisplay = document.getElementById('flowDisplay');
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+
+  let history = [];
+
+  function update() {
+    const s = scenarios[current];
+    const val = +dataSlider.value;
+    const thr = +thresholdSlider.value;
+    dataValue.textContent = val + ' ' + s.unit;
+    thresholdValue.textContent = thr + ' ' + s.unit;
+    numDisplay.textContent = val;
+    unitDisplay.textContent = s.unit;
+    dataLabel.textContent = s.label;
+
+    if (val > thr) {
+      statusBox.className = 'status danger';
+      statusBox.textContent = s.overMsg;
+      flowDisplay.innerHTML = `检测数据 (${val}) → 与阈值 (${thr}) 比较 → <span style="color:#dc2626;font-weight:bold;">数据 > 阈值，输出"超标"指令</span>`;
+    } else {
+      statusBox.className = 'status safe';
+      statusBox.textContent = s.safeMsg;
+      flowDisplay.innerHTML = `检测数据 (${val}) → 与阈值 (${thr}) 比较 → <span style="color:#16a34a;font-weight:bold;">数据 ≤ 阈值，输出"正常"</span>`;
+    }
+    history.push(val);
+    if (history.length > 50) history.shift();
+    drawChart(thr);
+  }
+
+  function drawChart(threshold) {
+    const w = canvas.width = canvas.offsetWidth;
+    const h = canvas.height = canvas.offsetHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    // 网格
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = (h / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    // 阈值线
+    const thrY = h - (threshold / 100) * h;
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(0, thrY); ctx.lineTo(w, thrY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f97316';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('阈值 ' + threshold, 6, thrY - 6);
+
+    // 数据曲线
+    if (history.length > 1) {
+      ctx.strokeStyle = '#0891b2';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      history.forEach((v, i) => {
+        const x = (w / (history.length - 1)) * i;
+        const y = h - (v / 100) * h;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // 当前点
+      const lastX = w;
+      const lastY = h - (history[history.length-1] / 100) * h;
+      ctx.fillStyle = '#0891b2';
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 4, 0, 2*Math.PI);
+      ctx.fill();
+    }
+  }
+
+  dataSlider.addEventListener('input', update);
+  thresholdSlider.addEventListener('input', update);
+
+  document.querySelectorAll('.scenario-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.scenario-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      current = btn.dataset.scene;
+      const s = scenarios[current];
+      dataSlider.min = s.min; dataSlider.max = s.max;
+      thresholdSlider.min = s.min; thresholdSlider.max = s.max;
+      dataSlider.value = s.defaultData;
+      thresholdSlider.value = s.defaultThreshold;
+      history = [];
+      update();
+    });
+  });
+
+  // 自动小幅波动模拟"实时采集"
+  setInterval(() => {
+    const cur = +dataSlider.value;
+    const drift = (Math.random() - 0.5) * 4;
+    const newVal = Math.max(0, Math.min(100, cur + drift));
+    history.push(newVal);
+    if (history.length > 50) history.shift();
+    drawChart(+thresholdSlider.value);
+  }, 600);
+
+  update();
+  window.addEventListener('resize', () => drawChart(+thresholdSlider.value));
+</script>
+</body>
+</html>

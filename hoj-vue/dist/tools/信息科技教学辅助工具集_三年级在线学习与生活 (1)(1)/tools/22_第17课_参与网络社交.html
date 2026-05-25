@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>参与网络社交 — 第17课</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3ff;color:#1e293b}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:linear-gradient(180deg,#5b21b6,#7c3aed);color:white;padding:24px 16px;flex-shrink:0}
+.sidebar h1{font-size:16px;margin-bottom:4px}.sidebar .lesson{font-size:12px;opacity:.8;margin-bottom:22px}
+.nav-item{padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.12)}.nav-item.active{background:rgba(255,255,255,.22);font-weight:600}
+.nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.main{flex:1;padding:32px 40px;overflow-y:auto}
+.slide{display:none;animation:f .4s}.slide.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide h2{color:#5b21b6;font-size:28px;margin-bottom:8px}.slide .lead{color:#64748b;margin-bottom:24px;font-size:15px}
+.controls{position:fixed;bottom:24px;right:32px;display:flex;gap:8px;z-index:50}
+.ctrl-btn{padding:10px 20px;background:white;border:1.5px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ctrl-btn.primary{background:#7c3aed;color:white;border-color:#5b21b6}
+.intro{background:linear-gradient(135deg,#ede9fe,#ddd6fe);padding:24px 28px;border-radius:16px;margin-bottom:18px}
+.intro h3{color:#5b21b6;margin-bottom:8px;font-size:20px}.intro p{color:#4c1d95;line-height:1.7}
+.know{background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;padding:16px 20px;border-radius:8px;margin-top:18px}
+.know h3{color:#92400e;font-size:15px;margin-bottom:6px}.know p{color:#78350f;font-size:14px;line-height:1.7}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tool-card{background:white;padding:18px 14px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.tool-card .icon{font-size:42px}.tool-card h4{color:#5b21b6;margin:8px 0 4px;font-size:14px}.tool-card p{color:#4c1d95;font-size:12px;line-height:1.5}
+
+/* 案例分类 */
+.case-board{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:800px){.case-board{grid-template-columns:1fr}}
+.case-zone{background:white;border-radius:12px;padding:14px;min-height:200px}
+.case-zone.unsorted{border:2px dashed #c4b5fd}
+.case-zone.positive{background:#f0fdf4;border-left:4px solid #22c55e}
+.case-zone.caution{background:#fef2f2;border-left:4px solid #ef4444}
+.case-zone h4{margin-bottom:10px;font-size:14px}
+.case-zone.unsorted h4{color:#5b21b6}
+.case-zone.positive h4{color:#15803d}
+.case-zone.caution h4{color:#b91c1c}
+.case-item{background:white;padding:10px 12px;border-radius:8px;margin-bottom:8px;font-size:13px;color:#475569;line-height:1.5;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.04);user-select:none}
+.case-item:hover{box-shadow:0 4px 10px rgba(0,0,0,.08)}
+.case-item.dragging{opacity:.4}
+.case-item .actions{margin-top:6px;display:flex;gap:4px}
+.case-btn{padding:3px 8px;border:1px solid #c4b5fd;background:white;border-radius:4px;font-size:11px;cursor:pointer}
+.case-btn:hover{background:#ede9fe}
+.case-btn.good{color:#15803d}
+.case-btn.bad{color:#b91c1c}
+
+.energy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.energy-item{background:white;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.energy-item .icon{font-size:30px}.energy-item h4{font-size:12px;margin:4px 0}
+.energy-item.pos{border-top:3px solid #22c55e}
+.energy-item.pos h4{color:#15803d}
+.energy-item.neg{border-top:3px solid #ef4444}
+.energy-item.neg h4{color:#b91c1c}
+.energy-item p{font-size:11px;color:#475569;line-height:1.5}
+@media(max-width:800px){.app{flex-direction:column}.sidebar{width:100%}.main{padding:20px;padding-bottom:100px}.controls{bottom:12px;right:12px;left:12px;justify-content:center}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>🌐 参与网络社交</h1>
+    <div class="lesson">第 17 课 · 第五单元</div>
+    <div class="nav-item active" onclick="g(0)"><span class="num">1</span>什么是网络社交</div>
+    <div class="nav-item" onclick="g(1)"><span class="num">2</span>社交平台的作用</div>
+    <div class="nav-item" onclick="g(2)"><span class="num">3</span>案例分类游戏</div>
+    <div class="nav-item" onclick="g(3)"><span class="num">4</span>传播正能量</div>
+    <div class="nav-item" onclick="g(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <div class="slide active">
+      <h2>🌐 什么是网络社交</h2>
+      <div class="lead">通过网络平台与他人建立联系、互动、分享</div>
+      <div class="intro">
+        <h3>📱 我们身边的网络社交</h3>
+        <p>朋友圈、微博、QQ 空间、知乎、抖音……都是<b>网络社交平台</b>。可以分享生活、关注他人、表达观点、结识朋友。</p>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="icon">💭</div><h4>分享生活</h4><p>记录有趣的事</p></div>
+        <div class="tool-card"><div class="icon">👀</div><h4>关注他人</h4><p>看朋友的动态</p></div>
+        <div class="tool-card"><div class="icon">👍</div><h4>互动点赞</h4><p>评论、转发、点赞</p></div>
+        <div class="tool-card"><div class="icon">🤝</div><h4>结交朋友</h4><p>认识志同道合的人</p></div>
+      </div>
+      <div class="know">
+        <h3>⚠️ 注意：未成年人使用社交平台需要谨慎</h3>
+        <p>《未成年人网络保护条例》规定，社交平台为<b>未成年人提供专门模式</b>，对内容、时间、消费等做出限制。</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎯 社交平台的作用</h2>
+      <div class="lead">网络社交既有积极的一面，也要注意可能的风险</div>
+      <h3 style="color:#15803d;font-size:16px;margin-bottom:10px;">✅ 积极作用</h3>
+      <div class="energy-grid">
+        <div class="energy-item pos"><div class="icon">📚</div><h4>学习交流</h4><p>分享学习心得</p></div>
+        <div class="energy-item pos"><div class="icon">🤝</div><h4>互助公益</h4><p>组织爱心活动</p></div>
+        <div class="energy-item pos"><div class="icon">📢</div><h4>正能量</h4><p>传播好人好事</p></div>
+        <div class="energy-item pos"><div class="icon">🎨</div><h4>展示才艺</h4><p>分享作品作品</p></div>
+        <div class="energy-item pos"><div class="icon">📰</div><h4>了解时事</h4><p>关注国家大事</p></div>
+        <div class="energy-item pos"><div class="icon">🌍</div><h4>开阔眼界</h4><p>看不同的生活</p></div>
+      </div>
+      <h3 style="color:#b91c1c;font-size:16px;margin:20px 0 10px;">⚠️ 需要警惕</h3>
+      <div class="energy-grid">
+        <div class="energy-item neg"><div class="icon">⏰</div><h4>沉迷网络</h4><p>影响学习健康</p></div>
+        <div class="energy-item neg"><div class="icon">📢</div><h4>盲目跟风</h4><p>不加思考转发</p></div>
+        <div class="energy-item neg"><div class="icon">🎭</div><h4>陌生人</h4><p>不要轻易添加</p></div>
+        <div class="energy-item neg"><div class="icon">😰</div><h4>网络欺凌</h4><p>言语攻击他人</p></div>
+        <div class="energy-item neg"><div class="icon">💰</div><h4>付费陷阱</h4><p>充值、打赏</p></div>
+        <div class="energy-item neg"><div class="icon">🔓</div><h4>泄露隐私</h4><p>暴露个人信息</p></div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🎮 案例分类游戏</h2>
+      <div class="lead">把下面的网络行为，拖到正确的分类中</div>
+      <div class="case-board">
+        <div class="case-zone unsorted" ondragover="event.preventDefault()" ondrop="dropTo(event,'unsorted')">
+          <h4>📦 待分类</h4>
+          <div id="poolCases"></div>
+        </div>
+        <div class="case-zone positive" ondragover="event.preventDefault()" ondrop="dropTo(event,'positive')">
+          <h4>✅ 正能量行为</h4>
+          <div id="positiveCases"></div>
+        </div>
+        <div class="case-zone caution" ondragover="event.preventDefault()" ondrop="dropTo(event,'caution')">
+          <h4>⚠️ 需要警惕</h4>
+          <div id="cautionCases"></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+        <button class="ctrl-btn primary" onclick="checkCases()">✓ 检查分类</button>
+        <button class="ctrl-btn" onclick="resetCases()">🔄 重新开始</button>
+        <span style="font-size:12px;color:#94a3b8;margin-left:auto;">💡 在手机上：点击案例下方的按钮直接分类</span>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>🌟 传播正能量</h2>
+      <div class="lead">我们应该怎样做一名"网络小公民"？</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #22c55e;"><div class="icon">📚</div><h4>分享学习</h4><p>在班级群分享好书</p></div>
+        <div class="tool-card" style="border-top:4px solid #22c55e;"><div class="icon">🎨</div><h4>展示作品</h4><p>分享自己的画作</p></div>
+        <div class="tool-card" style="border-top:4px solid #22c55e;"><div class="icon">🤝</div><h4>组织公益</h4><p>参与爱心捐书</p></div>
+        <div class="tool-card" style="border-top:4px solid #22c55e;"><div class="icon">🇨🇳</div><h4>爱国宣传</h4><p>转发主流新闻</p></div>
+        <div class="tool-card" style="border-top:4px solid #22c55e;"><div class="icon">🏥</div><h4>科普知识</h4><p>分享健康常识</p></div>
+        <div class="tool-card" style="border-top:4px solid #22c55e;"><div class="icon">💚</div><h4>环保倡议</h4><p>提倡绿色生活</p></div>
+      </div>
+      <div class="know">
+        <h3>🎯 案例 · 我们身边的"网络正能量"</h3>
+        <p><b>"杭州亚运会少年献歌"</b>：杭州小学生在社交平台分享亚运会主题歌，引起全国网友点赞，传递团结友爱的精神。<br>
+        <b>"为山区孩子送书"</b>：一位网友发起为大凉山孩子捐书活动，3 天内收到 1 万本图书。这就是<b>网络的正能量</b>！</p>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">本课要点</div>
+      <div class="tools-grid">
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🌐</div><h4>了解社交平台</h4><p>知道它的功能与作用</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">⚖️</div><h4>明辨利弊</h4><p>积极的一面 vs 风险</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🌟</div><h4>传播正能量</h4><p>分享美好、不传谣言</p></div>
+        <div class="tool-card" style="border-top:4px solid #7c3aed;"><div class="icon">🛡️</div><h4>保护自己</h4><p>不轻信、不沉迷</p></div>
+      </div>
+      <div class="know">
+        <h3>💡 老师寄语</h3>
+        <p>网络世界很精彩，但也有陷阱。小学生使用社交平台，要记住"<b>三看一不</b>"：<b>看内容、看人、看时间、不冲动</b>。多和老师家长交流，让网络成为成长的助力。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="p()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="n()">下一页 →</button>
+</div>
+
+<script>
+const cases = [
+  { id: 1, text: '小华在班级群分享自己读《十万个为什么》的心得', type: 'positive' },
+  { id: 2, text: '小宇看到"震惊体"标题就立刻转发了，没核实是否真实', type: 'caution' },
+  { id: 3, text: '小明在朋友圈发起"为贫困地区捐书"的活动', type: 'positive' },
+  { id: 4, text: '小亮陌生人加好友说请他玩游戏，他直接接受了', type: 'caution' },
+  { id: 5, text: '小红把自己画的国画作品发到 QQ 空间', type: 'positive' },
+  { id: 6, text: '小芳每晚熬夜刷视频到凌晨两点', type: 'caution' },
+  { id: 7, text: '小芳的好朋友评论说她衣服丑，她直接回怼了她', type: 'caution' },
+  { id: 8, text: '小辉转发了人民日报关于神舟飞船成功发射的报道', type: 'positive' },
+];
+
+let assignedTo = {};
+cases.forEach(c => assignedTo[c.id] = 'unsorted');
+
+function renderCases() {
+  ['unsorted','positive','caution'].forEach(zone => {
+    const list = cases.filter(c => assignedTo[c.id] === zone);
+    const html = list.map(c => `
+      <div class="case-item" draggable="true" data-id="${c.id}" ondragstart="event.dataTransfer.setData('id','${c.id}')">${c.text}
+        ${zone === 'unsorted' ? `<div class="actions">
+          <button class="case-btn good" onclick="moveCase(${c.id},'positive')">✓ 正能量</button>
+          <button class="case-btn bad" onclick="moveCase(${c.id},'caution')">⚠ 警惕</button>
+        </div>` : `<div class="actions"><button class="case-btn" onclick="moveCase(${c.id},'unsorted')">↩ 取消分类</button></div>`}
+      </div>
+    `).join('');
+    document.getElementById(zone === 'unsorted' ? 'poolCases' : zone + 'Cases').innerHTML = html;
+  });
+}
+
+function moveCase(id, zone) { assignedTo[id] = zone; renderCases(); }
+
+function dropTo(e, zone) {
+  e.preventDefault();
+  const id = e.dataTransfer.getData('id');
+  if (id) moveCase(parseInt(id), zone);
+}
+
+function checkCases() {
+  let right = 0, wrong = 0, unsorted = 0;
+  cases.forEach(c => {
+    if (assignedTo[c.id] === 'unsorted') unsorted++;
+    else if (assignedTo[c.id] === c.type) right++;
+    else wrong++;
+  });
+  if (unsorted > 0) { alert('还有 ' + unsorted + ' 个案例未分类！'); return; }
+  alert(`分类结果：\n✓ 正确 ${right} 个\n✗ 错误 ${wrong} 个\n${right === cases.length ? '🎉 全部正确！' : '继续努力～'}`);
+}
+
+function resetCases() {
+  cases.forEach(c => assignedTo[c.id] = 'unsorted');
+  renderCases();
+}
+
+renderCases();
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function g(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((nv, idx) => nv.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function n() { if (cur < slides.length - 1) g(cur + 1); }
+function p() { if (cur > 0) g(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') n();
+  if (e.key === 'ArrowLeft') p();
+});
+</script>
+</body>
+</html>

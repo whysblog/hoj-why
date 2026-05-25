@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第14课 · 远程控制更便捷 — 远程开锁模拟器</title>
+<style>
+  :root {
+    --bg: #f0fdf4;
+    --bg-2: #dcfce7;
+    --ink: #052e1a;
+    --ink-soft: #4a6c5e;
+    --primary: #047857;
+    --primary-2: #10b981;
+    --warn: #f59e0b;
+    --blue: #2563eb;
+    --red: #dc2626;
+    --line: #c8d8ce;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(4,120,87,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--warn); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 双端模拟器 */
+  .remote-sim { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .sim-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: stretch; }
+  .end {
+    background: var(--bg-2); padding: 22px; border-radius: 10px;
+    text-align: center;
+  }
+  .end h3 { font-size: 15px; margin-bottom: 10px; color: var(--primary); }
+  .phone-mock {
+    background: #fff; border: 3px solid #1e40af; border-radius: 16px;
+    padding: 12px; max-width: 180px; margin: 0 auto;
+  }
+  .phone-screen {
+    background: #0f1c3a; color: #93c5fd; border-radius: 6px;
+    padding: 12px; min-height: 200px;
+    font-size: 12px; text-align: left;
+    font-family: "PingFang SC", sans-serif;
+  }
+  .phone-screen .title {
+    background: #1e40af; color: #fff; padding: 6px 10px;
+    border-radius: 4px; font-size: 11px; font-weight: 700;
+    margin: -12px -12px 10px; text-align: center;
+  }
+  .phone-screen .status {
+    background: rgba(16,185,129,.15); color: #6ee7b7;
+    padding: 6px 10px; border-radius: 4px; font-size: 11px;
+    margin-bottom: 10px; text-align: center;
+  }
+  .unlock-btn {
+    width: 100%; padding: 14px; background: linear-gradient(180deg, #fbbf24, #f59e0b);
+    color: #fff; border: none; border-radius: 8px; font-size: 13px;
+    font-weight: 700; cursor: pointer; margin-top: 8px;
+    font-family: inherit;
+  }
+  .unlock-btn:hover { transform: scale(1.02); }
+  .unlock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .lock-btn {
+    width: 100%; padding: 10px; background: rgba(255,255,255,.1);
+    color: #93c5fd; border: 1px solid #1e40af; border-radius: 6px;
+    font-size: 11px; cursor: pointer; margin-top: 6px;
+    font-family: inherit;
+  }
+  .cloud-mock {
+    background: #fff; border: 3px solid #7c3aed; border-radius: 50%;
+    width: 180px; height: 180px; margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .cloud-mock .ic { font-size: 48px; }
+  .cloud-mock h4 { font-size: 12px; color: #7c3aed; }
+  .cloud-mock .log {
+    font-family: "JetBrains Mono",monospace; font-size: 9px; color: #7c3aed;
+    margin-top: 4px; text-align: center; line-height: 1.4;
+  }
+  .door-mock {
+    background: linear-gradient(180deg, #d97706 0%, #92400e 100%);
+    border: 3px solid #92400e; border-radius: 4px;
+    width: 130px; height: 200px; margin: 0 auto;
+    position: relative;
+  }
+  .door-mock .panel {
+    background: rgba(0,0,0,.15); height: 70px; margin: 14px;
+    border-radius: 2px;
+  }
+  .door-mock .lock {
+    position: absolute; right: 12px; top: 90px;
+    width: 20px; height: 28px;
+    border-radius: 3px;
+  }
+  .door-mock .lock.locked   { background: #dc2626; }
+  .door-mock .lock.unlocked { background: #10b981; }
+  .door-mock .light-led {
+    position: absolute; left: 50%; top: -16px; transform: translateX(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #94a3b8;
+  }
+  .door-mock .light-led.active { background: #10b981; box-shadow: 0 0 12px #10b981; }
+
+  .lines-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 14px;
+    color: var(--ink-soft); font-size: 11px;
+  }
+  .lines-row .l { text-align: center; padding: 4px; }
+
+  .log-box {
+    background: #0f1c14; color: #6ee7b7; padding: 14px; border-radius: 6px;
+    font-family: "JetBrains Mono",monospace; font-size: 11px; line-height: 1.7;
+    max-height: 140px; overflow-y: auto; margin-top: 16px;
+  }
+  .log-box .ts { color: #64748b; }
+  .log-box .ok { color: #6ee7b7; }
+  .log-box .info { color: #93c5fd; }
+  .log-box .err { color: #fca5a5; }
+
+  /* 安全提示 */
+  .security-card { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); border-top: 4px solid var(--red); }
+  .security-card h3 { color: var(--red); margin-bottom: 14px; font-size: 16px; }
+  .security-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .sec-item {
+    background: var(--bg-2); padding: 14px; border-radius: 8px;
+  }
+  .sec-item h4 { font-size: 13px; margin-bottom: 4px; color: var(--ink); }
+  .sec-item p { font-size: 11px; color: var(--ink-soft); line-height: 1.6; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .sim-row { grid-template-columns: 1fr; }
+    .lines-row { grid-template-columns: 1fr; }
+    .security-list { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 14 课</span>远程控制更便捷</h1>
+  <p class="lead">远程控制让你<strong>不在家也能开锁</strong>：当亲友临时来访、快递员需要把包裹放进玄关时，房主可以用手机 APP 一键开门。本课通过双端模拟器演示远程控制的工作原理。</p>
+</header>
+
+<main>
+
+  <!-- 双端模拟器 -->
+  <section class="section">
+    <div class="section-title">一、远程开锁完整链路</div>
+    <div class="remote-sim">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">模拟"<strong>房主在远方 → 通过手机 APP → 经云端 → 开家里的门</strong>"。点击手机上的"远程开锁"按钮看完整过程：</p>
+      <div class="sim-row">
+        <!-- 手机端 -->
+        <div class="end">
+          <h3>📱 手机端（房主）</h3>
+          <div class="phone-mock">
+            <div class="phone-screen">
+              <div class="title">🏠 智能家居 APP</div>
+              <div class="status" id="phoneStatus">门锁状态：🔒 已上锁</div>
+              <div style="font-size:11px;line-height:1.6;color:#cbd5e1;">
+                房主：<strong style="color:#fff">小明</strong><br>
+                设备：玄关门锁<br>
+                <span id="phoneLastOp" style="color:#94a3b8;">最近操作：—</span>
+              </div>
+              <button id="btnUnlock" class="unlock-btn" onclick="remoteUnlock()">🔓 远程开锁</button>
+              <button id="btnLock"   class="lock-btn"   onclick="remoteLock()" disabled>🔒 远程上锁</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 云端 -->
+        <div class="end">
+          <h3>☁ 云端服务器</h3>
+          <div class="cloud-mock">
+            <div class="ic">☁</div>
+            <h4>IoT 云平台</h4>
+            <div class="log" id="cloudLog">待机中</div>
+          </div>
+        </div>
+
+        <!-- 门锁端 -->
+        <div class="end">
+          <h3>🚪 家中门锁</h3>
+          <div class="door-mock">
+            <div class="light-led" id="doorLed"></div>
+            <div class="panel"></div>
+            <div class="lock locked" id="doorLock"></div>
+            <div class="panel"></div>
+          </div>
+          <p style="font-size:11px;color:var(--ink-soft);margin-top:8px;" id="doorStatus">🔒 已上锁</p>
+        </div>
+      </div>
+
+      <div class="lines-row">
+        <div class="l">↓ 发送指令</div>
+        <div class="l">↓ 转发指令</div>
+        <div class="l">↑ 反馈状态</div>
+      </div>
+
+      <div class="log-box" id="log">
+        <div><span class="ts">[准备就绪]</span> 在手机上点击"远程开锁"，观察整个过程...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 工作原理说明 -->
+  <section class="section">
+    <div class="section-title">二、远程控制如何实现</div>
+    <div class="security-card" style="border-top-color:var(--primary);">
+      <h3 style="color:var(--primary);">🔄 双向通信流程</h3>
+      <ol style="font-size:13px;line-height:1.9;color:var(--ink-soft);padding-left:20px;">
+        <li><strong>身份验证：</strong>房主先在手机 APP 登录账号。云端验证身份，关联到对应的家庭设备。</li>
+        <li><strong>指令上行：</strong>用户点击"开锁"，APP 通过 HTTPS 或 MQTT 把<code>{"cmd":"unlock","device":"door_01"}</code>发送到云端。</li>
+        <li><strong>云端转发：</strong>云端验证权限后，将指令通过 MQTT 推送给该家庭的门锁（订阅了 <code>home/door/cmd</code>）。</li>
+        <li><strong>门锁执行：</strong>门锁主控收到指令，驱动舵机解锁。同时更新本地状态。</li>
+        <li><strong>状态上报：</strong>门锁向云端发布开锁结果<code>{"state":"unlocked","time":"..."}</code>。</li>
+        <li><strong>反馈用户：</strong>云端推送给 APP，手机界面更新为"已开锁"。整个过程在 1-3 秒内完成。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 安全考虑 -->
+  <section class="section">
+    <div class="section-title">三、远程控制的安全考虑</div>
+    <div class="security-card">
+      <h3>⚠ 远程控制的安全挑战</h3>
+      <div class="security-list">
+        <div class="sec-item">
+          <h4>🔑 身份认证</h4>
+          <p>不能仅靠用户名密码，建议增加<strong>短信验证码、人脸识别或指纹</strong>等多因素认证。</p>
+        </div>
+        <div class="sec-item">
+          <h4>🔐 通信加密</h4>
+          <p>APP 与云端、云端与设备之间的所有通信必须<strong>采用 TLS/SSL 加密</strong>，防止数据被截获。</p>
+        </div>
+        <div class="sec-item">
+          <h4>📋 操作日志</h4>
+          <p>所有开锁操作必须<strong>记录到云端日志</strong>，包括时间、操作人、IP 等，可供事后审计。</p>
+        </div>
+        <div class="sec-item">
+          <h4>⏰ 时效控制</h4>
+          <p>临时授权（如让快递员开门）应设置<strong>限时令牌</strong>，过期自动失效。</p>
+        </div>
+        <div class="sec-item">
+          <h4>🚨 异常告警</h4>
+          <p>非常用 IP 或非常用时间段的开锁，触发<strong>异常告警</strong>，要求二次验证。</p>
+        </div>
+        <div class="sec-item">
+          <h4>📱 设备绑定</h4>
+          <p>每台门锁与房主账号<strong>一一绑定</strong>，新设备授权需要原设备验证。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 14 课配套交互工具</footer>
+
+<script>
+function logMsg(html) {
+  var l = document.getElementById('log');
+  var ts = new Date().toTimeString().slice(0,8);
+  l.innerHTML += '<div><span class="ts">[' + ts + ']</span> ' + html + '</div>';
+  l.scrollTop = l.scrollHeight;
+}
+function setCloud(text) { document.getElementById('cloudLog').textContent = text; }
+
+var busy = false;
+
+function remoteUnlock() {
+  if (busy) return;
+  busy = true;
+  document.getElementById('btnUnlock').disabled = true;
+  document.getElementById('btnLock').disabled = true;
+
+  logMsg('<span class="info">[APP]</span> 用户点击"远程开锁"，发送指令...');
+  document.getElementById('phoneStatus').innerHTML = '门锁状态：⏳ 处理中...';
+
+  setTimeout(function () {
+    setCloud('接收指令\nverifying...');
+    logMsg('<span class="info">[云端]</span> 收到 APP 指令 <code>{"cmd":"unlock"}</code>，正在验证身份...');
+  }, 600);
+
+  setTimeout(function () {
+    setCloud('验证通过\n转发指令');
+    logMsg('<span class="ok">[云端]</span> 验证通过！转发指令到门锁...');
+  }, 1500);
+
+  setTimeout(function () {
+    document.getElementById('doorLed').className = 'light-led active';
+    logMsg('<span class="info">[门锁]</span> 收到开锁指令，驱动舵机...');
+  }, 2400);
+
+  setTimeout(function () {
+    document.getElementById('doorLock').className = 'lock unlocked';
+    document.getElementById('doorStatus').textContent = '🔓 已开锁';
+    logMsg('<span class="ok">[门锁]</span> 舵机已转动，门已开锁！');
+  }, 3000);
+
+  setTimeout(function () {
+    setCloud('收到状态\n推送 APP');
+    logMsg('<span class="info">[门锁→云端]</span> 上报状态：unlocked');
+  }, 3600);
+
+  setTimeout(function () {
+    document.getElementById('phoneStatus').innerHTML = '门锁状态：🔓 已开锁';
+    document.getElementById('phoneLastOp').innerHTML = '最近操作：远程开锁 (刚才)';
+    logMsg('<span class="ok">[APP]</span> 手机已收到反馈，整个流程完成 ✓');
+    document.getElementById('btnLock').disabled = false;
+    busy = false;
+  }, 4200);
+}
+
+function remoteLock() {
+  if (busy) return;
+  busy = true;
+  document.getElementById('btnUnlock').disabled = true;
+  document.getElementById('btnLock').disabled = true;
+
+  logMsg('<span class="info">[APP]</span> 用户点击"远程上锁"...');
+  document.getElementById('phoneStatus').innerHTML = '门锁状态：⏳ 处理中...';
+
+  setTimeout(function () {
+    setCloud('转发上锁指令');
+    logMsg('<span class="info">[云端]</span> 转发上锁指令到门锁');
+  }, 600);
+
+  setTimeout(function () {
+    document.getElementById('doorLock').className = 'lock locked';
+    document.getElementById('doorLed').className = 'light-led';
+    document.getElementById('doorStatus').textContent = '🔒 已上锁';
+    logMsg('<span class="ok">[门锁]</span> 已上锁');
+  }, 1400);
+
+  setTimeout(function () {
+    setCloud('待机中');
+    document.getElementById('phoneStatus').innerHTML = '门锁状态：🔒 已上锁';
+    document.getElementById('phoneLastOp').innerHTML = '最近操作：远程上锁 (刚才)';
+    logMsg('<span class="ok">[APP]</span> 状态已更新');
+    document.getElementById('btnUnlock').disabled = false;
+    busy = false;
+  }, 2000);
+}
+
+window.remoteUnlock = remoteUnlock;
+window.remoteLock = remoteLock;
+</script>
+</body>
+</html>

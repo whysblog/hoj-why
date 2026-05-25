@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第6课 古往今来话编码 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#fb8c00;
+  --theme-dark:#e65100;
+  --theme-light:#fff3e0;
+  --bg:#fff8f0;
+}
+.timeline{
+  position:relative;
+  padding:10px 0 10px 40px;
+  margin:18px 0;
+}
+.timeline::before{
+  content:"";
+  position:absolute;
+  left:14px;top:10px;bottom:10px;
+  width:3px;
+  background:linear-gradient(to bottom,var(--theme),var(--theme-dark));
+  border-radius:2px;
+}
+.timeline-item{
+  position:relative;
+  background:#fff;
+  border-radius:12px;
+  padding:14px 18px;
+  margin-bottom:14px;
+  border-left:4px solid var(--theme);
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.timeline-item::before{
+  content:"";
+  position:absolute;
+  left:-32px;top:18px;
+  width:14px;height:14px;
+  background:var(--theme);
+  border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 0 2px var(--theme);
+}
+.timeline-item h4{
+  color:var(--theme-dark);
+  font-size:16px;margin-bottom:4px;
+}
+.timeline-item .era{
+  font-size:12px;color:#999;
+  margin-bottom:6px;
+  font-style:italic;
+}
+.timeline-item p{font-size:14px;color:#37474f;margin-bottom:6px}
+.timeline-item .example{
+  background:var(--theme-light);
+  padding:6px 10px;border-radius:6px;
+  font-size:13px;color:var(--theme-dark);
+  display:inline-block;
+  margin-top:4px;
+}
+.encoding-demo{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:14px 0;
+}
+.encoding-demo .demo-row{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 0;
+  border-bottom:1px dashed #eceff1;
+}
+.encoding-demo .demo-row:last-child{border-bottom:none}
+.encoding-demo .original{
+  font-size:22px;font-weight:bold;
+  color:#263238;min-width:60px;
+}
+.encoding-demo .arrow{
+  color:var(--theme);font-size:22px;
+}
+.encoding-demo .encoded{
+  font-family:"Courier New",monospace;
+  font-size:18px;
+  color:var(--theme-dark);
+  background:var(--theme-light);
+  padding:6px 14px;
+  border-radius:6px;
+  flex:1;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第二单元 · 第6课</span>
+    <h1>📜 古往今来话编码</h1>
+    <p>穿越古今，看看人类是如何用编码记录信息的</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">⏳ 编码的历史</button>
+    <button class="nav-btn" data-slide="2">💡 编码的本质</button>
+    <button class="nav-btn" data-slide="3">🎮 来做"古人"</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 思考</h4>
+      远古的人类还没有发明文字，他们怎么<b>记住事情</b>？比如：
+      <ul style="margin-top:6px">
+        <li>这个月村里养了多少头羊？</li>
+        <li>春天到了，该播种了！</li>
+        <li>明天部落要打仗，去哪里集合？</li>
+      </ul>
+      没有文字，没有数字，没有手机，他们靠什么？答案是——<b>编码</b>！
+    </div>
+
+    <p>什么是<b>编码</b>？简单说就是用<b>一些符号</b>来代表<b>一些信息</b>。</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>了解人类<b>编码的历史</b>，从结绳记事到二进制</li>
+      <li>理解编码的<b>本质</b>：用符号代表信息</li>
+      <li>感受<b>编码无处不在</b>，是人类的伟大发明</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>编码的历史长河</h2>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>🪢 结绳记事</h4>
+        <div class="era">远古时代</div>
+        <p>原始人在绳子上打<b>不同的结</b>来记录事情：大结代表大事，小结代表小事，红绳代表战争，白绳代表和平……</p>
+        <span class="example">大结 = 大事，小结 = 小事</span>
+      </div>
+
+      <div class="timeline-item">
+        <h4>🏺 象形文字</h4>
+        <div class="era">公元前 3000 年</div>
+        <p>古埃及人发明象形文字，用<b>图形</b>代表事物：画一个太阳代表"日"，画一只眼睛代表"看"。</p>
+        <span class="example">☀️ = 太阳/日 &nbsp; 👁️ = 看/眼</span>
+      </div>
+
+      <div class="timeline-item">
+        <h4>📜 甲骨文</h4>
+        <div class="era">公元前 1300 年（商朝）</div>
+        <p>中国人在<b>龟甲和兽骨</b>上刻字，这就是甲骨文，是汉字的祖先。</p>
+        <span class="example">"日"字最早就像一个圆 ○</span>
+      </div>
+
+      <div class="timeline-item">
+        <h4>🚩 烽火台</h4>
+        <div class="era">公元前 800 年（周朝）</div>
+        <p>古人在山上点烽火，<b>"白天放烟、夜里点火"</b>，远处的人看到就知道有敌人来了！</p>
+        <span class="example">有烟 = 敌情！</span>
+      </div>
+
+      <div class="timeline-item">
+        <h4>🐎 旗语和号角</h4>
+        <div class="era">古代军队</div>
+        <p>军队用不同颜色的<b>旗子</b>和不同次数的<b>号角声</b>来传达命令：红旗=进攻，白旗=投降，三声号=集合。</p>
+        <span class="example">不同信号 = 不同命令</span>
+      </div>
+
+      <div class="timeline-item">
+        <h4>📡 摩斯电码</h4>
+        <div class="era">1837 年（近代）</div>
+        <p>美国人摩斯发明<b>电报</b>，用"嘀（短）"和"嗒（长）"两种信号组合，就能传送任何字母！</p>
+        <span class="example">·−− SOS = ···−−−···</span>
+      </div>
+
+      <div class="timeline-item">
+        <h4>💻 二进制编码</h4>
+        <div class="era">1946 年至今</div>
+        <p>计算机用最简单的两种状态——<b>0 和 1</b>，可以表达世界上的一切信息！</p>
+        <span class="example">A = 01000001 &nbsp; 中 = 1110-0100-...</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>编码的本质</h2>
+
+    <p>古今中外那么多种编码，它们有什么<b>共同点</b>？</p>
+
+    <div class="info-box success">
+      <h4>🌟 编码 = 用符号代表信息</h4>
+      不管是绳结、火烟、旗子，还是嘀嗒声、0 和 1——它们都在做同一件事：
+      <br>
+      <b>用一种"信号"，去表达另一种"内容"</b>。
+    </div>
+
+    <h3>📋 编码示例</h3>
+
+    <div class="encoding-demo">
+      <div class="demo-row">
+        <span class="original">A</span>
+        <span class="arrow">→</span>
+        <span class="encoded">·−</span>
+        <span style="color:#999;font-size:12px">摩斯码</span>
+      </div>
+      <div class="demo-row">
+        <span class="original">SOS</span>
+        <span class="arrow">→</span>
+        <span class="encoded">···−−−···</span>
+        <span style="color:#999;font-size:12px">摩斯码求救</span>
+      </div>
+      <div class="demo-row">
+        <span class="original">A</span>
+        <span class="arrow">→</span>
+        <span class="encoded">01000001</span>
+        <span style="color:#999;font-size:12px">计算机二进制</span>
+      </div>
+      <div class="demo-row">
+        <span class="original">敌人来了</span>
+        <span class="arrow">→</span>
+        <span class="encoded">🔥🔥🔥</span>
+        <span style="color:#999;font-size:12px">烽火信号</span>
+      </div>
+      <div class="demo-row">
+        <span class="original">数学课本</span>
+        <span class="arrow">→</span>
+        <span class="encoded">9787107359750</span>
+        <span style="color:#999;font-size:12px">ISBN 编码</span>
+      </div>
+    </div>
+
+    <h3>🎯 为什么需要编码？</h3>
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">📤</span>
+        <h4>方便传输</h4>
+        <p>把长信息变成简短信号，更快传出去</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🔒</span>
+        <h4>保守秘密</h4>
+        <p>只有懂编码的人才能看懂</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">💾</span>
+        <h4>方便存储</h4>
+        <p>用简单符号节省空间</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🌐</span>
+        <h4>跨越语言</h4>
+        <p>不同语言的人也能理解</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>来做"古人"——设计自己的编码</h2>
+
+    <p>假设你是古代部落的小族长，需要向远方的小伙伴传达消息，请你设计一套<b>烽火编码</b>！</p>
+
+    <div class="interactive">
+      <h4>🔥 我的烽火编码规则</h4>
+      <table class="compare-table">
+        <thead><tr><th>烽火数量</th><th>含义（请填写）</th></tr></thead>
+        <tbody>
+          <tr><td>🔥 一堆</td><td><input style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-family:inherit" value="平安无事"></td></tr>
+          <tr><td>🔥🔥 两堆</td><td><input style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-family:inherit" value="敌人来了"></td></tr>
+          <tr><td>🔥🔥🔥 三堆</td><td><input style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-family:inherit" value="需要支援"></td></tr>
+          <tr><td>🔥🔥🔥🔥 四堆</td><td><input style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-family:inherit" value="敌军大败"></td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:13px;color:#607d8b;margin-top:10px">
+        💡 注意：编码要<b>简单、清晰、容易区分</b>。绝不能让 1 堆和 2 堆看起来一样！
+      </p>
+    </div>
+
+    <h3>📝 想一想</h3>
+    <div class="info-box">
+      如果敌人也学会了你的烽火编码怎么办？
+      <br>
+      古人的办法是<b>定期更换编码规则</b>，或者只让自己人知道。
+      这就涉及到下一单元会学的<b>"数据安全"</b>——好编码不仅要清楚，还要安全！
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="info-box success">
+      <h4>🌟 核心要点</h4>
+      <ol>
+        <li><b>编码</b> = 用一些符号去代表一些信息</li>
+        <li>编码<b>历史悠久</b>：结绳 → 文字 → 烽火 → 摩斯 → 二进制</li>
+        <li>编码的目的：<b>方便传输、保密、存储、跨语言</b></li>
+        <li>现代计算机用 <b>0 和 1</b>编码一切信息</li>
+      </ol>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box tip">
+      和家人一起<b>设计</b>一套你们家专属的<b>暗号</b>：
+      <ul style="margin-top:6px">
+        <li>"今天天气不错" = "我考了 100 分！"</li>
+        <li>"红色衣服" = "我饿了"</li>
+        <li>……自由发挥</li>
+      </ul>
+      然后明天和同学分享你们的"家庭密语"！
+    </div>
+
+    <h3>🔮 下节课预告</h3>
+    <div class="info-box">
+      你身上每天都带着<b>很多编码</b>！身份证、邮政编码、条形码……
+      下节课《数据编码随处见》，我们来一起解密生活中的编码！🎉
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

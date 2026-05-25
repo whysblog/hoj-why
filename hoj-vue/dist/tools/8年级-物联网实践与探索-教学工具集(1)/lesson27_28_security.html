@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第27-28课 · 物联网安全 — 三层架构风险与防护学习器</title>
+<style>
+  :root {
+    --bg: #1a1d29;
+    --panel: #232838;
+    --panel-2: #2c3245;
+    --line: #3a4258;
+    --ink: #e8edf5;
+    --ink-soft: #8a93a8;
+    --perception: #f97316;
+    --network: #22d3ee;
+    --application: #a78bfa;
+    --danger: #ef4444;
+    --safe: #22c55e;
+    --warn: #fbbf24;
+    --shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(167,139,250,.07), transparent 50%),
+      radial-gradient(circle at 90% 100%, rgba(249,115,22,.06), transparent 50%);
+    min-height: 100vh;
+  }
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--application); text-decoration: none; border-bottom: 1px dotted var(--application); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--perception); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--perception); margin-right: 8px; font-size: 14px; }
+
+  /* 三层架构图 */
+  .architecture {
+    background: var(--panel); padding: 30px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .layer-row {
+    display: grid; grid-template-columns: 200px 1fr; gap: 20px;
+    padding: 18px 0; border-bottom: 1px dashed var(--line); align-items: center;
+  }
+  .layer-row:last-child { border: none; }
+  .layer-tag {
+    padding: 14px 18px; border-radius: 8px; text-align: center; cursor: pointer; transition: all .2s;
+  }
+  .layer-tag.application { background: rgba(167,139,250,.15); border: 2px solid var(--application); }
+  .layer-tag.network     { background: rgba(34,211,238,.15); border: 2px solid var(--network); }
+  .layer-tag.perception  { background: rgba(249,115,22,.15); border: 2px solid var(--perception); }
+  .layer-tag h3 { font-size: 15px; }
+  .layer-tag.application h3 { color: var(--application); }
+  .layer-tag.network h3     { color: var(--network); }
+  .layer-tag.perception h3  { color: var(--perception); }
+  .layer-tag .lbl { font-size: 11px; color: var(--ink-soft); margin-top: 4px; letter-spacing: 1px; }
+  .layer-content { font-size: 13px; color: var(--ink-soft); line-height: 1.8; }
+  .layer-content strong { color: var(--ink); }
+  .layer-content .ex { display: inline-block; padding: 2px 10px; background: var(--panel-2); border-radius: 4px; font-size: 11px; margin: 2px 4px 2px 0; }
+
+  /* 切换器 */
+  .layer-switcher {
+    display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .layer-btn {
+    padding: 10px 20px; background: var(--panel); color: var(--ink-soft);
+    border: 1px solid var(--line); border-radius: 8px; cursor: pointer; transition: all .2s;
+    font-size: 13px; font-family: inherit;
+  }
+  .layer-btn:hover { border-color: var(--ink-soft); }
+  .layer-btn.active.application { background: var(--application); color: #1a1d29; border-color: var(--application); }
+  .layer-btn.active.network     { background: var(--network); color: #1a1d29; border-color: var(--network); }
+  .layer-btn.active.perception  { background: var(--perception); color: #1a1d29; border-color: var(--perception); }
+
+  /* 风险/对策双栏 */
+  .risk-strategy {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  }
+  .col-card {
+    background: var(--panel); padding: 22px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .col-card.risks { border-top: 4px solid var(--danger); }
+  .col-card.strats { border-top: 4px solid var(--safe); }
+  .col-card h3 { font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .col-card.risks h3 { color: var(--danger); }
+  .col-card.strats h3 { color: var(--safe); }
+  .item {
+    padding: 14px 16px; background: var(--panel-2); border-radius: 8px;
+    margin-bottom: 10px; cursor: pointer; transition: all .15s;
+    border-left: 3px solid transparent;
+  }
+  .item:hover { transform: translateX(4px); }
+  .item.expanded { border-left-color: var(--warn); background: rgba(251,191,36,.08); }
+  .item .head { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; }
+  .item .head .ic { font-size: 18px; }
+  .item .body { display: none; margin-top: 10px; font-size: 12px; line-height: 1.7; color: var(--ink-soft); }
+  .item.expanded .body { display: block; }
+  .item .body .case { margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,.25); border-radius: 4px; font-size: 11px; line-height: 1.6; border-left: 2px solid var(--warn); }
+  .item .body .case strong { color: var(--warn); }
+
+  /* 配对游戏 */
+  .game {
+    background: var(--panel); padding: 24px; border-radius: 12px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .game .intro { color: var(--ink-soft); font-size: 13px; margin-bottom: 14px; line-height: 1.7; }
+  .scenario-box {
+    background: linear-gradient(135deg, rgba(251,191,36,.1), rgba(249,115,22,.1));
+    padding: 20px; border-radius: 10px; border: 1px solid rgba(251,191,36,.3);
+    margin-bottom: 16px;
+  }
+  .scenario-box .label { font-size: 11px; letter-spacing: 1.5px; color: var(--warn); }
+  .scenario-box .text { font-size: 14px; line-height: 1.7; margin-top: 6px; color: var(--ink); }
+  .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .opt-btn {
+    padding: 14px 12px; background: var(--panel-2); border: 2px solid var(--line);
+    border-radius: 8px; cursor: pointer; transition: all .15s; text-align: center;
+    font-size: 13px; color: var(--ink); font-family: inherit;
+  }
+  .opt-btn:hover { border-color: var(--warn); }
+  .opt-btn.correct { background: rgba(34,197,94,.15); border-color: var(--safe); color: var(--safe); font-weight: 700; }
+  .opt-btn.wrong { background: rgba(239,68,68,.15); border-color: var(--danger); color: var(--danger); }
+  .opt-btn:disabled { cursor: default; }
+  .feedback {
+    margin-top: 14px; padding: 14px 18px; border-radius: 6px; font-size: 13px; line-height: 1.7;
+  }
+  .feedback.ok { background: rgba(34,197,94,.1); color: var(--safe); border-left: 3px solid var(--safe); }
+  .feedback.no { background: rgba(239,68,68,.1); color: var(--danger); border-left: 3px solid var(--danger); }
+  .game .meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: var(--ink-soft); }
+  .game .meta strong { color: var(--ink); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .layer-row { grid-template-columns: 1fr; }
+    .risk-strategy { grid-template-columns: 1fr; }
+    .options { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 27-28 课</span>物联网安全</h1>
+  <p class="lead">物联网为生活带来便利的同时，也带来了严峻的<strong>安全挑战</strong>。本工具按物联网三层架构（感知层、网络层、应用层），帮你认识每一层面临的典型风险和对应的防护策略，并通过情景配对游戏检验你的理解。</p>
+</header>
+
+<main>
+
+  <!-- 三层架构 -->
+  <section class="section">
+    <div class="section-title">一、物联网三层架构</div>
+    <div class="architecture">
+      <div class="layer-row">
+        <div class="layer-tag application">
+          <h3>🖥 应用层</h3>
+          <div class="lbl">Application</div>
+        </div>
+        <div class="layer-content">
+          <strong>提供面向用户的物联网服务和应用程序。</strong><br>
+          用户通过手机 APP、网页、小程序等访问物联网系统，进行查看数据、远程控制、接收报警等操作。
+          <div style="margin-top:8px;">
+            <span class="ex">📱 手机 APP</span>
+            <span class="ex">☁ 云服务器</span>
+            <span class="ex">📊 数据可视化</span>
+            <span class="ex">👤 用户账户</span>
+          </div>
+        </div>
+      </div>
+      <div class="layer-row">
+        <div class="layer-tag network">
+          <h3>📡 网络层</h3>
+          <div class="lbl">Network</div>
+        </div>
+        <div class="layer-content">
+          <strong>负责感知层数据的传输与汇聚。</strong><br>
+          采用各类通信协议（Wi-Fi、4G/5G、NB-IoT、LoRa、ZigBee、蓝牙等），将传感器数据传输到服务器，将控制指令下发到设备。
+          <div style="margin-top:8px;">
+            <span class="ex">📶 Wi-Fi/5G</span>
+            <span class="ex">🌐 互联网</span>
+            <span class="ex">📡 路由器/网关</span>
+            <span class="ex">📦 MQTT/HTTP</span>
+          </div>
+        </div>
+      </div>
+      <div class="layer-row">
+        <div class="layer-tag perception">
+          <h3>🌡 感知层</h3>
+          <div class="lbl">Perception</div>
+        </div>
+        <div class="layer-content">
+          <strong>物联网的"末梢神经"，负责感知环境与物理量。</strong><br>
+          各类传感器、RFID 标签、智能终端、摄像头等，采集环境数据并转换为电信号，是物联网的数据源头。
+          <div style="margin-top:8px;">
+            <span class="ex">🌡 温湿度传感器</span>
+            <span class="ex">📷 摄像头</span>
+            <span class="ex">🏷 RFID 标签</span>
+            <span class="ex">💡 智能灯泡</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 各层风险与策略 -->
+  <section class="section">
+    <div class="section-title">二、各层风险与防护策略</div>
+    <div class="layer-switcher">
+      <button class="layer-btn perception active" onclick="switchLayer('perception')">🌡 感知层</button>
+      <button class="layer-btn network" onclick="switchLayer('network')">📡 网络层</button>
+      <button class="layer-btn application" onclick="switchLayer('application')">🖥 应用层</button>
+    </div>
+    <div class="risk-strategy">
+      <div class="col-card risks">
+        <h3>⚠ 安全风险</h3>
+        <div id="risksBox"></div>
+      </div>
+      <div class="col-card strats">
+        <h3>🛡 防护策略</h3>
+        <div id="stratsBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 配对游戏 -->
+  <section class="section">
+    <div class="section-title">三、情景识别小测试</div>
+    <div class="game">
+      <p class="intro">读完上方的风险和对策后，试试这个小测试。每题给出一个情景，请判断它属于哪一层的安全问题。</p>
+      <div class="meta">
+        <span>题目 <strong id="qNum">1</strong> / <strong>6</strong></span>
+        <span>得分：<strong id="score">0</strong> / 6</span>
+      </div>
+      <div class="scenario-box">
+        <div class="label">📋 情景</div>
+        <div class="text" id="scenarioText">…</div>
+      </div>
+      <div class="options" id="optionsBox">
+        <button class="opt-btn" onclick="answer('perception')">🌡 感知层</button>
+        <button class="opt-btn" onclick="answer('network')">📡 网络层</button>
+        <button class="opt-btn" onclick="answer('application')">🖥 应用层</button>
+      </div>
+      <div id="feedbackBox"></div>
+      <button id="nextBtn" onclick="nextQuestion()" style="margin-top:14px;padding:10px 20px;background:var(--application);color:#1a1d29;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;display:none;">下一题 →</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 27-28 课配套交互工具</footer>
+
+<script>
+"use strict";
+
+// ============ 风险数据 ============
+var data = {
+  perception: {
+    risks: [{
+      ic: "🔨",
+      title: "物理攻击",
+      desc: "传感器、RFID 标签、智能终端等设备暴露在外部环境中，可能被人为破坏、偷窃或恶意改装。",
+      case: "案例：路边的智能停车地磁传感器被人撬走或砸坏，导致停车场计费系统失效。"
+    }, {
+      ic: "🎭",
+      title: "传感器欺骗",
+      desc: "攻击者通过伪造的物理信号（如假温度源、假声音、假指纹）欺骗传感器，让设备做出错误判断。",
+      case: "案例：用照片或硅胶假指纹欺骗指纹门禁，或用录音骗过声控锁。"
+    }, {
+      ic: "🏷",
+      title: "RFID 标签盗读",
+      desc: "RFID 标签的数据可能被未授权的读卡器偷偷读取，造成隐私泄露或克隆复制。",
+      case: "案例：电子门禁卡在公交、超市等场所可能被恶意读卡器盗读并复制。"
+    }, {
+      ic: "🦠",
+      title: "硬件后门",
+      desc: "在芯片设计或生产阶段被植入恶意逻辑，让设备绕过认证或执行非预期操作。",
+      case: "案例：某品牌摄像头被发现含有未公开的远程访问后门。"
+    }],
+    strats: [{
+      ic: "🔒",
+      title: "物理防护",
+      desc: "对暴露设备进行加固外壳、安装防拆传感器、限制接触权限。例如重要传感器放置在防护罩内并锁定。"
+    }, {
+      ic: "🔄",
+      title: "多传感器融合",
+      desc: "组合多种传感器交叉验证。例如人脸识别 + 红外活体检测，防止用照片欺骗。"
+    }, {
+      ic: "✅",
+      title: "身份认证",
+      desc: "传感器与主控板之间建立加密的身份认证机制，确保数据来自合法的设备而非伪造。"
+    }, {
+      ic: "🛡",
+      title: "防欺骗能力",
+      desc: "在算法层增加异常检测，识别明显不符合常理的数据（如温度突然跳变 50℃）并报警。"
+    }]
+  },
+  network: {
+    risks: [{
+      ic: "👁",
+      title: "数据传输被窃听",
+      desc: "无线传输的数据如果未加密，可能被攻击者用嗅探设备截获，泄露用户隐私和设备运行数据。",
+      case: "案例：未加密的智能家居 Wi-Fi 信号可能被邻居或路过的攻击者监听。"
+    }, {
+      ic: "📥",
+      title: "中间人攻击",
+      desc: "攻击者在通信链路中插入自己的设备，伪装成合法节点，截获和篡改双方的通信内容。",
+      case: "案例：攻击者在公共 Wi-Fi 中拦截手机 APP 与云端的通信，篡改控制指令。"
+    }, {
+      ic: "💣",
+      title: "拒绝服务攻击（DoS）",
+      desc: "向物联网设备或网关发送大量虚假请求，耗尽其计算/带宽资源，使其无法正常工作。",
+      case: "案例：2016 年 Mirai 病毒控制大量物联网摄像头组成僵尸网络，发起大规模 DDoS 攻击。"
+    }, {
+      ic: "🔓",
+      title: "协议漏洞",
+      desc: "某些物联网协议（如早期 MQTT、ZigBee）存在已知漏洞，可能被利用进行非法访问。",
+      case: "案例：使用默认账号 admin/admin 的 MQTT 服务器可被任意接入。"
+    }],
+    strats: [{
+      ic: "🚧",
+      title: "网络隔离",
+      desc: "通过物理或逻辑方式将不同安全等级的网络分开，物联网设备使用专用网段，避免与办公网混用。"
+    }, {
+      ic: "🔐",
+      title: "数据传输加密",
+      desc: "采用 TLS/SSL、AES、SM9 等加密协议保护传输数据。我国自主创新的 SM9 已成为 ISO/IEC 国际标准。"
+    }, {
+      ic: "🆔",
+      title: "设备身份认证",
+      desc: "每个设备分配唯一证书，通信前进行双向认证，杜绝伪装设备接入。"
+    }, {
+      ic: "📊",
+      title: "异常流量监控",
+      desc: "实时监测流量异常，自动屏蔽来自可疑源的请求，缓解 DoS 攻击。"
+    }]
+  },
+  application: {
+    risks: [{
+      ic: "🔑",
+      title: "弱密码与默认账户",
+      desc: "用户使用 123456、admin 等弱密码，或不更改设备出厂默认密码，给攻击者可乘之机。",
+      case: "案例：研究表明许多智能摄像头被入侵都是因为用户从未修改默认密码。"
+    }, {
+      ic: "🐛",
+      title: "应用程序漏洞",
+      desc: "APP 或云平台软件中存在编程错误（如 SQL 注入、缓冲区溢出），可能被攻击者利用。",
+      case: "案例：某共享单车 APP 存在漏洞，攻击者可绕过支付直接开锁。"
+    }, {
+      ic: "🕵",
+      title: "隐私数据泄露",
+      desc: "应用收集了过多用户隐私数据（位置、行为习惯、语音），一旦数据库被攻破将引发严重后果。",
+      case: "案例：智能音箱意外录制并上传家庭对话，引发隐私争议。"
+    }, {
+      ic: "👥",
+      title: "用户操作失误",
+      desc: "用户点击钓鱼链接、安装恶意 APP、随意授权等导致账户被盗。",
+      case: "案例：扫描伪造的智能家居设置二维码，设备控制权被移交给攻击者。"
+    }],
+    strats: [{
+      ic: "📋",
+      title: "数据监管与脱敏",
+      desc: "\u5BF9\u7528\u6237\u9690\u79C1\u6570\u636E\u8FDB\u884C\u5206\u7C7B\u7BA1\u7406\uFF0C\u5FC5\u8981\u65F6\u8FDB\u884C\u8131\u654F\u5904\u7406\u3002\u9075\u5FAA\u201C\u6700\u5C0F\u5FC5\u8981\u201D\u539F\u5219\uFF0C\u4E0D\u6536\u96C6\u65E0\u5173\u6570\u636E\u3002"
+    }, {
+      ic: "💾",
+      title: "数据备份",
+      desc: "定期备份重要数据到多个位置（本地 + 云端），防止数据被勒索病毒加密或意外丢失。"
+    }, {
+      ic: "🚪",
+      title: "访问控制",
+      desc: "采用强密码 + 多因素认证（MFA）。按角色分配权限，普通用户无法访问管理员功能。"
+    }, {
+      ic: "🎓",
+      title: "用户安全教育",
+      desc: "教育用户不点击不明链接、定期更新密码、关注设备厂商安全公告。"
+    }, {
+      ic: "🔄",
+      title: "及时更新",
+      desc: "厂商持续修补漏洞并推送更新，用户应及时安装。算法和策略也要持续优化。"
+    }]
+  }
+};
+
+// ============ 切换层 ============
+var currentLayer = "perception";
+function switchLayer(layer) {
+  currentLayer = layer;
+  document.querySelectorAll('.layer-btn').forEach(function (b) {
+    return b.classList.toggle('active', b.classList.contains(layer));
+  });
+  renderLayer();
+}
+function renderLayer() {
+  var d = data[currentLayer];
+  document.getElementById('risksBox').innerHTML = d.risks.map(function (r, i) {
+    return "\n    <div class=\"item\" onclick=\"this.classList.toggle('expanded')\">\n      <div class=\"head\"><span>" + r.ic + " " + r.title + "</span><span class=\"ic\">\u2193</span></div>\n      <div class=\"body\">\n        " + r.desc + "\n        " + (r.case ? "<div class=\"case\"><strong>\uD83D\uDCCC " + r.case.split('：')[0] + "\uFF1A</strong>" + r.case.split('：').slice(1).join('：') + "</div>" : '') + "\n      </div>\n    </div>\n  ";
+  }).join('');
+  document.getElementById('stratsBox').innerHTML = d.strats.map(function (s, i) {
+    return "\n    <div class=\"item\" onclick=\"this.classList.toggle('expanded')\">\n      <div class=\"head\"><span>" + s.ic + " " + s.title + "</span><span class=\"ic\">\u2193</span></div>\n      <div class=\"body\">" + s.desc + "</div>\n    </div>\n  ";
+  }).join('');
+}
+renderLayer();
+
+// ============ 测试游戏 ============
+var questions = [{
+  text: "\u5B66\u6821\u5927\u95E8\u53E3\u7684\u4EBA\u8138\u8BC6\u522B\u8003\u52E4\u8BBE\u5907\u88AB\u6709\u4EBA\u7528\u4E00\u5F20\u9AD8\u6E05\u6253\u5370\u7684\u7167\u7247\u9A97\u8FC7\uFF0C\u8BA9\u964C\u751F\u4EBA\u6210\u529F\u201C\u6253\u5361\u201D\u3002\u8FD9\u5C5E\u4E8E\u54EA\u4E00\u5C42\u7684\u5B89\u5168\u95EE\u9898\uFF1F",
+  answer: "perception",
+  explain: "\u8FD9\u662F\u5178\u578B\u7684\u201C\u4F20\u611F\u5668\u6B3A\u9A97\u201D\uFF0C\u653B\u51FB\u8005\u901A\u8FC7\u4F2A\u9020\u7684\u7269\u7406\u4FE1\u53F7\uFF08\u7167\u7247\uFF09\u6B3A\u9A97\u4E86\u611F\u77E5\u5C42\u7684\u56FE\u50CF\u4F20\u611F\u5668\u3002\u9632\u62A4\u65B9\u6CD5\u662F\u5F15\u5165\u7EA2\u5916\u6D3B\u4F53\u68C0\u6D4B\u7B49\u591A\u4F20\u611F\u5668\u878D\u5408\u624B\u6BB5\u3002"
+}, {
+  text: "小明发现家里的智能音箱可以听到他刚才在房间里说的私密对话，怀疑数据被服务器记录了。这主要是哪一层的问题？",
+  answer: "application",
+  explain: "这是应用层的隐私数据泄露问题。应用收集了超出必要范围的用户隐私数据，需要数据监管和脱敏处理。"
+}, {
+  text: "同学发现某品牌智能摄像头大批量被黑客入侵，原因是这些摄像头都使用了出厂默认的 admin/admin 账号。这是哪一层的问题？",
+  answer: "application",
+  explain: "弱密码与默认账户属于应用层风险。防护策略是强制用户首次使用时修改密码，并启用多因素认证。"
+}, {
+  text: "公共 Wi-Fi 下，攻击者用嗅探工具截获了你手机 APP 与服务器之间的通信内容，知道了你的远程开锁密码。这是哪一层风险？",
+  answer: "network",
+  explain: "数据传输被窃听属于网络层风险。防护方法是采用 TLS/SSL、AES 等传输加密协议，让窃听者即使截获也无法解读。"
+}, {
+  text: "路边的共享单车智能锁被人用工具撬开，提取里面的电路板研究破解了开锁逻辑。这属于哪一层？",
+  answer: "perception",
+  explain: "对感知层设备的物理攻击。防护方法包括加固外壳、增加防拆传感器、限制物理接触。"
+}, {
+  text: "黑客向某物联网平台发送了海量伪造的连接请求，导致正常用户的设备无法上线。这是哪一层的攻击？",
+  answer: "network",
+  explain: "拒绝服务攻击（DoS / DDoS）属于网络层。防护手段包括异常流量监控、限流、设备身份认证。"
+}];
+var currentQ = 0;
+var score = 0;
+function showQuestion() {
+  var q = questions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('scenarioText').textContent = q.text;
+  document.getElementById('feedbackBox').innerHTML = '';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.querySelectorAll('.opt-btn').forEach(function (b) {
+    b.classList.remove('correct', 'wrong');
+    b.disabled = false;
+  });
+}
+function answer(layer) {
+  var q = questions[currentQ];
+  document.querySelectorAll('.opt-btn').forEach(function (b) {
+    b.disabled = true;
+  });
+  var buttons = document.querySelectorAll('.opt-btn');
+  var map = {
+    perception: 0,
+    network: 1,
+    application: 2
+  };
+  buttons[map[q.answer]].classList.add('correct');
+  if (layer === q.answer) {
+    score++;
+    document.getElementById('score').textContent = score;
+    document.getElementById('feedbackBox').innerHTML = "<div class=\"feedback ok\">\u2713 \u56DE\u7B54\u6B63\u786E\uFF01" + q.explain + "</div>";
+  } else {
+    buttons[map[layer]].classList.add('wrong');
+    document.getElementById('feedbackBox').innerHTML = "<div class=\"feedback no\">\u2717 \u4E0D\u592A\u5BF9\u54E6\u3002\u6B63\u786E\u7B54\u6848\u662F <strong>" + {
+      perception: '感知层',
+      network: '网络层',
+      application: '应用层'
+    }[q.answer] + "</strong>\u3002" + q.explain + "</div>";
+  }
+  if (currentQ < questions.length - 1) {
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('feedbackBox').innerHTML += "<div class=\"feedback ok\" style=\"margin-top:8px;\">\uD83C\uDF89 \u6D4B\u8BD5\u7ED3\u675F\uFF01\u4F60\u7684\u5F97\u5206\uFF1A<strong>" + score + " / " + questions.length + "</strong>\u3002" + (score === questions.length ? "完美通关！" : "继续学习吧！") + "</div>";
+  }
+}
+function nextQuestion() {
+  currentQ++;
+  showQuestion();
+}
+showQuestion();
+
+</script>
+</body>
+</html>

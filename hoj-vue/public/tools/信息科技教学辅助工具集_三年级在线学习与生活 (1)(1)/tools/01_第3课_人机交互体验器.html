@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>人机交互体验器 — 第3课 体验人机交互</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  min-height: 100vh; color: #1e293b; padding: 20px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: white; border-radius: 16px; padding: 24px 32px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08); margin-bottom: 20px;
+}
+h1 { color: #1e40af; font-size: 26px; margin-bottom: 6px; }
+.subtitle { color: #64748b; font-size: 14px; }
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab {
+  flex: 1; min-width: 140px; padding: 16px 20px; background: white; border: 2px solid transparent;
+  border-radius: 12px; cursor: pointer; transition: all .25s;
+  font-size: 16px; font-weight: 600; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.tab:hover { transform: translateY(-2px); }
+.tab.active { background: #3b82f6; color: white; border-color: #1e40af; }
+.tab .icon { font-size: 28px; display: block; margin-bottom: 4px; }
+.panel { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,.05); display: none; }
+.panel.active { display: block; }
+.panel h2 { color: #1e40af; font-size: 22px; margin-bottom: 8px; }
+.panel .desc { color: #475569; line-height: 1.7; margin-bottom: 18px; font-size: 15px; }
+.demo-area {
+  background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px;
+  padding: 24px; margin: 16px 0; min-height: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+/* 扫描 */
+.scan-frame {
+  width: 240px; height: 180px; border: 3px solid #3b82f6; border-radius: 10px;
+  position: relative; overflow: hidden; background: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 60px;
+}
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #ef4444, transparent);
+  animation: scan 2s ease-in-out infinite; box-shadow: 0 0 12px #ef4444;
+}
+@keyframes scan { 0%,100% { top: 0; } 50% { top: calc(100% - 3px); } }
+/* 触屏 */
+.touch-area {
+  width: 100%; max-width: 360px; height: 200px; background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  border-radius: 12px; position: relative; cursor: pointer; user-select: none; touch-action: none;
+}
+.touch-dot {
+  position: absolute; width: 50px; height: 50px; border-radius: 50%;
+  background: rgba(236, 72, 153, .4); border: 2px solid #ec4899;
+  transform: translate(-50%, -50%); pointer-events: none; animation: ping .8s ease-out;
+}
+@keyframes ping { 0% { transform: translate(-50%,-50%) scale(.3); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; } }
+/* 手写 */
+.canvas-wrap { background: white; border: 2px solid #94a3b8; border-radius: 8px; }
+canvas { display: block; cursor: crosshair; touch-action: none; }
+.canvas-tools { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+/* 语音 */
+.mic-button {
+  width: 110px; height: 110px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #10b981, #059669); color: white; font-size: 50px;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, .35); transition: all .2s;
+}
+.mic-button:hover { transform: scale(1.05); }
+.mic-button.listening { animation: pulse 1.2s ease-in-out infinite; background: linear-gradient(135deg, #ef4444, #dc2626); }
+@keyframes pulse { 0%,100% { box-shadow: 0 6px 20px rgba(239,68,68,.35); } 50% { box-shadow: 0 6px 32px rgba(239,68,68,.7), 0 0 0 14px rgba(239,68,68,.1); } }
+.voice-text {
+  margin-top: 16px; min-height: 40px; padding: 10px 16px; background: #f0fdf4;
+  border-radius: 8px; font-size: 16px; color: #064e3b; min-width: 240px; text-align: center;
+}
+.btn {
+  padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 600; transition: all .2s;
+}
+.btn-primary { background: #3b82f6; color: white; }
+.btn-primary:hover { background: #2563eb; }
+.btn-ghost { background: #f1f5f9; color: #475569; }
+.knowledge {
+  background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b;
+  border-radius: 8px; padding: 16px 20px; margin-top: 20px;
+}
+.knowledge h3 { color: #92400e; margin-bottom: 8px; font-size: 16px; }
+.knowledge p, .knowledge li { color: #78350f; line-height: 1.7; font-size: 14px; }
+.knowledge ul { padding-left: 22px; }
+.scenario-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 16px; }
+.scenario {
+  background: #f8fafc; padding: 14px; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer;
+  transition: all .2s; font-size: 14px;
+}
+.scenario:hover { border-color: #3b82f6; }
+.scenario.matched { background: #dcfce7; border-color: #22c55e; }
+.handwrite-result {
+  margin-top: 12px; padding: 10px 16px; background: #eff6ff; border-radius: 8px; font-size: 16px; color: #1e40af; min-height: 40px;
+}
+.recognized { font-size: 28px; font-weight: bold; }
+.scan-result { margin-top: 12px; font-size: 15px; color: #1e40af; text-align: center; min-height: 24px; font-weight: 600; }
+.touch-hint { color: #831843; font-size: 14px; margin-top: 10px; text-align: center; }
+.gesture-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.gesture-tag { padding: 6px 12px; background: #fce7f3; border-radius: 16px; font-size: 13px; color: #831843; }
+@media (max-width: 600px) { h1 { font-size: 22px; } .tab { min-width: 100%; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎯 人机交互体验器</h1>
+    <div class="subtitle">配套课时：第3课 体验人机交互 · 体验扫描 / 触屏 / 手写 / 语音四种交互方式</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="scan"><span class="icon">📷</span>扫描交互</div>
+    <div class="tab" data-tab="touch"><span class="icon">👆</span>触屏交互</div>
+    <div class="tab" data-tab="write"><span class="icon">✍️</span>手写交互</div>
+    <div class="tab" data-tab="voice"><span class="icon">🎙️</span>语音交互</div>
+  </div>
+
+  <!-- 扫描 -->
+  <div class="panel active" id="panel-scan">
+    <h2>📷 扫描交互</h2>
+    <div class="desc">把摄像头对准物体，设备识别出它是什么。常用于植物识别、二维码支付、车牌识别等。</div>
+    <div class="demo-area">
+      <div class="scan-frame" id="scanFrame">
+        <span id="scanIcon">🌸</span>
+        <div class="scan-line"></div>
+      </div>
+      <div class="scan-result" id="scanResult">点击下方按钮，扫描这朵花…</div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+        <button class="btn btn-primary" onclick="doScan()">🔍 开始扫描</button>
+        <button class="btn btn-ghost" onclick="changeScan()">🔄 换一个对象</button>
+      </div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学小知识</h3>
+      <p>扫描交互的原理：摄像头采集图像 → 计算机识别图像中的特征（颜色、形状、纹理） → 与数据库中已知信息比对 → 返回结果。<br>
+      <b>常见应用：</b>识物软件、二维码、超市扫码枪、停车场车牌识别。</p>
+    </div>
+  </div>
+
+  <!-- 触屏 -->
+  <div class="panel" id="panel-touch">
+    <h2>👆 触屏交互</h2>
+    <div class="desc">用手指直接触摸屏幕来操作。常见手势有点击、滑动、拖动、放大、缩小、长按。</div>
+    <div class="demo-area">
+      <div class="touch-area" id="touchArea">
+        <div class="touch-hint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">在这里点点试试 👇</div>
+      </div>
+      <div class="gesture-list">
+        <span class="gesture-tag">点击 (Tap)</span>
+        <span class="gesture-tag">滑动 (Swipe)</span>
+        <span class="gesture-tag">拖动 (Drag)</span>
+        <span class="gesture-tag">放大 (Pinch)</span>
+        <span class="gesture-tag">缩小 (Pinch)</span>
+        <span class="gesture-tag">长按 (Hold)</span>
+      </div>
+      <div class="touch-hint" id="touchCount">已触发 0 次点击</div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学小知识</h3>
+      <p>触屏的原理：屏幕表面含有"<b>电容传感器</b>"，当手指（带电）触碰屏幕时，会引起对应位置的电荷变化，设备根据变化的位置坐标判断你点了哪里。<br>
+      所以一般戴普通棉手套时无法操作触屏，因为手套不导电。</p>
+    </div>
+  </div>
+
+  <!-- 手写 -->
+  <div class="panel" id="panel-write">
+    <h2>✍️ 手写交互</h2>
+    <div class="desc">在屏幕上写字，设备识别成文字。当你不认识一个字、不会读音时，手写输入特别有用。</div>
+    <div class="demo-area">
+      <div class="canvas-wrap"><canvas id="writeCanvas" width="320" height="240"></canvas></div>
+      <div class="canvas-tools">
+        <button class="btn btn-primary" onclick="recognize()">🔎 识别文字</button>
+        <button class="btn btn-ghost" onclick="clearCanvas()">🧹 清空重写</button>
+      </div>
+      <div class="handwrite-result" id="writeResult">在上方画板写一个简单字符（如 1, 2, +, ○）…</div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学小知识</h3>
+      <p>手写识别的原理：把你画的笔迹转成图像 → 识别每一笔的方向、长度、相对位置 → 用人工智能模型匹配最相似的字。<br>
+      <b>适用场景：</b>不会读的字（如"馨"）、老年人不会拼音、签名等。</p>
+    </div>
+  </div>
+
+  <!-- 语音 -->
+  <div class="panel" id="panel-voice">
+    <h2>🎙️ 语音交互</h2>
+    <div class="desc">用嘴说话，让设备听懂你的意思。比如对智能音箱说"播放儿歌"，它就会播放。</div>
+    <div class="demo-area">
+      <button class="mic-button" id="micBtn" onclick="toggleVoice()">🎤</button>
+      <div style="margin-top: 14px; color: #475569; font-size: 14px;" id="voiceStatus">点击麦克风开始说话</div>
+      <div class="voice-text" id="voiceText">（识别结果会显示在这里）</div>
+      <div style="margin-top: 14px; font-size: 13px; color: #64748b;">💡 浏览器需支持语音识别（推荐 Chrome / Edge）</div>
+    </div>
+    <div class="knowledge">
+      <h3>💡 科学小知识</h3>
+      <p>语音识别的原理：麦克风把你的声音变成电信号 → 计算机分析声音的频率特征 → 用人工智能匹配出对应的文字。<br>
+      <b>适用场景：</b>开车时导航、智能音箱、双手忙碌时、视障人士使用设备。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// 标签切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== 扫描交互 =====
+const scanItems = [
+  { icon: '🌸', name: '香石竹（康乃馨）', info: '石竹科多年生草本植物' },
+  { icon: '🌻', name: '向日葵', info: '菊科一年生草本植物' },
+  { icon: '🌷', name: '郁金香', info: '百合科多年生草本植物' },
+  { icon: '🍎', name: '苹果', info: '蔷薇科苹果属植物果实' },
+  { icon: '🐱', name: '家猫', info: '猫科哺乳动物' },
+  { icon: '🦋', name: '蝴蝶', info: '鳞翅目昆虫' }
+];
+let scanIndex = 0;
+function changeScan() {
+  scanIndex = (scanIndex + 1) % scanItems.length;
+  document.getElementById('scanIcon').textContent = scanItems[scanIndex].icon;
+  document.getElementById('scanResult').textContent = '点击"开始扫描"识别它…';
+}
+function doScan() {
+  const result = document.getElementById('scanResult');
+  result.textContent = '🔍 正在扫描…';
+  setTimeout(() => {
+    const item = scanItems[scanIndex];
+    result.innerHTML = `✅ 识别成功：<b>${item.name}</b><br><span style="color:#64748b;font-size:13px;">${item.info}</span>`;
+  }, 1200);
+}
+
+// ===== 触屏交互 =====
+let touchCount = 0;
+const touchArea = document.getElementById('touchArea');
+function addDot(x, y) {
+  const dot = document.createElement('div');
+  dot.className = 'touch-dot';
+  dot.style.left = x + 'px';
+  dot.style.top = y + 'px';
+  touchArea.appendChild(dot);
+  setTimeout(() => dot.remove(), 800);
+  touchCount++;
+  document.getElementById('touchCount').textContent = `已触发 ${touchCount} 次点击`;
+}
+touchArea.addEventListener('click', (e) => {
+  const rect = touchArea.getBoundingClientRect();
+  addDot(e.clientX - rect.left, e.clientY - rect.top);
+});
+touchArea.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const rect = touchArea.getBoundingClientRect();
+  for (let t of e.touches) addDot(t.clientX - rect.left, t.clientY - rect.top);
+});
+
+// ===== 手写交互 =====
+const canvas = document.getElementById('writeCanvas');
+const ctx = canvas.getContext('2d');
+ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e40af';
+let drawing = false, strokes = [];
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return { x, y };
+}
+function start(e) {
+  e.preventDefault(); drawing = true;
+  const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+  strokes.push([p]);
+}
+function move(e) {
+  if (!drawing) return; e.preventDefault();
+  const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+  strokes[strokes.length - 1].push(p);
+}
+function end() { drawing = false; }
+canvas.addEventListener('mousedown', start);
+canvas.addEventListener('mousemove', move);
+canvas.addEventListener('mouseup', end);
+canvas.addEventListener('mouseleave', end);
+canvas.addEventListener('touchstart', start);
+canvas.addEventListener('touchmove', move);
+canvas.addEventListener('touchend', end);
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  strokes = [];
+  document.getElementById('writeResult').textContent = '在上方画板写一个简单字符（如 1, 2, +, ○）…';
+}
+
+// 简易"识别"：根据笔画数和形态做趣味判断（演示用）
+function recognize() {
+  if (strokes.length === 0) {
+    document.getElementById('writeResult').textContent = '请先在画板上写点什么哦~';
+    return;
+  }
+  const result = document.getElementById('writeResult');
+  result.textContent = '🤖 正在识别…';
+  setTimeout(() => {
+    // 计算笔画总数和包围盒
+    const allPts = strokes.flat();
+    const xs = allPts.map(p=>p.x), ys = allPts.map(p=>p.y);
+    const w = Math.max(...xs)-Math.min(...xs), h = Math.max(...ys)-Math.min(...ys);
+    const ratio = w/h;
+    const totalLen = strokes.reduce((s,stroke)=>{
+      let l=0; for(let i=1;i<stroke.length;i++) l+=Math.hypot(stroke[i].x-stroke[i-1].x, stroke[i].y-stroke[i-1].y);
+      return s+l;
+    },0);
+    let guess = '？';
+    if (strokes.length === 1) {
+      if (ratio < 0.4) guess = '1';
+      else if (totalLen > 200 && Math.abs(ratio-1) < 0.4) guess = '○';
+      else guess = '一';
+    } else if (strokes.length === 2) {
+      if (ratio > 1.5) guess = '二';
+      else guess = '+';
+    } else if (strokes.length === 3) {
+      guess = '三';
+    } else {
+      guess = '复杂字';
+    }
+    result.innerHTML = `🤖 识别结果：<span class="recognized">${guess}</span><br><span style="font-size:13px;color:#64748b;">（共 ${strokes.length} 笔，演示版识别仅供参考）</span>`;
+  }, 800);
+}
+
+// ===== 语音交互 =====
+let recognition = null, listening = false;
+function toggleVoice() {
+  const btn = document.getElementById('micBtn');
+  const status = document.getElementById('voiceStatus');
+  const textEl = document.getElementById('voiceText');
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    textEl.textContent = '⚠️ 当前浏览器不支持语音识别，请使用 Chrome/Edge 浏览器';
+    return;
+  }
+  if (listening) {
+    if (recognition) recognition.stop();
+    listening = false;
+    btn.classList.remove('listening');
+    status.textContent = '点击麦克风开始说话';
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'zh-CN';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.onstart = () => {
+    listening = true;
+    btn.classList.add('listening');
+    status.textContent = '🎙️ 正在聆听…请说话';
+    textEl.textContent = '…';
+  };
+  recognition.onresult = (e) => {
+    let txt = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
+    textEl.textContent = '🗣️ "' + txt + '"';
+  };
+  recognition.onerror = (e) => {
+    textEl.textContent = '识别出错：' + e.error + '（可能未授权麦克风）';
+  };
+  recognition.onend = () => {
+    listening = false;
+    btn.classList.remove('listening');
+    status.textContent = '识别结束，可再次点击';
+  };
+  recognition.start();
+}
+</script>
+</body>
+</html>

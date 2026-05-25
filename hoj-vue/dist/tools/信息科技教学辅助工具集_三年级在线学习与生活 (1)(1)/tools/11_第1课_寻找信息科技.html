@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>寻找信息科技 — 第1课</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f9ff; color: #1e293b; }
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 230px; background: linear-gradient(180deg, #1e40af, #3b82f6); color: white; padding: 24px 16px; flex-shrink: 0; }
+.sidebar h1 { font-size: 16px; margin-bottom: 4px; }
+.sidebar .lesson { font-size: 12px; opacity: .8; margin-bottom: 22px; }
+.nav-item { padding: 12px 14px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 14px; transition: all .2s; display: flex; align-items: center; gap: 10px; }
+.nav-item:hover { background: rgba(255,255,255,.12); }
+.nav-item.active { background: rgba(255,255,255,.22); font-weight: 600; }
+.nav-item .num { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+.slide { display: none; animation: fadeIn .4s; }
+.slide.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide h2 { color: #1e40af; font-size: 28px; margin-bottom: 8px; }
+.slide .lead { color: #64748b; margin-bottom: 24px; font-size: 15px; }
+.controls { position: fixed; bottom: 24px; right: 32px; display: flex; gap: 8px; }
+.ctrl-btn { padding: 10px 20px; background: white; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.ctrl-btn:hover { background: #f0f9ff; }
+.ctrl-btn.primary { background: #3b82f6; color: white; border-color: #1e40af; }
+.timeline { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+.tl-item { display: flex; gap: 14px; padding: 14px 18px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); cursor: pointer; transition: all .2s; }
+.tl-item:hover { transform: translateX(4px); border-left: 4px solid #3b82f6; padding-left: 14px; }
+.tl-time { font-weight: 700; color: #1e40af; font-size: 16px; min-width: 60px; }
+.tl-content { flex: 1; }
+.tl-content .what { font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+.tl-content .tech { font-size: 12px; color: #16a34a; padding: 2px 8px; background: #dcfce7; border-radius: 12px; display: inline-block; margin-top: 4px; }
+.tl-emoji { font-size: 32px; }
+.dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.dev-card { background: white; padding: 18px 14px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.04); cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+.dev-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
+.dev-card.active { background: #dbeafe; border-color: #1e40af; }
+.dev-card .icon { font-size: 44px; }
+.dev-card .name { font-weight: 600; color: #1e293b; margin: 8px 0 4px; font-size: 14px; }
+.dev-card .desc { color: #64748b; font-size: 12px; line-height: 1.5; min-height: 32px; }
+.dev-card .cat-tag { display: inline-block; padding: 2px 8px; background: #fef3c7; color: #b45309; border-radius: 8px; font-size: 11px; margin-top: 6px; }
+.cat-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.cat-btn { padding: 6px 14px; background: white; border: 1.5px solid #cbd5e1; border-radius: 16px; cursor: pointer; font-size: 13px; transition: all .2s; }
+.cat-btn:hover { border-color: #3b82f6; }
+.cat-btn.active { background: #3b82f6; color: white; border-color: #1e40af; }
+.knowledge { background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; padding: 16px 20px; border-radius: 8px; margin-top: 18px; }
+.knowledge h3 { color: #92400e; font-size: 15px; margin-bottom: 6px; }
+.knowledge p { color: #78350f; font-size: 14px; line-height: 1.7; }
+.intro-card { background: linear-gradient(135deg, #dbeafe, #bfdbfe); padding: 28px 32px; border-radius: 16px; margin-bottom: 20px; }
+.intro-card h3 { color: #1e40af; font-size: 22px; margin-bottom: 8px; }
+.intro-card p { color: #1e3a8a; line-height: 1.7; }
+.objectives { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.obj { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; background: white; border-radius: 8px; }
+.obj .num { background: #3b82f6; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.obj .text { font-size: 14px; color: #475569; line-height: 1.6; }
+.detail-pop { display: none; padding: 12px 16px; background: #eff6ff; border-radius: 8px; margin-top: 10px; font-size: 13px; color: #1e3a8a; line-height: 1.6; }
+.detail-pop.show { display: block; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 14px; }
+.sum-card { background: white; padding: 18px 22px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); border-top: 4px solid #3b82f6; }
+.sum-card h4 { color: #1e40af; margin-bottom: 8px; font-size: 16px; }
+.sum-card p { color: #475569; font-size: 13px; line-height: 1.7; }
+@media (max-width: 800px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; }
+  .main { padding: 20px; padding-bottom: 100px; }
+  .controls { bottom: 12px; right: 12px; left: 12px; justify-content: center; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>📡 寻找信息科技</h1>
+    <div class="lesson">第 1 课 · 第一单元</div>
+    <div class="nav-item active" onclick="goSlide(0)"><span class="num">1</span>本课导入</div>
+    <div class="nav-item" onclick="goSlide(1)"><span class="num">2</span>小华的一天</div>
+    <div class="nav-item" onclick="goSlide(2)"><span class="num">3</span>身边的数字设备</div>
+    <div class="nav-item" onclick="goSlide(3)"><span class="num">4</span>设备分类探究</div>
+    <div class="nav-item" onclick="goSlide(4)"><span class="num">5</span>课堂总结</div>
+  </aside>
+
+  <main class="main">
+    <!-- Slide 1 导入 -->
+    <div class="slide active">
+      <h2>本课导入</h2>
+      <div class="lead">信息科技无处不在，它已经融入了我们的学习、生活和工作</div>
+      <div class="intro-card">
+        <h3>🌟 你知道吗？</h3>
+        <p>从早晨智能闹钟把你叫醒，到晚上扫码买文具回家——你一天接触到的"信息科技"超过几十种！本课我们一起来"寻找"身边的信息科技吧。</p>
+      </div>
+      <div style="margin-top: 20px;">
+        <h3 style="color:#1e40af;font-size:16px;margin-bottom:10px;">📌 学习目标</h3>
+        <div class="objectives">
+          <div class="obj"><div class="num">1</div><div class="text">感受信息科技应用带来的变化，初步了解信息科技</div></div>
+          <div class="obj"><div class="num">2</div><div class="text">认识常用的数字设备，感受数字设备带来的便利</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2 小华的一天 -->
+    <div class="slide">
+      <h2>🏠 小华一家的一天</h2>
+      <div class="lead">点击每个时间点，看看用到了什么信息科技</div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <!-- Slide 3 数字设备 -->
+    <div class="slide">
+      <h2>📱 身边的数字设备</h2>
+      <div class="lead">点击设备查看用途</div>
+      <div class="dev-grid" id="devGrid"></div>
+      <div class="detail-pop" id="devDetail">点击上方设备查看详细说明</div>
+    </div>
+
+    <!-- Slide 4 设备分类 -->
+    <div class="slide">
+      <h2>🗂️ 数字设备分类</h2>
+      <div class="lead">同一个设备可能有多种用途，按"主要功能"分类有助于我们快速选择合适的设备</div>
+      <div class="cat-filters">
+        <button class="cat-btn active" onclick="filterCat('all', this)">全部</button>
+        <button class="cat-btn" onclick="filterCat('通信', this)">📞 通信类</button>
+        <button class="cat-btn" onclick="filterCat('办公', this)">💼 办公类</button>
+        <button class="cat-btn" onclick="filterCat('教育', this)">📚 教育类</button>
+        <button class="cat-btn" onclick="filterCat('娱乐', this)">🎮 娱乐类</button>
+        <button class="cat-btn" onclick="filterCat('家居', this)">🏠 家居类</button>
+        <button class="cat-btn" onclick="filterCat('健康', this)">💪 健康类</button>
+      </div>
+      <div class="dev-grid" id="catGrid"></div>
+    </div>
+
+    <!-- Slide 5 总结 -->
+    <div class="slide">
+      <h2>📋 课堂总结</h2>
+      <div class="lead">回顾今天学到的关键内容</div>
+      <div class="summary-grid">
+        <div class="sum-card">
+          <h4>🌐 信息科技无处不在</h4>
+          <p>从智能家居、移动支付、视频通话，到机器人、虚拟现实——信息科技已经融入生活的方方面面。</p>
+        </div>
+        <div class="sum-card">
+          <h4>🔬 多种科技在背后</h4>
+          <p>计算机技术、通信技术、人工智能、传感器、控制技术、虚拟现实……这些是支撑信息科技应用的基石。</p>
+        </div>
+        <div class="sum-card">
+          <h4>📱 多样的数字设备</h4>
+          <p>手机、电脑、电视、音箱、扫地机器人……每种设备有其擅长的功能，要根据需求合理选择。</p>
+        </div>
+        <div class="sum-card">
+          <h4>🎯 拓展任务</h4>
+          <p>采访家人，了解他们工作中用到了哪些信息科技；列举一两个生活场景，分析其中用到的技术。</p>
+        </div>
+      </div>
+      <div class="knowledge">
+        <h3>💡 老师寄语</h3>
+        <p>信息科技就像水电一样，已经成为现代生活的"基础设施"。学好信息科技，能让我们更好地适应未来的社会。同学们，让我们一起做"信息时代的小主人"！</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="prevSlide()">← 上一页</button>
+  <button class="ctrl-btn primary" onclick="nextSlide()">下一页 →</button>
+</div>
+
+<script>
+const timelineData = [
+  { time: '5:30', emoji: '🍚', what: '智能电饭锅自动开始熬粥', tech: '传感器 + 控制技术' },
+  { time: '6:30', emoji: '🔊', what: '智能音箱叫醒一家人，并播报天气', tech: '人工智能 + 语音识别' },
+  { time: '7:30', emoji: '🚗', what: '爸爸用手机查看道路交通', tech: '互联网 + 大数据' },
+  { time: '8:20', emoji: '🏫', what: '小华在教室里上课', tech: '电子白板 + 多媒体' },
+  { time: '12:30', emoji: '🤖', what: '餐厅机器人为爸爸送饭', tech: '机器人技术 + AI' },
+  { time: '14:00', emoji: '🥽', what: '哥哥在科技馆体验 VR', tech: '虚拟现实技术' },
+  { time: '14:50', emoji: '👥', what: '小华和同学开展协作学习', tech: '在线协作 + 网络' },
+  { time: '17:30', emoji: '💳', what: '妈妈在超市扫码支付', tech: '二维码 + 移动支付' },
+  { time: '19:00', emoji: '➕', what: '小华生成口算练习', tech: '人工智能 + 教育科技' },
+  { time: '20:00', emoji: '📞', what: '一家人和爷爷奶奶视频通话', tech: '通信技术 + 视频压缩' },
+];
+
+document.getElementById('timeline').innerHTML = timelineData.map(t => `
+  <div class="tl-item">
+    <div class="tl-time">${t.time}</div>
+    <div class="tl-emoji">${t.emoji}</div>
+    <div class="tl-content">
+      <div class="what">${t.what}</div>
+      <div class="tech">${t.tech}</div>
+    </div>
+  </div>
+`).join('');
+
+const devices = [
+  { icon: '📱', name: '手机', desc: '通话、上网、拍照、付款', cat: '通信' },
+  { icon: '⌚', name: '电话手表', desc: '儿童通话、定位、记录运动', cat: '通信' },
+  { icon: '💻', name: '笔记本计算机', desc: '学习、办公、上网课', cat: '办公' },
+  { icon: '🖥️', name: '台式计算机', desc: '高性能学习、设计', cat: '办公' },
+  { icon: '🖨️', name: '打印机', desc: '把电子文档打印成纸', cat: '办公' },
+  { icon: '📷', name: '数字照相机', desc: '专业拍摄高质量照片', cat: '娱乐' },
+  { icon: '📺', name: '电视机', desc: '观看节目、玩游戏', cat: '娱乐' },
+  { icon: '🔊', name: '智能音箱', desc: '语音控制、播放音乐', cat: '娱乐' },
+  { icon: '🎮', name: '游戏机', desc: '玩游戏、运动锻炼', cat: '娱乐' },
+  { icon: '📚', name: '电子书阅读器', desc: '看电子书、不刺眼', cat: '教育' },
+  { icon: '📖', name: '学习机', desc: '辅导功课、学习资源', cat: '教育' },
+  { icon: '📷', name: '摄像头', desc: '视频通话、安防监控', cat: '通信' },
+  { icon: '🏧', name: '自动柜员机', desc: '存取款、查询余额', cat: '办公' },
+  { icon: '🤖', name: '扫地机器人', desc: '自动打扫卫生', cat: '家居' },
+  { icon: '🍚', name: '智能电饭锅', desc: '预约煮饭、保温', cat: '家居' },
+  { icon: '❄️', name: '智能空调', desc: '远程控制、温度调节', cat: '家居' },
+  { icon: '🏃', name: '智能手环', desc: '步数、心率监测', cat: '健康' },
+  { icon: '⚖️', name: '智能体重秤', desc: '体重、体脂分析', cat: '健康' },
+];
+
+document.getElementById('devGrid').innerHTML = devices.slice(0, 8).map(d => `
+  <div class="dev-card" onclick="showDev('${d.name}', '${d.desc}')">
+    <div class="icon">${d.icon}</div>
+    <div class="name">${d.name}</div>
+    <div class="desc">${d.desc}</div>
+  </div>
+`).join('');
+
+function showDev(name, desc) {
+  document.getElementById('devDetail').classList.add('show');
+  document.getElementById('devDetail').innerHTML = `<b>${name}</b>：${desc}。这种设备主要使用了相关的信息科技，帮助我们高效解决生活中的问题。`;
+}
+
+function filterCat(cat, btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat === 'all' ? devices : devices.filter(d => d.cat === cat);
+  document.getElementById('catGrid').innerHTML = filtered.map(d => `
+    <div class="dev-card">
+      <div class="icon">${d.icon}</div>
+      <div class="name">${d.name}</div>
+      <div class="desc">${d.desc}</div>
+      <div class="cat-tag">${d.cat}类</div>
+    </div>
+  `).join('');
+}
+filterCat('all', document.querySelector('.cat-btn.active'));
+
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const navItems = document.querySelectorAll('.nav-item');
+function goSlide(i) {
+  cur = i;
+  slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+  navItems.forEach((n, idx) => n.classList.toggle('active', idx === i));
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextSlide() { if (cur < slides.length - 1) goSlide(cur + 1); }
+function prevSlide() { if (cur > 0) goSlide(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+</script>
+</body>
+</html>

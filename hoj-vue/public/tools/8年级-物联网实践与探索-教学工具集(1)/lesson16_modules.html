@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第16课 · 模块功能先划分 — 智能花盆系统设计</title>
+<style>
+  :root {
+    --bg: #ecfeff;
+    --bg-2: #cffafe;
+    --ink: #042f2e;
+    --ink-soft: #4a6c5e;
+    --primary: #0d9488;
+    --primary-2: #14b8a6;
+    --accent: #06b6d4;
+    --warn: #f59e0b;
+    --line: #bae6e6;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(13,148,136,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image: radial-gradient(circle at 80% 0%, rgba(20,184,166,.08), transparent 50%);
+  }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 系统总览 */
+  .overview-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .arch-svg { width: 100%; max-height: 380px; }
+
+  /* 模块卡片 */
+  .modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .module {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-top: 4px solid var(--primary);
+    cursor: pointer; transition: all .2s;
+  }
+  .module:hover { transform: translateY(-3px); }
+  .module .ic { font-size: 32px; margin-bottom: 8px; }
+  .module h3 { font-size: 15px; margin-bottom: 6px; color: var(--primary); }
+  .module .role { font-size: 11px; color: var(--ink-soft); margin-bottom: 8px; font-style: italic; }
+  .module ul { padding-left: 18px; font-size: 12px; color: var(--ink-soft); }
+  .module li { margin: 3px 0; line-height: 1.6; }
+
+  /* 数据流 */
+  .dataflow-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .df-svg { width: 100%; max-height: 240px; }
+
+  /* 设计步骤 */
+  .design-steps {
+    background: var(--card); padding: 28px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+  }
+  .design-steps ol {
+    counter-reset: step;
+    list-style: none;
+  }
+  .design-steps li {
+    counter-increment: step;
+    padding-left: 50px; position: relative; margin-bottom: 16px;
+    font-size: 13px; line-height: 1.8;
+  }
+  .design-steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    background: var(--primary); color: #fff;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .design-steps strong { color: var(--ink); }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .modules-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 16 课</span>模块功能先划分</h1>
+  <p class="lead">在设计一个完整的物联系统时，<strong>"模块化"</strong>是关键方法——把复杂系统拆成若干<strong>独立、可单独实现</strong>的模块。本课以"<strong>智能花盆</strong>"为例，展示物联系统的模块划分与协作关系。</p>
+</header>
+
+<main>
+
+  <!-- 系统总览 -->
+  <section class="section">
+    <div class="section-title">一、智能花盆系统架构</div>
+    <div class="overview-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">智能花盆系统可以划分为<strong>4 个核心模块</strong>：感知层（采集环境数据）、控制层（决策与执行）、传输层（网络通信）、应用层（用户界面）。各模块各司其职，通过定义好的接口协作：</p>
+      <svg class="arch-svg" viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488"/>
+          </marker>
+        </defs>
+        <!-- 第一层：感知 -->
+        <g transform="translate(50 30)">
+          <rect x="0" y="0" width="700" height="68" rx="10" fill="#cffafe" stroke="#0d9488" stroke-width="2"/>
+          <text x="20" y="28" font-size="14" fill="#0d9488" font-weight="700">① 感知层（输入）</text>
+          <text x="20" y="50" font-size="11" fill="#4a6c5e">土壤湿度传感器 · 光照传感器 · 温度传感器 · 空气湿度传感器</text>
+        </g>
+        <line x1="400" y1="98" x2="400" y2="113" stroke="#0d9488" stroke-width="2" marker-end="url(#arr3)"/>
+        <!-- 第二层：控制 -->
+        <g transform="translate(50 118)">
+          <rect x="0" y="0" width="700" height="68" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="20" y="28" font-size="14" fill="#92400e" font-weight="700">② 控制层（决策+执行）</text>
+          <text x="20" y="50" font-size="11" fill="#4a6c5e">主控板 · 灌溉算法 · 水泵 · 蜂鸣器 · LED 指示灯 · OLED 屏幕</text>
+        </g>
+        <line x1="400" y1="186" x2="400" y2="201" stroke="#0d9488" stroke-width="2" marker-end="url(#arr3)"/>
+        <!-- 第三层：传输 -->
+        <g transform="translate(50 206)">
+          <rect x="0" y="0" width="700" height="68" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+          <text x="20" y="28" font-size="14" fill="#1e40af" font-weight="700">③ 传输层（网络）</text>
+          <text x="20" y="50" font-size="11" fill="#4a6c5e">Wi-Fi 模块 · MQTT 协议 · 上行：上传数据 · 下行：接收远程指令</text>
+        </g>
+        <line x1="400" y1="274" x2="400" y2="289" stroke="#0d9488" stroke-width="2" marker-end="url(#arr3)"/>
+        <!-- 第四层：应用 -->
+        <g transform="translate(50 294)">
+          <rect x="0" y="0" width="700" height="56" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+          <text x="20" y="24" font-size="14" fill="#6b21a8" font-weight="700">④ 应用层（用户界面）</text>
+          <text x="20" y="44" font-size="11" fill="#4a6c5e">手机 APP · 数据可视化图表 · 远程控制按钮 · 报警通知</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 各模块详解 -->
+  <section class="section">
+    <div class="section-title">二、各模块详细划分</div>
+    <div class="modules-grid">
+      <div class="module" style="border-top-color: #0d9488;">
+        <div class="ic">🌱</div>
+        <h3>感知模块</h3>
+        <div class="role">回答："环境现在怎么样？"</div>
+        <ul>
+          <li>土壤湿度（核心数据）</li>
+          <li>光照强度（决定蒸发速度）</li>
+          <li>空气温湿度（参考）</li>
+          <li>定时采样（如每 1 分钟）</li>
+        </ul>
+      </div>
+      <div class="module" style="border-top-color: #f59e0b;">
+        <div class="ic">🧠</div>
+        <h3>决策模块</h3>
+        <div class="role">回答："要不要浇水？"</div>
+        <ul>
+          <li>读取感知模块的数据</li>
+          <li>对比上下限阈值</li>
+          <li>结合天气、光照微调</li>
+          <li>输出"灌溉/不灌溉"指令</li>
+        </ul>
+      </div>
+      <div class="module" style="border-top-color: #dc2626;">
+        <div class="ic">⚙</div>
+        <h3>执行模块</h3>
+        <div class="role">回答："执行决策动作"</div>
+        <ul>
+          <li>水泵：浇水控制</li>
+          <li>蜂鸣器：异常报警</li>
+          <li>LED：状态指示</li>
+          <li>OLED：本地显示数据</li>
+        </ul>
+      </div>
+      <div class="module" style="border-top-color: #2563eb;">
+        <div class="ic">📡</div>
+        <h3>通信模块</h3>
+        <div class="role">回答："如何与外界沟通？"</div>
+        <ul>
+          <li>Wi-Fi 接入互联网</li>
+          <li>MQTT 上传环境数据</li>
+          <li>接收 APP 远程指令</li>
+          <li>定时心跳保持在线</li>
+        </ul>
+      </div>
+      <div class="module" style="border-top-color: #7c3aed;">
+        <div class="ic">📱</div>
+        <h3>应用模块</h3>
+        <div class="role">回答："给用户看什么？"</div>
+        <ul>
+          <li>实时数据展示</li>
+          <li>历史趋势图表</li>
+          <li>手动浇水按钮</li>
+          <li>报警推送通知</li>
+        </ul>
+      </div>
+      <div class="module" style="border-top-color: #94a3b8;">
+        <div class="ic">💾</div>
+        <h3>存储模块</h3>
+        <div class="role">回答："数据存哪里？"</div>
+        <ul>
+          <li>云端数据库</li>
+          <li>历史数据保存</li>
+          <li>用户配置存储</li>
+          <li>日志审计</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数据流 -->
+  <section class="section">
+    <div class="section-title">三、模块间的数据流</div>
+    <div class="dataflow-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">数据在系统中的流动有<strong>两条主线</strong>：本地反馈链路（毫秒级）+ 云端报告链路（秒级）：</p>
+      <svg class="df-svg" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488"/>
+          </marker>
+          <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+          </marker>
+        </defs>
+        <!-- 本地链路 -->
+        <text x="40" y="30" font-size="13" font-weight="700" fill="#0d9488">本地反馈链路（实时）</text>
+        <g transform="translate(40 40)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#cffafe" stroke="#0d9488" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">感知模块</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">读取湿度=2400</text>
+        </g>
+        <line x1="160" y1="64" x2="200" y2="64" stroke="#0d9488" stroke-width="2" marker-end="url(#arr4)"/>
+        <g transform="translate(200 40)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">决策模块</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">2400&lt;阈值 → 灌溉</text>
+        </g>
+        <line x1="320" y1="64" x2="360" y2="64" stroke="#0d9488" stroke-width="2" marker-end="url(#arr4)"/>
+        <g transform="translate(360 40)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">执行模块</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">水泵开 3 秒</text>
+        </g>
+        <!-- 云端链路 -->
+        <text x="40" y="130" font-size="13" font-weight="700" fill="#2563eb">云端报告链路</text>
+        <g transform="translate(40 140)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#cffafe" stroke="#0d9488" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">感知数据</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">每 60 秒一次</text>
+        </g>
+        <line x1="160" y1="164" x2="200" y2="164" stroke="#2563eb" stroke-width="2" marker-end="url(#arr5)"/>
+        <g transform="translate(200 140)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">通信模块</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">MQTT 上传</text>
+        </g>
+        <line x1="320" y1="164" x2="360" y2="164" stroke="#2563eb" stroke-width="2" marker-end="url(#arr5)"/>
+        <g transform="translate(360 140)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">云端服务器</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">存储+转发</text>
+        </g>
+        <line x1="480" y1="164" x2="520" y2="164" stroke="#2563eb" stroke-width="2" marker-end="url(#arr5)"/>
+        <g transform="translate(520 140)">
+          <rect x="0" y="0" width="120" height="48" rx="6" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+          <text x="60" y="20" font-size="11" text-anchor="middle">应用模块</text>
+          <text x="60" y="36" font-size="10" text-anchor="middle" fill="#4a6c5e">APP 显示</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 模块化设计的好处 -->
+  <section class="section">
+    <div class="section-title">四、模块化设计的优势</div>
+    <div class="design-steps">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">为什么要先做模块划分，再开始具体实现？模块化带来五个核心好处：</p>
+      <ol>
+        <li><strong>降低复杂度。</strong>一次只关注一个模块，思考它的"输入是什么、要做什么、输出是什么"。整体大问题被分解为多个小问题。</li>
+        <li><strong>便于分工合作。</strong>不同同学可以并行开发不同模块（A 同学做感知，B 同学做通信），只要约定好接口，最后整合即可。</li>
+        <li><strong>方便测试调试。</strong>单独测试每个模块（"水泵能不能开"、"传感器读数对不对"），定位问题更准确。</li>
+        <li><strong>易于替换升级。</strong>未来想把 Wi-Fi 模块换成 4G 模块？只要新模块提供相同接口，其他部分不用动。</li>
+        <li><strong>模块可复用。</strong>"感知模块"还可以用在智能温室、智慧农场中。一个模块能在多个项目中复用，效率倍增。</li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 16 课配套交互工具</footer>
+
+<script>
+// Nothing interactive here, content is static.
+</script>
+</body>
+</html>

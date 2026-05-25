@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第25课 · 学习探究新工具 — 智慧教室与实验</title>
+<style>
+  :root {
+    --bg: #faf5ff;
+    --bg-2: #f3e8ff;
+    --ink: #1e1b4b;
+    --ink-soft: #5b5076;
+    --primary: #7c3aed;
+    --accent: #ec4899;
+    --green: #10b981;
+    --warn: #f59e0b;
+    --line: #ddd0f5;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(124,58,237,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  header { padding: 40px 48px 16px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 700; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 780px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1300px; margin: 0 auto; }
+  .section { margin-top: 36px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 14px; }
+
+  /* 智慧教室 */
+  .class-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .class-svg { width: 100%; height: 320px; background: linear-gradient(180deg, #f3e8ff, #ddd0f5); border-radius: 12px; }
+  .features {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
+    margin-top: 14px;
+  }
+  .feat {
+    background: var(--bg-2); padding: 12px; border-radius: 8px; cursor: pointer;
+    border: 2px solid transparent; transition: all .15s; font-size: 12px;
+  }
+  .feat:hover { border-color: var(--primary); }
+  .feat .ic { font-size: 22px; margin-bottom: 4px; }
+  .feat h4 { font-size: 12px; color: var(--primary); margin-bottom: 2px; }
+  .feat p { color: var(--ink-soft); line-height: 1.5; font-size: 11px; }
+
+  /* 实验数据采集模拟 */
+  .lab-card { background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .lab-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: stretch; }
+  .lab-chart {
+    background: var(--bg-2); border-radius: 8px; padding: 16px;
+  }
+  .lab-chart svg { width: 100%; height: 240px; }
+  .lab-info {
+    background: #0f0a23; color: #6ee7b7; border-radius: 8px; padding: 16px;
+    font-family: "JetBrains Mono",monospace; font-size: 12px;
+    display: flex; flex-direction: column;
+  }
+  .lab-info h3 { color: #a78bfa; font-size: 13px; margin-bottom: 10px; letter-spacing: 1px; font-family: "PingFang SC",sans-serif; }
+  .lab-data { line-height: 1.8; flex: 1; overflow-y: auto; max-height: 240px; }
+  .lab-data .t { color: #64748b; }
+  .lab-controls {
+    margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .lab-btn {
+    padding: 10px 18px; background: var(--primary); color: #fff;
+    border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700;
+    font-family: inherit;
+  }
+  .lab-btn:hover { opacity: 0.9; }
+  .lab-btn.stop { background: var(--warn); }
+  .lab-btn.secondary { background: var(--bg-2); color: var(--ink); border: 1.5px solid var(--line); }
+
+  /* 应用 */
+  .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .app-card {
+    background: var(--card); padding: 18px; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    border-top: 4px solid var(--primary);
+  }
+  .app-card .ic { font-size: 28px; margin-bottom: 6px; }
+  .app-card h4 { font-size: 14px; margin-bottom: 4px; color: var(--primary); }
+  .app-card p { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .lab-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 25 课</span>学习探究新工具</h1>
+  <p class="lead">物联网正在让学习方式发生深刻变化。智慧教室、电子考勤、AR/VR 实验、自动数据采集……IoT 帮助同学们以<strong>更直观、更精准、更高效</strong>的方式开展探究学习。</p>
+</header>
+
+<main>
+
+  <!-- 智慧教室 -->
+  <section class="section">
+    <div class="section-title">一、智慧教室全景</div>
+    <div class="class-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">现代化的智慧教室集成了多种物联设备，从进门刷卡到课程互动，整个学习过程都有数据支持：</p>
+      <svg class="class-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+        <!-- 教室墙 -->
+        <rect x="50" y="40" width="700" height="220" fill="none" stroke="#7c3aed" stroke-width="2"/>
+        <!-- 黑板 -->
+        <rect x="150" y="50" width="200" height="100" fill="#1e293b" stroke="#0f172a" stroke-width="2" rx="3"/>
+        <text x="250" y="90" font-size="11" fill="#a78bfa" text-anchor="middle">电子白板</text>
+        <text x="250" y="105" font-size="9" fill="#c4b5fd" text-anchor="middle">触摸交互+录播</text>
+        <!-- 投影 -->
+        <circle cx="250" cy="180" r="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <text x="250" y="186" font-size="14" text-anchor="middle">📽</text>
+        <text x="250" y="218" font-size="9" fill="#7c3aed" text-anchor="middle">投影</text>
+        <!-- 课桌 -->
+        <g id="desks">
+          <rect x="80" y="190" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="80" y="230" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="420" y="190" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="420" y="230" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="500" y="190" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="500" y="230" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="580" y="190" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="580" y="230" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="660" y="190" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+          <rect x="660" y="230" width="40" height="20" fill="#fbbf24" stroke="#a37315"/>
+        </g>
+        <!-- 学生（点） -->
+        <circle cx="100" cy="183" r="6" fill="#10b981"/>
+        <circle cx="100" cy="223" r="6" fill="#10b981"/>
+        <circle cx="440" cy="183" r="6" fill="#10b981"/>
+        <circle cx="440" cy="223" r="6" fill="#10b981"/>
+        <circle cx="520" cy="183" r="6" fill="#10b981"/>
+        <circle cx="520" cy="223" r="6" fill="#10b981"/>
+        <circle cx="600" cy="183" r="6" fill="#10b981"/>
+        <circle cx="600" cy="223" r="6" fill="#94a3b8"/>
+        <circle cx="680" cy="183" r="6" fill="#10b981"/>
+        <circle cx="680" cy="223" r="6" fill="#10b981"/>
+        <!-- IoT 设备 -->
+        <!-- 摄像头 -->
+        <g transform="translate(700 50)">
+          <circle r="8" fill="#0f172a"/>
+          <circle r="4" fill="#a78bfa"/>
+        </g>
+        <text x="700" y="76" font-size="9" fill="#7c3aed" text-anchor="middle">智能摄像头</text>
+        <!-- 空气检测 -->
+        <g transform="translate(120 60)">
+          <rect x="-15" y="-10" width="30" height="20" fill="#10b981" rx="2"/>
+          <text y="4" font-size="11" text-anchor="middle">💨</text>
+        </g>
+        <text x="120" y="85" font-size="9" fill="#047857" text-anchor="middle">CO₂检测</text>
+        <!-- 门刷卡 -->
+        <g transform="translate(50 280)">
+          <rect x="0" y="0" width="60" height="20" fill="#a78bfa" rx="3"/>
+          <text x="30" y="14" font-size="10" fill="#fff" text-anchor="middle">🪪 刷卡考勤</text>
+        </g>
+        <!-- 灯 -->
+        <circle cx="350" cy="60" r="6" fill="#fbbf24" stroke="#a37315"/>
+        <circle cx="450" cy="60" r="6" fill="#fbbf24" stroke="#a37315"/>
+        <circle cx="550" cy="60" r="6" fill="#fbbf24" stroke="#a37315"/>
+        <circle cx="650" cy="60" r="6" fill="#94a3b8" stroke="#a37315"/>
+        <text x="500" y="48" font-size="9" fill="#a37315" text-anchor="middle">智能照明：根据光照自动调节</text>
+      </svg>
+      <div class="features">
+        <div class="feat"><span class="ic">🪪</span><h4>电子刷卡考勤</h4><p>学生卡刷一下自动签到</p></div>
+        <div class="feat"><span class="ic">📺</span><h4>电子白板</h4><p>笔迹云端同步，自动录播</p></div>
+        <div class="feat"><span class="ic">📷</span><h4>智能摄像头</h4><p>记录课堂、AI 分析参与度</p></div>
+        <div class="feat"><span class="ic">💨</span><h4>环境监测</h4><p>CO₂ 超标自动开窗通风</p></div>
+        <div class="feat"><span class="ic">📊</span><h4>抢答器</h4><p>题目响应时间精确到 ms</p></div>
+        <div class="feat"><span class="ic">📱</span><h4>互动答题</h4><p>手机/平板实时答题数据</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 实验数据自动采集 -->
+  <section class="section">
+    <div class="section-title">二、实验数据自动采集与可视化</div>
+    <div class="lab-card">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;">物理课"自由落体"实验，过去靠秒表测量误差大。<strong>IoT 时代</strong>：物体上贴 IMU 传感器，落地瞬间自动记录加速度、速度变化，曲线一目了然。下面是一次自由落体实验的数据采集模拟：</p>
+      <div class="lab-row">
+        <div class="lab-chart">
+          <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" id="labChart">
+            <!-- 网格 -->
+            <g stroke="#ddd0f5" stroke-width="1">
+              <line x1="50" y1="40" x2="780" y2="40"/>
+              <line x1="50" y1="100" x2="780" y2="100"/>
+              <line x1="50" y1="160" x2="780" y2="160"/>
+              <line x1="50" y1="220" x2="780" y2="220"/>
+            </g>
+            <!-- Y 轴标签 -->
+            <text x="42" y="44" font-size="10" fill="#5b5076" text-anchor="end">9.8</text>
+            <text x="42" y="104" font-size="10" fill="#5b5076" text-anchor="end">5</text>
+            <text x="42" y="164" font-size="10" fill="#5b5076" text-anchor="end">0</text>
+            <text x="42" y="224" font-size="10" fill="#5b5076" text-anchor="end">-5</text>
+            <text x="20" y="130" font-size="10" fill="#7c3aed" font-weight="700">加速度 (m/s²)</text>
+            <!-- X 轴 -->
+            <text x="50" y="234" font-size="10" fill="#5b5076">0s</text>
+            <text x="780" y="234" font-size="10" fill="#5b5076" text-anchor="end">2s</text>
+            <!-- 数据 -->
+            <polyline id="dataLine" fill="none" stroke="#7c3aed" stroke-width="2.5"/>
+            <!-- 提示线 -->
+            <line x1="50" y1="40" x2="780" y2="40" stroke="#10b981" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+            <text x="60" y="38" font-size="9" fill="#10b981">理论值 g=9.8</text>
+          </svg>
+        </div>
+        <div class="lab-info">
+          <h3>📋 实验记录</h3>
+          <div class="lab-data" id="labData">
+            <div class="t">等待开始采集...</div>
+          </div>
+        </div>
+      </div>
+      <div class="lab-controls">
+        <button class="lab-btn" id="labBtn" onclick="startLab()">▶ 开始实验</button>
+        <button class="lab-btn secondary" onclick="resetLab()">重置</button>
+        <span style="font-size:12px;color:var(--ink-soft);align-self:center;">采样率：50Hz · 传感器：MPU6050 IMU</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 应用 -->
+  <section class="section">
+    <div class="section-title">三、其他智慧学习应用</div>
+    <div class="apps-grid">
+      <div class="app-card"><div class="ic">📔</div><h4>电子学籍卡</h4><p>RFID 卡集成考勤、借书、刷卡食堂等多种功能。</p></div>
+      <div class="app-card"><div class="ic">📚</div><h4>智能图书馆</h4><p>RFID 标签自助借还书、机器人盘点、智能找书定位。</p></div>
+      <div class="app-card"><div class="ic">🧪</div><h4>虚拟仿真实验</h4><p>VR/AR 让无法在教室开展的实验（如化学爆炸）安全模拟。</p></div>
+      <div class="app-card"><div class="ic">🤖</div><h4>编程小车</h4><p>蓝牙控制小车走迷宫，让算法和数学知识具象化。</p></div>
+      <div class="app-card"><div class="ic">🌐</div><h4>校园云盘</h4><p>课件、作业、笔记云端同步，回家继续学习。</p></div>
+      <div class="app-card"><div class="ic">🛡</div><h4>校园安全</h4><p>电子围栏 + 校车 GPS，家长 APP 实时看孩子在校位置。</p></div>
+      <div class="app-card"><div class="ic">🏃</div><h4>体育监测</h4><p>运动手环测心率、跳绳计数，体育课数据精准评分。</p></div>
+      <div class="app-card"><div class="ic">🍱</div><h4>智慧食堂</h4><p>刷脸支付、营养分析、菜品推荐。</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 25 课配套交互工具</footer>
+
+<script>
+var labTimer = null;
+var dataPoints = [];
+
+function startLab() {
+  if (labTimer) return;
+  resetLab();
+  document.getElementById('labBtn').textContent = '⏸ 实验中...';
+  document.getElementById('labBtn').className = 'lab-btn stop';
+  var totalMs = 2000;
+  var startTime = Date.now();
+  var dataEl = document.getElementById('labData');
+  dataEl.innerHTML = '';
+  var sample = 0;
+  labTimer = setInterval(function () {
+    var elapsed = Date.now() - startTime;
+    if (elapsed >= totalMs) {
+      clearInterval(labTimer); labTimer = null;
+      document.getElementById('labBtn').textContent = '✓ 实验完成';
+      document.getElementById('labBtn').className = 'lab-btn secondary';
+      dataEl.innerHTML += '<div style="color:#fbbf24;margin-top:6px;">[完成] 共采集 ' + dataPoints.length + ' 个数据点</div>';
+      dataEl.innerHTML += '<div style="color:#a78bfa;">平均加速度 ≈ 9.7 m/s² ✓</div>';
+      return;
+    }
+    // 模拟自由落体加速度信号：开始略有抖动，落体后稳定在 9.8 m/s² 附近，落地瞬间冲击
+    var t = elapsed / 1000;
+    var a;
+    if (t < 0.1) a = 0.3 + (Math.random() - 0.5) * 0.2;
+    else if (t < 1.4) a = 9.6 + (Math.random() - 0.5) * 0.4;
+    else if (t < 1.5) a = -3 + (Math.random() - 0.5) * 2;  // 冲击
+    else a = 0 + (Math.random() - 0.5) * 0.3;
+    dataPoints.push({ t: t, a: a });
+    updateChart();
+    // 每 5 个采样记一行
+    if (sample % 5 === 0) {
+      var ts = (elapsed/1000).toFixed(2);
+      dataEl.innerHTML += '<div><span class="t">[' + ts + 's]</span> a = <span style="color:#fbbf24">' + a.toFixed(2) + '</span> m/s²</div>';
+      dataEl.scrollTop = dataEl.scrollHeight;
+    }
+    sample++;
+  }, 40);
+}
+
+function updateChart() {
+  var xLeft = 50, xRight = 780;
+  var yTop = 30, yBot = 220; // y=40 means 9.8, y=160 means 0, y=220 means -5
+  // Map a to y: a=9.8 → y=40, a=0 → y=160, a=-5 → y=220, a=5 → y=100
+  // y = 160 - (a / 9.8) * 120 if simple
+  var pts = '';
+  for (var i = 0; i < dataPoints.length; i++) {
+    var x = xLeft + (dataPoints[i].t / 2) * (xRight - xLeft);
+    var y = 160 - (dataPoints[i].a / 9.8) * 120;
+    pts += x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  document.getElementById('dataLine').setAttribute('points', pts.trim());
+}
+
+function resetLab() {
+  if (labTimer) { clearInterval(labTimer); labTimer = null; }
+  dataPoints = [];
+  document.getElementById('dataLine').setAttribute('points', '');
+  document.getElementById('labData').innerHTML = '<div class="t">等待开始采集...</div>';
+  document.getElementById('labBtn').textContent = '▶ 开始实验';
+  document.getElementById('labBtn').className = 'lab-btn';
+}
+
+window.startLab = startLab;
+window.resetLab = resetLab;
+</script>
+</body>
+</html>

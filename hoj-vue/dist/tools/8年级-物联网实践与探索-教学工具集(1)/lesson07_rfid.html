@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第7课 · 电子标签我揭秘 — RFID工作原理动画</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --bg-2: #ecebe5;
+    --ink: #1d2025;
+    --ink-soft: #5d6470;
+    --accent: #d6443e;
+    --accent-2: #e9a826;
+    --tech: #2c80b5;
+    --green: #4f9d6e;
+    --line: #d8d3c4;
+    --card: #ffffff;
+    --shadow: 0 4px 16px rgba(20,30,50,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image:
+      linear-gradient(rgba(214,68,62,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(214,68,62,.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+    min-height: 100vh;
+  }
+  header { padding: 36px 48px 12px; }
+  .crumb { font-size: 13px; color: var(--ink-soft); letter-spacing: 1px; }
+  .crumb a { color: var(--tech); text-decoration: none; border-bottom: 1px dotted var(--tech); }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  h1 .num { color: var(--accent); margin-right: 12px; font-style: italic; }
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 6px; max-width: 760px; line-height: 1.7; }
+  main { padding: 12px 48px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section { margin-top: 32px; }
+  .section-title { font-size: 20px; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid var(--ink); display: inline-block; margin-bottom: 24px; }
+  .section-title::before { content:"●"; color: var(--accent); margin-right: 8px; font-size: 14px; }
+
+  /* --- 动画区 --- */
+  .stage-wrap {
+    display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start;
+  }
+  .stage {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .stage svg { width: 100%; height: 360px; }
+  .controls { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    padding: 10px 18px; background: var(--tech); color: #fff; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-family: inherit; letter-spacing: 1px; transition: all .2s;
+  }
+  .btn:hover { background: #1c6ba0; transform: translateY(-1px); }
+  .btn.secondary { background: var(--bg-2); color: var(--ink); }
+  .btn.danger { background: var(--accent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .step-info {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);
+  }
+  .step-info h3 { font-size: 18px; color: var(--accent); }
+  .step-info .step-num { display: inline-block; padding: 4px 14px; background: var(--accent); color: #fff; font-weight: 700; border-radius: 999px; font-size: 12px; letter-spacing: 1px; margin-right: 8px; }
+  .step-info .desc { margin-top: 14px; color: var(--ink-soft); font-size: 14px; line-height: 1.8; }
+  .step-info .data {
+    margin-top: 16px; padding: 12px 14px; background: var(--ink); color: #84d2a3;
+    border-radius: 6px; font-family: "JetBrains Mono","Consolas",monospace; font-size: 12px; line-height: 1.6;
+    word-break: break-all;
+  }
+  .progress-dots { display: flex; gap: 6px; margin-top: 16px; justify-content: center; }
+  .pdot { width: 28px; height: 4px; background: var(--bg-2); border-radius: 2px; transition: background .3s; }
+  .pdot.active { background: var(--accent); }
+  .pdot.done   { background: var(--green); }
+
+  /* --- 比较 RFID vs NFC --- */
+  .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .comp-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 24px; box-shadow: var(--shadow); }
+  .comp-card h3 { font-size: 18px; padding-bottom: 8px; border-bottom: 2px solid; margin-bottom: 12px; }
+  .comp-card.rfid h3 { color: var(--accent); border-color: var(--accent); }
+  .comp-card.nfc  h3 { color: var(--tech);  border-color: var(--tech); }
+  .comp-card .key { font-size: 12px; color: var(--ink-soft); margin-top: 8px; letter-spacing: 1px; }
+  .comp-card p { font-size: 13px; line-height: 1.7; margin-bottom: 8px; }
+  .comp-card .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .meta-tag { padding: 3px 10px; background: var(--bg-2); border-radius: 4px; font-size: 11px; color: var(--ink); }
+
+  /* --- 编号查询模拟 --- */
+  .lookup-tool {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 28px; box-shadow: var(--shadow);
+  }
+  .reader-sim {
+    background: linear-gradient(160deg,#1d2025,#2a2f37); color:#e6e6e6;
+    padding: 24px; border-radius: 8px; margin-top: 16px;
+  }
+  .reader-sim .display {
+    background: #050b15; color: var(--green); padding: 14px 18px; border-radius: 4px;
+    font-family: "JetBrains Mono","Consolas",monospace; font-size: 14px; min-height: 70px;
+    border: 1px solid #1a2533; line-height: 1.7;
+  }
+  .reader-sim .display::before { content: ">_ "; color: var(--accent-2); }
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .tag-btn {
+    padding: 10px 16px; background: var(--accent-2); color: #1d2025; border: none;
+    border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform .15s;
+    font-family: "JetBrains Mono","Consolas",monospace;
+  }
+  .tag-btn:hover { transform: translateY(-2px); }
+  .tag-btn.unknown { background: var(--ink-soft); color: #fff; }
+
+  footer { text-align: center; padding: 24px; color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line); margin-top: 32px; }
+
+  @media (max-width: 900px) {
+    header, main { padding-left: 20px; padding-right: 20px; }
+    .stage-wrap, .comp-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="num">第 7 课</span>电子标签我揭秘</h1>
+  <p class="lead">RFID（Radio Frequency IDentification，射频识别）是一种无线通信技术，无须与被识别物品直接接触。本工具通过动画演示读卡器与电子标签的5步通信流程，对比 RFID 与 NFC 的差异，并模拟"读取电子标签编号"的实践活动。</p>
+</header>
+
+<main>
+
+  <!-- 一、动画演示 -->
+  <section class="section">
+    <div class="section-title">一、RFID 系统工作流程动画</div>
+    <div class="stage-wrap">
+
+      <div>
+        <div class="stage">
+          <svg id="rfidSvg" viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+            <!-- 装饰背景 -->
+            <rect x="0" y="0" width="700" height="360" fill="url(#bg-grad)"/>
+            <defs>
+              <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff"/>
+                <stop offset="1" stop-color="#f3f1ea"/>
+              </linearGradient>
+              <radialGradient id="rf-wave" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="0" stop-color="rgba(44,128,181,.4)"/>
+                <stop offset="1" stop-color="rgba(44,128,181,0)"/>
+              </radialGradient>
+            </defs>
+
+            <!-- 计算机/管理系统 -->
+            <g id="computer">
+              <rect x="40" y="80" width="130" height="100" rx="6" fill="#fff" stroke="#1d2025" stroke-width="2"/>
+              <rect x="50" y="90" width="110" height="70" fill="#1d2025"/>
+              <text x="105" y="120" font-size="11" fill="#84d2a3" text-anchor="middle" font-family="monospace">管理系统</text>
+              <text x="105" y="140" font-size="9" fill="#84d2a3" text-anchor="middle" font-family="monospace" id="computer-data">等待数据...</text>
+              <rect x="80" y="180" width="50" height="6" fill="#1d2025"/>
+              <rect x="60" y="186" width="90" height="14" fill="#1d2025"/>
+              <text x="105" y="220" font-size="11" fill="#1d2025" text-anchor="middle" font-weight="700">管理系统</text>
+            </g>
+
+            <!-- 数据线 -->
+            <line x1="170" y1="130" x2="240" y2="130" stroke="#5d6470" stroke-width="2" stroke-dasharray="4 3"/>
+
+            <!-- 读卡器 -->
+            <g id="reader">
+              <rect x="240" y="100" width="160" height="120" rx="8" fill="#2c80b5" stroke="#1c6ba0" stroke-width="2"/>
+              <rect x="260" y="120" width="120" height="40" fill="#0f1822" rx="3"/>
+              <text x="320" y="145" font-size="12" fill="#84d2a3" text-anchor="middle" font-family="monospace" id="reader-display">RFID Reader</text>
+              <circle cx="320" cy="190" r="14" fill="none" stroke="#fff" stroke-width="2"/>
+              <circle cx="320" cy="190" r="6" fill="#fff" id="reader-led"/>
+              <text x="320" y="245" font-size="11" fill="#1d2025" text-anchor="middle" font-weight="700">读 卡 器</text>
+            </g>
+
+            <!-- 射频波（JS 驱动，最大化兼容性） -->
+            <g id="rf-waves" opacity="0">
+              <circle class="wave-fwd" cx="450" cy="160" r="20" fill="none" stroke="#2c80b5" stroke-width="2.5"/>
+              <circle class="wave-fwd" cx="450" cy="160" r="20" fill="none" stroke="#2c80b5" stroke-width="2.5"/>
+              <circle class="wave-fwd" cx="450" cy="160" r="20" fill="none" stroke="#2c80b5" stroke-width="2.5"/>
+            </g>
+
+            <!-- 标签反向射频（JS 驱动） -->
+            <g id="rf-back" opacity="0">
+              <circle class="wave-back" cx="540" cy="160" r="15" fill="none" stroke="#d6443e" stroke-width="2.5"/>
+              <circle class="wave-back" cx="540" cy="160" r="15" fill="none" stroke="#d6443e" stroke-width="2.5"/>
+            </g>
+
+            <!-- 物品 + 电子标签 -->
+            <g id="tag-group" transform="translate(540 100)">
+              <!-- 物品（书） -->
+              <rect x="0" y="20" width="120" height="100" rx="3" fill="#e9a826" stroke="#a37315" stroke-width="2"/>
+              <line x1="20" y1="20" x2="20" y2="120" stroke="#a37315" stroke-width="1.5"/>
+              <text x="70" y="75" font-size="10" fill="#1d2025" text-anchor="middle">📚 物品</text>
+              <!-- 电子标签 -->
+              <rect x="80" y="40" width="36" height="22" rx="2" fill="#fff" stroke="#1d2025" stroke-width="1.5"/>
+              <rect x="83" y="44" width="6" height="4" fill="#1d2025"/>
+              <line x1="91" y1="46" x2="113" y2="46" stroke="#1d2025" stroke-width=".5"/>
+              <line x1="91" y1="50" x2="113" y2="50" stroke="#1d2025" stroke-width=".5"/>
+              <line x1="91" y1="54" x2="113" y2="54" stroke="#1d2025" stroke-width=".5"/>
+              <text x="98" y="35" font-size="9" fill="#1d2025" text-anchor="middle">电子标签</text>
+              <text x="98" y="78" font-size="7" fill="#1d2025" text-anchor="middle" font-family="monospace" id="tag-id">001A79B5</text>
+            </g>
+
+            <!-- 数据流提示 -->
+            <text id="data-pulse" x="350" y="320" font-size="13" fill="#d6443e" text-anchor="middle" font-weight="700" opacity="0">⬡ 数据流动 ⬡</text>
+          </svg>
+
+          <div class="controls">
+            <button class="btn" id="btnPrev" onclick="prevStep()" disabled>← 上一步</button>
+            <button class="btn" id="btnNext" onclick="nextStep()">下一步 →</button>
+            <button class="btn secondary" onclick="resetSim()">重置</button>
+            <button class="btn danger" onclick="autoPlay()">▶ 自动播放</button>
+          </div>
+          <div class="progress-dots" id="progressDots"></div>
+        </div>
+      </div>
+
+      <div class="step-info">
+        <h3 id="stepTitle"><span class="step-num" id="stepNum">0</span>等待开始</h3>
+        <div class="desc" id="stepDesc">点击右上方按钮开始浏览 RFID 系统的 5 步工作流程动画。每一步都会展示读卡器与电子标签之间的数据交互。</div>
+        <div class="data" id="stepData">> 状态：待机</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 二、读取电子标签实践 -->
+  <section class="section">
+    <div class="section-title">二、模拟"读取电子标签编号"实验</div>
+    <div class="lookup-tool">
+      <p style="color:var(--ink-soft);font-size:14px;line-height:1.7;">
+        每个电子标签都有<strong>唯一编号</strong>。教材中的实验代码：
+      </p>
+      <pre style="margin-top:8px;background:#1d2025;color:#84d2a3;padding:12px 16px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;overflow-x:auto;">scan_rfid = rfid(sda=4, scl=5)
+while True:
+    rf = scan_rfid.scanning()
+    sn = rf.serial_number()
+    oled.print(sn)</pre>
+      <div class="reader-sim">
+        <div style="font-size:11px;letter-spacing:1.5px;color:var(--accent-2);margin-bottom:6px;">▸ 主控板OLED显示屏</div>
+        <div class="display" id="oledDisplay">就绪。请点击下方电子标签...</div>
+        <p style="margin-top:18px;font-size:13px;color:#a0a8b3;">将以下电子标签靠近读卡器：</p>
+        <div class="tag-row">
+          <button class="tag-btn" onclick="readTag('001A79B56C', '小智')">📛 学生卡-A</button>
+          <button class="tag-btn" onclick="readTag('001A79B56D', '小慧')">📛 学生卡-B</button>
+          <button class="tag-btn" onclick="readTag('001A79B56E', '小华')">📛 学生卡-C</button>
+          <button class="tag-btn" onclick="readTag('A7F8E901',   '通用钥匙卡')">🔑 钥匙卡</button>
+          <button class="tag-btn unknown" onclick="readTag('FF8800AA', null)">❓ 未注册卡</button>
+        </div>
+        <p style="margin-top:14px;font-size:12px;color:#7a8390;line-height:1.6;">
+          💡 <strong>拓展练习：</strong>在程序中可以使用字典 <code style="background:#0f1822;padding:1px 5px;border-radius:2px;color:var(--accent-2);">{"001A79B56C":"小智", ...}</code> 实现编号 → 学生姓名的查询。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 三、RFID vs NFC 对比 -->
+  <section class="section">
+    <div class="section-title">三、RFID 与 NFC 的区别</div>
+    <p style="color:var(--ink-soft);font-size:14px;line-height:1.7;margin-bottom:16px;">
+      NFC（Near Field Communication，近场通信）由 RFID 演变而来。形象类比："RFID 是一个学生戴胸卡方便老师识别；NFC 是学生和老师都戴胸卡，可以双向沟通"。
+    </p>
+    <div class="comp-grid">
+      <div class="comp-card rfid">
+        <h3>🏷️ RFID（射频识别）</h3>
+        <p>电子标签 → 单向数据传输给读卡器，常用于物品标识、门禁、库存管理等场景。</p>
+        <div class="key">特征</div>
+        <div class="meta">
+          <span class="meta-tag">单向通信</span>
+          <span class="meta-tag">几厘米~几米</span>
+          <span class="meta-tag">数据格式自定义</span>
+          <span class="meta-tag">可"批量识读"</span>
+        </div>
+        <div class="key" style="margin-top:14px;">典型应用</div>
+        <p style="margin-top:6px;">高速 ETC、火车站身份证刷卡、图书管理、物流仓储、门禁系统</p>
+      </div>
+      <div class="comp-card nfc">
+        <h3>📱 NFC（近场通信）</h3>
+        <p>由 RFID 演变而来，是双向的近距离高频无线通信，规定了数据交换格式。</p>
+        <div class="key">特征</div>
+        <div class="meta">
+          <span class="meta-tag">双向通信</span>
+          <span class="meta-tag">≤10cm</span>
+          <span class="meta-tag">数据格式标准化</span>
+          <span class="meta-tag">支持点对点交换</span>
+        </div>
+        <div class="key" style="margin-top:14px;">典型应用</div>
+        <p style="margin-top:6px;">手机一碰传、移动支付、公交地铁刷卡、设备快速配对</p>
+        <p style="margin-top:14px;font-size:12px;color:var(--green);background:rgba(79,157,110,.1);padding:10px;border-radius:4px;">
+          🇨🇳 <strong>自主可控里程碑：</strong>2016 年，我国自主创新的 NFC 非对称/对称实体鉴别两项近场通信安全技术成为 ISO/IEC 国际标准。
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 第 7 课配套交互工具</footer>
+
+<script>
+// ============ 5 步动画（ES5 语法，兼容 IE9+ 等旧浏览器） ============
+// 用 JS 驱动射频波动画（不依赖 SVG SMIL）
+var __wavePhase = 0;
+setInterval(function () {
+  __wavePhase = (__wavePhase + 0.025) % 1;
+  var fwd = document.querySelectorAll('.wave-fwd');
+  var i, p;
+  for (i = 0; i < fwd.length; i++) {
+    p = (__wavePhase + i / fwd.length) % 1;
+    fwd[i].setAttribute('r', String(20 + p * 45));
+    fwd[i].setAttribute('opacity', String((0.75 * (1 - p)).toFixed(3)));
+  }
+  var back = document.querySelectorAll('.wave-back');
+  var j, q;
+  for (j = 0; j < back.length; j++) {
+    q = (__wavePhase + j / back.length) % 1;
+    back[j].setAttribute('r', String(15 + q * 40));
+    back[j].setAttribute('opacity', String((0.75 * (1 - q)).toFixed(3)));
+  }
+}, 50);
+
+var steps = [
+  {
+    title: "等待开始",
+    desc: "点击「下一步」按钮开始浏览 RFID 系统的 5 步工作流程。",
+    data: "> 系统就绪",
+    led: "#fff", waves: 0, back: 0, dataPulse: 0,
+    readerText: "RFID Reader", computerData: "等待数据..."
+  },
+  {
+    title: "① 给物品贴上电子标签",
+    desc: "首先要给每个待识别的物品贴上电子标签，标签内部的芯片中存储着该物品的相关数据（如唯一编号、所有者、库存信息等）。",
+    data: "> 标签ID = 001A79B56C\n> 数据已写入芯片",
+    led: "#fff", waves: 0, back: 0, dataPulse: 0,
+    readerText: "RFID Reader", computerData: "等待数据..."
+  },
+  {
+    title: "② 读卡器发送射频信号",
+    desc: "读卡器持续发射一定频率的射频电磁波。当电子标签进入读卡器的工作区时，可以接收到这些信号并获得能量。",
+    data: "> 读卡器频段：13.56 MHz\n> 射频信号发射中...",
+    led: "#5dc1f5", waves: 1, back: 0, dataPulse: 0,
+    readerText: "扫描中...", computerData: "等待数据..."
+  },
+  {
+    title: "③ 标签发送自身数据",
+    desc: "电子标签接收到读卡器的信号后，依靠感应电流获得能量（被动标签），将存储在芯片中的数据通过射频信号反向发送出去。",
+    data: "> 标签响应：\n> ID = 001A79B56C\n> 信号强度：-42 dBm",
+    led: "#d6443e", waves: 1, back: 1, dataPulse: 1,
+    readerText: "接收中...", computerData: "等待数据..."
+  },
+  {
+    title: "④ 读卡器接收并传输数据",
+    desc: "读卡器接收到电子标签发送的数据，进行解码后，通过有线（如串口、USB）或网络方式传输到后台计算机的管理系统。",
+    data: "> 解码完成 \u2713\n> 传输至管理系统：\n> [001A79B56C, 2024-01-15 10:23]",
+    led: "#4f9d6e", waves: 0, back: 0, dataPulse: 1,
+    readerText: "数据已读取", computerData: "接收中..."
+  },
+  {
+    title: "⑤ 管理系统作出处理",
+    desc: "计算机中的管理系统接收数据后，根据业务需求作出相应处理：例如查询车辆信息、扣除车费（ETC）、记录考勤、解锁门禁、统计库存等。",
+    data: "> ID 已识别：001A79B56C\n> 业务处理：开门 / 扣费 / 记录\n> 流程结束 \u2713",
+    led: "#4f9d6e", waves: 0, back: 0, dataPulse: 1,
+    readerText: "处理完成", computerData: "ID = 001A79B56C \u2713"
+  }
+];
+
+var currentStep = 0;
+var autoPlayTimer = null;
+
+var dotsEl = document.getElementById('progressDots');
+var k, dotEl;
+for (k = 0; k < steps.length; k++) {
+  dotEl = document.createElement('div');
+  dotEl.className = 'pdot';
+  dotsEl.appendChild(dotEl);
+}
+
+function renderStep() {
+  var s = steps[currentStep];
+  document.getElementById('stepTitle').innerHTML = '<span class="step-num">' + (currentStep === 0 ? '\u25ef' : currentStep) + '</span>' + s.title;
+  document.getElementById('stepDesc').innerHTML = s.desc.replace(/</g,'&lt;');
+  document.getElementById('stepData').innerHTML = s.data.replace(/</g,'&lt;').replace(/\n/g,'<br>');
+  document.getElementById('reader-led').setAttribute('fill', s.led);
+  document.getElementById('rf-waves').setAttribute('opacity', s.waves);
+  document.getElementById('rf-back').setAttribute('opacity', s.back);
+  document.getElementById('data-pulse').setAttribute('opacity', s.dataPulse);
+  document.getElementById('reader-display').innerHTML = s.readerText;
+  document.getElementById('computer-data').innerHTML = s.computerData;
+  var dots = document.querySelectorAll('.pdot');
+  var di;
+  for (di = 0; di < dots.length; di++) {
+    dots[di].className = 'pdot';
+    if (di < currentStep) dots[di].className = 'pdot done';
+    if (di === currentStep) dots[di].className = 'pdot active';
+  }
+  document.getElementById('btnPrev').disabled = currentStep === 0;
+  document.getElementById('btnNext').disabled = currentStep === steps.length - 1;
+}
+function nextStep() { if (currentStep < steps.length - 1) { currentStep++; renderStep(); } }
+function prevStep() { if (currentStep > 0) { currentStep--; renderStep(); } }
+function resetSim() { stopAuto(); currentStep = 0; renderStep(); }
+function autoPlay() {
+  stopAuto();
+  if (currentStep === steps.length - 1) currentStep = 0;
+  renderStep();
+  autoPlayTimer = setInterval(function () {
+    if (currentStep >= steps.length - 1) { stopAuto(); return; }
+    nextStep();
+  }, 2200);
+}
+function stopAuto() { if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; } }
+
+// 暴露到全局，确保 inline onclick 可调用（旧浏览器中函数声明已默认全局，这里再显式赋一遍）
+window.nextStep = nextStep;
+window.prevStep = prevStep;
+window.resetSim = resetSim;
+window.autoPlay = autoPlay;
+
+renderStep();
+
+// ============ 模拟读卡 ============
+var knownTags = {
+  "001A79B56C": "小智",
+  "001A79B56D": "小慧",
+  "001A79B56E": "小华",
+  "A7F8E901":   "通用钥匙卡"
+};
+function readTag(id, owner) {
+  var oled = document.getElementById('oledDisplay');
+  oled.style.color = "var(--accent-2)";
+  oled.innerHTML = "扫描中...";
+  setTimeout(function () {
+    oled.style.color = "var(--green)";
+    if (owner) {
+      oled.innerHTML = '编号: ' + id + '<br>所有者: ' + owner + ' \u2713';
+    } else {
+      var known = knownTags[id];
+      oled.innerHTML = '编号: ' + id + '<br>' + (known ? '所有者: ' + known + ' \u2713' : '<span style="color:var(--accent)">\u26a0 未授权标签</span>');
+    }
+  }, 600);
+}
+window.readTag = readTag;
+</script>
+</body>
+</html>

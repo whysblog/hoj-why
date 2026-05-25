@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物联网实践与探索 · 八年级 · 课程工具集</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --line: #e2e8f0;
+    --card: #ffffff;
+    --shadow: 0 4px 18px rgba(0,0,0,.06);
+    /* unit colors */
+    --c1: #d97706;  /* unit 1: orange */
+    --c2: #1e40af;  /* unit 2: blue */
+    --c3: #047857;  /* unit 3: green */
+    --c4: #0d9488;  /* unit 4: teal */
+    --c5: #7c3aed;  /* unit 5: purple */
+    --c6: #dc2626;  /* unit 6: red */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    color: var(--ink); background: var(--bg); min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(217,119,6,.05), transparent 50%),
+      radial-gradient(circle at 90% 60%, rgba(124,58,237,.05), transparent 50%);
+  }
+  header {
+    padding: 56px 48px 32px; max-width: 1300px; margin: 0 auto;
+    text-align: center;
+  }
+  h1 { font-size: 36px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 8px; }
+  .subtitle { color: var(--ink-soft); font-size: 16px; margin-bottom: 14px; }
+  .meta {
+    display: inline-flex; gap: 20px; padding: 10px 24px;
+    background: var(--card); border-radius: 99px; box-shadow: var(--shadow);
+    font-size: 12px; color: var(--ink-soft);
+  }
+  .meta strong { color: var(--ink); }
+  main { padding: 16px 48px 64px; max-width: 1300px; margin: 0 auto; }
+
+  /* Unit section */
+  .unit { margin-top: 40px; }
+  .unit-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+    padding-bottom: 12px; border-bottom: 3px solid;
+  }
+  .unit-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 22px; font-weight: 700;
+  }
+  .unit-info h2 { font-size: 22px; font-weight: 700; }
+  .unit-info p { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .unit-count {
+    margin-left: auto; padding: 6px 14px; background: var(--card);
+    border-radius: 99px; font-size: 12px; color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+
+  .u1 .unit-header { border-color: var(--c1); }
+  .u1 .unit-icon   { background: var(--c1); }
+  .u2 .unit-header { border-color: var(--c2); }
+  .u2 .unit-icon   { background: var(--c2); }
+  .u3 .unit-header { border-color: var(--c3); }
+  .u3 .unit-icon   { background: var(--c3); }
+  .u4 .unit-header { border-color: var(--c4); }
+  .u4 .unit-icon   { background: var(--c4); }
+  .u5 .unit-header { border-color: var(--c5); }
+  .u5 .unit-icon   { background: var(--c5); }
+  .u6 .unit-header { border-color: var(--c6); }
+  .u6 .unit-icon   { background: var(--c6); }
+
+  .lesson-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;
+  }
+  .lesson {
+    background: var(--card); padding: 18px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    text-decoration: none; color: inherit;
+    display: block; transition: all .2s;
+    position: relative;
+  }
+  .lesson:hover {
+    transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  }
+  .lesson .num {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .lesson h3 {
+    font-size: 16px; font-weight: 700; margin-bottom: 8px; line-height: 1.4;
+  }
+  .lesson p {
+    font-size: 12px; color: var(--ink-soft); line-height: 1.7;
+  }
+  .lesson .tag {
+    display: inline-block; margin-top: 8px; padding: 2px 8px;
+    background: rgba(0,0,0,.05); border-radius: 4px; font-size: 10px;
+  }
+  .lesson::after {
+    content: "→"; position: absolute; right: 18px; top: 18px;
+    color: var(--ink-soft); transition: all .2s; font-size: 18px;
+  }
+  .lesson:hover::after { color: var(--ink); transform: translateX(4px); }
+
+  .u1 .lesson { border-top: 3px solid var(--c1); }
+  .u1 .lesson .num { color: var(--c1); }
+  .u2 .lesson { border-top: 3px solid var(--c2); }
+  .u2 .lesson .num { color: var(--c2); }
+  .u3 .lesson { border-top: 3px solid var(--c3); }
+  .u3 .lesson .num { color: var(--c3); }
+  .u4 .lesson { border-top: 3px solid var(--c4); }
+  .u4 .lesson .num { color: var(--c4); }
+  .u5 .lesson { border-top: 3px solid var(--c5); }
+  .u5 .lesson .num { color: var(--c5); }
+  .u6 .lesson { border-top: 3px solid var(--c6); }
+  .u6 .lesson .num { color: var(--c6); }
+
+  footer {
+    text-align: center; padding: 32px 24px;
+    color: var(--ink-soft); font-size: 12px; border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 700px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+    h1 { font-size: 26px; }
+    .lesson-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌐 物联网实践与探索</h1>
+  <p class="subtitle">义务教育信息科技 · 八年级（全一册）· 课程配套交互工具集</p>
+  <div class="meta">
+    <span><strong>30</strong> 课</span>
+    <span><strong>6</strong> 单元</span>
+    <span>ES5 兼容 · Win7+ / IE11+ 可用</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- 第一单元 -->
+  <section class="unit u1">
+    <div class="unit-header">
+      <div class="unit-icon">1</div>
+      <div class="unit-info">
+        <h2>第一单元 · 从感知到物联</h2>
+        <p>认识物联网的概念、传感器，理解物联网与互联网的关系</p>
+      </div>
+      <span class="unit-count">5 课</span>
+    </div>
+    <div class="lesson-grid">
+      <a class="lesson" href="lesson01_intro.html">
+        <div class="num">第 1 课</div>
+        <h3>开启物联网之门</h3>
+        <p>认识物联网，了解物品入网的 3 个条件，回顾我国物联网发展历程</p>
+        <span class="tag">交互式设备检查器</span>
+      </a>
+      <a class="lesson" href="lesson02_sensors.html">
+        <div class="num">第 2 课</div>
+        <h3>传感之古今未来</h3>
+        <p>传感器的发展历史、人体五感与传感器的对应关系</p>
+        <span class="tag">器官-传感器对照</span>
+      </a>
+      <a class="lesson" href="lesson03_sensing.html">
+        <div class="num">第 3 课</div>
+        <h3>环境数据要感知</h3>
+        <p>三种传感器实践方式、声音分贝认知、传感器选择练习</p>
+        <span class="tag">分贝尺 + 选择题</span>
+      </a>
+      <a class="lesson" href="lesson04_value.html">
+        <div class="num">第 4 课</div>
+        <h3>物物相连有价值</h3>
+        <p>传统场景 vs 物联场景对比、价值链分析、物联灯光案例</p>
+        <span class="tag">4 大场景对比</span>
+      </a>
+      <a class="lesson" href="lesson05_experience.html">
+        <div class="num">第 5 课</div>
+        <h3>物联功能趣体验</h3>
+        <p>物联系统的输入-处理-输出三要素、自己搭配组合一个系统</p>
+        <span class="tag">系统搭建器</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第二单元 -->
+  <section class="unit u2">
+    <div class="unit-header">
+      <div class="unit-icon">2</div>
+      <div class="unit-info">
+        <h2>第二单元 · 万物互联有协议</h2>
+        <p>数据传输方式、RFID、蓝牙、HTTP、MQTT 等通信协议</p>
+      </div>
+      <span class="unit-count">5 课</span>
+    </div>
+    <div class="lesson-grid">
+      <a class="lesson" href="lesson06_transmission.html">
+        <div class="num">第 6 课</div>
+        <h3>数据传输方式多</h3>
+        <p>有线 vs 无线、协议栈层次、5G/Wi-Fi/蓝牙/NFC 适用场景</p>
+        <span class="tag">协议推荐器</span>
+      </a>
+      <a class="lesson" href="lesson07_rfid.html">
+        <div class="num">第 7 课</div>
+        <h3>电子标签我揭秘</h3>
+        <p>RFID 工作原理 5 步详解、卡读取模拟、应用场景</p>
+        <span class="tag">5 步动画</span>
+      </a>
+      <a class="lesson" href="lesson08_bluetooth.html">
+        <div class="num">第 8 课</div>
+        <h3>巧用蓝牙做工具</h3>
+        <p>蓝牙特性、配对过程 4 步动画、应用场景</p>
+        <span class="tag">配对模拟器</span>
+      </a>
+      <a class="lesson" href="lesson09_http.html">
+        <div class="num">第 9 课</div>
+        <h3>互联协议仍沿用</h3>
+        <p>HTTP 请求/响应原理、天气数据获取实战</p>
+        <span class="tag">天气 API 模拟</span>
+      </a>
+      <a class="lesson" href="lesson10_mqtt.html">
+        <div class="num">第 10 课</div>
+        <h3>物物互通有新径</h3>
+        <p>MQTT 发布-订阅模型、主题层次、对比 HTTP</p>
+        <span class="tag">发布订阅模拟</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第三单元 -->
+  <section class="unit u3">
+    <div class="unit-header">
+      <div class="unit-icon">3</div>
+      <div class="unit-info">
+        <h2>第三单元 · 简单物联功能实践</h2>
+        <p>以智能门锁为例，循序渐进实现刷卡、门铃、远程、人脸开锁</p>
+      </div>
+      <span class="unit-count">5 课</span>
+    </div>
+    <div class="lesson-grid">
+      <a class="lesson" href="lesson11_decompose.html">
+        <div class="num">第 11 课</div>
+        <h3>物联功能细分解</h3>
+        <p>智能门锁的功能拆解、输入-处理-输出分析、设计步骤</p>
+        <span class="tag">功能图谱</span>
+      </a>
+      <a class="lesson" href="lesson12_rfid_lock.html">
+        <div class="num">第 12 课</div>
+        <h3>刷卡开锁易实现</h3>
+        <p>RFID 门锁实现：白名单匹配、舵机控制、流程图</p>
+        <span class="tag">完整模拟器</span>
+      </a>
+      <a class="lesson" href="lesson13_doorbell.html">
+        <div class="num">第 13 课</div>
+        <h3>门铃通知即时到</h3>
+        <p>智能门铃 5 步推送流程、MQTT 应用、双端代码</p>
+        <span class="tag">动画演示</span>
+      </a>
+      <a class="lesson" href="lesson14_remote.html">
+        <div class="num">第 14 课</div>
+        <h3>远程控制更便捷</h3>
+        <p>手机-云端-门锁三端联动、双向通信流程、安全考虑</p>
+        <span class="tag">远程开锁模拟</span>
+      </a>
+      <a class="lesson" href="lesson15_face.html">
+        <div class="num">第 15 课</div>
+        <h3>面容钥匙显智能</h3>
+        <p>人脸识别 5 步流程、活体检测、相似度阈值</p>
+        <span class="tag">人脸识别模拟</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第四单元 -->
+  <section class="unit u4">
+    <div class="unit-header">
+      <div class="unit-icon">4</div>
+      <div class="unit-info">
+        <h2>第四单元 · 简易物联系统实践</h2>
+        <p>以智能花盆为例，学习数据采集、分析、可视化和反馈控制</p>
+      </div>
+      <span class="unit-count">5 课</span>
+    </div>
+    <div class="lesson-grid">
+      <a class="lesson" href="lesson16_modules.html">
+        <div class="num">第 16 课</div>
+        <h3>模块功能先划分</h3>
+        <p>智能花盆系统架构、4 个核心模块、数据流分析</p>
+        <span class="tag">系统架构图</span>
+      </a>
+      <a class="lesson" href="lesson17_collect.html">
+        <div class="num">第 17 课</div>
+        <h3>物联数据需采集</h3>
+        <p>实时数据采集、采样频率选择、异常应对</p>
+        <span class="tag">实时面板</span>
+      </a>
+      <a class="lesson" href="lesson18_analysis.html">
+        <div class="num">第 18 课</div>
+        <h3>数据分析与处理</h3>
+        <p>数据平滑、异常剔除、统计指标（均值/最值/标准差）</p>
+        <span class="tag">数据可视化</span>
+      </a>
+      <a class="lesson" href="lesson19_visualization.html">
+        <div class="num">第 19 课</div>
+        <h3>数据呈现可视化</h3>
+        <p>柱状/折线/饼/散点图选择、可视化原则</p>
+        <span class="tag">4 种图表演示</span>
+      </a>
+      <a class="lesson" href="lesson20_feedback_control.html">
+        <div class="num">第 20 课</div>
+        <h3>反馈控制有算法</h3>
+        <p>智能花盆灌溉算法、阈值判断、结合天气决策</p>
+        <span class="tag">算法决策器</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第五单元 -->
+  <section class="unit u5">
+    <div class="unit-header">
+      <div class="unit-icon">5</div>
+      <div class="unit-info">
+        <h2>第五单元 · 物联网应用探索</h2>
+        <p>物联网在文物、医疗、农业、教育等领域的应用案例</p>
+      </div>
+      <span class="unit-count">5 课</span>
+    </div>
+    <div class="lesson-grid">
+      <a class="lesson" href="lesson21_heritage.html">
+        <div class="num">第 21 课</div>
+        <h3>文物保护新手段</h3>
+        <p>智慧博物馆环境监测、文物面临的 8 类威胁</p>
+        <span class="tag">展柜模拟器</span>
+      </a>
+      <a class="lesson" href="lesson22_health.html">
+        <div class="num">第 22 课</div>
+        <h3>健康生活新设备</h3>
+        <p>智能手表健康仪表盘、心率监测原理、6 种场景</p>
+        <span class="tag">健康仪表盘</span>
+      </a>
+      <a class="lesson" href="lesson23_medical.html">
+        <div class="num">第 23 课</div>
+        <h3>医疗设施新功能</h3>
+        <p>智慧病房监护、远程会诊、医院 IoT 应用</p>
+        <span class="tag">病房监护模拟</span>
+      </a>
+      <a class="lesson" href="lesson24_agriculture.html">
+        <div class="num">第 24 课</div>
+        <h3>农业生产新模式</h3>
+        <p>智能温室、精准灌溉、智慧农业 8 大应用</p>
+        <span class="tag">温室模拟器</span>
+      </a>
+      <a class="lesson" href="lesson25_learning.html">
+        <div class="num">第 25 课</div>
+        <h3>学习探究新工具</h3>
+        <p>智慧教室、实验数据自动采集与可视化</p>
+        <span class="tag">物理实验模拟</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 第六单元 -->
+  <section class="unit u6">
+    <div class="unit-header">
+      <div class="unit-icon">6</div>
+      <div class="unit-info">
+        <h2>第六单元 · 物联网安全</h2>
+        <p>虚拟身份、安全事件、防范策略、自主可控、系统升级</p>
+      </div>
+      <span class="unit-count">5 课</span>
+    </div>
+    <div class="lesson-grid">
+      <a class="lesson" href="lesson26_identity.html">
+        <div class="num">第 26 课</div>
+        <h3>数字世界有身份</h3>
+        <p>虚拟身份分类、IPv4 vs IPv6、设备身份探索</p>
+        <span class="tag">身份查看器</span>
+      </a>
+      <a class="lesson" href="lesson27_28_security.html">
+        <div class="num">第 27–28 课</div>
+        <h3>安全事件与防范策略</h3>
+        <p>4 层安全风险、6 大防范策略、安全知识测试</p>
+        <span class="tag">层级 + 题库</span>
+      </a>
+      <a class="lesson" href="lesson29_autonomy.html">
+        <div class="num">第 29 课</div>
+        <h3>自主可控意义大</h3>
+        <p>外部依赖风险、国产技术栈对比、我国创新成就</p>
+        <span class="tag">技术栈对照</span>
+      </a>
+      <a class="lesson" href="lesson30_security.html">
+        <div class="num">第 30 课</div>
+        <h3>系统安全需升级</h3>
+        <p>OTA 远程升级模拟、漏洞应对流程、6 大安全实践</p>
+        <span class="tag">OTA 模拟</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>义务教育信息科技 · 物联网实践与探索 · 八年级 · 全 30 课配套交互工具<br>所有工具采用 ES5 语法，兼容 Win7 + IE11 及更高版本浏览器</footer>
+
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Markdown 实时预览器 · 第19课</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1729;--panel:#1a2340;--panel2:#222d50;
+  --line:#2d3a63;--text:#e6eaf5;--muted:#8a96b8;
+  --accent:#4ed1b8;--accent2:#ffb347;
+  --shadow:0 8px 30px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 30% -10%,#1c2a4d 0%,var(--bg) 60%);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:20px;height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+h1{font-size:24px;margin:0;font-weight:700;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.lesson-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.02);}
+.subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+
+.toolbar{
+  display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+  padding:8px 12px;background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:10px;margin-bottom:12px;
+}
+.tb-btn{
+  background:transparent;border:1px solid var(--line);color:var(--text);
+  padding:5px 10px;border-radius:5px;font-family:inherit;
+  font-size:12px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;
+}
+.tb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tb-btn .syntax{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:11px}
+.tb-btn:hover .syntax{color:var(--accent)}
+.divider{width:1px;height:18px;background:var(--line);margin:0 4px}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:0}
+@media(max-width:760px){.split{grid-template-columns:1fr;grid-auto-rows:1fr}}
+
+.panel-block{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:12px;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.panel-head{
+  padding:10px 14px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.panel-head h2{margin:0;font-size:13px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.panel-head .actions{display:flex;gap:6px}
+.panel-head button{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:4px 10px;border-radius:5px;font-size:11px;font-family:inherit;cursor:pointer;
+}
+.panel-head button:hover{border-color:var(--accent);color:var(--accent)}
+.panel-head button.primary{background:var(--accent);color:#0a1226;border-color:transparent;font-weight:700}
+
+#md{
+  flex:1;background:#0a1226;color:var(--text);
+  border:0;padding:16px;
+  font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;
+  resize:none;outline:none;tab-size:2;
+}
+
+/* Rendered preview styles */
+.preview{
+  flex:1;background:#fafafa;color:#222;padding:24px;overflow:auto;
+  font-family:-apple-system,'Segoe UI','Helvetica Neue','Microsoft YaHei',sans-serif;
+  line-height:1.7;
+}
+.preview h1,.preview h2,.preview h3{margin-top:1.2em;margin-bottom:.5em;color:#0a1226;font-weight:700}
+.preview h1{font-size:28px;border-bottom:2px solid #4ed1b8;padding-bottom:6px}
+.preview h2{font-size:22px;border-bottom:1px solid #ddd;padding-bottom:4px}
+.preview h3{font-size:18px}
+.preview p{margin:0 0 1em}
+.preview ul,.preview ol{margin:0 0 1em;padding-left:24px}
+.preview li{margin:4px 0}
+.preview blockquote{
+  margin:0 0 1em;padding:8px 16px;background:#f0f9f6;
+  border-left:4px solid #4ed1b8;color:#555;
+}
+.preview code{
+  background:#eef0f4;color:#d63384;padding:2px 6px;border-radius:3px;
+  font-family:'JetBrains Mono',monospace;font-size:.9em;
+}
+.preview pre{
+  background:#1a2340;color:#e6eaf5;padding:14px 16px;border-radius:6px;
+  overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.5;
+}
+.preview pre code{background:transparent;color:inherit;padding:0}
+.preview hr{border:0;border-top:1px solid #ddd;margin:1.5em 0}
+.preview a{color:#4ed1b8;text-decoration:none}
+.preview a:hover{text-decoration:underline}
+.preview img{max-width:100%;border-radius:4px}
+.preview table{border-collapse:collapse;margin:0 0 1em;width:auto}
+.preview th,.preview td{border:1px solid #ddd;padding:6px 12px;text-align:left}
+.preview th{background:#f0f9f6}
+.preview strong{color:#0a1226}
+.preview em{color:#555}
+
+.examples-row{
+  padding:8px 14px;background:rgba(0,0,0,.15);border-top:1px solid var(--line);
+  display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+}
+.examples-row .lbl{color:var(--muted);font-size:11px;margin-right:4px}
+.eg{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;
+}
+.eg:hover{border-color:var(--accent2);color:var(--accent2)}
+
+.cheat-bar{
+  padding:6px 14px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+  background:rgba(0,0,0,.2);border-top:1px solid var(--line);
+}
+.cheat-bar b{color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Markdown 实时预览器</h1>
+      <div class="subtitle">轻量标记语法 → 自动转换为格式化文档（多人协同写作的常用语言）</div>
+    </div>
+    <span class="lesson-tag">第四单元 · 第19课《多人协同效率高》</span>
+  </header>
+
+  <div class="toolbar">
+    <button class="tb-btn" data-md="# {sel}" data-tip="标题"># <span class="syntax">H1</span></button>
+    <button class="tb-btn" data-md="## {sel}" data-tip="二级标题">## <span class="syntax">H2</span></button>
+    <button class="tb-btn" data-md="### {sel}" data-tip="三级标题">### <span class="syntax">H3</span></button>
+    <div class="divider"></div>
+    <button class="tb-btn" data-md="**{sel}**" data-tip="粗体"><b>B</b><span class="syntax">**</span></button>
+    <button class="tb-btn" data-md="*{sel}*" data-tip="斜体"><i>I</i><span class="syntax">*</span></button>
+    <button class="tb-btn" data-md="~~{sel}~~" data-tip="删除线"><s>S</s><span class="syntax">~~</span></button>
+    <button class="tb-btn" data-md="`{sel}`" data-tip="行内代码"><span class="syntax">`code`</span></button>
+    <div class="divider"></div>
+    <button class="tb-btn" data-md="[{sel}](https://example.com)" data-tip="链接">🔗<span class="syntax">[]()</span></button>
+    <button class="tb-btn" data-md="![{sel}](https://placehold.co/300x180/4ed1b8/fff?text=Image)" data-tip="图片">🖼<span class="syntax">![]()</span></button>
+    <div class="divider"></div>
+    <button class="tb-btn" data-md="- {sel}\n- 列表项\n- 列表项" data-tip="无序列表">📋<span class="syntax">-</span></button>
+    <button class="tb-btn" data-md="1. {sel}\n2. 第二项\n3. 第三项" data-tip="有序列表">🔢<span class="syntax">1.</span></button>
+    <button class="tb-btn" data-md="> {sel}" data-tip="引用">💬<span class="syntax">&gt;</span></button>
+    <button class="tb-btn" data-md="```\n{sel}\n```" data-tip="代码块">{} <span class="syntax">```</span></button>
+    <button class="tb-btn" data-md="\n---\n" data-tip="分割线">— <span class="syntax">---</span></button>
+    <button class="tb-btn" data-md="| 列1 | 列2 | 列3 |\n|-----|-----|-----|\n| A | B | C |" data-tip="表格">▦ <span class="syntax">| |</span></button>
+  </div>
+
+  <div class="split">
+    <div class="panel-block">
+      <div class="panel-head">
+        <h2>📝 Markdown 源码</h2>
+        <div class="actions">
+          <button id="btnDownMD" class="primary">⬇ 下载 .md</button>
+        </div>
+      </div>
+      <textarea id="md" spellcheck="false"></textarea>
+      <div class="examples-row">
+        <span class="lbl">示例：</span>
+        <button class="eg" data-eg="readme">README 范例</button>
+        <button class="eg" data-eg="article">活动通知</button>
+        <button class="eg" data-eg="syntax">语法速查</button>
+        <button class="eg" data-eg="empty">清空</button>
+      </div>
+    </div>
+
+    <div class="panel-block">
+      <div class="panel-head">
+        <h2>👁 渲染效果</h2>
+        <div class="actions">
+          <button id="btnDownHTML">⬇ 下载 .html</button>
+          <button id="btnPrint">打印</button>
+        </div>
+      </div>
+      <div class="preview" id="preview"></div>
+      <div class="cheat-bar">
+        💡 <b>Markdown</b> 用极简符号代替 HTML 标签：<b>#</b> = 标题， <b>**</b> = 粗体， <b>-</b> = 列表， <b>&gt;</b> = 引用 …
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const md = document.getElementById('md');
+const preview = document.getElementById('preview');
+
+const examples = {
+  readme: `# 校园科技节 · 项目说明
+
+## 项目简介
+
+我们小组的项目主题是 **人工智能绘画**，使用在线 AI 模型生成富有创意的图像作品。
+
+## 团队成员
+
+1. 小明 — 组长，负责整体协调
+2. 小红 — 美术设计
+3. 小华 — 文案撰写
+
+## 工作进度
+
+- [x] 确定项目主题
+- [x] 收集素材
+- [ ] 完成网页制作
+- [ ] 准备线下展示
+
+## 重要提示
+
+> 制作过程中要注意 *版权* 问题，使用的素材必须来自合法渠道。
+
+更多信息请访问 [项目主页](https://example.com)。
+
+---
+
+| 阶段 | 时间 | 负责人 |
+|------|------|--------|
+| 策划 | 第1周 | 小明 |
+| 设计 | 第2周 | 小红 |
+| 撰写 | 第3周 | 小华 |
+| 整合 | 第4周 | 全员 |
+
+\`\`\`
+项目代码示例:
+print("Hello, 科技节!")
+\`\`\`
+`,
+  article: `# 读书节线上分享活动通知
+
+## 活动主题
+
+**书香润心灵** —— 让阅读照亮青春
+
+## 时间地点
+
+- **日期**：4 月 23 日（世界读书日）
+- **形式**：线上视频分享 + 网页展览
+- **平台**：班级在线协同平台
+
+## 活动内容
+
+1. 推荐一本最喜爱的书
+2. 分享读书感悟（不少于 200 字）
+3. 制作一个介绍图书的网页
+
+> "读书破万卷，下笔如有神。" —— 杜甫
+
+## 报名方式
+
+请扫描下方二维码报名，或联系班长。
+
+![活动海报](https://placehold.co/400x200/ffb347/fff?text=Reading+Festival)
+
+---
+
+*欢迎每一位同学积极参与！*
+`,
+  syntax: `# Markdown 语法速查表
+
+## 1. 标题
+
+# 一级 ## 二级 ### 三级 #### 四级
+
+## 2. 强调
+
+**粗体**、*斜体*、***粗斜体***、~~删除线~~
+
+## 3. 列表
+
+无序列表：
+- 苹果
+- 香蕉
+- 橙子
+
+有序列表：
+1. 第一步
+2. 第二步
+3. 第三步
+
+## 4. 链接与图片
+
+[这是链接](https://example.com)
+
+![图片说明](https://placehold.co/200x100/4ed1b8/fff?text=Demo)
+
+## 5. 代码
+
+行内代码：\`var x = 10;\`
+
+代码块：
+\`\`\`
+function hello() {
+  console.log("Hello, world!");
+}
+\`\`\`
+
+## 6. 引用
+
+> 这是引用块。
+> 可以多行书写。
+
+## 7. 分割线
+
+---
+
+## 8. 表格
+
+| 姓名 | 学号 | 成绩 |
+|------|------|------|
+| 张三 | 001 | 95 |
+| 李四 | 002 | 88 |
+`,
+  empty: ''
+};
+
+// === Minimal Markdown Renderer ===
+// Supports: headings, bold/italic/strike, code (inline & block), lists,
+// quotes, hr, links, images, tables, paragraphs.
+function escapeHTML(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderInline(text){
+  // images: ![alt](url)
+  text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,(_,alt,url,t)=>`<img src="${url}" alt="${escapeHTML(alt)}"${t?` title="${escapeHTML(t)}"`:''}>`);
+  // links: [text](url)
+  text = text.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,(_,t,url,ti)=>`<a href="${url}"${ti?` title="${escapeHTML(ti)}"`:''} target="_blank">${t}</a>`);
+  // inline code
+  text = text.replace(/`([^`]+)`/g,(_,c)=>`<code>${escapeHTML(c)}</code>`);
+  // bold
+  text = text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  text = text.replace(/__([^_]+)__/g,'<strong>$1</strong>');
+  // italic
+  text = text.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  text = text.replace(/(?<![A-Za-z])_([^_]+)_/g,'<em>$1</em>');
+  // strikethrough
+  text = text.replace(/~~([^~]+)~~/g,'<s>$1</s>');
+  return text;
+}
+
+function renderMD(src){
+  const lines = src.split('\n');
+  let html = '';
+  let i = 0;
+  while(i<lines.length){
+    let line = lines[i];
+    // code block
+    if(/^```/.test(line)){
+      const lang = line.slice(3).trim();
+      let codeLines = [];
+      i++;
+      while(i<lines.length && !/^```/.test(lines[i])){
+        codeLines.push(lines[i]); i++;
+      }
+      i++; // skip closing ```
+      html += `<pre><code class="lang-${lang}">${escapeHTML(codeLines.join('\n'))}</code></pre>`;
+      continue;
+    }
+    // hr
+    if(/^---+$/.test(line.trim())){html+='<hr>';i++;continue;}
+    // heading
+    let m;
+    if((m=line.match(/^(#{1,6})\s+(.+)$/))){
+      const lv = m[1].length;
+      html += `<h${lv}>${renderInline(m[2])}</h${lv}>`;
+      i++;continue;
+    }
+    // blockquote
+    if(/^> /.test(line)){
+      let quoteLines = [];
+      while(i<lines.length && /^> /.test(lines[i])){
+        quoteLines.push(lines[i].replace(/^> /,''));
+        i++;
+      }
+      html += `<blockquote>${renderMD(quoteLines.join('\n'))}</blockquote>`;
+      continue;
+    }
+    // table (header | sep | rows)
+    if(/^\|.+\|$/.test(line) && i+1<lines.length && /^\|[\s|:-]+\|$/.test(lines[i+1])){
+      const headers = line.slice(1,-1).split('|').map(s=>s.trim());
+      i+=2; // skip sep
+      const rows = [];
+      while(i<lines.length && /^\|.+\|$/.test(lines[i])){
+        rows.push(lines[i].slice(1,-1).split('|').map(s=>s.trim()));
+        i++;
+      }
+      let t = '<table><thead><tr>';
+      headers.forEach(h=>t+=`<th>${renderInline(h)}</th>`);
+      t+='</tr></thead><tbody>';
+      rows.forEach(r=>{
+        t+='<tr>';
+        r.forEach(c=>t+=`<td>${renderInline(c)}</td>`);
+        t+='</tr>';
+      });
+      t+='</tbody></table>';
+      html+=t;continue;
+    }
+    // list
+    if(/^(\s*)([-*+]|\d+\.)\s+/.test(line)){
+      const isOrdered = /^\s*\d+\./.test(line);
+      const tag = isOrdered?'ol':'ul';
+      let items = [];
+      while(i<lines.length && /^(\s*)([-*+]|\d+\.)\s+/.test(lines[i])){
+        const m2 = lines[i].match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
+        let content = m2[3];
+        // task list
+        const tk = content.match(/^\[( |x|X)\]\s+(.+)$/);
+        if(tk){
+          const checked = tk[1].toLowerCase()==='x';
+          content = `<input type="checkbox" disabled ${checked?'checked':''}> ${tk[2]}`;
+          items.push(content);
+        } else {
+          items.push(renderInline(content));
+        }
+        i++;
+      }
+      html += `<${tag}>${items.map(it=>`<li>${it}</li>`).join('')}</${tag}>`;
+      continue;
+    }
+    // empty line -> break
+    if(line.trim()===''){i++;continue;}
+    // paragraph (gather consecutive non-empty)
+    let para = [line];
+    i++;
+    while(i<lines.length && lines[i].trim()!=='' &&
+      !/^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|---+$|\|.+\|)/.test(lines[i])){
+      para.push(lines[i]); i++;
+    }
+    html += `<p>${renderInline(para.join(' '))}</p>`;
+  }
+  return html;
+}
+
+function update(){
+  preview.innerHTML = renderMD(md.value);
+}
+
+let timer;
+md.oninput = ()=>{clearTimeout(timer);timer=setTimeout(update,150);};
+
+document.querySelectorAll('.tb-btn').forEach(b=>{
+  b.onclick = ()=>{
+    const tpl = b.dataset.md.replace(/\\n/g,'\n');
+    const start = md.selectionStart, end = md.selectionEnd;
+    const sel = md.value.substring(start,end) || '内容';
+    const txt = tpl.replace('{sel}', sel);
+    md.value = md.value.substring(0,start) + txt + md.value.substring(end);
+    md.focus();
+    md.selectionStart = start;
+    md.selectionEnd = start + txt.length;
+    update();
+  };
+});
+
+document.querySelectorAll('.eg').forEach(b=>{
+  b.onclick = ()=>{md.value = examples[b.dataset.eg]; update();};
+});
+
+document.getElementById('btnDownMD').onclick = ()=>{
+  const blob = new Blob([md.value],{type:'text/markdown;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url;a.download='document.md';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+document.getElementById('btnDownHTML').onclick = ()=>{
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Document</title>
+<style>body{font-family:-apple-system,'Microsoft YaHei',sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222}
+h1{border-bottom:2px solid #4ed1b8;padding-bottom:6px}h2{border-bottom:1px solid #ddd;padding-bottom:4px}
+blockquote{margin:0 0 1em;padding:8px 16px;background:#f0f9f6;border-left:4px solid #4ed1b8;color:#555}
+code{background:#eef0f4;color:#d63384;padding:2px 6px;border-radius:3px;font-family:Consolas,monospace}
+pre{background:#1a2340;color:#e6eaf5;padding:14px 16px;border-radius:6px;overflow-x:auto}pre code{background:transparent;color:inherit;padding:0}
+table{border-collapse:collapse}th,td{border:1px solid #ddd;padding:6px 12px}th{background:#f0f9f6}
+img{max-width:100%}a{color:#4ed1b8}</style></head><body>${preview.innerHTML}</body></html>`;
+  const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url;a.download='document.html';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+document.getElementById('btnPrint').onclick = ()=>window.print();
+
+md.value = examples.readme;
+update();
+</script>
+</body>
+</html>

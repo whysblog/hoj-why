@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信息科技教学工具总首页</title>
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --text: #172033;
+    --muted: #647084;
+    --card: #ffffff;
+    --line: #dfe5ee;
+    --shadow: 0 10px 30px rgba(23, 32, 51, .08);
+    --blue: #2563eb;
+    --cyan: #0891b2;
+    --teal: #0d9488;
+    --green: #059669;
+    --orange: #d97706;
+    --purple: #7c3aed;
+    --pink: #db2777;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.72), rgba(246,248,251,1)),
+      radial-gradient(circle at 8% 8%, rgba(37,99,235,.08), transparent 32%),
+      radial-gradient(circle at 92% 18%, rgba(5,150,105,.08), transparent 30%);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  .page {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 48px 0;
+  }
+
+  header {
+    padding: 34px 0 28px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255,255,255,.72);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  h1 {
+    margin-top: 18px;
+    font-size: clamp(32px, 6vw, 54px);
+    line-height: 1.12;
+    letter-spacing: 0;
+  }
+
+  .lead {
+    max-width: 760px;
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 17px;
+  }
+
+  .grade-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  .grade-card {
+    position: relative;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+    color: inherit;
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+
+  .grade-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: var(--accent);
+  }
+
+  .grade-card:hover,
+  .grade-card:focus-visible {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 18px 42px rgba(23, 32, 51, .13);
+    outline: none;
+  }
+
+  .grade {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .grade-card h2 {
+    margin-top: 18px;
+    font-size: 20px;
+    line-height: 1.35;
+  }
+
+  .grade-card p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .tag {
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+  }
+
+  .open {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 22px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .open::after {
+    content: "→";
+    transition: transform .2s ease;
+  }
+
+  .grade-card:hover .open::after {
+    transform: translateX(4px);
+  }
+
+  .g3 { --accent: var(--cyan); }
+  .g4 { --accent: var(--teal); }
+  .g5 { --accent: var(--blue); }
+  .g6 { --accent: var(--purple); }
+  .g7 { --accent: var(--green); }
+  .g8 { --accent: var(--orange); }
+  .g9 { --accent: var(--pink); }
+
+  footer {
+    margin-top: 34px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 1080px) {
+    .grade-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .page {
+      width: min(100% - 24px, 1180px);
+      padding: 28px 0;
+    }
+
+    .grade-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .grade-card {
+      min-height: 220px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <span class="eyebrow">义务教育信息科技 · 教学工具总入口</span>
+    <h1>信息科技教学工具集</h1>
+    <p class="lead">按年级汇总入口，点击年级卡片即可进入对应工具集首页。</p>
+  </header>
+
+  <main class="grade-grid" aria-label="年级入口">
+    <a class="grade-card g3" href="信息科技教学辅助工具集_三年级在线学习与生活 (1)(1)/tools/00_工具集导航.html">
+      <div class="grade">3</div>
+      <h2>三年级 · 在线学习与生活</h2>
+      <p>进入工具集首页，访问数字设备、图片音视频记录、网络资源、在线交流、作品制作和在线安全等课堂工具。</p>
+      <div class="meta">
+        <span class="tag">在线学习</span>
+        <span class="tag">数字生活</span>
+        <span class="tag">30 课</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+
+    <a class="grade-card g4" href="四年级-数据与编码-教学工具集/数据与编码教学工具/index.html">
+      <div class="grade">4</div>
+      <h2>四年级 · 数据与编码</h2>
+      <p>进入工具集首页，访问数据记录、编码体验、图像像素、RGB 色彩、校验码、图表和词云等课程页面。</p>
+      <div class="meta">
+        <span class="tag">数据编码</span>
+        <span class="tag">互动工具</span>
+        <span class="tag">30 课</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+
+    <a class="grade-card g5" href="五年级-身边的算法-互动工具集(2)/algorithm_tools/index.html">
+      <div class="grade">5</div>
+      <h2>五年级 · 身边的算法</h2>
+      <p>进入工具集首页，访问算法入门、流程结构、排序、图论、人工智能算法等课堂工具。</p>
+      <div class="meta">
+        <span class="tag">算法</span>
+        <span class="tag">互动工具</span>
+        <span class="tag">30 课</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+
+    <a class="grade-card g6" href="六年级-过程与控制教学工具集/过程与控制教学工具/00_首页_工具导航.html">
+      <div class="grade">6</div>
+      <h2>六年级 · 过程与控制</h2>
+      <p>进入工具集首页，访问控制系统、逻辑运算、开环闭环、智能种植、电梯和汽车控制等工具。</p>
+      <div class="meta">
+        <span class="tag">过程控制</span>
+        <span class="tag">教学导航</span>
+        <span class="tag">30 课</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+
+    <a class="grade-card g7" href="七年级/index.html">
+      <div class="grade">7</div>
+      <h2>七年级 · 互联网应用与创新</h2>
+      <p>进入工具集首页，访问互联网发展、网络协议、WWW 服务、网页制作和网络生态等内容。</p>
+      <div class="meta">
+        <span class="tag">互联网</span>
+        <span class="tag">课件与工具</span>
+        <span class="tag">30 课</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+
+    <a class="grade-card g8" href="8年级-物联网实践与探索-教学工具集(1)/index.html">
+      <div class="grade">8</div>
+      <h2>八年级 · 物联网实践与探索</h2>
+      <p>进入工具集首页，访问传感器、RFID、蓝牙、MQTT、智能门锁、智慧农业和物联网安全等工具。</p>
+      <div class="meta">
+        <span class="tag">物联网</span>
+        <span class="tag">实践探索</span>
+        <span class="tag">30 课</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+
+    <a class="grade-card g9" href="九年级AI教学工具包/index.html">
+      <div class="grade">9</div>
+      <h2>九年级 · 人工智能与智慧社会</h2>
+      <p>进入工具集首页，访问文本生成、图像识别、智能推理、聚类与博弈等工具。</p>
+      <div class="meta">
+        <span class="tag">人工智能</span>
+        <span class="tag">智慧社会</span>
+        <span class="tag">AI 工具</span>
+      </div>
+      <span class="open">进入首页</span>
+    </a>
+  </main>
+
+  <footer>信息科技教学工具集 · 总首页</footer>
+</div>
+</body>
+</html>

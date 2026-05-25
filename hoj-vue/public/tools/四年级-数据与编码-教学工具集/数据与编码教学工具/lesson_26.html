@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第26课 用数据支撑观点 · 数据与编码</title>
+<link rel="stylesheet" href="lesson_style.css">
+<style>
+:root{
+  --theme:#e53935;
+  --theme-dark:#c62828;
+  --theme-light:#ffebee;
+  --bg:#fffafa;
+}
+.compare-arg{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin:14px 0;
+}
+.arg-card{
+  background:#fff;border-radius:12px;
+  padding:16px;
+}
+.arg-card.weak{border-top:5px solid #ef5350}
+.arg-card.strong{border-top:5px solid #43a047}
+.arg-card h4{font-size:15px;margin-bottom:10px}
+.arg-card.weak h4{color:#c62828}
+.arg-card.strong h4{color:#2e7d32}
+.arg-card .quote{
+  background:#fafafa;
+  border-left:3px solid #cfd8dc;
+  padding:10px 14px;
+  font-size:14px;
+  color:#37474f;
+  border-radius:0 8px 8px 0;
+  margin-bottom:8px;
+  font-style:italic;
+}
+.arg-card.weak .quote{border-left-color:#ef5350}
+.arg-card.strong .quote{border-left-color:#43a047}
+.flow-step{
+  background:#fff;border-radius:12px;
+  padding:16px;margin:10px 0;
+  display:flex;gap:14px;align-items:flex-start;
+}
+.flow-step .step-num{
+  background:var(--theme);color:#fff;
+  width:36px;height:36px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:16px;
+  flex-shrink:0;
+}
+.flow-step h4{
+  color:var(--theme-dark);font-size:15px;
+  margin-bottom:6px;
+}
+.flow-step p{font-size:14px;color:#37474f;margin:0}
+.report-demo{
+  background:linear-gradient(135deg,#fff5f5,#ffebee);
+  border-radius:12px;
+  padding:20px;margin:14px 0;
+  border:1px solid #ffcdd2;
+}
+.report-demo h4{
+  color:var(--theme-dark);
+  font-size:18px;margin-bottom:10px;
+  text-align:center;
+  border-bottom:2px solid var(--theme);
+  padding-bottom:8px;
+}
+.report-demo .rep-section{
+  margin:10px 0;
+  font-size:14px;
+}
+.report-demo .rep-section b{color:var(--theme-dark)}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← 返回工具首页</a>
+
+  <header class="lesson-header">
+    <span class="lesson-tag">第五单元 · 第26课</span>
+    <h1>💬 用数据支撑观点</h1>
+    <p>学习用数据和图表让自己的发言更有说服力</p>
+  </header>
+
+  <nav class="section-nav">
+    <button class="nav-btn active" data-slide="0">🎯 课前导入</button>
+    <button class="nav-btn" data-slide="1">⚖️ 有数据 vs 无数据</button>
+    <button class="nav-btn" data-slide="2">📋 五步法</button>
+    <button class="nav-btn" data-slide="3">📝 完整案例</button>
+    <button class="nav-btn" data-slide="4">✨ 课堂小结</button>
+  </nav>
+
+  <section class="slide active">
+    <h2><span class="step-num">1</span>课前导入</h2>
+
+    <div class="info-box tip">
+      <h4>🤔 想一想</h4>
+      你和同学讨论：<b>"我们班同学最喜欢哪种课外活动？"</b>
+      <br><br>
+      小明说："<b>我觉得大家都喜欢踢球</b>。"
+      <br>小红说："<b>我调查了，30 人里有 12 人最喜欢踢球，占 40%，是最多的</b>。"
+      <br><br>
+      你觉得<b>谁更有说服力</b>？为什么？
+    </div>
+
+    <p>答案显然是<b>小红</b>！因为她<b>用数据说话</b>。</p>
+
+    <h3>🎯 这节课你将学会</h3>
+    <ul>
+      <li>理解为什么<b>数据让观点更可信</b></li>
+      <li>掌握用数据支撑观点的<b>五步法</b></li>
+      <li>能用图表来增强报告的说服力</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">2</span>有数据 vs 无数据</h2>
+
+    <p>同样一个观点，加不加数据，差距巨大 ↓</p>
+
+    <div class="compare-arg">
+      <div class="arg-card weak">
+        <h4>❌ 没有数据</h4>
+        <div class="quote">"我们班大部分同学喜欢踢球。"</div>
+        <p style="font-size:13px;color:#37474f">
+          ❓ "大部分" 是多少？<br>
+          ❓ 你怎么知道的？<br>
+          ❓ 你的数据来源呢？
+        </p>
+      </div>
+      <div class="arg-card strong">
+        <h4>✅ 有数据</h4>
+        <div class="quote">"我调查了全班 30 人，其中 12 人选择踢球作为最爱的运动，占比 40%，是最受欢迎的运动。"</div>
+        <p style="font-size:13px;color:#37474f">
+          ✓ 具体数字：30 人 / 12 人 / 40%<br>
+          ✓ 调查方法说明<br>
+          ✓ 可以验证
+        </p>
+      </div>
+    </div>
+
+    <h3>📊 加上图表，更有冲击力</h3>
+    <div class="info-box success">
+      文字 + <b>数据</b> + <b>图表</b> = 强大的说服力！
+      <br>
+      想象一下：你说"40% 同学喜欢踢球"，再配上一张<b>柱形图</b>，效果是不是更好？
+    </div>
+
+    <div class="card-grid">
+      <div class="feature-card">
+        <span class="emoji">💪</span>
+        <h4>更有力</h4>
+        <p>数据是事实，让人无法反驳</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">👁️</span>
+        <h4>更直观</h4>
+        <p>图表一眼看清</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🎯</span>
+        <h4>更精准</h4>
+        <p>避免模糊的"很多""一些"</p>
+      </div>
+      <div class="feature-card">
+        <span class="emoji">🤝</span>
+        <h4>更可信</h4>
+        <p>说明你认真做了研究</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">3</span>用数据说话的五步法</h2>
+
+    <div class="flow-step">
+      <span class="step-num">1</span>
+      <div>
+        <h4>提出观点</h4>
+        <p>先明确<b>你想表达什么</b>。例：我认为"运动有助于身体健康"</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <span class="step-num">2</span>
+      <div>
+        <h4>收集数据</h4>
+        <p>通过<b>调查、测量、查询</b>获取相关数据。例：测量经常运动和不运动同学的身体状况</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <span class="step-num">3</span>
+      <div>
+        <h4>整理分析</h4>
+        <p><b>清洗、排序、计算</b>，找出规律。例：算出两组同学的平均体质分</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <span class="step-num">4</span>
+      <div>
+        <h4>制作图表</h4>
+        <p>选择合适的<b>图表</b>来展示。例：用柱形图对比两组分数</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <span class="step-num">5</span>
+      <div>
+        <h4>得出结论</h4>
+        <p>用数据<b>证明</b>你的观点，注意写明<b>数据来源</b>。</p>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 关键原则</h4>
+      <ul style="margin-top:4px">
+        <li>📊 <b>数据真实</b>：不能编造</li>
+        <li>📅 <b>注明来源和时间</b>：方便核实</li>
+        <li>🎯 <b>不夸大不缩小</b>：客观呈现</li>
+        <li>📐 <b>图表选对</b>：饼图看比例、柱图看比较、折线看变化</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">4</span>完整案例</h2>
+
+    <p>来看一份小明的<b>课外活动调查报告</b>：</p>
+
+    <div class="report-demo">
+      <h4>📋 四(1)班课外活动喜好调查报告</h4>
+      
+      <div class="rep-section">
+        <b>👥 调查对象：</b>四(1)班全体 30 位同学
+      </div>
+      
+      <div class="rep-section">
+        <b>📅 调查时间：</b>2025 年 9 月 15 日
+      </div>
+      
+      <div class="rep-section">
+        <b>🔍 调查方法：</b>问卷调查，每人选 1 项最喜欢的活动
+      </div>
+      
+      <div class="rep-section">
+        <b>📊 数据结果：</b>
+        <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:13px">
+          <tr style="background:var(--theme);color:#fff"><th style="padding:6px">活动</th><th style="padding:6px">人数</th><th style="padding:6px">占比</th></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">⚽ 踢球</td><td style="padding:6px;border-bottom:1px solid #eee">12</td><td style="padding:6px;border-bottom:1px solid #eee">40%</td></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">📖 阅读</td><td style="padding:6px;border-bottom:1px solid #eee">7</td><td style="padding:6px;border-bottom:1px solid #eee">23.3%</td></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">🎨 画画</td><td style="padding:6px;border-bottom:1px solid #eee">5</td><td style="padding:6px;border-bottom:1px solid #eee">16.7%</td></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">🎵 音乐</td><td style="padding:6px;border-bottom:1px solid #eee">4</td><td style="padding:6px;border-bottom:1px solid #eee">13.3%</td></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">🤖 其他</td><td style="padding:6px;border-bottom:1px solid #eee">2</td><td style="padding:6px;border-bottom:1px solid #eee">6.7%</td></tr>
+        </table>
+      </div>
+      
+      <div class="rep-section">
+        <b>💡 结论：</b>
+        <p style="margin-top:4px">
+          四(1)班同学最喜欢的课外活动是 <b>踢球</b>（40%），其次是<b>阅读</b>（23.3%）。
+          建议班级活动安排可以多组织足球比赛和读书会。
+        </p>
+      </div>
+      
+      <div class="rep-section" style="font-size:12px;color:#90a4ae">
+        <b>📌 数据来源：</b>四(1)班问卷调查（2025.9.15）
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <h4>🌟 这份报告好在哪里？</h4>
+      <ul style="margin-top:4px">
+        <li>✓ 观点<b>有数据支撑</b></li>
+        <li>✓ 数据<b>具体、详细</b>（30 人 / 12 人 / 40%）</li>
+        <li>✓ 用<b>表格</b>清晰呈现</li>
+        <li>✓ 写明了<b>来源和时间</b></li>
+        <li>✓ 结论由数据<b>自然得出</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2><span class="step-num">5</span>课堂小结</h2>
+
+    <div class="info-box success">
+      <h4>🌟 单元小结（第 21-26 课）</h4>
+      <ul style="margin-top:4px">
+        <li><b>第 21-23 课</b>：用图表展示数据（柱、饼、折、雷达）</li>
+        <li><b>第 24 课</b>：用词云展示文本数据</li>
+        <li><b>第 25 课</b>：用知识图谱表达关系</li>
+        <li><b>第 26 课</b>：用数据支撑观点和报告</li>
+      </ul>
+      <p style="margin-top:6px">这一单元，我们学会了让<b>数据为我所用</b>，让观点更有说服力！</p>
+    </div>
+
+    <h3>🏠 课后小任务</h3>
+    <div class="info-box">
+      请你做一份小报告，主题任选：
+      <ul style="margin-top:4px">
+        <li>📚 我们家最喜欢的书</li>
+        <li>🍎 妈妈每周买了几次菜</li>
+        <li>📺 同学们每天看电视多久</li>
+      </ul>
+      <b>要求</b>：用数据 + 表格/图表，写一份完整的小报告！
+    </div>
+
+    <h3>🔮 下个单元预告</h3>
+    <div class="info-box tip">
+      数据和编码的世界这么神奇，那它和现在最火的<b>人工智能</b>有什么关系？
+      <br>
+      下个单元《人工智能耀未来》，揭开 AI 神秘面纱！🤖
+    </div>
+  </section>
+
+  <div class="slide-nav">
+    <button class="btn btn-secondary" id="prevBtn">← 上一页</button>
+    <div class="progress" id="progress">1 / 5</div>
+    <button class="btn btn-primary" id="nextBtn">下一页 →</button>
+  </div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navBtns = document.querySelectorAll('.nav-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+function showSlide(idx){
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+  navBtns.forEach((b,i)=>b.classList.toggle('active', i===current));
+  progress.textContent = `${current+1} / ${slides.length}`;
+  prevBtn.style.opacity = current === 0 ? 0.4 : 1;
+  nextBtn.style.opacity = current === slides.length - 1 ? 0.4 : 1;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+navBtns.forEach((b,i)=>b.addEventListener('click', ()=>showSlide(i)));
+prevBtn.addEventListener('click', ()=>showSlide(current-1));
+nextBtn.addEventListener('click', ()=>showSlide(current+1));
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') showSlide(current-1);
+  if(e.key==='ArrowRight') showSlide(current+1);
+});
+showSlide(0);
+</script>
+</body>
+</html>
