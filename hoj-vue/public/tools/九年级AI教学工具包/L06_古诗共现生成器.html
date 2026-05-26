@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第6课 · 古诗共现矩阵与生成器</title>
+<style>
+  :root {
+    --bg: #0f1729;
+    --panel: #1a2440;
+    --panel-2: #243054;
+    --ink: #e6ecf5;
+    --muted: #8b9bbf;
+    --accent: #fbbf24;
+    --accent-2: #60a5fa;
+    --good: #34d399;
+    --line: #2d3a5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f1729 0%, #141e3a 100%);
+    color: var(--ink); min-height: 100vh; line-height: 1.6;
+  }
+  header {
+    padding: 24px 36px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .title { display: flex; align-items: baseline; gap: 14px; }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .tag {
+    font-size: 12px; padding: 3px 10px;
+    background: var(--accent); color: #0f1729;
+    border-radius: 999px; font-weight: 600;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main {
+    display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px;
+    padding: 24px 36px 40px; max-width: 1400px; margin: 0 auto;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px;
+  }
+  .panel h2 {
+    margin: 0 0 14px; font-size: 15px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+
+  textarea {
+    width: 100%; min-height: 100px; resize: vertical;
+    background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; font-family: inherit; font-size: 14px;
+  }
+  textarea:focus { outline: none; border-color: var(--accent-2); }
+  
+  .controls { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  button {
+    background: var(--accent); color: #0f1729; border: none; border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(251,191,36,0.3); }
+  button.secondary {
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+  }
+  button.secondary:hover { background: var(--panel-2); box-shadow: none; }
+
+  .input-row {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .input-row label { font-size: 13px; color: var(--muted); }
+  .input-row input[type=text] {
+    background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 12px; font-size: 14px; width: 80px;
+    text-align: center; font-family: inherit;
+  }
+  .input-row input[type=number] {
+    background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 12px; font-size: 14px; width: 70px;
+    font-family: inherit;
+  }
+
+  /* 共现矩阵 */
+  .matrix-wrap {
+    overflow: auto; max-height: 380px; border: 1px solid var(--line);
+    border-radius: 8px; background: #0f1729;
+  }
+  table.matrix {
+    border-collapse: collapse; font-size: 12px; width: 100%;
+  }
+  table.matrix th, table.matrix td {
+    border: 1px solid var(--line);
+    padding: 0; min-width: 22px; height: 22px; text-align: center;
+    font-family: ui-monospace, "SF Mono", monospace;
+  }
+  table.matrix th {
+    background: var(--panel-2); color: var(--accent);
+    font-weight: 600; position: sticky; top: 0; z-index: 2;
+  }
+  table.matrix th.row-header {
+    position: sticky; left: 0; z-index: 3; background: var(--panel-2);
+  }
+  table.matrix td.zero { color: rgba(139,155,191,0.3); }
+  table.matrix td.has { background: rgba(251,191,36,0.15); color: var(--accent); font-weight: 600; }
+  table.matrix td.high { background: rgba(251,191,36,0.4); color: var(--ink); font-weight: 700; }
+  table.matrix td.path { background: var(--accent) !important; color: #0f1729 !important; font-weight: 700; }
+
+  /* 生成结果 */
+  .gen-result {
+    background: #0f1729; padding: 18px; border-radius: 8px;
+    border: 1px solid var(--line); min-height: 60px;
+    font-size: 22px; letter-spacing: 4px; line-height: 1.8;
+    text-align: center; font-family: "STKaiti", "KaiTi", "楷体", serif;
+  }
+  .gen-result .ch {
+    display: inline-block; padding: 0 4px;
+    animation: fade 0.4s ease-out;
+  }
+  .gen-result .ch.start { color: var(--accent); font-weight: 700; }
+  .gen-result .ch.gen { color: var(--ink); }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 生成步骤 */
+  .step-list {
+    margin-top: 14px; max-height: 200px; overflow-y: auto;
+    background: #0f1729; border: 1px solid var(--line);
+    border-radius: 8px; padding: 12px; font-size: 13px;
+  }
+  .step {
+    padding: 6px 8px; border-bottom: 1px dashed var(--line);
+    display: flex; gap: 10px; align-items: baseline;
+  }
+  .step:last-child { border-bottom: none; }
+  .step .num {
+    color: var(--accent); font-weight: 600; min-width: 24px;
+  }
+  .step .from { color: var(--accent-2); }
+  .step .arrow { color: var(--muted); }
+  .step .to { color: var(--good); font-weight: 600; }
+  .step .prob { color: var(--muted); font-size: 11.5px; margin-left: auto; }
+
+  .help {
+    color: var(--muted); font-size: 12.5px;
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent-2);
+    padding: 10px 14px; border-radius: 6px;
+    margin: 10px 0;
+  }
+
+  .stats {
+    display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap;
+  }
+  .stat-item {
+    flex: 1; min-width: 100px;
+    background: var(--panel-2); padding: 8px 12px; border-radius: 8px;
+    text-align: center;
+  }
+  .stat-item .val { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .stat-item .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  @media (max-width: 880px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>古诗共现矩阵与生成器</h1>
+    <span class="tag">第 6 课</span>
+  </div>
+  <div class="subtitle">基于相邻字共现统计 · 通过"概率接龙"生成诗句</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>① 训练文本(古诗语料)</h2>
+    <textarea id="corpus">山深水流远 风起云自闲 月落空林影 水远风声随 云暗月影深 空山声自远 林暗水流深 风起随云闲 影落深水月 月随流水空</textarea>
+    <div class="controls">
+      <button onclick="trainModel()">开始训练</button>
+      <button class="secondary" onclick="loadCorpus(1)">五言示例</button>
+      <button class="secondary" onclick="loadCorpus(2)">扩展示例</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="val" id="charCount">—</div>
+        <div class="lbl">字符数</div>
+      </div>
+      <div class="stat-item">
+        <div class="val" id="uniqCount">—</div>
+        <div class="lbl">独立字</div>
+      </div>
+      <div class="stat-item">
+        <div class="val" id="pairCount">—</div>
+        <div class="lbl">共现对</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:24px;">② 生成新"诗句"</h2>
+    <div class="input-row">
+      <label>起始字:</label>
+      <input type="text" id="startChar" maxlength="1" value="深">
+      <label>生成长度:</label>
+      <input type="number" id="genLen" min="3" max="20" value="7">
+      <button onclick="generate()">生成诗句</button>
+    </div>
+    <div class="input-row">
+      <label style="margin-right: 6px;">采样方式:</label>
+      <label style="font-size: 13px;"><input type="radio" name="mode" value="max" checked> 最大概率</label>
+      <label style="font-size: 13px;"><input type="radio" name="mode" value="random"> 按概率随机</label>
+    </div>
+
+    <div style="margin-top:14px;" class="gen-result" id="genResult">— 训练后输入起始字,然后点"生成诗句" —</div>
+    
+    <div class="step-list" id="stepList"></div>
+
+    <div class="help">
+      💡 <b>原理:</b> 统计每个字后面接什么字的次数,形成"搭配习惯"表。生成时,根据当前字查找它后面常出现的字,选概率最高的(或按概率随机)作为下一个字,如此"接龙"形成新诗句。
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>③ 相邻共现矩阵</h2>
+    <div style="font-size:12.5px; color:var(--muted); margin-bottom: 8px;">
+      行=前一个字,列=后一个字 · 数字 = 在文本中相邻出现的次数(0以淡色显示)
+    </div>
+    <div class="matrix-wrap" id="matrixWrap">
+      <div style="padding: 40px; text-align: center; color: var(--muted);">点击"开始训练"以构建矩阵</div>
+    </div>
+
+    <h2 style="margin-top: 24px;">④ 当前字的后续概率分布</h2>
+    <div id="probDist" style="background:#0f1729; padding: 14px; border-radius: 8px; border: 1px solid var(--line); min-height: 60px;">
+      <span style="color: var(--muted); font-size: 13px;">生成时此处会显示每一步候选字的概率</span>
+    </div>
+  </section>
+</main>
+
+<script>
+  let chars = [];     // 全部字符序列
+  let uniq = [];      // 独立字列表(用于矩阵)
+  let matrix = {};    // matrix[a][b] = 次数
+
+  function trainModel() {
+    const text = document.getElementById('corpus').value
+      .replace(/[\s,。、;,!?:""''\-_.\n\r\t]/g, '');
+    if (!text) { alert('请输入文本'); return; }
+    chars = Array.from(text);
+    
+    // 构建矩阵
+    matrix = {};
+    const uniqSet = new Set();
+    for (let i = 0; i < chars.length - 1; i++) {
+      const a = chars[i], b = chars[i+1];
+      uniqSet.add(a); uniqSet.add(b);
+      if (!matrix[a]) matrix[a] = {};
+      matrix[a][b] = (matrix[a][b] || 0) + 1;
+    }
+    uniq = [...uniqSet].sort();
+    
+    document.getElementById('charCount').textContent = chars.length;
+    document.getElementById('uniqCount').textContent = uniq.length;
+    let totalPairs = 0;
+    for (const a in matrix) for (const b in matrix[a]) totalPairs++;
+    document.getElementById('pairCount').textContent = totalPairs;
+    
+    renderMatrix();
+    document.getElementById('genResult').innerHTML = '<span style="color:var(--muted); font-size: 14px; letter-spacing: 0;">训练完成,请在左侧输入起始字然后点"生成诗句"</span>';
+    document.getElementById('stepList').innerHTML = '';
+    document.getElementById('probDist').innerHTML = '<span style="color: var(--muted); font-size: 13px;">生成时此处会显示候选字的概率</span>';
+  }
+
+  function renderMatrix(highlightPath) {
+    const wrap = document.getElementById('matrixWrap');
+    if (uniq.length === 0) return;
+    
+    let html = '<table class="matrix"><thead><tr><th class="row-header"></th>';
+    for (const c of uniq) html += `<th>${c}</th>`;
+    html += '</tr></thead><tbody>';
+    
+    // 找最大值用于颜色分级
+    let maxVal = 0;
+    for (const a in matrix) for (const b in matrix[a]) maxVal = Math.max(maxVal, matrix[a][b]);
+    
+    const pathSet = new Set();
+    if (highlightPath) {
+      for (let i = 0; i < highlightPath.length - 1; i++) {
+        pathSet.add(highlightPath[i] + '|' + highlightPath[i+1]);
+      }
+    }
+    
+    for (const a of uniq) {
+      html += `<tr><th class="row-header">${a}</th>`;
+      for (const b of uniq) {
+        const v = (matrix[a] && matrix[a][b]) || 0;
+        const isPath = pathSet.has(a + '|' + b);
+        let cls = '';
+        if (isPath) cls = 'path';
+        else if (v === 0) cls = 'zero';
+        else if (v >= maxVal * 0.7) cls = 'high';
+        else cls = 'has';
+        html += `<td class="${cls}">${v}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function generate() {
+    if (uniq.length === 0) { alert('请先训练'); return; }
+    const start = document.getElementById('startChar').value.trim();
+    if (!start) { alert('请输入起始字'); return; }
+    if (!matrix[start]) { 
+      alert(`字"${start}"在训练数据中没有出现或没有后续字!请换一个字。`);
+      return;
+    }
+    const len = parseInt(document.getElementById('genLen').value) || 7;
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    
+    const path = [start];
+    const steps = [];
+    
+    for (let i = 0; i < len - 1; i++) {
+      const cur = path[path.length - 1];
+      const followers = matrix[cur];
+      if (!followers || Object.keys(followers).length === 0) {
+        steps.push({num: i+1, from: cur, to: '∅', prob: '没有后续字,生成结束'});
+        break;
+      }
+      
+      // 总次数
+      let total = 0;
+      for (const c in followers) total += followers[c];
+      // 概率
+      const probs = [];
+      for (const c in followers) probs.push({c, count: followers[c], p: followers[c] / total});
+      probs.sort((a,b) => b.p - a.p);
+      
+      let next;
+      if (mode === 'max') {
+        // 选最大,有并列时随机
+        const maxP = probs[0].p;
+        const ties = probs.filter(x => x.p === maxP);
+        next = ties[Math.floor(Math.random() * ties.length)].c;
+      } else {
+        // 按概率随机
+        const r = Math.random();
+        let acc = 0;
+        for (const p of probs) {
+          acc += p.p;
+          if (r < acc) { next = p.c; break; }
+        }
+        if (!next) next = probs[0].c;
+      }
+      
+      path.push(next);
+      const nxtP = probs.find(x => x.c === next);
+      steps.push({
+        num: i+1, from: cur, to: next, 
+        prob: `${nxtP.count}/${total} = ${(nxtP.p * 100).toFixed(1)}%`,
+        allProbs: probs
+      });
+    }
+    
+    // 渲染结果
+    const result = document.getElementById('genResult');
+    result.innerHTML = '';
+    path.forEach((c, i) => {
+      const span = document.createElement('span');
+      span.className = 'ch ' + (i === 0 ? 'start' : 'gen');
+      span.textContent = c;
+      span.style.animationDelay = (i * 0.1) + 's';
+      result.appendChild(span);
+    });
+    
+    // 步骤
+    const stepList = document.getElementById('stepList');
+    stepList.innerHTML = '<div style="font-size: 12px; color: var(--muted); margin-bottom: 6px;">生成过程:</div>';
+    steps.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'step';
+      div.innerHTML = `<span class="num">第${s.num}步</span><span class="from">${s.from}</span><span class="arrow">→</span><span class="to">${s.to}</span><span class="prob">${s.prob}</span>`;
+      stepList.appendChild(div);
+    });
+    
+    // 显示路径上最后一步的概率分布
+    if (steps.length > 0 && steps[steps.length - 1].allProbs) {
+      const last = steps[steps.length - 1];
+      const probDiv = document.getElementById('probDist');
+      probDiv.innerHTML = `<div style="font-size:12px; color:var(--muted); margin-bottom:8px;">"${last.from}" 后面候选字的概率分布(共 ${last.allProbs.reduce((s,p)=>s+p.count,0)} 次):</div>`;
+      last.allProbs.forEach(p => {
+        const bar = document.createElement('div');
+        bar.style.cssText = 'display:flex; align-items:center; gap:8px; margin: 4px 0; font-size: 13px;';
+        const isChosen = p.c === last.to;
+        bar.innerHTML = `
+          <span style="min-width: 30px; ${isChosen ? 'color:var(--good); font-weight:700;' : ''}">${p.c}${isChosen ? ' ✓' : ''}</span>
+          <div style="flex:1; background:var(--panel-2); height: 18px; border-radius: 4px; overflow:hidden;">
+            <div style="width:${p.p * 100}%; height:100%; background:${isChosen ? 'var(--good)' : 'var(--accent)'};"></div>
+          </div>
+          <span style="min-width: 60px; text-align:right; color:var(--muted); font-size: 12px;">${(p.p*100).toFixed(1)}%</span>`;
+        probDiv.appendChild(bar);
+      });
+    }
+    
+    // 在矩阵上高亮路径
+    renderMatrix(path);
+  }
+
+  function loadCorpus(n) {
+    const samples = {
+      1: '山深水流远 风起云自闲 月落空林影 水远风声随 云暗月影深 空山声自远 林暗水流深 风起随云闲 影落深水月 月随流水空',
+      2: '春眠不觉晓 处处闻啼鸟 夜来风雨声 花落知多少 红豆生南国 春来发几枝 愿君多采撷 此物最相思 床前明月光 疑是地上霜 举头望明月 低头思故乡 白日依山尽 黄河入海流 欲穷千里目 更上一层楼'
+    };
+    document.getElementById('corpus').value = samples[n];
+    trainModel();
+  }
+</script>
+
+</body>
+</html>
