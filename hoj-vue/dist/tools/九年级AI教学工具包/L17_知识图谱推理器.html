@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知识图谱推理器 — 红楼梦人物关系</title>
+<style>
+:root{
+  --bg:#0f1729; --panel:#1a2440; --panel-2:#243054;
+  --ink:#e6ecf5; --muted:#8b9bbf; --accent:#fbbf24;
+  --accent-2:#60a5fa; --good:#34d399; --warn:#f87171;
+  --line:#2d3a5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#0f1729 0%,#141e3a 100%);
+  color:var(--ink);min-height:100vh;padding:24px;
+}
+.container{max-width:1400px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+h1{font-size:22px;font-weight:600}
+.tag{background:linear-gradient(135deg,var(--accent),#f59e0b);color:#0f1729;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}
+.subtitle{color:var(--muted);font-size:14px;margin-left:auto}
+.layout{display:grid;grid-template-columns:1fr 1.3fr;gap:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);padding-left:10px;border-left:3px solid var(--accent);margin-bottom:14px}
+h3{font-size:14px;color:var(--ink);margin:14px 0 8px}
+.btn{background:linear-gradient(135deg,var(--accent),#f59e0b);color:#0f1729;border:none;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.sec{background:var(--panel-2);color:var(--ink);border:1px solid var(--line)}
+.btn.sec:hover{background:#2c3a64}
+.tab-row{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tab{padding:8px 14px;cursor:pointer;color:var(--muted);font-size:13px;border-bottom:2px solid transparent}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+td.num{font-family:"SF Mono",Menlo,monospace;color:var(--accent-2)}
+.del{color:var(--warn);cursor:pointer;font-size:14px}
+.del:hover{opacity:.7}
+input,select{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:6px;font-size:13px;font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.row input,.row select{flex:1;min-width:80px}
+.rule-card{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;display:flex;align-items:center;gap:10px}
+.rule-name{color:var(--accent);font-weight:600}
+.rule-def{color:var(--muted);font-family:"SF Mono",Menlo,monospace;font-size:12px;flex:1}
+.graph-container{background:#0a1224;border:1px solid var(--line);border-radius:10px;height:480px;position:relative;overflow:hidden}
+.result-box{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:10px;min-height:60px}
+.result-item{display:inline-block;background:rgba(52,211,153,.15);border:1px solid var(--good);color:var(--good);padding:5px 12px;border-radius:16px;margin:4px 4px 4px 0;font-size:13px}
+.empty{color:var(--muted);font-size:13px;font-style:italic}
+.path{font-size:12px;color:var(--muted);margin-top:6px;font-family:"SF Mono",Menlo,monospace}
+@media (max-width:880px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <span class="tag">第17课</span>
+  <h1>知识图谱推理器</h1>
+  <span class="subtitle">红楼梦人物亲属关系 · 规则推理</span>
+</header>
+
+<div class="layout">
+
+<div>
+<div class="panel">
+  <h2>① 实体（人物）</h2>
+  <div class="row">
+    <input id="ent-name" placeholder="姓名" style="flex:2">
+    <select id="ent-gender"><option value="男">男</option><option value="女">女</option></select>
+    <input id="ent-year" placeholder="出生年" type="number" style="flex:1">
+    <button class="btn sec" onclick="addEntity()">添加</button>
+  </div>
+  <table>
+    <thead><tr><th>姓名</th><th>性别</th><th>出生年</th><th></th></tr></thead>
+    <tbody id="ent-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>② 基础关系</h2>
+  <div class="row">
+    <select id="rel-a"></select>
+    <select id="rel-type"><option>父母</option><option>配偶</option></select>
+    <select id="rel-b"></select>
+    <button class="btn sec" onclick="addRelation()">添加</button>
+  </div>
+  <table>
+    <thead><tr><th>人物1</th><th>关系</th><th>人物2</th><th></th></tr></thead>
+    <tbody id="rel-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>③ 推理规则</h2>
+  <p style="color:var(--muted);font-size:12px;margin-bottom:10px">
+    通过基础关系组合，可推导更多亲属关系。点击规则名查看定义。
+  </p>
+  <div id="rule-list"></div>
+</div>
+</div>
+
+<div>
+<div class="panel">
+  <h2>④ 关系推理</h2>
+  <div class="row" style="margin-bottom:14px">
+    <select id="q-entity" style="flex:1.5"></select>
+    <span style="line-height:32px;color:var(--muted)">的</span>
+    <select id="q-rule" style="flex:1.5"></select>
+    <button class="btn" onclick="doInfer()">推理</button>
+  </div>
+  <div class="result-box" id="result"></div>
+</div>
+
+<div class="panel">
+  <h2>⑤ 实体关系图</h2>
+  <div class="graph-container">
+    <svg id="graph" width="100%" height="100%"></svg>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:10px">
+    🟦 蓝色节点 = 男 ｜ 🟥 红色节点 = 女 ｜ 实线 = 父母 ｜ 虚线 = 配偶
+  </p>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ====== 数据：红楼梦初始数据（教材表17.1、17.2）======
+let entities = [
+  {name:"贾宝玉",gender:"男",year:184},
+  {name:"贾政",gender:"男",year:155},
+  {name:"贾母",gender:"女",year:125},
+  {name:"王夫人",gender:"女",year:160},
+  {name:"贾赦",gender:"男",year:150},
+  {name:"贾琏",gender:"男",year:175}
+];
+let relations = [
+  {a:"贾宝玉",type:"父母",b:"贾政"},
+  {a:"贾宝玉",type:"父母",b:"王夫人"},
+  {a:"贾政",type:"父母",b:"贾母"},
+  {a:"贾赦",type:"父母",b:"贾母"},
+  {a:"贾琏",type:"父母",b:"贾赦"},
+  {a:"贾政",type:"配偶",b:"王夫人"}
+];
+
+// 推理规则：用复合路径定义
+// 关系类型：父母(向上)、子女(父母反向)、配偶
+// 性别约束：男/女
+let rules = [
+  {name:"父亲", path:["父母"], gender:"男", desc:"父母 + 性别男"},
+  {name:"母亲", path:["父母"], gender:"女", desc:"父母 + 性别女"},
+  {name:"儿子", path:["子女"], gender:"男", desc:"子女 + 性别男"},
+  {name:"女儿", path:["子女"], gender:"女", desc:"子女 + 性别女"},
+  {name:"爷爷", path:["父亲","父亲"], desc:"父亲的父亲"},
+  {name:"奶奶", path:["父亲","母亲"], desc:"父亲的母亲"},
+  {name:"兄弟", path:["父亲","儿子"], excludeSelf:true, desc:"父亲的儿子（非自己）"},
+  {name:"堂兄弟", path:["父亲","兄弟","儿子"], desc:"父亲的兄弟的儿子"}
+];
+
+function $(id){return document.getElementById(id)}
+
+// ====== 渲染 ======
+function renderEntities(){
+  const tb = $("ent-tbody"); tb.innerHTML="";
+  entities.forEach((e,i)=>{
+    tb.innerHTML += `<tr>
+      <td>${e.name}</td>
+      <td style="color:${e.gender==='男'?'var(--accent-2)':'#f472b6'}">${e.gender}</td>
+      <td class="num">${e.year}</td>
+      <td><span class="del" onclick="delEntity(${i})">×</span></td>
+    </tr>`;
+  });
+  // 更新下拉
+  ["rel-a","rel-b","q-entity"].forEach(id=>{
+    const sel=$(id); const cur=sel.value;
+    sel.innerHTML = entities.map(e=>`<option>${e.name}</option>`).join("");
+    if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  });
+}
+function renderRelations(){
+  const tb = $("rel-tbody"); tb.innerHTML="";
+  relations.forEach((r,i)=>{
+    tb.innerHTML += `<tr>
+      <td>${r.a}</td>
+      <td style="color:var(--accent)">${r.type}</td>
+      <td>${r.b}</td>
+      <td><span class="del" onclick="delRelation(${i})">×</span></td>
+    </tr>`;
+  });
+}
+function renderRules(){
+  $("rule-list").innerHTML = rules.map(r=>`
+    <div class="rule-card">
+      <span class="rule-name">${r.name}</span>
+      <span class="rule-def">${r.desc}</span>
+    </div>`).join("");
+  const sel = $("q-rule"); const cur = sel.value;
+  sel.innerHTML = ["父母","配偶","子女",...rules.map(r=>r.name)]
+    .map(n=>`<option>${n}</option>`).join("");
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+
+// ====== 增删 ======
+function addEntity(){
+  const n=$("ent-name").value.trim();
+  if(!n) return;
+  if(entities.some(e=>e.name===n)){alert("该人物已存在");return}
+  entities.push({name:n,gender:$("ent-gender").value,year:parseInt($("ent-year").value)||2000});
+  $("ent-name").value=""; $("ent-year").value="";
+  renderEntities(); drawGraph();
+}
+function delEntity(i){
+  const n=entities[i].name;
+  entities.splice(i,1);
+  relations = relations.filter(r=>r.a!==n && r.b!==n);
+  renderEntities(); renderRelations(); drawGraph();
+}
+function addRelation(){
+  const a=$("rel-a").value, b=$("rel-b").value, t=$("rel-type").value;
+  if(a===b){alert("人物1与人物2不能相同");return}
+  if(relations.some(r=>r.a===a&&r.b===b&&r.type===t)) return;
+  relations.push({a,type:t,b});
+  renderRelations(); drawGraph();
+}
+function delRelation(i){
+  relations.splice(i,1);
+  renderRelations(); drawGraph();
+}
+
+// ====== 推理引擎 ======
+// 基础查询：A 的「父母/子女/配偶」
+function basicQuery(name, type){
+  const ent = entities.find(e=>e.name===name);
+  if(!ent) return [];
+  const out=[];
+  if(type==="父母"){
+    relations.filter(r=>r.a===name && r.type==="父母").forEach(r=>out.push(r.b));
+  } else if(type==="子女"){
+    relations.filter(r=>r.b===name && r.type==="父母").forEach(r=>out.push(r.a));
+  } else if(type==="配偶"){
+    relations.filter(r=>r.type==="配偶" && (r.a===name||r.b===name))
+      .forEach(r=>out.push(r.a===name?r.b:r.a));
+  }
+  return [...new Set(out)];
+}
+// 复合查询：根据规则名递归
+function queryByRule(name, ruleName, visited=new Set()){
+  if(["父母","子女","配偶"].includes(ruleName)) return basicQuery(name, ruleName);
+  const rule = rules.find(r=>r.name===ruleName);
+  if(!rule) return [];
+  // 沿 path 递归扩展
+  let curSet = [name];
+  for(const step of rule.path){
+    const next = new Set();
+    curSet.forEach(p=>queryByRule(p, step, visited).forEach(x=>next.add(x)));
+    curSet = [...next];
+  }
+  // 性别筛选
+  if(rule.gender){
+    curSet = curSet.filter(n=>{
+      const e=entities.find(x=>x.name===n);
+      return e && e.gender===rule.gender;
+    });
+  }
+  // 排除自身
+  if(rule.excludeSelf) curSet = curSet.filter(n=>n!==name);
+  return [...new Set(curSet)];
+}
+
+function doInfer(){
+  const a=$("q-entity").value, r=$("q-rule").value;
+  const result = queryByRule(a, r);
+  const box = $("result");
+  if(result.length===0){
+    box.innerHTML = `<div class="empty">推理结果：未找到「${a}」的「${r}」</div>`;
+  } else {
+    const rule = rules.find(x=>x.name===r);
+    const pathDesc = rule ? `<div class="path">推理路径：${rule.desc}</div>` : "";
+    box.innerHTML = `<div style="font-size:13px;color:var(--muted);margin-bottom:8px">「${a}」的「${r}」是：</div>` +
+      result.map(n=>`<span class="result-item">${n}</span>`).join("") + pathDesc;
+  }
+}
+
+// ====== 图绘制 ======
+function drawGraph(){
+  const svg = $("graph");
+  const W = svg.clientWidth || 640, H = 480;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML="";
+
+  // 简单分层：按出生年代决定 y，按入度决定 x
+  const cx = W/2, cy = H/2;
+  const n = entities.length;
+  const positions = {};
+  // 按出生年分代
+  const sorted = [...entities].sort((a,b)=>a.year-b.year);
+  const minY = sorted[0]?.year || 100, maxY = sorted[sorted.length-1]?.year || 200;
+  // 分组按代（每30年一代）
+  const generations = {};
+  entities.forEach(e=>{
+    const g = Math.floor((e.year - minY)/30);
+    (generations[g] = generations[g]||[]).push(e);
+  });
+  const genKeys = Object.keys(generations).map(Number).sort();
+  const genCount = genKeys.length;
+  genKeys.forEach((g,gi)=>{
+    const grp = generations[g];
+    const y = 60 + gi * (H-120)/Math.max(1,genCount-1);
+    grp.forEach((e,ei)=>{
+      const x = (W/(grp.length+1)) * (ei+1);
+      positions[e.name] = {x,y};
+    });
+  });
+
+  // 绘制边
+  relations.forEach(r=>{
+    const p1=positions[r.a], p2=positions[r.b]; if(!p1||!p2) return;
+    const isP = r.type==="父母";
+    svg.innerHTML += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"
+      stroke="${isP?'#60a5fa':'#fbbf24'}" stroke-width="${isP?2:1.5}"
+      stroke-dasharray="${isP?'':'4,4'}" opacity=".7"/>`;
+    // 关系标签
+    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    svg.innerHTML += `<text x="${mx}" y="${my-3}" fill="${isP?'#60a5fa':'#fbbf24'}"
+      font-size="10" text-anchor="middle">${r.type}</text>`;
+  });
+
+  // 绘制节点
+  entities.forEach(e=>{
+    const p=positions[e.name]; if(!p) return;
+    const color = e.gender==='男' ? '#3b82f6' : '#ec4899';
+    svg.innerHTML += `
+      <circle cx="${p.x}" cy="${p.y}" r="26" fill="${color}" opacity=".9" stroke="#fff" stroke-width="1.5"/>
+      <text x="${p.x}" y="${p.y+4}" fill="#fff" font-size="12" text-anchor="middle" font-weight="600">${e.name}</text>
+      <text x="${p.x}" y="${p.y+40}" fill="#8b9bbf" font-size="10" text-anchor="middle">${e.year}年</text>`;
+  });
+}
+
+// 初始化
+renderEntities();
+renderRelations();
+renderRules();
+drawGraph();
+window.addEventListener("resize", drawGraph);
+</script>
+</body>
+</html>

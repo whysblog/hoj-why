@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第5课 · BPE 自动构建词表器</title>
+<style>
+  :root {
+    --bg: #0f1729;
+    --panel: #1a2440;
+    --panel-2: #243054;
+    --ink: #e6ecf5;
+    --muted: #8b9bbf;
+    --accent: #fbbf24;
+    --accent-2: #60a5fa;
+    --good: #34d399;
+    --warn: #f87171;
+    --line: #2d3a5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: linear-gradient(135deg, #0f1729 0%, #141e3a 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  header {
+    padding: 24px 36px 16px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(15, 23, 41, 0.8);
+    backdrop-filter: blur(8px);
+  }
+  .title {
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .title h1 {
+    margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .title .tag {
+    font-size: 12px; padding: 3px 10px;
+    background: var(--accent); color: #0f1729;
+    border-radius: 999px; font-weight: 600;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 20px;
+    padding: 24px 36px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .panel h2 {
+    margin: 0 0 14px; font-size: 15px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+  textarea {
+    width: 100%; min-height: 120px; resize: vertical;
+    background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; font-family: inherit; font-size: 14px;
+    line-height: 1.7;
+  }
+  textarea:focus { outline: none; border-color: var(--accent-2); }
+  .controls { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  button {
+    background: var(--accent); color: #0f1729;
+    border: none; border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(251,191,36,0.3); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  button.secondary {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  button.secondary:hover { background: var(--panel-2); box-shadow: none; }
+
+  .iter-info {
+    display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--panel-2); padding: 10px 14px; border-radius: 8px;
+    flex: 1; min-width: 120px;
+  }
+  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat .value { font-size: 20px; font-weight: 600; color: var(--accent); margin-top: 2px; }
+
+  .vocab-grid {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    max-height: 220px; overflow-y: auto;
+    padding: 12px; background: #0f1729; border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+  .token {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; background: var(--panel-2);
+    border-radius: 6px; font-size: 13px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .token .freq {
+    font-size: 11px; color: var(--muted);
+    background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px;
+  }
+  .token.new {
+    background: var(--accent); color: #0f1729; border-color: var(--accent);
+    animation: pop 0.4s ease-out;
+  }
+  .token.new .freq { background: rgba(15,23,41,0.3); color: #0f1729; }
+  .token.merged {
+    background: var(--good); color: #0f1729;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .pairs-table {
+    width: 100%; border-collapse: collapse; margin-top: 10px;
+  }
+  .pairs-table th, .pairs-table td {
+    padding: 8px 10px; text-align: left; font-size: 13px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pairs-table th {
+    color: var(--muted); font-weight: 500;
+    text-transform: uppercase; font-size: 11px; letter-spacing: 1px;
+  }
+  .pairs-table tr.top {
+    background: linear-gradient(90deg, rgba(251,191,36,0.15), transparent);
+  }
+  .pairs-table tr.top td:first-child {
+    color: var(--accent); font-weight: 600;
+  }
+
+  .legend { display: flex; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .legend span::before {
+    content: '■'; margin-right: 5px;
+  }
+  .legend .l1::before { color: var(--accent); }
+  .legend .l2::before { color: var(--good); }
+
+  .text-display {
+    background: #0f1729; padding: 14px; border-radius: 8px;
+    border: 1px solid var(--line); font-size: 14px;
+    line-height: 2; min-height: 60px;
+    word-break: break-all;
+  }
+  .text-display .ch {
+    display: inline-block; padding: 2px 4px;
+    border-radius: 3px; margin: 1px;
+  }
+
+  .help {
+    color: var(--muted); font-size: 12.5px;
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent-2);
+    padding: 10px 14px; border-radius: 6px;
+    margin: 10px 0;
+  }
+  
+  @media (max-width: 880px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>BPE 自动构建词表器</h1>
+    <span class="tag">第 5 课</span>
+  </div>
+  <div class="subtitle">字节对编码 · 通过统计相邻字符共现频率,自动从文本中"算"出词</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>① 输入文本数据</h2>
+    <textarea id="input">人工智能正在改变世界,人工智能技术需要深度学习。人工神经网络通过大量计算实现智能,这种智能需要人工设计算法。</textarea>
+    <div class="controls">
+      <button onclick="reset()">初始化词表</button>
+      <button onclick="oneStep()" id="stepBtn" disabled>下一次迭代</button>
+      <button onclick="autoRun()" id="autoBtn" disabled>自动运行</button>
+      <button class="secondary" onclick="loadExample(1)">示例·诗句</button>
+      <button class="secondary" onclick="loadExample(2)">示例·英文</button>
+    </div>
+
+    <div class="iter-info">
+      <div class="stat">
+        <div class="label">迭代次数</div>
+        <div class="value" id="iterCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="label">词表大小</div>
+        <div class="value" id="vocabSize">—</div>
+      </div>
+      <div class="stat">
+        <div class="label">本轮合并</div>
+        <div class="value" id="mergedPair">—</div>
+      </div>
+    </div>
+
+    <div class="help">
+      💡 <b>BPE 原理:</b> ① 把文本拆解为单个字符作为初始词表;② 统计所有相邻字符对的共现次数;③ 把次数最多的合并为新词,加入词表;④ 重复直到无可合并(频次≤1)。
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>② 当前词表</h2>
+    <div id="vocab" class="vocab-grid">点击 <b style="color:var(--accent)">初始化词表</b> 开始</div>
+    <div class="legend">
+      <span class="l1">本轮新增</span>
+      <span class="l2">已存在</span>
+    </div>
+
+    <h2 style="margin-top: 24px;">③ 相邻共现统计 (前 8)</h2>
+    <table class="pairs-table">
+      <thead>
+        <tr><th>相邻组合</th><th>出现次数</th><th>说明</th></tr>
+      </thead>
+      <tbody id="pairsBody">
+        <tr><td colspan="3" style="color:var(--muted); text-align:center; padding: 20px;">— 待统计 —</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top: 24px;">④ 当前文本切分状态</h2>
+    <div class="text-display" id="textDisplay">— 待初始化 —</div>
+  </section>
+</main>
+
+<script>
+  let tokens = [];        // 当前文本序列(列表的列表,每个元素是当前的token串)
+  let vocab = new Map();  // 词表: token -> 是否新增
+  let iter = 0;
+  let lastMerged = null;
+
+  function reset() {
+    const text = document.getElementById('input').value.replace(/[\s,。;,!?:""''\-_.\n\r\t、:,]/g, '');
+    if (!text) { alert('请输入文本'); return; }
+    
+    // 初始化:每个字符作为一个token
+    tokens = Array.from(text);
+    vocab = new Map();
+    for (const c of tokens) {
+      vocab.set(c, vocab.get(c) || 0);
+    }
+    // 重新计算频次
+    recomputeVocabFreq();
+    
+    iter = 0;
+    lastMerged = null;
+    document.getElementById('stepBtn').disabled = false;
+    document.getElementById('autoBtn').disabled = false;
+    render();
+  }
+
+  function recomputeVocabFreq() {
+    // 用最长匹配将文本重新切分,以便统计每个词的实际频次
+    const tokenList = Array.from(vocab.keys()).sort((a,b) => b.length - a.length);
+    const newFreq = new Map();
+    for (const t of tokenList) newFreq.set(t, 0);
+    for (const t of tokens) {
+      newFreq.set(t, (newFreq.get(t) || 0) + 1);
+    }
+    // 移除频次为0的(只有当我们已经合并过它且它不再单独出现时)
+    vocab = newFreq;
+  }
+
+  function getPairs() {
+    const counts = new Map();
+    for (let i = 0; i < tokens.length - 1; i++) {
+      // 跳过跨标点的组合(本工具已预清洗)
+      const pair = tokens[i] + '|' + tokens[i+1];
+      counts.set(pair, (counts.get(pair) || 0) + 1);
+    }
+    return counts;
+  }
+
+  function oneStep() {
+    const pairs = getPairs();
+    if (pairs.size === 0) { alert('文本太短,无可合并'); return; }
+    // 找最大
+    let best = null, bestCount = 0;
+    for (const [p, c] of pairs) {
+      if (c > bestCount) { bestCount = c; best = p; }
+    }
+    if (bestCount < 2) { 
+      alert('已无频次≥2的组合,合并完成!');
+      document.getElementById('stepBtn').disabled = true;
+      document.getElementById('autoBtn').disabled = true;
+      return;
+    }
+    
+    const [a, b] = best.split('|');
+    const merged = a + b;
+    
+    // 在tokens序列中,从左到右贪婪地把a,b合并为merged
+    const newTokens = [];
+    let i = 0;
+    while (i < tokens.length) {
+      if (i < tokens.length - 1 && tokens[i] === a && tokens[i+1] === b) {
+        newTokens.push(merged);
+        i += 2;
+      } else {
+        newTokens.push(tokens[i]);
+        i++;
+      }
+    }
+    tokens = newTokens;
+    
+    // 更新词表
+    if (!vocab.has(merged)) {
+      vocab.set(merged, 0);
+    }
+    recomputeVocabFreq();
+    
+    iter++;
+    lastMerged = merged;
+    render();
+  }
+
+  function autoRun() {
+    let count = 0;
+    const interval = setInterval(() => {
+      const pairs = getPairs();
+      let bestCount = 0;
+      for (const c of pairs.values()) if (c > bestCount) bestCount = c;
+      if (bestCount < 2 || count >= 30) {
+        clearInterval(interval);
+        return;
+      }
+      oneStep();
+      count++;
+    }, 500);
+  }
+
+  function loadExample(n) {
+    if (n === 1) {
+      document.getElementById('input').value = '山深水流远风起云自闲月落空林影水远风声随云暗月影深空山声自远林暗水流深风起随云闲影落深水月月随流水空';
+    } else if (n === 2) {
+      document.getElementById('input').value = 'lowlowlowlowlowlowestlowestnewernewernewernewernewernewerwiderwiderwidernewnewnewnew';
+    }
+    reset();
+  }
+
+  function render() {
+    document.getElementById('iterCount').textContent = iter;
+    document.getElementById('vocabSize').textContent = vocab.size;
+    document.getElementById('mergedPair').textContent = lastMerged || '—';
+    
+    // 词表
+    const vocabEl = document.getElementById('vocab');
+    vocabEl.innerHTML = '';
+    const sorted = [...vocab.entries()].sort((a,b) => b[1] - a[1]);
+    for (const [tok, freq] of sorted) {
+      if (freq === 0) continue;
+      const span = document.createElement('span');
+      span.className = 'token' + (tok === lastMerged ? ' new' : '');
+      span.innerHTML = `${tok}<span class="freq">${freq}</span>`;
+      vocabEl.appendChild(span);
+    }
+    
+    // 共现统计
+    const pairs = getPairs();
+    const sortedPairs = [...pairs.entries()].sort((a,b) => b[1] - a[1]).slice(0, 8);
+    const tbody = document.getElementById('pairsBody');
+    if (sortedPairs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted); text-align:center; padding: 20px;">无可合并组合</td></tr>';
+    } else {
+      tbody.innerHTML = sortedPairs.map(([p, c], idx) => {
+        const [a,b] = p.split('|');
+        const note = idx === 0 && c >= 2 ? '⭐ 本轮将合并' : (c < 2 ? '次数不足,跳过' : '');
+        return `<tr class="${idx === 0 && c >= 2 ? 'top' : ''}"><td><b>${a}</b> + <b>${b}</b> → ${a}${b}</td><td>${c}</td><td style="color:var(--muted)">${note}</td></tr>`;
+      }).join('');
+    }
+    
+    // 文本显示
+    const colors = ['#fbbf24', '#60a5fa', '#34d399', '#f472b6', '#a78bfa', '#fb923c'];
+    const td = document.getElementById('textDisplay');
+    td.innerHTML = tokens.map((t, i) => {
+      const isNew = t === lastMerged;
+      const color = isNew ? '#fbbf24' : (t.length > 1 ? '#60a5fa' : '#e6ecf5');
+      const bg = isNew ? 'rgba(251,191,36,0.2)' : (t.length > 1 ? 'rgba(96,165,250,0.12)' : 'transparent');
+      return `<span class="ch" style="color:${color}; background:${bg}; ${isNew ? 'font-weight:700;' : ''}">${t}</span>`;
+    }).join('<span style="color:var(--muted)"> / </span>');
+  }
+</script>
+
+</body>
+</html>

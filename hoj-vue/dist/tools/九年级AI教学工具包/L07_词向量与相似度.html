@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第7课 · 词向量与语义相似度</title>
+<style>
+  :root {
+    --bg: #0f1729;
+    --panel: #1a2440;
+    --panel-2: #243054;
+    --ink: #e6ecf5;
+    --muted: #8b9bbf;
+    --accent: #fbbf24;
+    --accent-2: #60a5fa;
+    --good: #34d399;
+    --warn: #f87171;
+    --line: #2d3a5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f1729 0%, #141e3a 100%);
+    color: var(--ink); min-height: 100vh; line-height: 1.6;
+  }
+  header {
+    padding: 24px 36px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .title { display: flex; align-items: baseline; gap: 14px; }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .tag {
+    font-size: 12px; padding: 3px 10px;
+    background: var(--accent); color: #0f1729;
+    border-radius: 999px; font-weight: 600;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main {
+    display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px;
+    padding: 24px 36px 40px; max-width: 1400px; margin: 0 auto;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px;
+  }
+  .panel h2 {
+    margin: 0 0 14px; font-size: 15px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+
+  /* 词列表 */
+  .word-list {
+    background: #0f1729; border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px; max-height: 320px; overflow-y: auto;
+  }
+  .word-row {
+    display: grid; grid-template-columns: 28px 90px 70px 70px 80px 30px;
+    gap: 8px; align-items: center; padding: 6px 6px;
+    border-bottom: 1px solid rgba(45,58,94,0.5);
+  }
+  .word-row:last-child { border-bottom: none; }
+  .word-row .color-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+  }
+  .word-row input {
+    background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 5px;
+    padding: 5px 8px; font-size: 13px; font-family: inherit;
+    width: 100%;
+  }
+  .word-row input:focus { outline: none; border-color: var(--accent-2); }
+  .word-row .label-x, .word-row .label-y {
+    color: var(--muted); font-size: 11px; text-align: center;
+  }
+  .word-row button.del {
+    background: transparent; color: var(--warn);
+    border: 1px solid var(--line); padding: 3px 6px;
+    border-radius: 4px; font-size: 12px;
+  }
+  .word-row button.del:hover { background: rgba(248,113,113,0.15); }
+
+  .add-row {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+  .add-row button {
+    flex: 1; padding: 8px; font-size: 13px;
+  }
+  
+  button {
+    background: var(--accent); color: #0f1729; border: none; border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(251,191,36,0.3); }
+  button.secondary {
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+  }
+  button.secondary:hover { background: var(--panel-2); box-shadow: none; }
+
+  /* 坐标系 */
+  .canvas-wrap {
+    background: #0f1729; border: 1px solid var(--line);
+    border-radius: 8px; padding: 0; position: relative;
+    aspect-ratio: 1; max-height: 480px;
+  }
+  svg { width: 100%; height: 100%; display: block; }
+
+  /* 相似度计算面板 */
+  .sim-row {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 10px; align-items: center; margin-top: 12px;
+  }
+  .sim-row select {
+    background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px; font-size: 14px; font-family: inherit;
+  }
+  .sim-row .equals { color: var(--muted); font-weight: 600; }
+  .sim-result {
+    background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(96,165,250,0.08));
+    border: 1px solid var(--accent);
+    border-radius: 10px; padding: 16px; margin-top: 14px;
+    text-align: center;
+  }
+  .sim-result .formula {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 15px; color: var(--accent-2); margin-bottom: 6px;
+  }
+  .sim-result .num {
+    font-size: 32px; font-weight: 700; color: var(--accent);
+  }
+  .sim-result .verdict {
+    font-size: 13px; color: var(--muted); margin-top: 4px;
+  }
+
+  /* 多义词模拟 */
+  .context-rule {
+    background: var(--panel-2); padding: 12px 14px; border-radius: 8px;
+    margin-top: 12px; font-size: 13px;
+  }
+  .context-rule .rule {
+    display: flex; gap: 8px; align-items: center; margin: 4px 0;
+  }
+  .context-rule code {
+    background: rgba(0,0,0,0.3); padding: 1px 6px;
+    border-radius: 4px; color: var(--accent);
+    font-size: 12px;
+  }
+  .context-input {
+    width: 100%; background: #0f1729; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 10px; font-family: inherit; font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .help {
+    color: var(--muted); font-size: 12.5px;
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent-2);
+    padding: 10px 14px; border-radius: 6px;
+    margin: 12px 0;
+  }
+
+  .tabs {
+    display: flex; gap: 6px; margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    background: transparent; color: var(--muted);
+    padding: 8px 14px; border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  @media (max-width: 880px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>词向量与语义相似度</h1>
+    <span class="tag">第 7 课</span>
+  </div>
+  <div class="subtitle">用一组数(向量)表示词的语义 · 距离越近,语义越相似</div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('basic')">① 基础词向量</button>
+      <button class="tab" onclick="switchTab('context')">② 上下文动态调整</button>
+      <button class="tab" onclick="switchTab('similar')">③ 相似度计算</button>
+    </div>
+
+    <!-- Tab 1: 基础词向量 -->
+    <div class="tab-content active" id="tab-basic">
+      <div class="word-list" id="wordList"></div>
+      <div class="add-row">
+        <button class="secondary" onclick="addWord()">+ 添加词</button>
+        <button class="secondary" onclick="loadDefault()">加载教材示例</button>
+      </div>
+      <div class="help">
+        💡 <b>提示:</b> 教材示例中,猫(3,0)、狗(3,1) 距离近(语义相近);汽车(2,1)、飞机(1,3) 也相近。猫狗与汽车距离 < 与飞机距离 — 因为都在陆地上活动。
+      </div>
+    </div>
+
+    <!-- Tab 2: 上下文动态调整 -->
+    <div class="tab-content" id="tab-context">
+      <h3 style="font-size: 14px; color: var(--accent-2); margin-top: 0;">多义词:"窗口"</h3>
+      <div style="font-size: 13px; color: var(--muted);">
+        初始语义编码: ( <code style="color:var(--accent)">0.5</code> , <code style="color:var(--accent)">0.5</code> )<br>
+        x 轴 = 方向属性 · y 轴 = 科技属性
+      </div>
+
+      <div class="context-rule">
+        <div style="color:var(--accent); font-weight:600; margin-bottom:6px;">规则:</div>
+        <div class="rule">遇到 <code>朝南</code> / <code>房间</code> / <code>方向</code> → 方向属性增强,x +1</div>
+        <div class="rule">遇到 <code>计算机</code> / <code>关闭</code> / <code>电脑</code> → 科技属性增强,y +1</div>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <label style="font-size:13px; color:var(--muted);">句 1(自定义):</label>
+        <input type="text" class="context-input" id="ctx1" value="房间窗口朝南" oninput="updateContext()">
+      </div>
+      <div style="margin-top: 8px;">
+        <label style="font-size:13px; color:var(--muted);">句 2(自定义):</label>
+        <input type="text" class="context-input" id="ctx2" value="关闭计算机窗口" oninput="updateContext()">
+      </div>
+
+      <div id="ctxResult" style="margin-top:14px;"></div>
+
+      <div class="help">
+        💡 同一个"窗口",在不同上下文中应有不同语义编码 — 这就是大语言模型为什么需要"动态嵌入"。
+      </div>
+    </div>
+
+    <!-- Tab 3: 相似度计算 -->
+    <div class="tab-content" id="tab-similar">
+      <p style="margin: 0 0 10px; font-size: 13px; color: var(--muted);">从词列表中选两个词,计算它们的欧氏距离:</p>
+      <div class="sim-row">
+        <select id="simA"></select>
+        <span class="equals">↔</span>
+        <select id="simB"></select>
+      </div>
+      <div class="sim-result" id="simResult">
+        <div class="formula">d = √[(x₁-x₂)² + (y₁-y₂)²]</div>
+        <div class="num">—</div>
+        <div class="verdict">选择两个词以计算</div>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="secondary" onclick="autoCompute()" style="width:100%;">计算所有词两两距离 (距离矩阵)</button>
+      </div>
+      <div id="distMatrix" style="margin-top:12px;"></div>
+      <div class="help">
+        💡 <b>欧氏距离:</b> 二维平面上两点的"直线距离"。距离越小越相似。实际系统用余弦或点积(更适合高维向量)。
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>语义空间(二维可视化)</h2>
+    <div class="canvas-wrap">
+      <svg id="canvas" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div style="font-size:12px; color:var(--muted); margin-top: 10px; text-align:center;">
+      ↑ 拖拽词的圆点可在坐标系中调整位置 · x、y轴范围: 0~5
+    </div>
+  </section>
+</main>
+
+<script>
+  const COLORS = ['#fbbf24', '#60a5fa', '#34d399', '#f472b6', '#a78bfa', '#fb923c', '#22d3ee', '#84cc16', '#ef4444'];
+  
+  // 默认数据(基于教材表7.1)
+  let words = [
+    {label: '猫',  x: 3, y: 0},
+    {label: '狗',  x: 3, y: 1},
+    {label: '汽车', x: 2, y: 1},
+    {label: '飞机', x: 1, y: 3}
+  ];
+  let activeTab = 'basic';
+  let dragIdx = -1;
+
+  function switchTab(t) {
+    activeTab = t;
+    document.querySelectorAll('.tab').forEach((el, i) => {
+      el.classList.toggle('active', el.textContent.includes(['基础','上下文','相似度'][['basic','context','similar'].indexOf(t)]));
+    });
+    document.querySelectorAll('.tab-content').forEach(el => {
+      el.classList.toggle('active', el.id === 'tab-' + t);
+    });
+    if (t === 'similar') updateSimSelectors();
+    if (t === 'context') updateContext();
+    render();
+  }
+
+  function loadDefault() {
+    words = [
+      {label: '猫',  x: 3, y: 0},
+      {label: '狗',  x: 3, y: 1},
+      {label: '汽车', x: 2, y: 1},
+      {label: '飞机', x: 1, y: 3}
+    ];
+    render();
+  }
+
+  function addWord() {
+    if (words.length >= 8) { alert('最多 8 个词'); return; }
+    words.push({label: '词' + (words.length + 1), x: 2.5, y: 2.5});
+    render();
+  }
+
+  function delWord(i) {
+    words.splice(i, 1);
+    render();
+  }
+
+  function updateWord(i, field, val) {
+    if (field === 'label') words[i].label = val;
+    else words[i][field] = parseFloat(val) || 0;
+    render();
+  }
+
+  function render() {
+    // 渲染列表
+    const list = document.getElementById('wordList');
+    list.innerHTML = '';
+    
+    // 表头
+    const header = document.createElement('div');
+    header.className = 'word-row';
+    header.style.cssText = 'border-bottom: 1px solid var(--line); padding-bottom: 8px; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 1px;';
+    header.innerHTML = '<span></span><span>词</span><span class="label-x">x</span><span class="label-y">y</span><span></span><span></span>';
+    list.appendChild(header);
+    
+    words.forEach((w, i) => {
+      const row = document.createElement('div');
+      row.className = 'word-row';
+      row.innerHTML = `
+        <span class="color-dot" style="background:${COLORS[i % COLORS.length]}"></span>
+        <input type="text" value="${w.label}" oninput="updateWord(${i}, 'label', this.value)">
+        <input type="number" step="0.1" value="${w.x}" oninput="updateWord(${i}, 'x', this.value)">
+        <input type="number" step="0.1" value="${w.y}" oninput="updateWord(${i}, 'y', this.value)">
+        <span style="font-size: 11px; color: var(--muted);">(${w.x}, ${w.y})</span>
+        <button class="del" onclick="delWord(${i})">✕</button>
+      `;
+      list.appendChild(row);
+    });
+    
+    drawCanvas();
+    updateSimSelectors();
+  }
+
+  function drawCanvas() {
+    const svg = document.getElementById('canvas');
+    const W = 500, H = 500;
+    const margin = 40;
+    const plotW = W - 2 * margin;
+    const plotH = H - 2 * margin;
+    const max = 5;
+    
+    function px(x) { return margin + x / max * plotW; }
+    function py(y) { return H - margin - y / max * plotH; }
+    
+    let html = '';
+    
+    // 网格
+    for (let i = 0; i <= max; i++) {
+      const x = px(i), y = py(i);
+      html += `<line x1="${x}" y1="${margin}" x2="${x}" y2="${H-margin}" stroke="rgba(45,58,94,0.6)" stroke-width="1"/>`;
+      html += `<line x1="${margin}" y1="${y}" x2="${W-margin}" y2="${y}" stroke="rgba(45,58,94,0.6)" stroke-width="1"/>`;
+      html += `<text x="${x}" y="${H-margin+18}" fill="#8b9bbf" font-size="11" text-anchor="middle">${i}</text>`;
+      if (i > 0) html += `<text x="${margin-8}" y="${y+4}" fill="#8b9bbf" font-size="11" text-anchor="end">${i}</text>`;
+    }
+    
+    // 坐标轴
+    html += `<line x1="${margin}" y1="${H-margin}" x2="${W-margin}" y2="${H-margin}" stroke="#8b9bbf" stroke-width="2"/>`;
+    html += `<line x1="${margin}" y1="${margin}" x2="${margin}" y2="${H-margin}" stroke="#8b9bbf" stroke-width="2"/>`;
+    
+    // 箭头
+    html += `<polygon points="${W-margin},${H-margin} ${W-margin-8},${H-margin-5} ${W-margin-8},${H-margin+5}" fill="#8b9bbf"/>`;
+    html += `<polygon points="${margin},${margin} ${margin-5},${margin+8} ${margin+5},${margin+8}" fill="#8b9bbf"/>`;
+    
+    // 标签 x, y, O
+    html += `<text x="${W-margin+12}" y="${H-margin+5}" fill="#8b9bbf" font-size="14" font-style="italic">x</text>`;
+    html += `<text x="${margin-5}" y="${margin-8}" fill="#8b9bbf" font-size="14" font-style="italic">y</text>`;
+    html += `<text x="${margin-15}" y="${H-margin+18}" fill="#8b9bbf" font-size="13" font-style="italic">O</text>`;
+    
+    // 词的圆点
+    words.forEach((w, i) => {
+      const x = px(w.x), y = py(w.y);
+      const color = COLORS[i % COLORS.length];
+      html += `<g style="cursor:grab;" data-idx="${i}" class="dot">`;
+      html += `<circle cx="${x}" cy="${y}" r="10" fill="${color}" stroke="#0f1729" stroke-width="2"/>`;
+      html += `<text x="${x+14}" y="${y+5}" fill="${color}" font-size="14" font-weight="600">${w.label}</text>`;
+      html += `</g>`;
+    });
+    
+    svg.innerHTML = html;
+    
+    // 添加拖拽
+    svg.querySelectorAll('.dot').forEach(g => {
+      g.addEventListener('mousedown', e => startDrag(e, parseInt(g.dataset.idx)));
+      g.addEventListener('touchstart', e => startDrag(e.touches[0], parseInt(g.dataset.idx)));
+    });
+  }
+
+  function startDrag(e, idx) {
+    dragIdx = idx;
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchmove', onDragTouch);
+    document.addEventListener('touchend', endDrag);
+  }
+  function onDragTouch(e) { onDrag(e.touches[0]); }
+  function onDrag(e) {
+    if (dragIdx < 0) return;
+    const svg = document.getElementById('canvas');
+    const rect = svg.getBoundingClientRect();
+    const W = 500, H = 500, margin = 40, max = 5;
+    const plotW = W - 2*margin, plotH = H - 2*margin;
+    const sx = (e.clientX - rect.left) / rect.width * W;
+    const sy = (e.clientY - rect.top) / rect.height * H;
+    let x = (sx - margin) / plotW * max;
+    let y = (H - margin - sy) / plotH * max;
+    x = Math.max(0, Math.min(max, Math.round(x * 10) / 10));
+    y = Math.max(0, Math.min(max, Math.round(y * 10) / 10));
+    words[dragIdx].x = x;
+    words[dragIdx].y = y;
+    render();
+  }
+  function endDrag() {
+    dragIdx = -1;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchmove', onDragTouch);
+    document.removeEventListener('touchend', endDrag);
+  }
+
+  // 上下文调整
+  function updateContext() {
+    const ctx1 = document.getElementById('ctx1').value;
+    const ctx2 = document.getElementById('ctx2').value;
+    
+    function calc(s) {
+      let x = 0.5, y = 0.5;
+      let xActions = [], yActions = [];
+      const xKeys = ['朝南', '房间', '方向', '南面', '北面', '朝北'];
+      const yKeys = ['计算机', '关闭', '电脑', '弹出', '点击', '系统'];
+      for (const k of xKeys) if (s.includes(k)) { x += 1; xActions.push(k); }
+      for (const k of yKeys) if (s.includes(k)) { y += 1; yActions.push(k); }
+      return {x, y, xActions, yActions};
+    }
+    
+    const r1 = calc(ctx1);
+    const r2 = calc(ctx2);
+    
+    const div = document.getElementById('ctxResult');
+    div.innerHTML = `
+      <div style="background: var(--panel-2); padding: 14px; border-radius: 8px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div>
+            <div style="color: var(--accent); font-weight: 600; font-size: 14px;">"${ctx1}" 中的窗口</div>
+            <div style="font-family: monospace; font-size: 18px; margin: 6px 0; color: var(--accent);">( ${r1.x} , ${r1.y} )</div>
+            <div style="font-size: 12px; color: var(--muted);">
+              ${r1.xActions.length ? '触发 x+1: ' + r1.xActions.join(',') : 'x: 无变化'}<br>
+              ${r1.yActions.length ? '触发 y+1: ' + r1.yActions.join(',') : 'y: 无变化'}
+            </div>
+          </div>
+          <div>
+            <div style="color: var(--accent-2); font-weight: 600; font-size: 14px;">"${ctx2}" 中的窗口</div>
+            <div style="font-family: monospace; font-size: 18px; margin: 6px 0; color: var(--accent-2);">( ${r2.x} , ${r2.y} )</div>
+            <div style="font-size: 12px; color: var(--muted);">
+              ${r2.xActions.length ? '触发 x+1: ' + r2.xActions.join(',') : 'x: 无变化'}<br>
+              ${r2.yActions.length ? '触发 y+1: ' + r2.yActions.join(',') : 'y: 无变化'}
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 13px;">
+          两点的距离: <b style="color: var(--good);">${Math.sqrt((r1.x-r2.x)**2 + (r1.y-r2.y)**2).toFixed(2)}</b> — 距离越大说明在不同上下文中"窗口"含义越不同。
+        </div>
+      </div>`;
+    
+    // 把它们也显示在主图上
+    const w1 = words.find(w => w.label === '窗口·' + ctx1.slice(0,2));
+    if (!w1) {
+      // 不持久添加,仅作为暂态显示;此处简化,只在文本中说明
+    }
+  }
+
+  // 相似度
+  function updateSimSelectors() {
+    const a = document.getElementById('simA');
+    const b = document.getElementById('simB');
+    if (!a || !b) return;
+    const opts = words.map((w,i) => `<option value="${i}">${w.label} (${w.x}, ${w.y})</option>`).join('');
+    a.innerHTML = '<option value="-1">— 选择第一个词 —</option>' + opts;
+    b.innerHTML = '<option value="-1">— 选择第二个词 —</option>' + opts;
+    if (words.length >= 2) {
+      a.value = 0; b.value = 1;
+    }
+    a.onchange = b.onchange = computeSim;
+    computeSim();
+  }
+
+  function computeSim() {
+    const a = document.getElementById('simA');
+    const b = document.getElementById('simB');
+    if (!a || !b) return;
+    const ia = parseInt(a.value), ib = parseInt(b.value);
+    const r = document.getElementById('simResult');
+    if (ia < 0 || ib < 0 || ia === ib) {
+      r.innerHTML = '<div class="formula">d = √[(x₁-x₂)² + (y₁-y₂)²]</div><div class="num">—</div><div class="verdict">请选两个不同的词</div>';
+      return;
+    }
+    const wa = words[ia], wb = words[ib];
+    const dx = wa.x - wb.x, dy = wa.y - wb.y;
+    const d = Math.sqrt(dx*dx + dy*dy);
+    let verdict;
+    if (d < 1) verdict = '✨ 非常相似 —— 在语义空间中几乎重合';
+    else if (d < 2) verdict = '😊 较为相似 —— 同类或相关';
+    else if (d < 3.5) verdict = '🤔 关联较弱';
+    else verdict = '❌ 不相关 —— 距离很远';
+    
+    r.innerHTML = `
+      <div class="formula">d = √[(${wa.x}-${wb.x})² + (${wa.y}-${wb.y})²]<br>= √[${dx*dx} + ${dy*dy}] = √${(dx*dx+dy*dy).toFixed(2)}</div>
+      <div class="num">${d.toFixed(3)}</div>
+      <div class="verdict"><b>${wa.label}</b> ↔ <b>${wb.label}</b> · ${verdict}</div>`;
+  }
+
+  function autoCompute() {
+    if (words.length < 2) { alert('至少 2 个词'); return; }
+    const div = document.getElementById('distMatrix');
+    let html = '<table style="width:100%; font-size:12px; border-collapse:collapse; margin-top: 4px;">';
+    html += '<tr><th style="padding:6px; border:1px solid var(--line); background:var(--panel-2);"></th>';
+    words.forEach(w => html += `<th style="padding:6px; border:1px solid var(--line); background:var(--panel-2); color:var(--accent);">${w.label}</th>`);
+    html += '</tr>';
+    let minD = Infinity, minPair = '';
+    words.forEach((wa, i) => {
+      html += `<tr><th style="padding:6px; border:1px solid var(--line); background:var(--panel-2); color:var(--accent);">${wa.label}</th>`;
+      words.forEach((wb, j) => {
+        if (i === j) html += `<td style="padding:6px; border:1px solid var(--line); color:var(--muted); text-align:center;">—</td>`;
+        else {
+          const d = Math.sqrt((wa.x-wb.x)**2 + (wa.y-wb.y)**2);
+          if (d < minD && i !== j) { minD = d; minPair = wa.label + '↔' + wb.label; }
+          const intensity = Math.min(1, 1 / (d + 0.3));
+          html += `<td style="padding:6px; border:1px solid var(--line); text-align:center; font-family: monospace; background: rgba(52,211,153,${intensity * 0.4});">${d.toFixed(2)}</td>`;
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</table>';
+    html += `<div style="font-size: 12.5px; color: var(--good); margin-top: 8px; text-align: center;">最近的一对: <b>${minPair}</b> (距离 ${minD.toFixed(2)})</div>`;
+    div.innerHTML = html;
+  }
+
+  render();
+  updateContext();
+</script>
+
+</body>
+</html>

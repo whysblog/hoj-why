@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Means聚类可视化 — 星图分组</title>
+<style>
+:root{
+  --bg:#0f1729; --panel:#1a2440; --panel-2:#243054;
+  --ink:#e6ecf5; --muted:#8b9bbf; --accent:#fbbf24;
+  --accent-2:#60a5fa; --good:#34d399; --warn:#f87171;
+  --line:#2d3a5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#0f1729 0%,#141e3a 100%);
+  color:var(--ink);min-height:100vh;padding:24px;
+}
+.container{max-width:1400px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+h1{font-size:22px;font-weight:600}
+.tag{background:linear-gradient(135deg,var(--accent),#f59e0b);color:#0f1729;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}
+.subtitle{color:var(--muted);font-size:14px;margin-left:auto}
+.layout{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);padding-left:10px;border-left:3px solid var(--accent);margin-bottom:14px}
+.btn{background:linear-gradient(135deg,var(--accent),#f59e0b);color:#0f1729;border:none;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:transform .15s;margin-right:6px;margin-bottom:6px}
+.btn:hover{transform:translateY(-1px)}
+.btn.sec{background:var(--panel-2);color:var(--ink);border:1px solid var(--line)}
+.btn.sec:hover{background:#2c3a64}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.canvas-wrap{background:#0a0e1f;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden}
+canvas{display:block;cursor:crosshair;width:100%;height:auto}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.controls label{color:var(--muted);font-size:13px}
+input[type=range]{accent-color:var(--accent)}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.metric{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center}
+.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.metric-val{font-size:22px;font-weight:600;color:var(--accent);margin-top:4px;font-family:"SF Mono",Menlo,monospace}
+.cluster-info{font-size:13px;line-height:1.7}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.step-log{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px;font-family:"SF Mono",Menlo,monospace;font-size:12px;max-height:200px;overflow-y:auto}
+.step-log div{padding:3px 0;border-bottom:1px dotted #2d3a5e;color:var(--muted)}
+.step-log div:last-child{border:none}
+.step-log .now{color:var(--good)}
+.intro{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:10px}
+.intro b{color:var(--ink)}
+@media (max-width:880px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <span class="tag">第19课</span>
+  <h1>K-Means聚类可视化</h1>
+  <span class="subtitle">星图分组 · 无监督学习</span>
+</header>
+
+<div class="layout">
+
+<div>
+<div class="panel">
+  <h2>① 算法说明</h2>
+  <p class="intro">
+    <b>K-Means 聚类</b>是一种无监督学习算法。给定数据点，将它们划分到 K 个簇：<br>
+    1. 随机选 <b>K 个中心</b><br>
+    2. 每个点归属<b>距离最近</b>的中心<br>
+    3. 重新计算每个簇的<b>新中心</b>（平均坐标）<br>
+    4. 重复直到中心<b>不再变化</b>
+  </p>
+</div>
+
+<div class="panel">
+  <h2>② 控制台</h2>
+  <div class="controls">
+    <label>K 值：</label>
+    <input id="k-slider" type="range" min="2" max="6" value="2" style="flex:1">
+    <span id="k-val" style="color:var(--accent);font-weight:600;width:24px;text-align:center">2</span>
+  </div>
+  <div class="controls">
+    <label>速度：</label>
+    <input id="speed-slider" type="range" min="100" max="1500" value="700" style="flex:1">
+    <span style="color:var(--muted);font-size:12px">慢 ← → 快</span>
+  </div>
+  <div style="margin-top:10px">
+    <button class="btn" onclick="initCenters()">① 随机初始化中心</button>
+    <button class="btn" onclick="oneStep()" id="step-btn">② 单步执行</button>
+    <button class="btn" onclick="autoRun()" id="run-btn">▶ 自动运行</button>
+  </div>
+  <div style="margin-top:6px">
+    <button class="btn sec" onclick="loadPreset(1)">星图（教材示例）</button>
+    <button class="btn sec" onclick="loadPreset(2)">随机散布</button>
+    <button class="btn sec" onclick="clearPoints()">清空重画</button>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:10px">
+    💡 也可在右侧画布上<b>点击</b>添加自定义点
+  </p>
+</div>
+
+<div class="panel">
+  <h2>③ 簇信息</h2>
+  <div id="cluster-info" class="cluster-info"></div>
+</div>
+</div>
+
+<div>
+<div class="panel">
+  <h2>④ 星图</h2>
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="700" height="500"></canvas>
+  </div>
+  <div class="metric-row">
+    <div class="metric"><div class="metric-label">数据点</div><div class="metric-val" id="m-n">0</div></div>
+    <div class="metric"><div class="metric-label">迭代轮数</div><div class="metric-val" id="m-iter">0</div></div>
+    <div class="metric"><div class="metric-label">SSE</div><div class="metric-val" id="m-sse">—</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>⑤ 迭代日志</h2>
+  <div class="step-log" id="step-log">
+    <div>等待开始…</div>
+  </div>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const W = canvas.width, H = canvas.height;
+
+// 簇颜色
+const CLUSTER_COLORS = ["#fbbf24","#60a5fa","#34d399","#f472b6","#a78bfa","#fb923c"];
+
+let points = [];      // {x,y,cluster}
+let centers = [];     // {x,y}
+let prevCenters = []; // 用于绘制轨迹
+let iter = 0;
+let running = false;
+let runTimer = null;
+
+// 教材示例：星图（19.1 类似分布）
+const PRESET_STARS = [
+  // 左下星团
+  {x:120,y:380},{x:140,y:360},{x:160,y:400},{x:130,y:420},{x:170,y:380},
+  {x:100,y:400},{x:150,y:340},{x:180,y:420},
+  // 右上星团
+  {x:520,y:120},{x:540,y:140},{x:560,y:100},{x:500,y:140},{x:530,y:160},
+  {x:570,y:140},{x:550,y:180},{x:580,y:120},
+  // 中部
+  {x:340,y:260},{x:360,y:280},{x:320,y:240},{x:380,y:260},{x:350,y:300},
+  // 右下
+  {x:520,y:380},{x:550,y:400},{x:580,y:360},{x:510,y:420},{x:560,y:420},
+];
+
+function $(id){return document.getElementById(id)}
+
+// 鼠标添加点
+canvas.addEventListener("click", e=>{
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (W/rect.width);
+  const y = (e.clientY - rect.top) * (H/rect.height);
+  points.push({x,y,cluster:-1});
+  centers = [];
+  iter = 0;
+  draw();
+  updateMetrics();
+});
+
+function loadPreset(n){
+  if(n===1){
+    points = PRESET_STARS.map(p=>({...p,cluster:-1}));
+  } else {
+    points = [];
+    for(let i=0;i<40;i++){
+      points.push({
+        x: 80 + Math.random()*(W-160),
+        y: 60 + Math.random()*(H-120),
+        cluster:-1
+      });
+    }
+  }
+  centers = [];
+  iter = 0;
+  log("已加载预设数据（" + points.length + " 点）", true);
+  draw(); updateMetrics(); updateClusterInfo();
+}
+
+function clearPoints(){
+  points = []; centers = []; prevCenters = []; iter = 0;
+  log("已清空");
+  draw(); updateMetrics(); updateClusterInfo();
+}
+
+$("k-slider").addEventListener("input", e=>{
+  $("k-val").textContent = e.target.value;
+  centers = []; iter = 0;
+  points.forEach(p=>p.cluster=-1);
+  draw(); updateMetrics(); updateClusterInfo();
+});
+
+function initCenters(){
+  if(points.length<2){alert("请先添加数据点");return}
+  const K = parseInt($("k-slider").value);
+  // 从已有点中随机挑 K 个作为初始中心（K-Means++ 简化版）
+  const shuffled = [...points].sort(()=>Math.random()-0.5);
+  centers = shuffled.slice(0,K).map(p=>({x:p.x, y:p.y}));
+  prevCenters = centers.map(c=>({...c, history:[{x:c.x,y:c.y}]}));
+  iter = 0;
+  points.forEach(p=>p.cluster=-1);
+  log("初始化 " + K + " 个中心点", true);
+  draw(); updateMetrics(); updateClusterInfo();
+}
+
+function oneStep(){
+  if(centers.length===0){initCenters(); return}
+  // Step A：分配点到最近中心
+  let changed = 0;
+  points.forEach(p=>{
+    let minD=Infinity, minC=0;
+    centers.forEach((c,ci)=>{
+      const d = (p.x-c.x)**2 + (p.y-c.y)**2;
+      if(d<minD){minD=d; minC=ci}
+    });
+    if(p.cluster!==minC){changed++; p.cluster=minC}
+  });
+  // Step B：重算中心
+  let centerMoved = false;
+  centers = centers.map((c,ci)=>{
+    const cluster = points.filter(p=>p.cluster===ci);
+    if(cluster.length===0) return c;
+    const nx = cluster.reduce((s,p)=>s+p.x,0)/cluster.length;
+    const ny = cluster.reduce((s,p)=>s+p.y,0)/cluster.length;
+    if(Math.abs(nx-c.x)>0.1 || Math.abs(ny-c.y)>0.1) centerMoved = true;
+    // 记录轨迹
+    prevCenters[ci].history.push({x:nx,y:ny});
+    return {x:nx, y:ny};
+  });
+
+  iter++;
+  log(`轮次 ${iter}：${changed} 个点改变归属，中心${centerMoved?'已更新':'稳定'}`, true);
+
+  draw(); updateMetrics(); updateClusterInfo();
+
+  if(!centerMoved && changed===0){
+    log("✓ 收敛完成！中心不再变化", true);
+    return false;
+  }
+  return true;
+}
+
+function autoRun(){
+  if(running){
+    running = false;
+    clearTimeout(runTimer);
+    $("run-btn").textContent = "▶ 自动运行";
+    return;
+  }
+  if(centers.length===0) initCenters();
+  running = true;
+  $("run-btn").textContent = "⏸ 暂停";
+  const tick = ()=>{
+    if(!running) return;
+    const cont = oneStep();
+    if(cont!==false){
+      runTimer = setTimeout(tick, parseInt($("speed-slider").value));
+    } else {
+      running = false;
+      $("run-btn").textContent = "▶ 自动运行";
+    }
+  };
+  tick();
+}
+
+function draw(){
+  ctx.fillStyle = "#0a0e1f";
+  ctx.fillRect(0,0,W,H);
+
+  // 绘制中心轨迹
+  if(prevCenters.length){
+    prevCenters.forEach((pc,ci)=>{
+      if(!pc.history || pc.history.length<2) return;
+      ctx.strokeStyle = CLUSTER_COLORS[ci]+"66";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      ctx.moveTo(pc.history[0].x, pc.history[0].y);
+      pc.history.forEach(h=>ctx.lineTo(h.x,h.y));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }
+
+  // 绘制点
+  points.forEach(p=>{
+    const color = p.cluster<0 ? "#8b9bbf" : CLUSTER_COLORS[p.cluster];
+    // 星形外发光
+    ctx.fillStyle = color + "33";
+    ctx.beginPath(); ctx.arc(p.x,p.y,10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill();
+  });
+
+  // 绘制中心
+  centers.forEach((c,ci)=>{
+    const color = CLUSTER_COLORS[ci];
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.fillStyle = "#0a0e1f";
+    // 十字标志
+    ctx.beginPath();
+    ctx.arc(c.x,c.y,12,0,Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(c.x-7,c.y); ctx.lineTo(c.x+7,c.y);
+    ctx.moveTo(c.x,c.y-7); ctx.lineTo(c.x,c.y+7);
+    ctx.stroke();
+    // 标签
+    ctx.fillStyle = color;
+    ctx.font = "bold 12px monospace";
+    ctx.fillText("C"+(ci+1), c.x+15, c.y-10);
+  });
+}
+
+function calcSSE(){
+  if(centers.length===0) return null;
+  return points.reduce((sum,p)=>{
+    if(p.cluster<0) return sum;
+    const c = centers[p.cluster];
+    return sum + (p.x-c.x)**2 + (p.y-c.y)**2;
+  }, 0);
+}
+
+function updateMetrics(){
+  $("m-n").textContent = points.length;
+  $("m-iter").textContent = iter;
+  const sse = calcSSE();
+  $("m-sse").textContent = sse===null ? "—" : sse.toFixed(0);
+}
+
+function updateClusterInfo(){
+  const box = $("cluster-info");
+  if(centers.length===0){
+    box.innerHTML = `<span style="color:var(--muted)">尚未开始聚类</span>`;
+    return;
+  }
+  let html = "";
+  centers.forEach((c,ci)=>{
+    const cnt = points.filter(p=>p.cluster===ci).length;
+    html += `<div>
+      <span class="dot" style="background:${CLUSTER_COLORS[ci]}"></span>
+      <b>簇 C${ci+1}</b> · ${cnt} 个点 · 中心 (${c.x.toFixed(0)}, ${c.y.toFixed(0)})
+    </div>`;
+  });
+  box.innerHTML = html;
+}
+
+function log(msg, mark=false){
+  const box = $("step-log");
+  const div = document.createElement("div");
+  div.textContent = msg;
+  if(mark) div.className = "now";
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  // 上一条恢复颜色
+  if(box.children.length>1) box.children[box.children.length-2].className="";
+}
+
+// 默认加载星图
+loadPreset(1);
+</script>
+</body>
+</html>
