@@ -286,36 +286,22 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
             return row;
         }
 
-        Judge best = judges.get(0);
-        int bestScore = 0;
-        int bestStatus = Constants.Judge.STATUS_NOT_SUBMITTED.getStatus();
+        Judge latest = judges.get(0);
         boolean isAcm = p.getType() != null && p.getType().equals(Constants.ProblemType.ACM.getType());
-        for (Judge judge : judges) {
-            int st = judge.getStatus() == null ? Constants.Judge.STATUS_NOT_SUBMITTED.getStatus() : judge.getStatus();
-            int sc;
-            if (isAcm) {
-                sc = st == Constants.Judge.STATUS_ACCEPTED.getStatus() ? maxScore : 0;
-            } else {
-                sc = judge.getScore() != null ? judge.getScore() : 0;
-                if (st == Constants.Judge.STATUS_ACCEPTED.getStatus() && sc < maxScore) {
-                    sc = maxScore;
-                }
-            }
-            if (sc > bestScore) {
-                bestScore = sc;
-                bestStatus = st;
-                best = judge;
-            }
-            if (st == Constants.Judge.STATUS_ACCEPTED.getStatus() && isAcm) {
-                bestScore = maxScore;
-                bestStatus = st;
-                best = judge;
-                break;
+        int latestStatus = latest.getStatus() == null ? Constants.Judge.STATUS_NOT_SUBMITTED.getStatus() : latest.getStatus();
+        int latestScore;
+        if (isAcm) {
+            latestScore = latestStatus == Constants.Judge.STATUS_ACCEPTED.getStatus() ? maxScore : 0;
+        } else {
+            latestScore = latest.getScore() != null ? latest.getScore() : 0;
+            if (latestStatus == Constants.Judge.STATUS_ACCEPTED.getStatus() && latestScore < maxScore) {
+                latestScore = maxScore;
             }
         }
-        row.setJudgeStatus(bestStatus);
-        row.setJudgeStatusName(resolveJudgeStatusName(bestStatus));
-        row.setScore(bestScore);
+        row.setJudgeStatus(latestStatus);
+        row.setJudgeStatusName(resolveJudgeStatusName(latestStatus));
+        row.setLanguage(latest.getLanguage());
+        row.setScore(latestScore);
         return row;
     }
 
