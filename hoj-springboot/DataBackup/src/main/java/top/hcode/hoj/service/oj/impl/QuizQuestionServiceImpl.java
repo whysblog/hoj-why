@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, QuizQuestion> implements QuizQuestionService {
 
     @Override
-    public Page<QuizQuestionListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, Integer difficulty) {
+    public Page<QuizQuestionListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, Integer difficulty, String langCategory) {
         int size = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         int page = currentPage == null || currentPage <= 0 ? 1 : currentPage;
         QueryWrapper<QuizQuestion> qw = new QueryWrapper<>();
@@ -34,6 +34,9 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
         }
         if (difficulty != null && difficulty >= 0 && difficulty <= 2) {
             qw.eq("difficulty", difficulty);
+        }
+        if (StrUtil.isNotBlank(langCategory)) {
+            qw.eq("lang_category", langCategory.toLowerCase());
         }
         qw.orderByDesc("id");
         IPage<QuizQuestion> entityPage = page(new Page<>(page, size), qw);

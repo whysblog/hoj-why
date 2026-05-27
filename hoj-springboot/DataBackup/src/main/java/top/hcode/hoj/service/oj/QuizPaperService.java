@@ -15,7 +15,7 @@ import java.util.List;
 
 public interface QuizPaperService extends IService<QuizPaper> {
 
-    Page<QuizPaperListVO> getPublicPage(Integer limit, Integer currentPage, String keyword);
+    Page<QuizPaperListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, String langCategory);
 
     QuizPaperDetailVO getPublicDetail(Long paperId) throws StatusFailException;
 

@@ -59,6 +59,10 @@ public class QuizQuestion {
     @ApiModelProperty(value = "作者")
     private String author;
 
+    @TableField("lang_category")
+    @ApiModelProperty(value = "分类：cpp/python")
+    private String langCategory;
+
     @TableField(fill = FieldFill.INSERT)
     private Date gmtCreate;
 

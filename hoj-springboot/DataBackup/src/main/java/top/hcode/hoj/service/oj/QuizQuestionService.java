@@ -10,7 +10,7 @@ import top.hcode.hoj.pojo.vo.QuizSubmitResultVO;
 
 public interface QuizQuestionService extends IService<QuizQuestion> {
 
-    Page<QuizQuestionListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, Integer difficulty);
+    Page<QuizQuestionListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, Integer difficulty, String langCategory);
 
     QuizQuestionInfoVO getPublicInfo(Long id) throws StatusFailException;
 

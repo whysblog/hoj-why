@@ -7,6 +7,17 @@
           <el-tag v-if="result.paperTitle" size="small" style="margin-left: 10px">{{ result.paperTitle }}</el-tag>
         </div>
         <el-alert v-if="result.message" :title="result.message" type="info" show-icon :closable="false" />
+        <div v-if="loaded && problemLangSummary.length" class="lang-summary">
+          <el-tag
+            v-for="item in problemLangSummary"
+            :key="item.lang"
+            size="small"
+            type="success"
+            effect="plain"
+          >
+            {{ item.lang }}：{{ item.count }}题，{{ item.score }} / {{ item.maxScore }}
+          </el-tag>
+        </div>
         <div v-if="!loaded" class="muted" style="margin-top: 16px;">未找到本次作答结果，请重新提交套卷。</div>
         <template v-else>
           <el-divider content-position="left">逐题对照</el-divider>
@@ -59,7 +70,7 @@
 import Markdown from '@/components/oj/common/Markdown';
 import { JUDGE_STATUS } from '@/common/constants';
 
-const storageKey = (paperId) => `hoj_quiz_paper_result_${paperId}`;
+const storageKey = (paperId, token) => `hoj_quiz_paper_result_${paperId}_${token}`;
 
 export default {
   name: 'QuizPaperResult',
@@ -79,6 +90,9 @@ export default {
     paperId() {
       return this.$route.params.paperId;
     },
+    resultToken() {
+      return this.$route.params.resultToken;
+    },
     itemResults() {
       if (this.result.itemResults && this.result.itemResults.length) {
         return this.result.itemResults;
@@ -88,6 +102,21 @@ export default {
         itemType: 'quiz',
       }));
     },
+    problemLangSummary() {
+      const map = {};
+      this.itemResults
+        .filter((row) => row.itemType === 'problem')
+        .forEach((row) => {
+          const lang = this.normalizeLanguage(row.language);
+          if (!map[lang]) {
+            map[lang] = { lang, count: 0, score: 0, maxScore: 0 };
+          }
+          map[lang].count += 1;
+          map[lang].score += Number(row.score || 0);
+          map[lang].maxScore += Number(row.maxScore || 0);
+        });
+      return Object.values(map);
+    },
   },
   mounted() {
     this.loadFromStorage();
@@ -96,10 +125,13 @@ export default {
     paperId() {
       this.loadFromStorage();
     },
+    resultToken() {
+      this.loadFromStorage();
+    },
   },
   methods: {
     loadFromStorage() {
-      const raw = sessionStorage.getItem(storageKey(this.paperId));
+      const raw = sessionStorage.getItem(storageKey(this.paperId, this.resultToken));
       if (!raw) {
         this.loaded = false;
         this.result = { paperTitle: '', message: '', itemResults: [], questionResults: [] };
@@ -119,6 +151,13 @@ export default {
     redo() {
       this.$router.push({ name: 'QuizPaperDetail', params: { paperId: String(this.paperId) } });
     },
+    normalizeLanguage(language) {
+      const text = String(language || '').toLowerCase();
+      if (!text) return '未提交';
+      if (text.includes('python') || text.includes('pypy')) return 'Python';
+      if (text.includes('c++') || text.includes('cpp') || text.includes('g++') || text.includes('clang++')) return 'C++';
+      return language;
+    },
   },
 };
 </script>
@@ -130,6 +169,12 @@ export default {
 }
 .muted {
   color: #909399;
+}
+.lang-summary {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .result-block {
   margin-bottom: 20px;

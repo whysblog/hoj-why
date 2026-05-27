@@ -84,7 +84,8 @@ import QuizProblemEmbed from '@/components/oj/quiz/QuizProblemEmbed.vue';
 import api from '@/common/api';
 import { mapGetters } from 'vuex';
 
-const resultStorageKey = (paperId) => `hoj_quiz_paper_result_${paperId}`;
+const resultStorageKey = (paperId, token) => `hoj_quiz_paper_result_${paperId}_${token}`;
+const createResultToken = () => Math.random().toString(36).slice(2, 10);
 
 export default {
   name: 'QuizPaperDetail',
@@ -183,6 +184,22 @@ export default {
       });
       return answers;
     },
+    buildProblemSnapshots() {
+      const snapshots = {};
+      this.paperItems.forEach((item) => {
+        if (item.itemType !== 'problem') return;
+        const pid = String(item.questionId);
+        const st = this.problemStatusMap[pid];
+        if (!st || !st.submittedInThisSession) return;
+        snapshots[pid] = {
+          status: st.status,
+          score: st.score,
+          language: st.language,
+          maxScore: st.maxScore,
+        };
+      });
+      return snapshots;
+    },
     submit() {
       if (!this.isAuthenticated) {
         this.$store.commit('changeModalStatus', { mode: 'Login', visible: true });
@@ -191,9 +208,13 @@ export default {
       }
       this.submitting = true;
       api
-        .submitQuizPaper(this.paperId, this.buildAnswers())
+        .submitQuizPaper(this.paperId, {
+          answers: this.buildAnswers(),
+          problemSnapshots: this.buildProblemSnapshots(),
+        })
         .then((res) => {
           const data = res.data.data || {};
+          const token = createResultToken();
           if (!data.itemResults && data.questionResults) {
             data.itemResults = data.questionResults.map((r) => ({
               ...r,
@@ -201,13 +222,13 @@ export default {
             }));
           }
           try {
-            sessionStorage.setItem(resultStorageKey(this.paperId), JSON.stringify(data));
+            sessionStorage.setItem(resultStorageKey(this.paperId, token), JSON.stringify(data));
           } catch (e) {
             /* ignore */
           }
           this.$router.push({
             name: 'QuizPaperResult',
-            params: { paperId: String(this.paperId) },
+            params: { paperId: String(this.paperId), resultToken: token },
           });
         })
         .finally(() => {
