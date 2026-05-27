@@ -70,7 +70,7 @@
 import Markdown from '@/components/oj/common/Markdown';
 import { JUDGE_STATUS } from '@/common/constants';
 
-const storageKey = (paperId) => `hoj_quiz_paper_result_${paperId}`;
+const storageKey = (paperId, token) => `hoj_quiz_paper_result_${paperId}_${token}`;
 
 export default {
   name: 'QuizPaperResult',
@@ -89,6 +89,9 @@ export default {
   computed: {
     paperId() {
       return this.$route.params.paperId;
+    },
+    resultToken() {
+      return this.$route.params.resultToken;
     },
     itemResults() {
       if (this.result.itemResults && this.result.itemResults.length) {
@@ -122,10 +125,13 @@ export default {
     paperId() {
       this.loadFromStorage();
     },
+    resultToken() {
+      this.loadFromStorage();
+    },
   },
   methods: {
     loadFromStorage() {
-      const raw = sessionStorage.getItem(storageKey(this.paperId));
+      const raw = sessionStorage.getItem(storageKey(this.paperId, this.resultToken));
       if (!raw) {
         this.loaded = false;
         this.result = { paperTitle: '', message: '', itemResults: [], questionResults: [] };
