@@ -336,6 +336,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
             row.setQuestionId(item.getQuestionId());
             row.setItemType(normalizeItemType(item.getItemType()));
             row.setSortOrder(order++);
+            row.setScore(item.getScore() == null ? 100 : Math.max(item.getScore(), 0));
             quizPaperItemMapper.insert(row);
         }
     }
@@ -368,6 +369,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         vo.setNo(no);
         vo.setItemType(itemType);
         vo.setQuestionId(item.getQuestionId());
+        vo.setScore(item.getScore() == null ? 100 : item.getScore());
         if ("problem".equals(itemType)) {
             Problem p = problemMapper.selectById(item.getQuestionId());
             if (p != null && (!publicOnly || (p.getAuth() != null && p.getAuth() == 1))) {

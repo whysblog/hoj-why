@@ -37,7 +37,7 @@
               />
             </el-col>
             <el-col :xs="24" :sm="4">
-              <el-select v-model="langCategory" size="small" clearable placeholder="分类" class="filter-mt" style="width:100%">
+              <el-select v-model="langCategory" size="small" clearable placeholder="分类" class="filter-mt" style="width:100%" @change="changeRoute(1)">
                 <el-option label="C++" value="cpp" />
                 <el-option label="Python" value="python" />
               </el-select>

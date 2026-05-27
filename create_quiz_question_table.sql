@@ -44,6 +44,7 @@ CREATE TABLE `quiz_paper_item` (
   `paper_id` bigint(20) unsigned NOT NULL,
   `question_id` bigint(20) unsigned NOT NULL,
   `item_type` varchar(20) NOT NULL DEFAULT 'quiz' COMMENT 'quiz or problem',
+  `score` int NOT NULL DEFAULT 100 COMMENT '本卷分值',
   `sort_order` int NOT NULL DEFAULT 0 COMMENT '题目顺序，从小到大',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_paper_item` (`paper_id`,`item_type`,`question_id`),

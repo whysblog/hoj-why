@@ -30,4 +30,7 @@ public class QuizPaperItem {
 
     @ApiModelProperty(value = "顺序")
     private Integer sortOrder;
+
+    @ApiModelProperty(value = "本卷分值")
+    private Integer score;
 }

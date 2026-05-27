@@ -120,6 +120,11 @@
         <el-table-column prop="typeLabel" label="类型" width="90" />
         <el-table-column prop="id" label="题目ID" width="100" />
         <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
+        <el-table-column label="分值" width="120">
+          <template slot-scope="{ $index }">
+            <el-input-number v-model="orderedItems[$index].score" :min="0" :max="1000" size="mini" />
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template slot-scope="{ $index }">
             <el-button type="text" size="small" :disabled="$index === 0" @click="moveUp($index)">上移</el-button>
@@ -191,6 +196,7 @@ export default {
         sort: i + 1,
         typeLabel: item.itemType === 'problem' ? '编程题' : '客观题',
         id: item.questionId,
+        score: item.score == null ? 100 : item.score,
         title: this.titleByKey[this.itemKey(item)] || '（请搜索添加或重新打开后刷新标题）',
       }));
     },
@@ -245,8 +251,9 @@ export default {
             ? body.items.map((item) => ({
               itemType: item.itemType || 'quiz',
               questionId: item.questionId,
+              score: item.score == null ? 100 : item.score,
             }))
-            : (body.questionIds || []).map((id) => ({ itemType: 'quiz', questionId: id }));
+            : (body.questionIds || []).map((id) => ({ itemType: 'quiz', questionId: id, score: 100 }));
           this.titleByKey = {};
           (body.items || []).forEach((item) => {
             if (item.title) {
@@ -306,7 +313,7 @@ export default {
     addPickedQuestion() {
       const id = this.pickQuestionId;
       if (!id) return;
-      const item = { itemType: this.pickItemType, questionId: id };
+      const item = { itemType: this.pickItemType, questionId: id, score: 100 };
       if (this.orderedItems.some((row) => this.itemKey(row) === this.itemKey(item))) {
         this.$message.warning('该题已在列表中');
         return;
@@ -373,6 +380,7 @@ export default {
           items: this.orderedItems.map((item) => ({
             itemType: item.itemType || 'quiz',
             questionId: item.questionId,
+            score: item.score == null ? 100 : item.score,
           })),
         })
         .then(() => {
