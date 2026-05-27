@@ -5,20 +5,20 @@
         <div slot="header">
           <el-row :gutter="20" style="margin-bottom: 0.5em;">
             <el-col :xs="24" :sm="8">
-              <span class="panel-title">{{ $t('m.NavBar_Objective_Quiz') }}</span>
+              <span class="panel-title">{{ $t('m.Problem_Bank') }}</span>
             </el-col>
             <el-col :xs="24" :sm="16" class="filter-mt" style="text-align: right;">
               <el-button-group>
                 <el-button
                   size="small"
-                  :type="quizSingleSection ? 'primary' : 'default'"
+                  type="default"
                   @click="$router.push({ name: 'QuizList' })"
-                >{{ $t('m.Quiz_Mode_Single') }}</el-button>
+                >客观题</el-button>
                 <el-button
                   size="small"
-                  :type="quizPaperSection ? 'primary' : 'default'"
+                  type="primary"
                   @click="$router.push({ name: 'QuizPaperList' })"
-                >{{ $t('m.Quiz_Mode_Paper') }}</el-button>
+                >套卷组合</el-button>
               </el-button-group>
             </el-col>
           </el-row>

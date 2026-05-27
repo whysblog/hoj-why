@@ -11,4 +11,5 @@ public class QuizPaperDetailVO {
     private String description;
     private String author;
     private List<QuizQuestionInfoVO> questions;
+    private List<QuizPaperItemVO> items;
 }

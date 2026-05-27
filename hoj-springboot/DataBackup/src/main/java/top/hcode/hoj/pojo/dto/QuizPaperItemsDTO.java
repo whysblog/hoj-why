@@ -7,4 +7,5 @@ import java.util.List;
 @Data
 public class QuizPaperItemsDTO {
     private List<Long> questionIds;
+    private List<QuizPaperItemDTO> items;
 }

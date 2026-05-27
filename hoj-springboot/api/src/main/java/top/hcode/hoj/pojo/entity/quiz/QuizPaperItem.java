@@ -25,6 +25,9 @@ public class QuizPaperItem {
     @ApiModelProperty(value = "题目ID")
     private Long questionId;
 
+    @ApiModelProperty(value = "题目类型：quiz 客观题，problem 编程题")
+    private String itemType;
+
     @ApiModelProperty(value = "顺序")
     private Integer sortOrder;
 }

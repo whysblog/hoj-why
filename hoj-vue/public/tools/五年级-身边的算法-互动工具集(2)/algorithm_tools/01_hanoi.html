@@ -117,10 +117,14 @@
       <div class="control-group">
         <label>圆环数量：</label>
         <select id="diskCount">
-          <option value="3" selected>3 个</option>
+          <option value="3">3 个</option>
           <option value="4">4 个</option>
           <option value="5">5 个</option>
           <option value="6">6 个</option>
+          <option value="7">7 个</option>
+          <option value="8">8 个</option>
+          <option value="9">9 个</option>
+          <option value="10" selected>10 个</option>
         </select>
       </div>
       <button onclick="resetGame()">🔄 重新开始</button>
@@ -169,7 +173,7 @@
 </div>
 
 <script>
-const colors = ['#E94B3C','#FF8C42','#FFC107','#50C878','#4A90E2','#9B59B6','#E91E63'];
+const colors = ['#E94B3C','#FF8C42','#FFC107','#50C878','#4A90E2','#9B59B6','#E91E63','#00A8A8','#795548','#607D8B'];
 let towers = [[],[],[]];
 let selectedTower = -1;
 let moves = 0;

@@ -2049,8 +2049,9 @@ const adminApi = {
     return ajax('/api/admin/quiz/paper/' + id, 'put', { data })
   },
   admin_saveQuizPaperItems(id, questionIds) {
+    const data = Array.isArray(questionIds) ? { questionIds } : questionIds
     return ajax('/api/admin/quiz/paper/' + id + '/items', 'put', {
-      data: { questionIds }
+      data
     })
   },
   admin_deleteQuizPaper(id) {

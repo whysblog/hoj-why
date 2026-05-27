@@ -6,44 +6,62 @@
           <span class="panel-title">{{ detail.title || '...' }}</span>
           <el-tag v-if="detail.author" size="small" style="margin-left: 10px">{{ detail.author }}</el-tag>
         </div>
+
         <Markdown v-if="detail.description" :content="detail.description" :isAvoidXss="false"></Markdown>
         <div v-else class="muted">暂无套卷说明</div>
         <el-divider></el-divider>
-        <div v-for="(q, idx) in detail.questions" :key="q.id" class="q-block">
-          <h4>
-            第 {{ idx + 1 }} 题
-            <el-tag v-if="(q.questionType || 0) === 1" size="mini" type="warning">多选</el-tag>
-            <el-tag v-else size="mini" type="info">单选</el-tag>
-            <span class="q-title">{{ q.title }}</span>
-          </h4>
-          <Markdown v-if="q.description" :content="q.description" :isAvoidXss="false"></Markdown>
-          <div v-if="(q.questionType || 0) === 1" class="quiz-options">
-            <el-checkbox-group v-model="selections[q.id]">
-              <el-checkbox
-                v-for="opt in q.options"
-                :key="q.id + '-' + opt.key"
+
+        <div v-for="(item, idx) in paperItems" :key="item.itemType + '-' + item.questionId" class="q-block">
+          <template v-if="item.itemType === 'problem'">
+            <h4>
+              第 {{ idx + 1 }} 题
+              <el-tag size="mini" type="success">编程题</el-tag>
+              <span class="q-title">{{ item.title }}</span>
+            </h4>
+            <el-button size="small" type="primary" @click="goProblem(item)">打开编程题</el-button>
+          </template>
+
+          <template v-else>
+            <h4>
+              第 {{ idx + 1 }} 题
+              <el-tag v-if="(item.quizQuestion.questionType || 0) === 1" size="mini" type="warning">多选</el-tag>
+              <el-tag v-else size="mini" type="info">单选</el-tag>
+              <span class="q-title">{{ item.quizQuestion.title }}</span>
+            </h4>
+            <Markdown
+              v-if="item.quizQuestion.description"
+              :content="item.quizQuestion.description"
+              :isAvoidXss="false"
+            ></Markdown>
+            <div v-if="(item.quizQuestion.questionType || 0) === 1" class="quiz-options">
+              <el-checkbox-group v-model="selections[item.quizQuestion.id]">
+                <el-checkbox
+                  v-for="opt in item.quizQuestion.options"
+                  :key="item.quizQuestion.id + '-' + opt.key"
+                  :label="opt.key"
+                  border
+                  class="quiz-check"
+                >
+                  {{ opt.key }}. {{ opt.text }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </div>
+            <el-radio-group v-else v-model="selections[item.quizQuestion.id]" class="quiz-options">
+              <el-radio
+                v-for="opt in item.quizQuestion.options"
+                :key="item.quizQuestion.id + '-' + opt.key"
                 :label="opt.key"
                 border
-                class="quiz-check"
+                class="quiz-radio"
               >
                 {{ opt.key }}. {{ opt.text }}
-              </el-checkbox>
-            </el-checkbox-group>
-          </div>
-          <el-radio-group v-else v-model="selections[q.id]" class="quiz-options">
-            <el-radio
-              v-for="opt in q.options"
-              :key="q.id + '-' + opt.key"
-              :label="opt.key"
-              border
-              class="quiz-radio"
-            >
-              {{ opt.key }}. {{ opt.text }}
-            </el-radio>
-          </el-radio-group>
+              </el-radio>
+            </el-radio-group>
+          </template>
         </div>
+
         <div style="margin-top: 24px;">
-          <el-button type="primary" :loading="submitting" @click="submit">提交整卷</el-button>
+          <el-button type="primary" :loading="submitting" @click="submit">提交客观题答案</el-button>
           <el-button @click="$router.push({ name: 'QuizPaperList' })">返回套卷列表</el-button>
         </div>
       </el-card>
@@ -65,7 +83,7 @@ export default {
     return {
       loading: false,
       submitting: false,
-      detail: { questions: [] },
+      detail: { questions: [], items: [] },
       selections: {},
     };
   },
@@ -73,6 +91,25 @@ export default {
     ...mapGetters(['isAuthenticated']),
     paperId() {
       return this.$route.params.paperId;
+    },
+    paperItems() {
+      if (this.detail.items && this.detail.items.length) {
+        return this.detail.items
+          .map((item) => {
+            if (item.itemType === 'problem') return item;
+            return {
+              ...item,
+              itemType: 'quiz',
+              quizQuestion: item.quizQuestion || this.findQuestion(item.questionId),
+            };
+          })
+          .filter((item) => item.itemType === 'problem' || item.quizQuestion);
+      }
+      return (this.detail.questions || []).map((q) => ({
+        itemType: 'quiz',
+        questionId: q.id,
+        quizQuestion: q,
+      }));
     },
   },
   mounted() {
@@ -85,9 +122,15 @@ export default {
     },
   },
   methods: {
-    initSelections(questions) {
+    findQuestion(id) {
+      return (this.detail.questions || []).find((q) => q.id === id);
+    },
+    initSelections(items) {
       const s = {};
-      (questions || []).forEach((q) => {
+      (items || []).forEach((item) => {
+        if (item.itemType === 'problem') return;
+        const q = item.quizQuestion;
+        if (!q) return;
         if ((q.questionType || 0) === 1) {
           s[q.id] = [];
         } else {
@@ -101,8 +144,8 @@ export default {
       api
         .getQuizPaperDetail(this.paperId)
         .then((res) => {
-          this.detail = res.data.data || { questions: [] };
-          this.initSelections(this.detail.questions);
+          this.detail = res.data.data || { questions: [], items: [] };
+          this.initSelections(this.paperItems);
         })
         .finally(() => {
           this.loading = false;
@@ -110,7 +153,9 @@ export default {
     },
     buildAnswers() {
       const answers = {};
-      (this.detail.questions || []).forEach((q) => {
+      this.paperItems.forEach((item) => {
+        if (item.itemType === 'problem' || !item.quizQuestion) return;
+        const q = item.quizQuestion;
         const raw = this.selections[q.id];
         if ((q.questionType || 0) === 1) {
           if (Array.isArray(raw) && raw.length >= 2) {
@@ -129,9 +174,8 @@ export default {
         return;
       }
       this.submitting = true;
-      const answers = this.buildAnswers();
       api
-        .submitQuizPaper(this.paperId, answers)
+        .submitQuizPaper(this.paperId, this.buildAnswers())
         .then((res) => {
           const data = res.data.data;
           try {
@@ -147,6 +191,10 @@ export default {
         .finally(() => {
           this.submitting = false;
         });
+    },
+    goProblem(item) {
+      if (!item.problemId) return;
+      this.$router.push({ name: 'ProblemDetails', params: { problemID: item.problemId } });
     },
   },
 };

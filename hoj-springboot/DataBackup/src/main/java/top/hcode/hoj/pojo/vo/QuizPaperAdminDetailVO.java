@@ -9,4 +9,5 @@ import java.util.List;
 public class QuizPaperAdminDetailVO {
     private QuizPaper paper;
     private List<Long> questionIds;
+    private List<QuizPaperItemVO> items;
 }

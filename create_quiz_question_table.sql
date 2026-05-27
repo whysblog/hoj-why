@@ -40,10 +40,10 @@ CREATE TABLE `quiz_paper_item` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `paper_id` bigint(20) unsigned NOT NULL,
   `question_id` bigint(20) unsigned NOT NULL,
+  `item_type` varchar(20) NOT NULL DEFAULT 'quiz' COMMENT 'quiz or problem',
   `sort_order` int NOT NULL DEFAULT 0 COMMENT '题目顺序，从小到大',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_paper_question` (`paper_id`,`question_id`),
+  UNIQUE KEY `uk_paper_item` (`paper_id`,`item_type`,`question_id`),
   KEY `idx_paper` (`paper_id`),
-  CONSTRAINT `fk_paper_item_paper` FOREIGN KEY (`paper_id`) REFERENCES `quiz_paper` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_paper_item_question` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_paper_item_paper` FOREIGN KEY (`paper_id`) REFERENCES `quiz_paper` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='套卷题目关联';

@@ -34,10 +34,10 @@
             <el-submenu index="submenu-quiz">
               <template slot="title"
                 ><i class="el-icon-document"></i
-                >{{ $t('m.NavBar_Objective_Quiz') }}</template
+                >{{ $t('m.Problem_Bank') }}</template
               >
               <el-menu-item index="/quiz">{{
-                $t('m.Quiz_Mode_Single')
+                $t('m.NavBar_Objective_Quiz')
               }}</el-menu-item>
               <el-menu-item index="/quiz/paper">{{
                 $t('m.Quiz_Mode_Paper')
@@ -489,7 +489,7 @@
             <mu-list-item-action>
               <mu-icon value=":el-icon-document" size="24"></mu-icon>
             </mu-list-item-action>
-            <mu-list-item-title>{{ $t('m.NavBar_Objective_Quiz') }}</mu-list-item-title>
+            <mu-list-item-title>{{ $t('m.Problem_Bank') }}</mu-list-item-title>
             <mu-list-item-action>
               <mu-icon
                 class="toggle-icon"
@@ -505,7 +505,7 @@
               @click="opendrawer = !opendrawer"
               active-class="mobile-menu-active"
             >
-              <mu-list-item-title>{{ $t('m.Quiz_Mode_Single') }}</mu-list-item-title>
+              <mu-list-item-title>{{ $t('m.NavBar_Objective_Quiz') }}</mu-list-item-title>
             </mu-list-item>
             <mu-list-item
               button

@@ -10,7 +10,10 @@ import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import top.hcode.hoj.common.result.CommonResult;
+import top.hcode.hoj.mapper.ProblemMapper;
+import top.hcode.hoj.pojo.dto.QuizPaperItemDTO;
 import top.hcode.hoj.pojo.dto.QuizPaperItemsDTO;
+import top.hcode.hoj.pojo.entity.problem.Problem;
 import top.hcode.hoj.pojo.entity.quiz.QuizPaper;
 import top.hcode.hoj.pojo.entity.quiz.QuizQuestion;
 import top.hcode.hoj.pojo.vo.QuizPaperAdminDetailVO;
@@ -28,6 +31,9 @@ public class AdminQuizPaperController {
 
     @Autowired
     private QuizQuestionService quizQuestionService;
+
+    @Autowired
+    private ProblemMapper problemMapper;
 
     @GetMapping("/list")
     @RequiresAuthentication
@@ -60,6 +66,7 @@ public class AdminQuizPaperController {
         QuizPaperAdminDetailVO vo = new QuizPaperAdminDetailVO();
         vo.setPaper(paper);
         vo.setQuestionIds(quizPaperService.listQuestionIdsByPaperId(id));
+        vo.setItems(quizPaperService.listPaperItemsByPaperId(id));
         return CommonResult.successResponse(vo);
     }
 
@@ -101,6 +108,27 @@ public class AdminQuizPaperController {
     public CommonResult<Void> saveItems(@PathVariable Long id, @RequestBody QuizPaperItemsDTO dto) {
         if (quizPaperService.getById(id) == null) {
             return CommonResult.errorResponse("套卷不存在");
+        }
+        if (dto != null && dto.getItems() != null) {
+            for (QuizPaperItemDTO item : dto.getItems()) {
+                if (item == null || item.getQuestionId() == null) {
+                    continue;
+                }
+                String itemType = "problem".equalsIgnoreCase(item.getItemType()) ? "problem" : "quiz";
+                if ("problem".equals(itemType)) {
+                    Problem p = problemMapper.selectById(item.getQuestionId());
+                    if (p == null) {
+                        return CommonResult.errorResponse("编程题不存在：" + item.getQuestionId());
+                    }
+                } else {
+                    QuizQuestion q = quizQuestionService.getById(item.getQuestionId());
+                    if (q == null) {
+                        return CommonResult.errorResponse("客观题不存在：" + item.getQuestionId());
+                    }
+                }
+            }
+            quizPaperService.replacePaperMixedItems(id, dto.getItems());
+            return CommonResult.successResponse();
         }
         List<Long> qids = dto == null ? null : dto.getQuestionIds();
         if (qids != null) {
