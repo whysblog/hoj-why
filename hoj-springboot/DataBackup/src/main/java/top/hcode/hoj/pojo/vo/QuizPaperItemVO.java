@@ -10,5 +10,6 @@ public class QuizPaperItemVO {
     private String problemId;
     private String title;
     private Integer questionType;
+    private Integer score;
     private QuizQuestionInfoVO quizQuestion;
 }

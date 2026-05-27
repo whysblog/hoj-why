@@ -86,6 +86,7 @@ export default {
       statusVisible: false,
       refreshStatus: null,
       displayScore: null,
+      hasSubmittedInThisSession: false,
     };
   },
   computed: {
@@ -116,6 +117,7 @@ export default {
     loadProblem() {
       if (!this.problemId) return;
       this.loading = true;
+      this.hasSubmittedInThisSession = false;
       this.statusVisible = false;
       this.displayScore = null;
       api
@@ -142,7 +144,6 @@ export default {
         if (st && st.status != null && st.status !== -10) {
           this.result.status = st.status;
           this.statusVisible = true;
-          this.emitStatus(st.status, st.score);
         }
       });
     },
@@ -227,6 +228,7 @@ export default {
           if (!pending.includes(sub.status)) {
             this.submitting = false;
             clearTimeout(this.refreshStatus);
+            this.hasSubmittedInThisSession = true;
             const score = this.calcScore(sub);
             this.displayScore = score;
             this.emitStatus(sub.status, score);
@@ -247,9 +249,11 @@ export default {
       this.$emit('status-change', {
         problemId: this.problemId,
         pid: this.pid || (this.problemData.problem && this.problemData.problem.id),
+        language: this.language,
         status,
         score: score != null ? score : this.calcScore({ status, score }),
         maxScore: this.maxScore || 100,
+        submittedInThisSession: this.hasSubmittedInThisSession,
       });
     },
   },

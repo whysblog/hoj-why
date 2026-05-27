@@ -18,6 +18,12 @@
           <el-option label="隐藏" :value="0" />
         </el-select>
       </el-col>
+      <el-col :span="6">
+        <el-select v-model="langCategoryFilter" placeholder="分类" clearable size="small" style="width: 100%;">
+          <el-option label="C++" value="cpp" />
+          <el-option label="Python" value="python" />
+        </el-select>
+      </el-col>
       <el-col :span="4">
         <el-button type="primary" size="small" @click="load">查询</el-button>
       </el-col>
@@ -58,6 +64,12 @@
         </el-form-item>
         <el-form-item label="作者">
           <el-input v-model="paperForm.author" maxlength="255" />
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="paperForm.langCategory" clearable style="width: 160px;">
+            <el-option label="C++" value="cpp" />
+            <el-option label="Python" value="python" />
+          </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="paperForm.status" style="width: 160px;">
@@ -108,6 +120,11 @@
         <el-table-column prop="typeLabel" label="类型" width="90" />
         <el-table-column prop="id" label="题目ID" width="100" />
         <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
+        <el-table-column label="分值" width="120">
+          <template slot-scope="{ $index }">
+            <el-input-number v-model="orderedItems[$index].score" :min="0" :max="1000" size="mini" />
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template slot-scope="{ $index }">
             <el-button type="text" size="small" :disabled="$index === 0" @click="moveUp($index)">上移</el-button>
@@ -142,6 +159,7 @@ const emptyPaper = () => ({
   description: '',
   author: '',
   status: 1,
+  langCategory: '',
 });
 
 export default {
@@ -155,6 +173,7 @@ export default {
       limit: 15,
       keyword: '',
       statusFilter: null,
+      langCategoryFilter: null,
       visible: false,
       isEdit: false,
       saving: false,
@@ -177,6 +196,7 @@ export default {
         sort: i + 1,
         typeLabel: item.itemType === 'problem' ? '编程题' : '客观题',
         id: item.questionId,
+        score: item.score == null ? 100 : item.score,
         title: this.titleByKey[this.itemKey(item)] || '（请搜索添加或重新打开后刷新标题）',
       }));
     },
@@ -190,6 +210,7 @@ export default {
       const params = { currentPage: this.page, limit: this.limit };
       if (this.keyword) params.keyword = this.keyword;
       if (this.statusFilter === 0 || this.statusFilter === 1) params.status = this.statusFilter;
+      if (this.langCategoryFilter) params.langCategory = this.langCategoryFilter;
       api
         .admin_getQuizPaperList(params)
         .then((res) => {
@@ -224,13 +245,15 @@ export default {
             description: p.description || '',
             author: p.author || '',
             status: p.status != null ? p.status : 1,
+            langCategory: p.langCategory || '',
           };
           this.orderedItems = (body.items && body.items.length)
             ? body.items.map((item) => ({
               itemType: item.itemType || 'quiz',
               questionId: item.questionId,
+              score: item.score == null ? 100 : item.score,
             }))
-            : (body.questionIds || []).map((id) => ({ itemType: 'quiz', questionId: id }));
+            : (body.questionIds || []).map((id) => ({ itemType: 'quiz', questionId: id, score: 100 }));
           this.titleByKey = {};
           (body.items || []).forEach((item) => {
             if (item.title) {
@@ -290,7 +313,7 @@ export default {
     addPickedQuestion() {
       const id = this.pickQuestionId;
       if (!id) return;
-      const item = { itemType: this.pickItemType, questionId: id };
+      const item = { itemType: this.pickItemType, questionId: id, score: 100 };
       if (this.orderedItems.some((row) => this.itemKey(row) === this.itemKey(item))) {
         this.$message.warning('该题已在列表中');
         return;
@@ -357,6 +380,7 @@ export default {
           items: this.orderedItems.map((item) => ({
             itemType: item.itemType || 'quiz',
             questionId: item.questionId,
+            score: item.score == null ? 100 : item.score,
           })),
         })
         .then(() => {

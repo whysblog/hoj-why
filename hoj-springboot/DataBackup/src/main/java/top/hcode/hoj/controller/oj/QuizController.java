@@ -26,8 +26,9 @@ public class QuizController {
     public CommonResult<Page<QuizQuestionListVO>> list(@RequestParam(value = "limit", required = false) Integer limit,
                                                        @RequestParam(value = "currentPage", required = false) Integer currentPage,
                                                        @RequestParam(value = "keyword", required = false) String keyword,
-                                                       @RequestParam(value = "difficulty", required = false) Integer difficulty) {
-        return CommonResult.successResponse(quizQuestionService.getPublicPage(limit, currentPage, keyword, difficulty));
+                                                       @RequestParam(value = "difficulty", required = false) Integer difficulty,
+                                                       @RequestParam(value = "langCategory", required = false) String langCategory) {
+        return CommonResult.successResponse(quizQuestionService.getPublicPage(limit, currentPage, keyword, difficulty, langCategory));
     }
 
     @GetMapping("/{id}")

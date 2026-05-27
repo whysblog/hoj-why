@@ -36,6 +36,12 @@
                 class="filter-mt"
               />
             </el-col>
+            <el-col :xs="24" :sm="4">
+              <el-select v-model="langCategory" size="small" clearable placeholder="分类" class="filter-mt" style="width:100%" @change="changeRoute(1)">
+                <el-option label="C++" value="cpp" />
+                <el-option label="Python" value="python" />
+              </el-select>
+            </el-col>
             <el-col :xs="24" :sm="6" class="filter-mt" style="text-align: right;">
               <el-button type="primary" size="small" icon="el-icon-search" round @click="loadList">
                 搜索
@@ -77,6 +83,7 @@ export default {
       page: 1,
       limit: 20,
       keyword: '',
+      langCategory: null,
       loading: false,
     };
   },
@@ -103,6 +110,7 @@ export default {
     parseRoute() {
       this.page = parseInt(this.$route.query.page) || 1;
       this.keyword = this.$route.query.keyword || '';
+      this.langCategory = this.$route.query.langCategory || null;
     },
     changeRoute(page) {
       this.$router.push({
@@ -110,6 +118,7 @@ export default {
         query: {
           page,
           keyword: this.keyword || undefined,
+          langCategory: this.langCategory || undefined,
         },
       });
     },
@@ -120,6 +129,7 @@ export default {
           currentPage: this.page,
           limit: this.limit,
           keyword: this.keyword || undefined,
+          langCategory: this.langCategory || undefined,
         })
         .then((res) => {
           const data = res.data.data;

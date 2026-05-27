@@ -474,9 +474,9 @@ const ojApi = {
   getQuizPaperDetail(id) {
     return ajax('/api/quiz/paper/' + id, 'get')
   },
-  submitQuizPaper(id, answers) {
+  submitQuizPaper(id, payload) {
     return ajax('/api/quiz/paper/' + id + '/submit', 'post', {
-      data: { answers }
+      data: payload
     })
   },
   queryCertificates(name, idCard) {
