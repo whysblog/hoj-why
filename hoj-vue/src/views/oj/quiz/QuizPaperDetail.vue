@@ -190,7 +190,7 @@ export default {
         if (item.itemType !== 'problem') return;
         const pid = String(item.questionId);
         const st = this.problemStatusMap[pid];
-        if (!st) return;
+        if (!st || !st.submittedInThisSession) return;
         snapshots[pid] = {
           status: st.status,
           score: st.score,
