@@ -59,6 +59,14 @@
               >{{ QUIZ_LEVEL[lv] }}</el-tag>
             </div>
           </section>
+          <section style="margin-top:8px;">
+            <b class="problem-filter">分类</b>
+            <div>
+              <el-tag size="medium" class="filter-item" :effect="langCategory === null ? 'dark' : 'plain'" @click="setLangCategory(null)">全部</el-tag>
+              <el-tag size="medium" class="filter-item" :effect="langCategory === 'cpp' ? 'dark' : 'plain'" @click="setLangCategory('cpp')">C++</el-tag>
+              <el-tag size="medium" class="filter-item" :effect="langCategory === 'python' ? 'dark' : 'plain'" @click="setLangCategory('python')">Python</el-tag>
+            </div>
+          </section>
         </div>
         <vxe-table
           border="inner"
@@ -122,6 +130,7 @@ export default {
       limit: 20,
       keyword: '',
       difficulty: null,
+      langCategory: null,
       loading: false,
     };
   },
@@ -154,6 +163,7 @@ export default {
         const d = parseInt(this.$route.query.difficulty, 10);
         this.difficulty = Number.isNaN(d) ? null : d;
       }
+      this.langCategory = this.$route.query.langCategory || null;
     },
     changeRoute(page) {
       this.$router.push({
@@ -162,6 +172,7 @@ export default {
           page,
           keyword: this.keyword || undefined,
           difficulty: this.difficulty === null ? undefined : this.difficulty,
+          langCategory: this.langCategory || undefined,
         },
       });
     },
@@ -172,6 +183,11 @@ export default {
     onReset() {
       this.keyword = '';
       this.difficulty = null;
+      this.langCategory = null;
+      this.changeRoute(1);
+    },
+    setLangCategory(category) {
+      this.langCategory = category;
       this.changeRoute(1);
     },
     loadList() {
@@ -182,6 +198,7 @@ export default {
       };
       if (this.keyword) params.keyword = this.keyword;
       if (this.difficulty !== null) params.difficulty = this.difficulty;
+      if (this.langCategory) params.langCategory = this.langCategory;
       api
         .getQuizList(params)
         .then((res) => {

@@ -35,7 +35,8 @@ public class QuizPaper {
     @ApiModelProperty(value = "作者")
     private String author;
 
-    @ApiModelProperty(value = "编程语言分类：cpp/python")
+    @TableField("lang_category")
+    @ApiModelProperty(value = "分类：cpp/python")
     private String langCategory;
 
     @TableField(fill = FieldFill.INSERT)

@@ -53,7 +53,7 @@ public class AdminQuizPaperController {
             qw.eq("status", status);
         }
         if (StrUtil.isNotBlank(langCategory)) {
-            qw.eq("lang_category", langCategory);
+            qw.eq("lang_category", langCategory.toLowerCase());
         }
         qw.orderByDesc("id");
         return CommonResult.successResponse(quizPaperService.page(new Page<>(page, size), qw));

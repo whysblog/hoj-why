@@ -25,8 +25,9 @@ public class QuizPaperController {
     @AnonApi
     public CommonResult<Page<QuizPaperListVO>> list(@RequestParam(value = "limit", required = false) Integer limit,
                                                       @RequestParam(value = "currentPage", required = false) Integer currentPage,
-                                                      @RequestParam(value = "keyword", required = false) String keyword) {
-        return CommonResult.successResponse(quizPaperService.getPublicPage(limit, currentPage, keyword));
+                                                      @RequestParam(value = "keyword", required = false) String keyword,
+                                                      @RequestParam(value = "langCategory", required = false) String langCategory) {
+        return CommonResult.successResponse(quizPaperService.getPublicPage(limit, currentPage, keyword, langCategory));
     }
 
     @GetMapping("/{id}")

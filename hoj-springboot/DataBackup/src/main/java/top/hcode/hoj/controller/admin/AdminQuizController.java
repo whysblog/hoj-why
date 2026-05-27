@@ -39,7 +39,7 @@ public class AdminQuizController {
             qw.eq("status", status);
         }
         if (StrUtil.isNotBlank(langCategory)) {
-            qw.eq("lang_category", langCategory);
+            qw.eq("lang_category", langCategory.toLowerCase());
         }
         qw.orderByDesc("id");
         return CommonResult.successResponse(quizQuestionService.page(new Page<>(page, size), qw));

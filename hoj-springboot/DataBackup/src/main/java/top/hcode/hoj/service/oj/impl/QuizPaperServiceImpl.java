@@ -51,13 +51,16 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
     private ProblemMapper problemMapper;
 
     @Override
-    public Page<QuizPaperListVO> getPublicPage(Integer limit, Integer currentPage, String keyword) {
+    public Page<QuizPaperListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, String langCategory) {
         int size = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         int page = currentPage == null || currentPage <= 0 ? 1 : currentPage;
         QueryWrapper<QuizPaper> qw = new QueryWrapper<>();
         qw.eq("status", 1);
         if (StrUtil.isNotBlank(keyword)) {
             qw.and(w -> w.like("title", keyword).or().like("description", keyword));
+        }
+        if (StrUtil.isNotBlank(langCategory)) {
+            qw.eq("lang_category", langCategory.toLowerCase());
         }
         qw.orderByDesc("id");
         IPage<QuizPaper> entityPage = page(new Page<>(page, size), qw);
