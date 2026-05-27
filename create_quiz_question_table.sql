@@ -14,6 +14,7 @@ CREATE TABLE `quiz_question` (
   `option_d` varchar(2000) NOT NULL COMMENT '选项D',
   `question_type` tinyint NOT NULL DEFAULT 0 COMMENT '0单选 1多选',
   `answer` varchar(16) NOT NULL COMMENT '正确答案：单选如A；多选升序如AB',
+  `explanation` mediumtext COMMENT '答案解析，支持 Markdown',
   `difficulty` int NOT NULL DEFAULT '1' COMMENT '0简单 1中等 2困难',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '0隐藏 1公开',
   `author` varchar(255) DEFAULT NULL COMMENT '出题人',

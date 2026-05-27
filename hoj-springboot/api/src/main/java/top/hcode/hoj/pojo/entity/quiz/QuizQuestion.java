@@ -47,6 +47,9 @@ public class QuizQuestion {
     @ApiModelProperty(value = "正确答案：单选如A；多选升序如AB")
     private String answer;
 
+    @ApiModelProperty(value = "答案解析，支持 Markdown")
+    private String explanation;
+
     @ApiModelProperty(value = "难度 0-2")
     private Integer difficulty;
 

@@ -10,33 +10,40 @@
         <div v-if="!loaded" class="muted" style="margin-top: 16px;">未找到本次作答结果，请重新提交套卷。</div>
         <template v-else>
           <el-divider content-position="left">逐题对照</el-divider>
-          <el-table :data="result.questionResults || []" border stripe style="width: 100%;">
-            <el-table-column prop="no" label="#" width="56" align="center" />
-            <el-table-column prop="title" label="题目" min-width="200" show-overflow-tooltip />
-            <el-table-column label="题型" width="72" align="center">
-              <template slot-scope="{ row }">
-                {{ (row.questionType || 0) === 1 ? '多选' : '单选' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="结果" width="96" align="center">
-              <template slot-scope="{ row }">
+          <div v-for="row in itemResults" :key="row.itemType + '-' + (row.questionId || row.pid || row.no)" class="result-block">
+            <div class="result-head">
+              <span class="result-no">第 {{ row.no }} 题</span>
+              <el-tag size="mini" :type="row.itemType === 'problem' ? 'success' : 'info'">
+                {{ row.itemType === 'problem' ? '编程题' : ((row.questionType || 0) === 1 ? '多选' : '单选') }}
+              </el-tag>
+              <span class="result-title">{{ row.title }}</span>
+              <el-tag v-if="row.itemType === 'problem' && row.problemId" size="mini">{{ row.problemId }}</el-tag>
+            </div>
+
+            <template v-if="row.itemType === 'problem'">
+              <div class="result-meta">
+                <span>评测状态：</span>
+                <el-tag size="small" :type="judgeTagType(row.judgeStatus)">{{ row.judgeStatusName || '—' }}</el-tag>
+                <span class="score-line">得分 <strong>{{ row.score != null ? row.score : 0 }}</strong> / {{ row.maxScore != null ? row.maxScore : 100 }}</span>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="result-meta">
                 <el-tag v-if="row.outcome === 'CORRECT'" type="success" size="small">正确</el-tag>
                 <el-tag v-else-if="row.outcome === 'WRONG'" type="danger" size="small">错误</el-tag>
                 <el-tag v-else type="info" size="small">未作答</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="userAnswer" label="你的答案" width="110" align="center">
-              <template slot-scope="{ row }">
-                <span>{{ row.userAnswer || '—' }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="correctAnswer" label="正确答案" width="110" align="center" />
-            <el-table-column label="操作" width="100" align="center" fixed="right">
-              <template slot-scope="{ row }">
-                <el-button type="text" size="small" @click="goQuestion(row.questionId)">看解析</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+                <span>你的答案：<strong>{{ row.userAnswer || '—' }}</strong></span>
+                <span>正确答案：<strong>{{ row.correctAnswer || '—' }}</strong></span>
+              </div>
+              <div v-if="row.explanation" class="explanation-box">
+                <div class="explanation-label">解析</div>
+                <Markdown :content="row.explanation" :isAvoidXss="false" />
+              </div>
+              <div v-else class="muted explanation-empty">暂无解析</div>
+            </template>
+          </div>
+
           <div style="margin-top: 20px;">
             <el-button type="primary" @click="redo">再答一次</el-button>
             <el-button @click="$router.push({ name: 'QuizPaperList' })">套卷列表</el-button>
@@ -49,16 +56,21 @@
 </template>
 
 <script>
+import Markdown from '@/components/oj/common/Markdown';
+import { JUDGE_STATUS } from '@/common/constants';
+
 const storageKey = (paperId) => `hoj_quiz_paper_result_${paperId}`;
 
 export default {
   name: 'QuizPaperResult',
+  components: { Markdown },
   data() {
     return {
       loaded: false,
       result: {
         paperTitle: '',
         message: '',
+        itemResults: [],
         questionResults: [],
       },
     };
@@ -66,6 +78,15 @@ export default {
   computed: {
     paperId() {
       return this.$route.params.paperId;
+    },
+    itemResults() {
+      if (this.result.itemResults && this.result.itemResults.length) {
+        return this.result.itemResults;
+      }
+      return (this.result.questionResults || []).map((r) => ({
+        ...r,
+        itemType: 'quiz',
+      }));
     },
   },
   mounted() {
@@ -81,7 +102,7 @@ export default {
       const raw = sessionStorage.getItem(storageKey(this.paperId));
       if (!raw) {
         this.loaded = false;
-        this.result = { paperTitle: '', message: '', questionResults: [] };
+        this.result = { paperTitle: '', message: '', itemResults: [], questionResults: [] };
         return;
       }
       try {
@@ -91,11 +112,12 @@ export default {
         this.loaded = false;
       }
     },
+    judgeTagType(status) {
+      const key = String(status);
+      return (JUDGE_STATUS[key] && JUDGE_STATUS[key].type) || 'info';
+    },
     redo() {
       this.$router.push({ name: 'QuizPaperDetail', params: { paperId: String(this.paperId) } });
-    },
-    goQuestion(qid) {
-      this.$router.push({ name: 'QuizDetail', params: { quizId: String(qid) } });
     },
   },
 };
@@ -108,5 +130,49 @@ export default {
 }
 .muted {
   color: #909399;
+}
+.result-block {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+.result-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.result-no {
+  font-weight: 600;
+}
+.result-title {
+  color: #303133;
+}
+.result-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 14px;
+  color: #606266;
+}
+.score-line {
+  margin-left: 4px;
+}
+.explanation-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+.explanation-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #303133;
+}
+.explanation-empty {
+  margin-top: 8px;
+  font-size: 13px;
 }
 </style>

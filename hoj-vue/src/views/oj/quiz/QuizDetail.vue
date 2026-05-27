@@ -54,10 +54,14 @@
           show-icon
           style="margin-top: 16px;"
         >
-          <template v-if="!resultOk && correctAnswer">
+          <template v-if="correctAnswer">
             <p>正确选项为：<strong>{{ correctAnswer }}</strong></p>
           </template>
         </el-alert>
+        <div v-if="explanation" class="explanation-box">
+          <div class="explanation-label">解析</div>
+          <Markdown :content="explanation" :isAvoidXss="false" />
+        </div>
       </el-card>
     </el-col>
   </el-row>
@@ -83,6 +87,7 @@ export default {
       resultMsg: '',
       resultOk: false,
       correctAnswer: '',
+      explanation: '',
     };
   },
   computed: {
@@ -105,6 +110,7 @@ export default {
       this.picked = '';
       this.pickedMulti = [];
       this.resultMsg = '';
+      this.explanation = '';
       this.fetch();
     },
   },
@@ -133,6 +139,7 @@ export default {
       }
       this.submitting = true;
       this.resultMsg = '';
+      this.explanation = '';
       const answer =
         (this.detail.questionType || 0) === 1
           ? [...this.pickedMulti].sort().join('')
@@ -144,6 +151,7 @@ export default {
           this.resultOk = data.correct;
           this.resultMsg = data.message || (data.correct ? '回答正确' : '回答错误');
           this.correctAnswer = data.correctAnswer || '';
+          this.explanation = data.explanation || '';
         })
         .finally(() => {
           this.submitting = false;
@@ -175,5 +183,15 @@ export default {
 }
 .muted {
   color: #909399;
+}
+.explanation-box {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+.explanation-label {
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 </style>

@@ -17,8 +17,16 @@
               第 {{ idx + 1 }} 题
               <el-tag size="mini" type="success">编程题</el-tag>
               <span class="q-title">{{ item.title }}</span>
+              <el-tag v-if="item.problemId" size="mini" style="margin-left: 8px">{{ item.problemId }}</el-tag>
             </h4>
-            <el-button size="small" type="primary" @click="goProblem(item)">打开编程题</el-button>
+            <QuizProblemEmbed
+              v-if="item.problemId"
+              :problem-id="item.problemId"
+              :pid="item.questionId"
+              :max-score="100"
+              @status-change="onProblemStatus"
+            />
+            <div v-else class="muted">题目信息不可用</div>
           </template>
 
           <template v-else>
@@ -61,9 +69,10 @@
         </div>
 
         <div style="margin-top: 24px;">
-          <el-button type="primary" :loading="submitting" @click="submit">提交客观题答案</el-button>
+          <el-button type="primary" :loading="submitting" @click="submit">提交答卷</el-button>
           <el-button @click="$router.push({ name: 'QuizPaperList' })">返回套卷列表</el-button>
         </div>
+        <p class="muted submit-hint">编程题请在本页提交评测；提交答卷后将汇总客观题判分与各编程题得分。</p>
       </el-card>
     </el-col>
   </el-row>
@@ -71,6 +80,7 @@
 
 <script>
 import Markdown from '@/components/oj/common/Markdown';
+import QuizProblemEmbed from '@/components/oj/quiz/QuizProblemEmbed.vue';
 import api from '@/common/api';
 import { mapGetters } from 'vuex';
 
@@ -78,13 +88,14 @@ const resultStorageKey = (paperId) => `hoj_quiz_paper_result_${paperId}`;
 
 export default {
   name: 'QuizPaperDetail',
-  components: { Markdown },
+  components: { Markdown, QuizProblemEmbed },
   data() {
     return {
       loading: false,
       submitting: false,
       detail: { questions: [], items: [] },
       selections: {},
+      problemStatusMap: {},
     };
   },
   computed: {
@@ -118,12 +129,17 @@ export default {
   watch: {
     paperId() {
       this.selections = {};
+      this.problemStatusMap = {};
       this.fetch();
     },
   },
   methods: {
     findQuestion(id) {
       return (this.detail.questions || []).find((q) => q.id === id);
+    },
+    onProblemStatus(payload) {
+      if (!payload || !payload.pid) return;
+      this.$set(this.problemStatusMap, String(payload.pid), payload);
     },
     initSelections(items) {
       const s = {};
@@ -177,11 +193,17 @@ export default {
       api
         .submitQuizPaper(this.paperId, this.buildAnswers())
         .then((res) => {
-          const data = res.data.data;
+          const data = res.data.data || {};
+          if (!data.itemResults && data.questionResults) {
+            data.itemResults = data.questionResults.map((r) => ({
+              ...r,
+              itemType: 'quiz',
+            }));
+          }
           try {
             sessionStorage.setItem(resultStorageKey(this.paperId), JSON.stringify(data));
           } catch (e) {
-            /* ignore quota */
+            /* ignore */
           }
           this.$router.push({
             name: 'QuizPaperResult',
@@ -191,10 +213,6 @@ export default {
         .finally(() => {
           this.submitting = false;
         });
-    },
-    goProblem(item) {
-      if (!item.problemId) return;
-      this.$router.push({ name: 'ProblemDetails', params: { problemID: item.problemId } });
     },
   },
 };
@@ -233,5 +251,9 @@ export default {
 }
 .muted {
   color: #909399;
+}
+.submit-hint {
+  margin-top: 12px;
+  font-size: 13px;
 }
 </style>

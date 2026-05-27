@@ -6,5 +6,6 @@ import lombok.Data;
 public class QuizSubmitResultVO {
     private Boolean correct;
     private String correctAnswer;
+    private String explanation;
     private String message;
 }

@@ -61,6 +61,9 @@
         <el-form-item label="题干说明">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="支持 Markdown / HTML" />
         </el-form-item>
+        <el-form-item label="答案解析">
+          <el-input v-model="form.explanation" type="textarea" :rows="4" placeholder="提交后展示给学生，支持 Markdown" />
+        </el-form-item>
         <el-form-item label="选项 A" required>
           <el-input v-model="form.optionA" type="textarea" :rows="2" />
         </el-form-item>
@@ -133,6 +136,7 @@ const emptyForm = () => ({
   id: null,
   title: '',
   description: '',
+  explanation: '',
   optionA: '',
   optionB: '',
   optionC: '',
@@ -203,6 +207,7 @@ export default {
             id: q.id,
             title: q.title || '',
             description: q.description || '',
+            explanation: q.explanation || '',
             optionA: q.optionA || '',
             optionB: q.optionB || '',
             optionC: q.optionC || '',

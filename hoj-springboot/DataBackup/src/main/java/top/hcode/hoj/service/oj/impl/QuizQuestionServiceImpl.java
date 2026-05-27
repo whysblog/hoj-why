@@ -104,6 +104,7 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
         QuizSubmitResultVO vo = new QuizSubmitResultVO();
         vo.setCorrect(ok);
         vo.setCorrectAnswer(normalizedCorrect);
+        vo.setExplanation(q.getExplanation());
         vo.setMessage(ok ? "回答正确" : "回答错误");
         return vo;
     }

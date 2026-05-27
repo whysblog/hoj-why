@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import top.hcode.hoj.common.exception.StatusFailException;
+import top.hcode.hoj.dao.judge.JudgeEntityService;
 import top.hcode.hoj.mapper.ProblemMapper;
 import top.hcode.hoj.mapper.QuizPaperItemMapper;
 import top.hcode.hoj.mapper.QuizPaperMapper;
+import top.hcode.hoj.pojo.entity.judge.Judge;
+import top.hcode.hoj.shiro.AccountProfile;
 import top.hcode.hoj.pojo.dto.QuizPaperItemDTO;
 import top.hcode.hoj.pojo.dto.QuizPaperSubmitDTO;
 import top.hcode.hoj.pojo.entity.problem.Problem;
@@ -21,11 +25,13 @@ import top.hcode.hoj.pojo.entity.quiz.QuizQuestion;
 import top.hcode.hoj.pojo.vo.QuizPaperDetailVO;
 import top.hcode.hoj.pojo.vo.QuizPaperItemVO;
 import top.hcode.hoj.pojo.vo.QuizPaperListVO;
+import top.hcode.hoj.pojo.vo.QuizPaperItemResultVO;
 import top.hcode.hoj.pojo.vo.QuizPaperQuestionResultVO;
 import top.hcode.hoj.pojo.vo.QuizPaperSubmitResultVO;
 import top.hcode.hoj.pojo.vo.QuizQuestionInfoVO;
 import top.hcode.hoj.service.oj.QuizPaperService;
 import top.hcode.hoj.service.oj.QuizQuestionService;
+import top.hcode.hoj.utils.Constants;
 import top.hcode.hoj.utils.QuizAnswerUtils;
 
 import java.util.ArrayList;
@@ -44,6 +50,9 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
 
     @Autowired
     private ProblemMapper problemMapper;
+
+    @Autowired
+    private JudgeEntityService judgeEntityService;
 
     @Override
     public Page<QuizPaperListVO> getPublicPage(Integer limit, Integer currentPage, String keyword) {
@@ -105,30 +114,52 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         if (items.isEmpty()) {
             throw new StatusFailException("该套卷暂无题目");
         }
-        int total = 0;
+        AccountProfile user = (AccountProfile) SecurityUtils.getSubject().getPrincipal();
+        String uid = user != null ? user.getUid() : null;
+
+        int quizTotal = 0;
         int correct = 0;
         int wrong = 0;
         int unanswered = 0;
+        int problemCount = 0;
+        int problemScored = 0;
+        int problemTotalScore = 0;
+        int problemMaxScore = 0;
+
+        List<QuizPaperItemResultVO> itemResults = new ArrayList<>();
         List<QuizPaperQuestionResultVO> questionResults = new ArrayList<>();
         int seq = 0;
         for (QuizPaperItem it : items) {
+            seq++;
             if ("problem".equals(normalizeItemType(it.getItemType()))) {
+                itemResults.add(buildProblemItemResult(seq, it, uid));
+                QuizPaperItemResultVO pr = itemResults.get(itemResults.size() - 1);
+                problemCount++;
+                if (pr.getScore() != null) {
+                    problemScored += pr.getScore();
+                }
+                if (pr.getMaxScore() != null) {
+                    problemMaxScore += pr.getMaxScore();
+                }
                 continue;
             }
-            seq++;
-            total++;
+
+            quizTotal++;
             Long qid = it.getQuestionId();
             QuizQuestion q = quizQuestionService.getOne(
                     new QueryWrapper<QuizQuestion>().eq("id", qid).eq("status", 1));
             if (q == null) {
                 throw new StatusFailException("题目不存在或未公开");
             }
-            QuizPaperQuestionResultVO row = new QuizPaperQuestionResultVO();
+
+            QuizPaperItemResultVO row = new QuizPaperItemResultVO();
             row.setNo(seq);
+            row.setItemType("quiz");
             row.setQuestionId(qid);
             row.setTitle(q.getTitle());
             int qType = q.getQuestionType() == null ? 0 : q.getQuestionType();
             row.setQuestionType(qType);
+            row.setExplanation(q.getExplanation());
             String nc = QuizAnswerUtils.normalize(q.getAnswer());
             row.setCorrectAnswer(StrUtil.isBlank(nc) ? "" : nc);
 
@@ -140,7 +171,8 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
                 row.setOutcome("UNANSWERED");
                 row.setUserAnswer("");
                 unanswered++;
-                questionResults.add(row);
+                itemResults.add(row);
+                questionResults.add(toLegacyQuestionRow(row));
                 continue;
             }
             String nu = QuizAnswerUtils.normalize(raw);
@@ -148,7 +180,8 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
                 row.setOutcome("UNANSWERED");
                 row.setUserAnswer(raw.trim());
                 unanswered++;
-                questionResults.add(row);
+                itemResults.add(row);
+                questionResults.add(toLegacyQuestionRow(row));
                 continue;
             }
             if (qType == 0) {
@@ -156,14 +189,16 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
                     row.setOutcome("WRONG");
                     row.setUserAnswer(nu);
                     wrong++;
-                    questionResults.add(row);
+                    itemResults.add(row);
+                    questionResults.add(toLegacyQuestionRow(row));
                     continue;
                 }
             } else if (!QuizAnswerUtils.isValidMultiple(nu)) {
                 row.setOutcome("WRONG");
                 row.setUserAnswer(nu);
                 wrong++;
-                questionResults.add(row);
+                itemResults.add(row);
+                questionResults.add(toLegacyQuestionRow(row));
                 continue;
             }
             if (nu.equals(nc)) {
@@ -175,18 +210,122 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
                 row.setUserAnswer(nu);
                 wrong++;
             }
-            questionResults.add(row);
+            itemResults.add(row);
+            questionResults.add(toLegacyQuestionRow(row));
         }
+
         QuizPaperSubmitResultVO vo = new QuizPaperSubmitResultVO();
         vo.setPaperId(paper.getId());
         vo.setPaperTitle(paper.getTitle());
-        vo.setTotalQuestions(total);
+        vo.setTotalQuestions(quizTotal);
         vo.setCorrectCount(correct);
         vo.setWrongCount(wrong);
         vo.setUnansweredCount(unanswered);
+        vo.setItemResults(itemResults);
         vo.setQuestionResults(questionResults);
-        vo.setMessage(String.format("答对 %d / %d 题（错误 %d，未作答 %d）", correct, total, wrong, unanswered));
+        StringBuilder msg = new StringBuilder();
+        msg.append(String.format("客观题：答对 %d / %d（错误 %d，未作答 %d）", correct, quizTotal, wrong, unanswered));
+        if (problemCount > 0) {
+            msg.append(String.format("；编程题 %d 道，得分合计 %d / %d", problemCount, problemScored, problemMaxScore));
+        }
+        vo.setMessage(msg.toString());
         return vo;
+    }
+
+    private QuizPaperQuestionResultVO toLegacyQuestionRow(QuizPaperItemResultVO row) {
+        QuizPaperQuestionResultVO legacy = new QuizPaperQuestionResultVO();
+        legacy.setNo(row.getNo());
+        legacy.setQuestionId(row.getQuestionId());
+        legacy.setTitle(row.getTitle());
+        legacy.setQuestionType(row.getQuestionType());
+        legacy.setOutcome(row.getOutcome());
+        legacy.setUserAnswer(row.getUserAnswer());
+        legacy.setCorrectAnswer(row.getCorrectAnswer());
+        return legacy;
+    }
+
+    private QuizPaperItemResultVO buildProblemItemResult(int no, QuizPaperItem it, String uid) {
+        QuizPaperItemResultVO row = new QuizPaperItemResultVO();
+        row.setNo(no);
+        row.setItemType("problem");
+        row.setPid(it.getQuestionId());
+        Problem p = problemMapper.selectById(it.getQuestionId());
+        if (p == null) {
+            row.setTitle("编程题");
+            row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
+            row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
+            row.setScore(0);
+            row.setMaxScore(100);
+            return row;
+        }
+        row.setTitle(p.getTitle());
+        row.setProblemId(p.getProblemId());
+        int maxScore = p.getIoScore() != null && p.getIoScore() > 0 ? p.getIoScore() : 100;
+        row.setMaxScore(maxScore);
+
+        if (StrUtil.isBlank(uid)) {
+            row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
+            row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
+            row.setScore(0);
+            return row;
+        }
+
+        QueryWrapper<Judge> qw = new QueryWrapper<>();
+        qw.eq("pid", p.getId()).eq("uid", uid).eq("cid", 0).isNull("gid")
+                .notIn("status",
+                        Constants.Judge.STATUS_PENDING.getStatus(),
+                        Constants.Judge.STATUS_COMPILING.getStatus(),
+                        Constants.Judge.STATUS_JUDGING.getStatus(),
+                        Constants.Judge.STATUS_SUBMITTING.getStatus())
+                .orderByDesc("submit_time");
+        List<Judge> judges = judgeEntityService.list(qw);
+        if (judges == null || judges.isEmpty()) {
+            row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
+            row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
+            row.setScore(0);
+            return row;
+        }
+
+        Judge best = judges.get(0);
+        int bestScore = 0;
+        int bestStatus = Constants.Judge.STATUS_NOT_SUBMITTED.getStatus();
+        boolean isAcm = p.getType() != null && p.getType().equals(Constants.ProblemType.ACM.getType());
+        for (Judge judge : judges) {
+            int st = judge.getStatus() == null ? Constants.Judge.STATUS_NOT_SUBMITTED.getStatus() : judge.getStatus();
+            int sc;
+            if (isAcm) {
+                sc = st == Constants.Judge.STATUS_ACCEPTED.getStatus() ? maxScore : 0;
+            } else {
+                sc = judge.getScore() != null ? judge.getScore() : 0;
+                if (st == Constants.Judge.STATUS_ACCEPTED.getStatus() && sc < maxScore) {
+                    sc = maxScore;
+                }
+            }
+            if (sc > bestScore) {
+                bestScore = sc;
+                bestStatus = st;
+                best = judge;
+            }
+            if (st == Constants.Judge.STATUS_ACCEPTED.getStatus() && isAcm) {
+                bestScore = maxScore;
+                bestStatus = st;
+                best = judge;
+                break;
+            }
+        }
+        row.setJudgeStatus(bestStatus);
+        row.setJudgeStatusName(resolveJudgeStatusName(bestStatus));
+        row.setScore(bestScore);
+        return row;
+    }
+
+    private String resolveJudgeStatusName(int status) {
+        for (Constants.Judge j : Constants.Judge.values()) {
+            if (j.getStatus().equals(status)) {
+                return j.getName();
+            }
+        }
+        return "Unknown";
     }
 
     @Override
