@@ -344,7 +344,7 @@ const ojRoutes = [
     meta: { title: 'Objective Quiz Papers' }
   },
   {
-    path: '/quiz/paper/:paperId/result',
+    path: '/quiz/paper/:paperId/result/:resultToken',
     name: 'QuizPaperResult',
     component: QuizPaperResult,
     meta: { title: 'Quiz Paper Review', requireAuth: true }

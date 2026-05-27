@@ -41,7 +41,8 @@ public class AdminQuizPaperController {
     public CommonResult<IPage<QuizPaper>> list(@RequestParam(value = "limit", required = false) Integer limit,
                                                @RequestParam(value = "currentPage", required = false) Integer currentPage,
                                                @RequestParam(value = "keyword", required = false) String keyword,
-                                               @RequestParam(value = "status", required = false) Integer status) {
+                                               @RequestParam(value = "status", required = false) Integer status,
+                                               @RequestParam(value = "langCategory", required = false) String langCategory) {
         int size = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         int page = currentPage == null || currentPage <= 0 ? 1 : currentPage;
         QueryWrapper<QuizPaper> qw = new QueryWrapper<>();
@@ -50,6 +51,9 @@ public class AdminQuizPaperController {
         }
         if (status != null && (status == 0 || status == 1)) {
             qw.eq("status", status);
+        }
+        if (StrUtil.isNotBlank(langCategory)) {
+            qw.eq("lang_category", langCategory);
         }
         qw.orderByDesc("id");
         return CommonResult.successResponse(quizPaperService.page(new Page<>(page, size), qw));
@@ -160,6 +164,14 @@ public class AdminQuizPaperController {
         }
         if (p.getStatus() != null && p.getStatus() != 0 && p.getStatus() != 1) {
             return "状态取值 0 或 1";
+        }
+        if (StrUtil.isNotBlank(p.getLangCategory())
+                && !"cpp".equalsIgnoreCase(p.getLangCategory())
+                && !"python".equalsIgnoreCase(p.getLangCategory())) {
+            return "分类仅支持 cpp 或 python";
+        }
+        if (StrUtil.isNotBlank(p.getLangCategory())) {
+            p.setLangCategory(p.getLangCategory().toLowerCase());
         }
         return null;
     }
