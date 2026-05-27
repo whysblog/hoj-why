@@ -247,6 +247,7 @@ export default {
       this.$emit('status-change', {
         problemId: this.problemId,
         pid: this.pid || (this.problemData.problem && this.problemData.problem.id),
+        language: this.language,
         status,
         score: score != null ? score : this.calcScore({ status, score }),
         maxScore: this.maxScore || 100,
