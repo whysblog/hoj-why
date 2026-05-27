@@ -10,11 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import top.hcode.hoj.common.exception.StatusFailException;
-import top.hcode.hoj.dao.judge.JudgeEntityService;
 import top.hcode.hoj.mapper.ProblemMapper;
 import top.hcode.hoj.mapper.QuizPaperItemMapper;
 import top.hcode.hoj.mapper.QuizPaperMapper;
-import top.hcode.hoj.pojo.entity.judge.Judge;
 import top.hcode.hoj.shiro.AccountProfile;
 import top.hcode.hoj.pojo.dto.QuizPaperItemDTO;
 import top.hcode.hoj.pojo.dto.QuizPaperSubmitDTO;
@@ -35,6 +33,7 @@ import top.hcode.hoj.utils.Constants;
 import top.hcode.hoj.utils.QuizAnswerUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,9 +49,6 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
 
     @Autowired
     private ProblemMapper problemMapper;
-
-    @Autowired
-    private JudgeEntityService judgeEntityService;
 
     @Override
     public Page<QuizPaperListVO> getPublicPage(Integer limit, Integer currentPage, String keyword) {
@@ -105,6 +101,8 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
             throw new StatusFailException("请提交答案");
         }
         Map<String, String> answers = dto.getAnswers();
+        Map<String, QuizPaperSubmitDTO.ProblemSnapshotDTO> problemSnapshots =
+                dto.getProblemSnapshots() == null ? Collections.emptyMap() : dto.getProblemSnapshots();
         QuizPaper paper = getOne(new QueryWrapper<QuizPaper>().eq("id", paperId).eq("status", 1));
         if (paper == null) {
             throw new StatusFailException("套卷不存在或未公开");
@@ -132,7 +130,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         for (QuizPaperItem it : items) {
             seq++;
             if ("problem".equals(normalizeItemType(it.getItemType()))) {
-                itemResults.add(buildProblemItemResult(seq, it, uid));
+                itemResults.add(buildProblemItemResult(seq, it, problemSnapshots));
                 QuizPaperItemResultVO pr = itemResults.get(itemResults.size() - 1);
                 problemCount++;
                 if (pr.getScore() != null) {
@@ -244,7 +242,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         return legacy;
     }
 
-    private QuizPaperItemResultVO buildProblemItemResult(int no, QuizPaperItem it, String uid) {
+    private QuizPaperItemResultVO buildProblemItemResult(int no, QuizPaperItem it, Map<String, QuizPaperSubmitDTO.ProblemSnapshotDTO> problemSnapshots) {
         QuizPaperItemResultVO row = new QuizPaperItemResultVO();
         row.setNo(no);
         row.setItemType("problem");
@@ -263,59 +261,28 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         int maxScore = p.getIoScore() != null && p.getIoScore() > 0 ? p.getIoScore() : 100;
         row.setMaxScore(maxScore);
 
-        if (StrUtil.isBlank(uid)) {
+        QuizPaperSubmitDTO.ProblemSnapshotDTO snap = problemSnapshots.get(String.valueOf(it.getQuestionId()));
+        if (snap == null) {
             row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
             row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
             row.setScore(0);
             return row;
         }
-
-        QueryWrapper<Judge> qw = new QueryWrapper<>();
-        qw.eq("pid", p.getId()).eq("uid", uid).eq("cid", 0).isNull("gid")
-                .notIn("status",
-                        Constants.Judge.STATUS_PENDING.getStatus(),
-                        Constants.Judge.STATUS_COMPILING.getStatus(),
-                        Constants.Judge.STATUS_JUDGING.getStatus(),
-                        Constants.Judge.STATUS_SUBMITTING.getStatus())
-                .orderByDesc("submit_time");
-        List<Judge> judges = judgeEntityService.list(qw);
-        if (judges == null || judges.isEmpty()) {
-            row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
-            row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
-            row.setScore(0);
-            return row;
-        }
-
-        Judge best = judges.get(0);
-        int bestScore = 0;
-        int bestStatus = Constants.Judge.STATUS_NOT_SUBMITTED.getStatus();
         boolean isAcm = p.getType() != null && p.getType().equals(Constants.ProblemType.ACM.getType());
-        for (Judge judge : judges) {
-            int st = judge.getStatus() == null ? Constants.Judge.STATUS_NOT_SUBMITTED.getStatus() : judge.getStatus();
-            int sc;
-            if (isAcm) {
-                sc = st == Constants.Judge.STATUS_ACCEPTED.getStatus() ? maxScore : 0;
-            } else {
-                sc = judge.getScore() != null ? judge.getScore() : 0;
-                if (st == Constants.Judge.STATUS_ACCEPTED.getStatus() && sc < maxScore) {
-                    sc = maxScore;
-                }
-            }
-            if (sc > bestScore) {
-                bestScore = sc;
-                bestStatus = st;
-                best = judge;
-            }
-            if (st == Constants.Judge.STATUS_ACCEPTED.getStatus() && isAcm) {
-                bestScore = maxScore;
-                bestStatus = st;
-                best = judge;
-                break;
+        int latestStatus = snap.getStatus() == null ? Constants.Judge.STATUS_NOT_SUBMITTED.getStatus() : snap.getStatus();
+        int latestScore;
+        if (isAcm) {
+            latestScore = latestStatus == Constants.Judge.STATUS_ACCEPTED.getStatus() ? maxScore : 0;
+        } else {
+            latestScore = snap.getScore() != null ? snap.getScore() : 0;
+            if (latestStatus == Constants.Judge.STATUS_ACCEPTED.getStatus() && latestScore < maxScore) {
+                latestScore = maxScore;
             }
         }
-        row.setJudgeStatus(bestStatus);
-        row.setJudgeStatusName(resolveJudgeStatusName(bestStatus));
-        row.setScore(bestScore);
+        row.setJudgeStatus(latestStatus);
+        row.setJudgeStatusName(resolveJudgeStatusName(latestStatus));
+        row.setLanguage(snap.getLanguage());
+        row.setScore(latestScore);
         return row;
     }
 
