@@ -25,6 +25,7 @@ public class QuizPaperItemResultVO {
     private Long pid;
     private Integer judgeStatus;
     private String judgeStatusName;
+    private String language;
     private Integer score;
     private Integer maxScore;
 }
