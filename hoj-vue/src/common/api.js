@@ -2060,8 +2060,14 @@ const adminApi = {
   admin_getCertificateList() {
     return ajax('/api/admin/certificate/list', 'get')
   },
+  admin_batchUploadCertificate(data) {
+    return ajax('/api/admin/certificate/batch-upload', 'post', { data })
+  },
+  admin_updateCertificate(data) {
+    return ajax('/api/admin/certificate/update', 'post', { data })
+  },
   admin_deleteCertificate(id) {
-    return ajax('/api/admin/certificate/delete', 'get', {
+    return ajax('/api/admin/certificate/delete', 'delete', {
       params: {
         id
       }

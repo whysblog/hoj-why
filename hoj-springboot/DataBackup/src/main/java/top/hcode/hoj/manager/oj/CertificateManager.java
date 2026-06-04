@@ -1,20 +1,18 @@
 package top.hcode.hoj.manager.oj;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import top.hcode.hoj.common.result.ResultStatus;
 import top.hcode.hoj.pojo.entity.common.Certificate;
 import top.hcode.hoj.service.oj.CertificateService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: Manus
@@ -34,12 +32,28 @@ public class CertificateManager {
         return certificateService.list(queryWrapper);
     }
 
+    public Certificate getCertificateById(Long id) {
+        return certificateService.getById(id);
+    }
+
     public void saveCertificate(Certificate certificate) {
         certificateService.save(certificate);
     }
 
+    public void saveCertificates(List<Certificate> certificates) {
+        certificateService.saveBatch(certificates);
+    }
+
+    public void updateCertificate(Certificate certificate) {
+        certificateService.updateById(certificate);
+    }
+
     public void deleteCertificate(Long id) {
+        Certificate certificate = certificateService.getById(id);
         certificateService.removeById(id);
+        if (certificate != null && StrUtil.isNotBlank(certificate.getFilePath()) && FileUtil.exist(certificate.getFilePath())) {
+            FileUtil.del(certificate.getFilePath());
+        }
     }
     
     public List<Certificate> getAllCertificates() {
