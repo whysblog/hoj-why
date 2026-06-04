@@ -78,12 +78,15 @@
 
         <template v-else>
           <el-alert
-            title="请上传一个UTF-8编码的CSV和一个zip压缩包。CSV表头必须为：姓名、身份证号、文件名；zip内不要放子目录，直接放CSV中填写的证书文件。"
+            title="CSV第一行必须是标题行：姓名、身份证号、文件名；从第二行开始填写数据。zip内不要放子目录，直接放CSV中填写的证书文件。"
             type="info"
             :closable="false"
             show-icon
             class="batch-upload-tip"
-          ></el-alert>
+          >
+            <div>示例：姓名,身份证号,文件名</div>
+            <div>　　　张三,110101199001011234,zhangsan.pdf</div>
+          </el-alert>
           <el-form-item label="CSV清单">
             <el-upload
               class="upload-demo"
@@ -98,7 +101,7 @@
               :before-upload="beforeUpload"
             >
               <el-button size="small" type="primary">选择CSV</el-button>
-              <div slot="tip" class="el-upload__tip">仅支持UTF-8编码.csv文件，表头：姓名、身份证号、文件名</div>
+              <div slot="tip" class="el-upload__tip">仅支持UTF-8编码.csv文件；第一行必须是标题：姓名、身份证号、文件名</div>
             </el-upload>
           </el-form-item>
           <el-form-item label="证书压缩包">
