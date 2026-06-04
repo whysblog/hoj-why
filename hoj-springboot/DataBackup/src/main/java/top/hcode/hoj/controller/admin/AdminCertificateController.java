@@ -110,23 +110,17 @@ public class AdminCertificateController {
             return CommonResult.errorResponse(csvParseResult.getError());
         }
 
+        Set<String> expectedFileNames = new HashSet<>();
+        for (CertificateCsvRow row : csvParseResult.getRows()) {
+            expectedFileNames.add(row.getFileName());
+        }
+
         Map<String, String> extractedFileMap = new HashMap<>();
         try {
-            String unzipError = unzipCertificateFiles(zipFile, extractedFileMap);
+            String unzipError = unzipCertificateFiles(zipFile, extractedFileMap, expectedFileNames);
             if (StrUtil.isNotBlank(unzipError)) {
                 deleteExtractedFiles(extractedFileMap);
                 return CommonResult.errorResponse(unzipError);
-            }
-
-            Set<String> expectedFileNames = new HashSet<>();
-            for (CertificateCsvRow row : csvParseResult.getRows()) {
-                expectedFileNames.add(row.getFileName());
-            }
-            for (String extractedFileName : extractedFileMap.keySet()) {
-                if (!expectedFileNames.contains(extractedFileName)) {
-                    deleteExtractedFiles(extractedFileMap);
-                    return CommonResult.errorResponse("压缩包中存在CSV未声明的证书文件：" + extractedFileName);
-                }
             }
 
             List<Certificate> certificates = new ArrayList<>();
@@ -245,7 +239,7 @@ public class AdminCertificateController {
                 List<String> columns = parseCsvLine(line);
                 String name = getCsvValue(columns, nameIndex);
                 String idCard = getCsvValue(columns, idCardIndex);
-                String fileName = getCsvValue(columns, fileNameIndex);
+                String fileName = normalizeCertificateFileName(getCsvValue(columns, fileNameIndex));
                 if (StrUtil.hasBlank(name, idCard, fileName)) {
                     return CsvParseResult.error("CSV第" + lineNumber + "行姓名、身份证号、文件名不能为空！");
                 }
@@ -296,19 +290,27 @@ public class AdminCertificateController {
         return index < columns.size() ? columns.get(index) : "";
     }
 
+    private String normalizeCertificateFileName(String fileName) {
+        return StrUtil.isBlank(fileName) ? "" : removeUtf8Bom(fileName).trim();
+    }
+
     private String removeUtf8Bom(String text) {
         return text != null && text.startsWith("\uFEFF") ? text.substring(1) : text;
     }
 
-    private String unzipCertificateFiles(MultipartFile zipFile, Map<String, String> extractedFileMap) throws IOException {
+    private String unzipCertificateFiles(MultipartFile zipFile, Map<String, String> extractedFileMap, Set<String> expectedFileNames) throws IOException {
         String folderPath = Constants.File.CERTIFICATE_FOLDER.getPath();
         FileUtil.mkdir(folderPath);
         try (ZipInputStream zipInputStream = new ZipInputStream(zipFile.getInputStream(), StandardCharsets.UTF_8)) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                String entryName = entry.getName();
+                String entryName = normalizeCertificateFileName(entry.getName());
                 if (entry.isDirectory() || isUnsafeZipEntryName(entryName)) {
                     return "压缩包内不能包含子目录或非法路径：" + entryName;
+                }
+                if (!expectedFileNames.contains(entryName)) {
+                    zipInputStream.closeEntry();
+                    continue;
                 }
                 if (extractedFileMap.containsKey(entryName)) {
                     return "压缩包内文件名重复：" + entryName;
@@ -326,7 +328,7 @@ public class AdminCertificateController {
             }
         }
         if (extractedFileMap.isEmpty()) {
-            return "压缩包内未找到证书文件！";
+            return "压缩包内未找到CSV指定的证书文件！";
         }
         return null;
     }
