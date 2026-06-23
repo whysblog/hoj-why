@@ -88,6 +88,12 @@
           show-overflow
         ></vxe-table-column>
         <vxe-table-column
+          field="phone"
+          :title="$t('m.Phone')"
+          min-width="130"
+          show-overflow
+        ></vxe-table-column>
+        <vxe-table-column
           field="gmtCreate"
           :title="$t('m.Created_Time')"
           min-width="150"
