@@ -541,6 +541,80 @@ public class ProblemEntityServiceImpl extends ServiceImpl<ProblemMapper, Problem
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void copyPublicProblemToGroup(Problem source, Long gid, String problemId, String author) {
+        Long sourcePid = source.getId();
+        Problem copy = new Problem();
+        BeanUtil.copyProperties(source, copy);
+        copy.setId(null).setProblemId(problemId).setGid(gid).setIsGroup(true)
+                .setAuthor(author).setModifiedUser(author).setApplyPublicProgress(null)
+                .setGmtCreate(null).setGmtModified(null)
+                .setCaseVersion(String.valueOf(System.currentTimeMillis()));
+        if (!save(copy)) {
+            throw new IllegalStateException("复制题目失败！");
+        }
+        Long pid = copy.getId();
+        String targetDir = Constants.File.TESTCASE_BASE_FOLDER.getPath() + File.separator + "problem_" + pid;
+        try {
+            List<ProblemLanguage> languages = problemLanguageEntityService.list(
+                    new QueryWrapper<ProblemLanguage>().eq("pid", sourcePid));
+            for (ProblemLanguage language : languages) {
+                language.setId(null).setPid(pid).setGmtCreate(null).setGmtModified(null);
+            }
+            if (!languages.isEmpty() && !problemLanguageEntityService.saveBatch(languages)) {
+                throw new IllegalStateException("复制题目语言失败！");
+            }
+            List<CodeTemplate> templates = codeTemplateEntityService.list(
+                    new QueryWrapper<CodeTemplate>().eq("pid", sourcePid));
+            for (CodeTemplate template : templates) {
+                template.setId(null).setPid(pid).setGmtCreate(null).setGmtModified(null);
+            }
+            if (!templates.isEmpty() && !codeTemplateEntityService.saveBatch(templates)) {
+                throw new IllegalStateException("复制代码模板失败！");
+            }
+            List<ProblemTag> tags = problemTagEntityService.list(new QueryWrapper<ProblemTag>().eq("pid", sourcePid));
+            for (ProblemTag relation : tags) {
+                Tag sourceTag = tagEntityService.getById(relation.getTid());
+                Tag tag = tagEntityService.getOne(new QueryWrapper<Tag>().eq("gid", gid)
+                        .eq("name", sourceTag.getName()).eq("oj", "ME"), false);
+                if (tag == null) {
+                    tag = new Tag().setName(sourceTag.getName()).setColor(sourceTag.getColor()).setOj("ME").setGid(gid);
+                    if (!tagEntityService.save(tag)) {
+                        throw new IllegalStateException("复制题目标签失败！");
+                    }
+                }
+                relation.setId(null).setPid(pid).setTid(tag.getId()).setGmtCreate(null).setGmtModified(null);
+            }
+            if (!tags.isEmpty() && !problemTagEntityService.saveBatch(tags)) {
+                throw new IllegalStateException("复制题目标签关联失败！");
+            }
+            List<ProblemCase> cases = problemCaseEntityService.list(
+                    new QueryWrapper<ProblemCase>().eq("pid", sourcePid).orderByAsc("id"));
+            for (ProblemCase problemCase : cases) {
+                problemCase.setId(null).setPid(pid).setGmtCreate(null).setGmtModified(null);
+            }
+            if (!cases.isEmpty() && !problemCaseEntityService.saveBatch(cases)) {
+                throw new IllegalStateException("复制测试数据失败！");
+            }
+            // Invoke directly so files and metadata are ready before reporting success.
+            if (Boolean.TRUE.equals(copy.getIsUploadCase())) {
+                String sourceDir = Constants.File.TESTCASE_BASE_FOLDER.getPath() + File.separator + "problem_" + sourcePid;
+                if (!FileUtil.isDirectory(sourceDir)) {
+                    throw new IllegalStateException("原题测试数据目录不存在！");
+                }
+                // The upload initializer deletes its temporary directory. Never pass the source directory.
+                FileUtil.copyFilesFromDir(new File(sourceDir), new File(targetDir), true);
+                initUploadTestCase(copy.getJudgeMode(), copy.getJudgeCaseMode(), copy.getCaseVersion(), pid, null, cases);
+            } else {
+                initHandTestCase(copy.getJudgeMode(), copy.getJudgeCaseMode(), copy.getCaseVersion(), pid, cases);
+            }
+        } catch (RuntimeException e) {
+            FileUtil.del(targetDir);
+            throw e;
+        }
+    }
+
     // 初始化上传文件的测试数据，写成json文件
     @Async
     public void initUploadTestCase(String judgeMode,

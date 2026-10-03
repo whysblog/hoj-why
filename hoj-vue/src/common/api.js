@@ -1031,6 +1031,10 @@ const ojApi = {
     })
   },
 
+  addGroupProblemFromPublic(data) {
+    return ajax('/api/group/problem/add-from-public', 'post', { data })
+  },
+
   updateGroupProblem(data) {
     return ajax("/api/group/problem", 'put', {
       data

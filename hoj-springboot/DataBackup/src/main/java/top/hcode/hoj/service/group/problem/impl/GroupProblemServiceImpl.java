@@ -11,6 +11,7 @@ import top.hcode.hoj.common.result.ResultStatus;
 import top.hcode.hoj.manager.group.problem.GroupProblemManager;
 import top.hcode.hoj.pojo.dto.CompileDTO;
 import top.hcode.hoj.pojo.dto.ProblemDTO;
+import top.hcode.hoj.pojo.dto.AddGroupProblemFromPublicDTO;
 import top.hcode.hoj.pojo.entity.problem.Problem;
 import top.hcode.hoj.pojo.entity.problem.ProblemCase;
 import top.hcode.hoj.pojo.entity.problem.Tag;
@@ -69,6 +70,20 @@ public class GroupProblemServiceImpl implements GroupProblemService {
     public CommonResult<Void> addProblem(ProblemDTO problemDto) {
         try {
             groupProblemManager.addProblem(problemDto);
+            return CommonResult.successResponse();
+        } catch (StatusForbiddenException e) {
+            return CommonResult.errorResponse(e.getMessage(), ResultStatus.FORBIDDEN);
+        } catch (StatusNotFoundException e) {
+            return CommonResult.errorResponse(e.getMessage(), ResultStatus.NOT_FOUND);
+        } catch (StatusFailException e) {
+            return CommonResult.errorResponse(e.getMessage(), ResultStatus.FAIL);
+        }
+    }
+
+    @Override
+    public CommonResult<Void> addProblemFromPublic(AddGroupProblemFromPublicDTO data) {
+        try {
+            groupProblemManager.addProblemFromPublic(data);
             return CommonResult.successResponse();
         } catch (StatusForbiddenException e) {
             return CommonResult.errorResponse(e.getMessage(), ResultStatus.FORBIDDEN);
