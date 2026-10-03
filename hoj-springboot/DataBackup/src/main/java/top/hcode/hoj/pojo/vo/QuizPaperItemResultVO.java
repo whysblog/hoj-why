@@ -7,6 +7,8 @@ import lombok.Data;
  */
 @Data
 public class QuizPaperItemResultVO {
+    private QuizQuestionInfoVO question;
+    private Long submitId;
     private Integer no;
     /** quiz | problem */
     private String itemType;

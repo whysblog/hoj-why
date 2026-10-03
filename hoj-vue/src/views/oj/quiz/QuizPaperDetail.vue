@@ -1,127 +1,163 @@
 <template>
-  <el-row :gutter="20">
-    <el-col :md="20" :sm="24">
-      <el-card v-loading="loading" shadow>
-        <div slot="header">
-          <span class="panel-title">{{ detail.title || '...' }}</span>
-          <el-tag v-if="detail.author" size="small" style="margin-left: 10px">{{ detail.author }}</el-tag>
+  <QuizShell
+    :title="detail.title || '套卷练习'"
+    active="paper"
+    subtitle="按自己的节奏完成作答，提交后逐题复盘。"
+    ><div class="quiz-layout">
+      <div v-loading="loading">
+        <section class="quiz-panel">
+          <Markdown
+            :content="
+              detail.description || '选择题完全选对得分；编程题请先完成评测。'
+            "
+            :isAvoidXss="true"
+          />
+          <div v-if="!loading && !detail.id" class="quiz-empty">
+            套卷加载失败<el-button type="text" @click="fetch"
+              >重新加载</el-button
+            >
+          </div>
+        </section>
+        <section
+          v-for="(item, i) in items"
+          :id="'quiz-item-' + i"
+          :key="item.itemType + '-' + item.questionId"
+          class="quiz-panel quiz-question-block"
+        >
+          <div class="quiz-meta">
+            <span class="quiz-pill">第 {{ i + 1 }} 题</span
+            ><span>{{
+              item.itemType === "problem"
+                ? "编程题"
+                : item.quizQuestion.questionType === 1
+                ? "多选题"
+                : "单选题"
+            }}</span
+            ><span>{{ item.score == null ? 100 : item.score }} 分</span>
+          </div>
+          <h2>
+            {{ item.title || (item.quizQuestion && item.quizQuestion.title) }}
+          </h2>
+          <QuizProblemEmbed
+            :key="identity + '-' + item.questionId"
+            v-if="item.itemType === 'problem'"
+            :problem-id="item.problemId"
+            :pid="item.questionId"
+            :max-score="item.score == null ? 100 : item.score"
+            @status-change="onProblemStatus"
+          />
+          <template v-else
+            ><Markdown
+              :content="item.quizQuestion.description || ''"
+              :isAvoidXss="true" /><QuizOptions
+              :value="selections[item.questionId]"
+              @input="$set(selections, item.questionId, $event)"
+              :options="item.quizQuestion.options"
+              :multiple="item.quizQuestion.questionType === 1"
+              :disabled="submitting"
+          /></template>
+        </section>
+      </div>
+      <aside class="quiz-panel quiz-sidebar">
+        <h3>答题卡</h3>
+        <p class="quiz-muted">
+          已作答 {{ answered }} / {{ items.length }} · 总分 {{ maxScore }}
+        </p>
+        <el-progress
+          :percentage="
+            items.length ? Math.round((answered / items.length) * 100) : 0
+          "
+          color="#167d75"
+        />
+        <div class="quiz-grid">
+          <button
+            v-for="(item, i) in items"
+            :key="i"
+            :class="{ answered: hasAnswer(item) }"
+            @click="jump(i)"
+            :aria-label="'跳到第' + (i + 1) + '题'"
+          >
+            {{ i + 1 }}
+          </button>
         </div>
-
-        <Markdown v-if="detail.description" :content="detail.description" :isAvoidXss="false"></Markdown>
-        <div v-else class="muted">暂无套卷说明</div>
-        <el-divider></el-divider>
-
-        <div v-for="(item, idx) in paperItems" :key="item.itemType + '-' + item.questionId" class="q-block">
-          <template v-if="item.itemType === 'problem'">
-            <h4>
-              第 {{ idx + 1 }} 题
-              <el-tag size="mini" type="success">编程题</el-tag>
-              <span class="q-title">{{ item.title }}</span>
-              <el-tag v-if="item.problemId" size="mini" style="margin-left: 8px">{{ item.problemId }}</el-tag>
-            </h4>
-            <QuizProblemEmbed
-              v-if="item.problemId"
-              :problem-id="item.problemId"
-              :pid="item.questionId"
-              :max-score="100"
-              @status-change="onProblemStatus"
-            />
-            <div v-else class="muted">题目信息不可用</div>
-          </template>
-
-          <template v-else>
-            <h4>
-              第 {{ idx + 1 }} 题
-              <el-tag v-if="(item.quizQuestion.questionType || 0) === 1" size="mini" type="warning">多选</el-tag>
-              <el-tag v-else size="mini" type="info">单选</el-tag>
-              <span class="q-title">{{ item.quizQuestion.title }}</span>
-            </h4>
-            <Markdown
-              v-if="item.quizQuestion.description"
-              :content="item.quizQuestion.description"
-              :isAvoidXss="false"
-            ></Markdown>
-            <div v-if="(item.quizQuestion.questionType || 0) === 1" class="quiz-options">
-              <el-checkbox-group v-model="selections[item.quizQuestion.id]">
-                <el-checkbox
-                  v-for="opt in item.quizQuestion.options"
-                  :key="item.quizQuestion.id + '-' + opt.key"
-                  :label="opt.key"
-                  border
-                  class="quiz-check"
-                >
-                  {{ opt.key }}. {{ opt.text }}
-                </el-checkbox>
-              </el-checkbox-group>
-            </div>
-            <el-radio-group v-else v-model="selections[item.quizQuestion.id]" class="quiz-options">
-              <el-radio
-                v-for="opt in item.quizQuestion.options"
-                :key="item.quizQuestion.id + '-' + opt.key"
-                :label="opt.key"
-                border
-                class="quiz-radio"
-              >
-                {{ opt.key }}. {{ opt.text }}
-              </el-radio>
-            </el-radio-group>
-          </template>
+        <p class="quiz-muted">
+          客观题选项自动保存。编程题请等待评测完成后再交卷。
+        </p>
+        <div class="quiz-actions">
+          <el-button
+            type="primary"
+            :loading="submitting"
+            :disabled="loading || !items.length || pending"
+            @click="submit"
+            >{{ pending ? "等待评测完成" : "提交答卷" }}</el-button
+          ><el-button :disabled="submitting" @click="reset">清空选择</el-button>
         </div>
-
-        <div style="margin-top: 24px;">
-          <el-button type="primary" :loading="submitting" @click="submit">提交答卷</el-button>
-          <el-button @click="$router.push({ name: 'QuizPaperList' })">返回套卷列表</el-button>
-        </div>
-        <p class="muted submit-hint">编程题请在本页提交评测；提交答卷后将汇总客观题判分与各编程题得分。</p>
-      </el-card>
-    </el-col>
-  </el-row>
+      </aside>
+    </div></QuizShell
+  >
 </template>
-
 <script>
-import Markdown from '@/components/oj/common/Markdown';
-import QuizProblemEmbed from '@/components/oj/quiz/QuizProblemEmbed.vue';
-import api from '@/common/api';
-import { mapGetters } from 'vuex';
-
-const resultStorageKey = (paperId, token) => `hoj_quiz_paper_result_${paperId}_${token}`;
-const createResultToken = () => Math.random().toString(36).slice(2, 10);
-
+import Markdown from "@/components/oj/common/Markdown";
+import QuizShell from "@/components/oj/quiz/QuizShell.vue";
+import QuizOptions from "@/components/oj/quiz/QuizOptions.vue";
+import QuizProblemEmbed from "@/components/oj/quiz/QuizProblemEmbed.vue";
+import api from "@/common/api";
+import { mapGetters } from "vuex";
+import {
+  answerText,
+  draftKey,
+  readDraft,
+  saveDraft,
+  clearDraft,
+  questionSignature,
+} from "@/common/quiz";
 export default {
-  name: 'QuizPaperDetail',
-  components: { Markdown, QuizProblemEmbed },
-  data() {
-    return {
-      loading: false,
-      submitting: false,
-      detail: { questions: [], items: [] },
-      selections: {},
-      problemStatusMap: {},
-    };
-  },
+  components: { Markdown, QuizShell, QuizOptions, QuizProblemEmbed },
+  data: () => ({
+    detail: {},
+    selections: {},
+    problemStatusMap: {},
+    loading: false,
+    submitting: false,
+    request: 0,
+  }),
   computed: {
-    ...mapGetters(['isAuthenticated']),
+    ...mapGetters(["isAuthenticated", "userInfo"]),
     paperId() {
       return this.$route.params.paperId;
     },
-    paperItems() {
-      if (this.detail.items && this.detail.items.length) {
-        return this.detail.items
-          .map((item) => {
-            if (item.itemType === 'problem') return item;
-            return {
-              ...item,
-              itemType: 'quiz',
-              quizQuestion: item.quizQuestion || this.findQuestion(item.questionId),
-            };
-          })
-          .filter((item) => item.itemType === 'problem' || item.quizQuestion);
-      }
-      return (this.detail.questions || []).map((q) => ({
-        itemType: 'quiz',
-        questionId: q.id,
-        quizQuestion: q,
-      }));
+    identity() {
+      return this.isAuthenticated && this.userInfo
+        ? this.userInfo.uid || this.userInfo.username
+        : "guest";
+    },
+    key() {
+      return draftKey("paper", this.paperId, this.identity);
+    },
+    items() {
+      return this.detail.items || [];
+    },
+    signature() {
+      return (
+        JSON.stringify(
+          this.items.map((i) => [i.itemType, i.questionId, i.score])
+        ) +
+        questionSignature(
+          this.items.filter((i) => i.quizQuestion).map((i) => i.quizQuestion)
+        )
+      );
+    },
+    answered() {
+      return this.items.filter(this.hasAnswer).length;
+    },
+    pending() {
+      return Object.values(this.problemStatusMap).some((s) => s.pending);
+    },
+    maxScore() {
+      return this.items.reduce(
+        (s, i) => s + (i.score == null ? 100 : i.score),
+        0
+      );
     },
   },
   mounted() {
@@ -129,152 +165,114 @@ export default {
   },
   watch: {
     paperId() {
-      this.selections = {};
-      this.problemStatusMap = {};
       this.fetch();
+    },
+    identity() {
+      this.fetch();
+    },
+    selections: {
+      deep: true,
+      handler() {
+        if (this.detail.id && !this.loading)
+          saveDraft(this.key, this.signature, this.selections);
+      },
     },
   },
   methods: {
-    findQuestion(id) {
-      return (this.detail.questions || []).find((q) => q.id === id);
+    hasAnswer(item) {
+      return item.itemType === "problem"
+        ? !!(this.problemStatusMap[item.questionId] || {}).submitId
+        : !!answerText(this.selections[item.questionId]);
     },
-    onProblemStatus(payload) {
-      if (!payload || !payload.pid) return;
-      this.$set(this.problemStatusMap, String(payload.pid), payload);
+    jump(i) {
+      const el = document.getElementById("quiz-item-" + i);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     },
-    initSelections(items) {
-      const s = {};
-      (items || []).forEach((item) => {
-        if (item.itemType === 'problem') return;
-        const q = item.quizQuestion;
-        if (!q) return;
-        if ((q.questionType || 0) === 1) {
-          s[q.id] = [];
-        } else {
-          s[q.id] = '';
-        }
-      });
-      this.selections = s;
+    onProblemStatus(s) {
+      this.$set(this.problemStatusMap, s.pid, s);
     },
-    fetch() {
+    async fetch() {
+      const token = ++this.request;
       this.loading = true;
-      api
-        .getQuizPaperDetail(this.paperId)
-        .then((res) => {
-          this.detail = res.data.data || { questions: [], items: [] };
-          this.initSelections(this.paperItems);
-        })
-        .finally(() => {
-          this.loading = false;
+      this.detail = {};
+      this.selections = {};
+      this.problemStatusMap = {};
+      try {
+        const res = await api.getQuizPaperDetail(this.paperId);
+        if (token !== this.request) return;
+        this.detail = res.data.data || {};
+        const saved = readDraft(this.key, this.signature);
+        const answers = {};
+        this.items
+          .filter((i) => i.quizQuestion)
+          .forEach((i) => {
+            const v = saved[i.questionId];
+            answers[i.questionId] =
+              i.quizQuestion.questionType === 1
+                ? Array.isArray(v)
+                  ? v
+                  : []
+                : typeof v === "string"
+                ? v
+                : "";
+          });
+        this.selections = answers;
+      } catch (e) {
+      } finally {
+        if (token === this.request) this.loading = false;
+      }
+    },
+    async reset() {
+      try {
+        await this.$confirm("清空本卷客观题选择？", "清空草稿", {
+          type: "warning",
         });
+        this.selections = {};
+        clearDraft(this.key);
+      } catch (e) {}
     },
-    buildAnswers() {
-      const answers = {};
-      this.paperItems.forEach((item) => {
-        if (item.itemType === 'problem' || !item.quizQuestion) return;
-        const q = item.quizQuestion;
-        const raw = this.selections[q.id];
-        if ((q.questionType || 0) === 1) {
-          if (Array.isArray(raw) && raw.length >= 2) {
-            answers[String(q.id)] = [...raw].sort().join('');
-          }
-        } else if (raw) {
-          answers[String(q.id)] = raw;
-        }
-      });
-      return answers;
-    },
-    buildProblemSnapshots() {
-      const snapshots = {};
-      this.paperItems.forEach((item) => {
-        if (item.itemType !== 'problem') return;
-        const pid = String(item.questionId);
-        const st = this.problemStatusMap[pid];
-        if (!st || !st.submittedInThisSession) return;
-        snapshots[pid] = {
-          status: st.status,
-          score: st.score,
-          language: st.language,
-          maxScore: st.maxScore,
-        };
-      });
-      return snapshots;
-    },
-    submit() {
+    async submit() {
+      if (this.submitting || this.pending) return;
       if (!this.isAuthenticated) {
-        this.$store.commit('changeModalStatus', { mode: 'Login', visible: true });
-        this.$message.warning(this.$i18n.t('m.Please_login_first'));
+        this.$store.commit("changeModalStatus", {
+          mode: "Login",
+          visible: true,
+        });
         return;
       }
       this.submitting = true;
-      api
-        .submitQuizPaper(this.paperId, {
-          answers: this.buildAnswers(),
-          problemSnapshots: this.buildProblemSnapshots(),
-        })
-        .then((res) => {
-          const data = res.data.data || {};
-          const token = createResultToken();
-          if (!data.itemResults && data.questionResults) {
-            data.itemResults = data.questionResults.map((r) => ({
-              ...r,
-              itemType: 'quiz',
-            }));
-          }
-          try {
-            sessionStorage.setItem(resultStorageKey(this.paperId, token), JSON.stringify(data));
-          } catch (e) {
-            /* ignore */
-          }
-          this.$router.push({
-            name: 'QuizPaperResult',
-            params: { paperId: String(this.paperId), resultToken: token },
-          });
-        })
-        .finally(() => {
-          this.submitting = false;
+      const token = this.request,
+        key = this.key;
+      try {
+        if (this.answered < this.items.length)
+          await this.$confirm(
+            "还有未作答题目，确定提交？未作答记为 0 分。",
+            "提交答卷",
+            { type: "warning" }
+          );
+        if (token !== this.request) return;
+        const answers = {},
+          problemSnapshots = {};
+        this.items.forEach((i) => {
+          if (i.itemType === "problem") {
+            const s = this.problemStatusMap[i.questionId];
+            if (s && s.submitId)
+              problemSnapshots[i.questionId] = { submitId: s.submitId };
+          } else
+            answers[i.questionId] = answerText(this.selections[i.questionId]);
         });
+        const res = await api.submitQuizPaper(this.paperId, {
+          answers,
+          problemSnapshots,
+        });
+        if (token !== this.request) return;
+        clearDraft(key);
+        this.$router.push("/quiz/history/" + res.data.data.attemptId);
+      } catch (e) {
+      } finally {
+        this.submitting = false;
+      }
     },
   },
 };
 </script>
-
-<style scoped>
-.panel-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-.q-block {
-  margin-bottom: 28px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-.q-title {
-  margin-left: 8px;
-  font-weight: normal;
-  color: #606266;
-}
-.quiz-options {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-top: 8px;
-}
-.quiz-radio {
-  margin: 8px 0 !important;
-  white-space: normal;
-  height: auto;
-  padding: 10px 16px;
-}
-.quiz-check {
-  margin: 8px 0 !important;
-  display: block;
-}
-.muted {
-  color: #909399;
-}
-.submit-hint {
-  margin-top: 12px;
-  font-size: 13px;
-}
-</style>

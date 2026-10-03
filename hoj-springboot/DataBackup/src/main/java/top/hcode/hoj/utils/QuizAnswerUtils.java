@@ -22,7 +22,8 @@ public final class QuizAnswerUtils {
         if (raw == null) {
             return "";
         }
-        String s = raw.trim().toUpperCase().replace(",", "").replace(" ", "").replace("，", "");
+        String s = raw.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("[\\s,，]", "");
+        if (!s.matches("[A-D]*")) return "";
         Set<Character> set = new LinkedHashSet<>();
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
@@ -40,10 +41,11 @@ public final class QuizAnswerUtils {
     }
 
     public static boolean isValidSingle(String normalized) {
-        return normalized != null && normalized.length() == 1;
+        return normalized != null && normalized.matches("[A-D]");
     }
 
     public static boolean isValidMultiple(String normalized) {
-        return normalized != null && normalized.length() >= 2 && normalized.length() <= 4;
+        return normalized != null && normalized.matches("[A-D]{2,4}")
+                && normalize(normalized).equals(normalized);
     }
 }

@@ -1,56 +1,99 @@
 <template>
-  <el-card shadow>
+  <el-card shadow class="quiz-page quiz-admin">
     <div slot="header" class="clearfix">
       <span class="panel-title">客观题管理</span>
-      <el-button style="float: right" type="primary" size="small" icon="el-icon-plus" @click="openCreate">
+      <el-button
+        style="float: right"
+        type="primary"
+        size="small"
+        icon="el-icon-plus"
+        @click="openCreate"
+      >
         新建题目
       </el-button>
     </div>
-    <el-row :gutter="10" style="margin-bottom: 12px;">
+    <el-row :gutter="10" style="margin-bottom: 12px">
       <el-col :span="8">
-        <el-input v-model="keyword" placeholder="标题关键词" clearable size="small" @keyup.enter.native="load" />
+        <el-input
+          v-model="keyword"
+          placeholder="标题关键词"
+          clearable
+          size="small"
+          @keyup.enter.native="search"
+        />
       </el-col>
       <el-col :span="6">
-        <el-select v-model="statusFilter" placeholder="状态" clearable size="small" style="width: 100%;">
+        <el-select
+          v-model="statusFilter"
+          placeholder="状态"
+          clearable
+          size="small"
+          style="width: 100%"
+        >
           <el-option label="全部" :value="null" />
           <el-option label="公开" :value="1" />
           <el-option label="隐藏" :value="0" />
         </el-select>
       </el-col>
       <el-col :span="6">
-        <el-select v-model="langCategoryFilter" placeholder="分类" clearable size="small" style="width: 100%;">
+        <el-select
+          v-model="langCategoryFilter"
+          placeholder="分类"
+          clearable
+          size="small"
+          style="width: 100%"
+        >
           <el-option label="C++" value="cpp" />
           <el-option label="Python" value="python" />
         </el-select>
       </el-col>
       <el-col :span="4">
-        <el-button type="primary" size="small" @click="load">查询</el-button>
+        <el-button type="primary" size="small" @click="search">查询</el-button>
       </el-col>
     </el-row>
     <el-table :data="records" v-loading="loading" border stripe>
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+      <el-table-column
+        prop="title"
+        label="标题"
+        min-width="200"
+        show-overflow-tooltip
+      />
       <el-table-column prop="answer" label="答案" width="80" />
       <el-table-column prop="questionType" label="题型" width="80">
         <template slot-scope="{ row }">
-          {{ (row.questionType || 0) === 1 ? '多选' : '单选' }}
+          {{ (row.questionType || 0) === 1 ? "多选" : "单选" }}
         </template>
       </el-table-column>
       <el-table-column prop="difficulty" label="难度" width="80">
-        <template slot-scope="{ row }">{{ ['简', '中', '难'][row.difficulty] || row.difficulty }}</template>
+        <template slot-scope="{ row }">{{
+          ["简", "中", "难"][row.difficulty] || row.difficulty
+        }}</template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="80">
-        <template slot-scope="{ row }">{{ row.status === 1 ? '公开' : '隐藏' }}</template>
+        <template slot-scope="{ row }"
+          ><el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{
+            row.status === 1 ? "公开" : "隐藏"
+          }}</el-tag></template
+        >
       </el-table-column>
       <el-table-column label="操作" width="160" fixed="right">
         <template slot-scope="{ row }">
-          <el-button type="text" size="small" @click="openEdit(row)">编辑</el-button>
-          <el-button type="text" size="small" style="color: #f56c6c" @click="remove(row)">删除</el-button>
+          <el-button type="text" size="small" @click="openEdit(row)"
+            >编辑</el-button
+          >
+          <el-button
+            type="text"
+            size="small"
+            style="color: #f56c6c"
+            @click="remove(row)"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
     <el-pagination
-      style="margin-top: 12px; text-align: right;"
+      style="margin-top: 12px; text-align: right"
       background
       layout="prev, pager, next"
       :total="total"
@@ -59,16 +102,40 @@
       @current-change="load"
     />
 
-    <el-dialog :title="dialogTitle" :visible.sync="visible" width="720px" destroy-on-close @closed="resetForm">
-      <el-form ref="formRef" :model="form" label-width="100px" size="small">
+    <el-dialog
+      :title="dialogTitle"
+      :visible.sync="visible"
+      width="720px"
+      :before-close="closeDialog"
+      :close-on-click-modal="false"
+      destroy-on-close
+      @closed="resetForm"
+    >
+      <el-form
+        :disabled="saving"
+        ref="formRef"
+        :model="form"
+        label-width="100px"
+        size="small"
+      >
         <el-form-item label="标题" required>
           <el-input v-model="form.title" maxlength="255" show-word-limit />
         </el-form-item>
         <el-form-item label="题干说明">
-          <el-input v-model="form.description" type="textarea" :rows="4" placeholder="支持 Markdown / HTML" />
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="4"
+            placeholder="支持 Markdown、代码与公式"
+          />
         </el-form-item>
         <el-form-item label="答案解析">
-          <el-input v-model="form.explanation" type="textarea" :rows="4" placeholder="提交后展示给学生，支持 Markdown" />
+          <el-input
+            v-model="form.explanation"
+            type="textarea"
+            :rows="4"
+            placeholder="提交后展示给学生，支持 Markdown"
+          />
         </el-form-item>
         <el-form-item label="选项 A" required>
           <el-input v-model="form.optionA" type="textarea" :rows="2" />
@@ -89,7 +156,11 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.questionType === 0" label="正确答案" required>
-          <el-select v-model="form.answer" placeholder="选择" style="width: 120px;">
+          <el-select
+            v-model="form.answer"
+            placeholder="选择"
+            style="width: 120px"
+          >
             <el-option label="A" value="A" />
             <el-option label="B" value="B" />
             <el-option label="C" value="C" />
@@ -102,7 +173,7 @@
             multiple
             collapse-tags
             placeholder="至少选两项"
-            style="width: 220px;"
+            style="width: 220px"
           >
             <el-option label="A" value="A" />
             <el-option label="B" value="B" />
@@ -111,14 +182,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="难度">
-          <el-select v-model="form.difficulty" style="width: 160px;">
+          <el-select v-model="form.difficulty" style="width: 160px">
             <el-option :value="0" label="简单" />
             <el-option :value="1" label="中等" />
             <el-option :value="2" label="困难" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="form.status" style="width: 160px;">
+          <el-select v-model="form.status" style="width: 160px">
             <el-option :value="1" label="公开" />
             <el-option :value="0" label="隐藏" />
           </el-select>
@@ -127,43 +198,64 @@
           <el-input v-model="form.author" maxlength="255" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-select v-model="form.langCategory" clearable style="width: 160px;">
+          <el-select v-model="form.langCategory" clearable style="width: 160px">
             <el-option label="C++" value="cpp" />
             <el-option label="Python" value="python" />
           </el-select>
         </el-form-item>
       </el-form>
-      <span slot="footer">
-        <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+      <section v-if="preview" class="quiz-panel">
+        <h2>{{ form.title }}</h2>
+        <Markdown :content="form.description" :isAvoidXss="true" /><QuizOptions
+          :options="previewOptions"
+          :multiple="form.questionType === 1"
+          :value="form.questionType === 1 ? form.answerMulti : form.answer"
+          reviewed
+          :correct-answer="previewAnswer"
+        />
+        <h3>解析预览</h3>
+        <Markdown :content="form.explanation" :isAvoidXss="true" />
+      </section>
+      <span slot="footer"
+        ><el-button @click="preview = !preview">{{
+          preview ? "收起预览" : "预览题目与解析"
+        }}</el-button>
+        <el-button :disabled="saving" @click="visible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="save"
+          >保存</el-button
+        >
       </span>
     </el-dialog>
   </el-card>
 </template>
 
 <script>
-import api from '@/common/api';
+import api from "@/common/api";
+import "@/styles/quiz.css";
+import Markdown from "@/components/oj/common/Markdown";
+import QuizOptions from "@/components/oj/quiz/QuizOptions.vue";
 
 const emptyForm = () => ({
   id: null,
-  title: '',
-  description: '',
-  explanation: '',
-  optionA: '',
-  optionB: '',
-  optionC: '',
-  optionD: '',
+  title: "",
+  description: "",
+  explanation: "",
+  optionA: "",
+  optionB: "",
+  optionC: "",
+  optionD: "",
   questionType: 0,
-  answer: 'A',
-  answerMulti: ['A', 'B'],
+  answer: "A",
+  answerMulti: ["A", "B"],
   difficulty: 1,
   status: 1,
-  author: '',
-  langCategory: '',
+  author: "",
+  langCategory: "",
 });
 
 export default {
-  name: 'AdminQuiz',
+  name: "AdminQuiz",
+  components: { Markdown, QuizOptions },
   data() {
     return {
       loading: false,
@@ -171,30 +263,51 @@ export default {
       total: 0,
       page: 1,
       limit: 15,
-      keyword: '',
+      keyword: "",
       statusFilter: null,
       langCategoryFilter: null,
       visible: false,
       isEdit: false,
       saving: false,
       form: emptyForm(),
+      preview: false,
     };
   },
   computed: {
+    previewOptions() {
+      return ["A", "B", "C", "D"].map((k) => ({
+        key: k,
+        text: this.form["option" + k],
+      }));
+    },
+    previewAnswer() {
+      return this.form.questionType === 1
+        ? (this.form.answerMulti || []).slice().sort().join("")
+        : this.form.answer;
+    },
     dialogTitle() {
-      return this.isEdit ? '编辑客观题' : '新建客观题';
+      return this.isEdit ? "编辑客观题" : "新建客观题";
     },
   },
   mounted() {
     this.load();
   },
   methods: {
+    search() {
+      this.page = 1;
+      this.load();
+    },
+    closeDialog(done) {
+      if (!this.saving) done();
+    },
     load() {
       this.loading = true;
       const params = { currentPage: this.page, limit: this.limit };
       if (this.keyword) params.keyword = this.keyword;
-      if (this.statusFilter === 0 || this.statusFilter === 1) params.status = this.statusFilter;
-      if (this.langCategoryFilter) params.langCategory = this.langCategoryFilter;
+      if (this.statusFilter === 0 || this.statusFilter === 1)
+        params.status = this.statusFilter;
+      if (this.langCategoryFilter)
+        params.langCategory = this.langCategoryFilter;
       api
         .admin_getQuizList(params)
         .then((res) => {
@@ -202,6 +315,7 @@ export default {
           this.records = data.records || [];
           this.total = data.total || 0;
         })
+        .catch(() => {})
         .finally(() => {
           this.loading = false;
         });
@@ -220,33 +334,34 @@ export default {
           const q = res.data.data;
           this.form = {
             id: q.id,
-            title: q.title || '',
-            description: q.description || '',
-            explanation: q.explanation || '',
-            optionA: q.optionA || '',
-            optionB: q.optionB || '',
-            optionC: q.optionC || '',
-            optionD: q.optionD || '',
+            title: q.title || "",
+            description: q.description || "",
+            explanation: q.explanation || "",
+            optionA: q.optionA || "",
+            optionB: q.optionB || "",
+            optionC: q.optionC || "",
+            optionD: q.optionD || "",
             questionType: q.questionType != null ? q.questionType : 0,
-            answer: 'A',
-            answerMulti: ['A', 'B'],
+            answer: "A",
+            answerMulti: ["A", "B"],
             difficulty: q.difficulty != null ? q.difficulty : 1,
             status: q.status != null ? q.status : 1,
-            author: q.author || '',
-            langCategory: q.langCategory || '',
+            author: q.author || "",
+            langCategory: q.langCategory || "",
           };
           const qt = this.form.questionType || 0;
-          const ans = (q.answer || 'A').toUpperCase().replace(/[^ABCD]/g, '');
+          const ans = (q.answer || "A").toUpperCase().replace(/[^ABCD]/g, "");
           if (qt === 0) {
-            this.form.answer = ans.slice(0, 1) || 'A';
+            this.form.answer = ans.slice(0, 1) || "A";
           } else {
-            this.form.answerMulti = ans.split('').filter(Boolean);
+            this.form.answerMulti = ans.split("").filter(Boolean);
             if (this.form.answerMulti.length < 2) {
-              this.form.answerMulti = ['A', 'B'];
+              this.form.answerMulti = ["A", "B"];
             }
           }
           this.visible = true;
         })
+        .catch(() => {})
         .finally(() => {
           this.loading = false;
         });
@@ -255,21 +370,32 @@ export default {
       this.form = emptyForm();
     },
     save() {
+      if (this.saving) return;
+      if (
+        ["title", "optionA", "optionB", "optionC", "optionD"].some(
+          (k) => !this.form[k].trim()
+        )
+      ) {
+        this.$message.warning("请填写标题和全部四个选项");
+        return;
+      }
       this.saving = true;
       const payload = { ...this.form };
       delete payload.id;
       delete payload.answerMulti;
       if (payload.questionType === 1) {
-        const letters = [...new Set(this.form.answerMulti || [])].sort().join('');
+        const letters = [...new Set(this.form.answerMulti || [])]
+          .sort()
+          .join("");
         payload.answer = letters;
       }
-      if ((payload.answer || '').length < 1) {
-        this.$message.warning('请设置正确答案');
+      if ((payload.answer || "").length < 1) {
+        this.$message.warning("请设置正确答案");
         this.saving = false;
         return;
       }
-      if (payload.questionType === 1 && (payload.answer || '').length < 2) {
-        this.$message.warning('多选题请至少选择两个选项');
+      if (payload.questionType === 1 && (payload.answer || "").length < 2) {
+        this.$message.warning("多选题请至少选择两个选项");
         this.saving = false;
         return;
       }
@@ -278,19 +404,20 @@ export default {
         : api.admin_createQuiz(payload);
       req
         .then(() => {
-          this.$message.success('保存成功');
+          this.$message.success("保存成功");
           this.visible = false;
           this.load();
         })
+        .catch(() => {})
         .finally(() => {
           this.saving = false;
         });
     },
     remove(row) {
-      this.$confirm('确定删除该题目？', '提示', { type: 'warning' })
+      this.$confirm("确定删除该题目？", "提示", { type: "warning" })
         .then(() => api.admin_deleteQuiz(row.id))
         .then(() => {
-          this.$message.success('已删除');
+          this.$message.success("已删除");
           this.load();
         })
         .catch(() => {});

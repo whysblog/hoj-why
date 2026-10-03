@@ -11,6 +11,7 @@ public class QuizQuestionInfoVO {
     private String description;
     private Integer difficulty;
     private String author;
+    private String langCategory;
     /** 0 单选 1 多选 */
     private Integer questionType;
     private List<QuizOptionVO> options;

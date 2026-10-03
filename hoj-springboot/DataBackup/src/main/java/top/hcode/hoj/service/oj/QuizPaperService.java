@@ -1,5 +1,6 @@
 package top.hcode.hoj.service.oj;
 
+import top.hcode.hoj.pojo.dto.QuizPaperSaveDTO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import top.hcode.hoj.common.exception.StatusFailException;
@@ -21,9 +22,11 @@ public interface QuizPaperService extends IService<QuizPaper> {
 
     QuizPaperSubmitResultVO submitPaper(Long paperId, QuizPaperSubmitDTO dto) throws StatusFailException;
 
-    void replacePaperItems(Long paperId, List<Long> questionIds);
+    Long savePaperWithItems(QuizPaperSaveDTO dto) throws StatusFailException;
 
-    void replacePaperMixedItems(Long paperId, List<QuizPaperItemDTO> items);
+    void replacePaperItems(Long paperId, List<Long> questionIds) throws StatusFailException;
+
+    void replacePaperMixedItems(Long paperId, List<QuizPaperItemDTO> items) throws StatusFailException;
 
     List<Long> listQuestionIdsByPaperId(Long paperId);
 

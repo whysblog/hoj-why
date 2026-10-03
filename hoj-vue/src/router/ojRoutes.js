@@ -47,6 +47,8 @@ import GroupMemberList from '@/views/oj/group/children/GroupMemberList.vue'
 import GroupSetting from '@/views/oj/group/children/GroupSetting.vue'
 import GroupRank from '@/views/oj/group/children/GroupRank.vue'
 import Certificate from "@/views/oj/certificate/Certificate.vue"
+import QuizHistory from '@/views/oj/quiz/QuizHistory.vue'
+import QuizAttemptDetail from '@/views/oj/quiz/QuizAttemptDetail.vue'
 import QuizList from "@/views/oj/quiz/QuizList.vue"
 import QuizDetail from "@/views/oj/quiz/QuizDetail.vue"
 import QuizPaperList from "@/views/oj/quiz/QuizPaperList.vue"
@@ -354,6 +356,14 @@ const ojRoutes = [
     name: 'QuizPaperDetail',
     component: QuizPaperDetail,
     meta: { title: 'Quiz Paper' }
+  },
+  {
+    path: '/quiz/history',
+    name: 'QuizHistory', component: QuizHistory, meta: {title: '作答记录', requireAuth:true}
+  },
+  {
+    path: '/quiz/history/:attemptId',
+    name: 'QuizAttemptDetail', component: QuizAttemptDetail, meta: {title: '作答复盘', requireAuth:true}
   },
   {
     path: '/quiz/:quizId',
