@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import top.hcode.hoj.service.oj.QuizHistoryService;
 import top.hcode.hoj.common.exception.StatusFailException;
 import top.hcode.hoj.mapper.QuizQuestionMapper;
 import top.hcode.hoj.pojo.entity.quiz.QuizQuestion;
@@ -23,12 +25,15 @@ import java.util.stream.Collectors;
 @Service
 public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, QuizQuestion> implements QuizQuestionService {
 
+    @Autowired private QuizHistoryService historyService;
+
     @Override
-    public Page<QuizQuestionListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, Integer difficulty, String langCategory) {
+    public Page<QuizQuestionListVO> getPublicPage(Integer limit, Integer currentPage, String keyword, Integer difficulty, String langCategory, Integer questionType) {
         int size = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         int page = currentPage == null || currentPage <= 0 ? 1 : currentPage;
         QueryWrapper<QuizQuestion> qw = new QueryWrapper<>();
         qw.eq("status", 1);
+        if (questionType != null && (questionType == 0 || questionType == 1)) qw.eq("question_type", questionType);
         if (StrUtil.isNotBlank(keyword)) {
             qw.and(w -> w.like("title", keyword).or().like("description", keyword));
         }
@@ -62,6 +67,7 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
         vo.setDescription(q.getDescription());
         vo.setDifficulty(q.getDifficulty());
         vo.setAuthor(q.getAuthor());
+        vo.setLangCategory(q.getLangCategory());
         vo.setQuestionType(q.getQuestionType() == null ? 0 : q.getQuestionType());
         vo.setOptions(Arrays.asList(
                 new QuizOptionVO("A", q.getOptionA()),
@@ -86,6 +92,7 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
             throw new StatusFailException("题目不存在或未公开");
         }
         int qType = q.getQuestionType() == null ? 0 : q.getQuestionType();
+        if (qType != 0 && qType != 1) throw new StatusFailException("题目类型配置无效");
         String correctRaw = q.getAnswer() == null ? "" : q.getAnswer().trim();
         String normalizedCorrect = QuizAnswerUtils.normalize(correctRaw);
         if (qType == 0) {
@@ -96,8 +103,8 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
                 throw new StatusFailException("题目数据异常：单选题答案无效");
             }
         } else {
-            if (!QuizAnswerUtils.isValidMultiple(normalizedUser)) {
-                throw new StatusFailException("本题为多选题，请至少选择两个选项");
+            if (!normalizedUser.matches("[A-D]{1,4}")) {
+                throw new StatusFailException("答案格式错误");
             }
             if (!QuizAnswerUtils.isValidMultiple(normalizedCorrect)) {
                 throw new StatusFailException("题目数据异常：多选题答案无效");
@@ -109,6 +116,10 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
         vo.setCorrectAnswer(normalizedCorrect);
         vo.setExplanation(q.getExplanation());
         vo.setMessage(ok ? "回答正确" : "回答错误");
+        vo.setQuestion(buildPublicInfo(q));
+        vo.setUserAnswer(normalizedUser);
+        vo.setScore(ok ? 1 : 0); vo.setMaxScore(1);
+        vo.setAttemptId(historyService.record("quiz", id, q.getTitle(), ok ? 1 : 0, 1, ok ? 1 : 0, 1, vo));
         return vo;
     }
 
@@ -118,6 +129,7 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
         vo.setTitle(q.getTitle());
         vo.setDifficulty(q.getDifficulty());
         vo.setAuthor(q.getAuthor());
+        vo.setLangCategory(q.getLangCategory());
         vo.setQuestionType(q.getQuestionType() == null ? 0 : q.getQuestionType());
         return vo;
     }

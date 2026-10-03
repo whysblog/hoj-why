@@ -42,6 +42,7 @@
               <el-menu-item index="/quiz/paper">{{
                 $t('m.Quiz_Mode_Paper')
               }}</el-menu-item>
+              <el-menu-item index="/quiz/history">作答记录</el-menu-item>
             </el-submenu>
             <el-menu-item index="/course"
               ><i class="el-icon-s-claim"></i
@@ -517,6 +518,7 @@
             >
               <mu-list-item-title>{{ $t('m.Quiz_Mode_Paper') }}</mu-list-item-title>
             </mu-list-item>
+            <mu-list-item button :ripple="false" slot="nested" to="/quiz/history" @click="opendrawer = !opendrawer" active-class="mobile-menu-active"><mu-list-item-title>作答记录</mu-list-item-title></mu-list-item>
           </mu-list-item>
 
           <mu-list-item
@@ -904,6 +906,7 @@ export default {
       } else if (this.$route.path.split('/')[1] == 'discussion-detail') {
         return '/discussion';
       } else if (this.$route.path.split('/')[1] == 'quiz') {
+        if (this.$route.path.startsWith('/quiz/history')) return '/quiz/history';
         if (this.$route.path.startsWith('/quiz/paper')) {
           return '/quiz/paper';
         }

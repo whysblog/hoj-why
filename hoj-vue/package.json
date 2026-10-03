@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "test:quiz": "node tests/quiz-workflow.cjs",
+    "test:quiz:browser": "node tests/quiz-browser.cjs"
   },
   "dependencies": {
     "@iktakahiro/markdown-it-katex": "^4.0.1",

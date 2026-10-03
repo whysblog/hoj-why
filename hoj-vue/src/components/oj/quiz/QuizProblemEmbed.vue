@@ -6,9 +6,34 @@
           <Markdown
             v-if="problemData.problem && problemData.problem.description"
             :content="problemData.problem.description"
-            :isAvoidXss="false"
+            :isAvoidXss="true"
           />
           <div v-else class="muted">暂无题目描述</div>
+          <template v-if="problemData.problem"
+            ><section
+              v-for="field in ['input', 'output', 'hint']"
+              :key="field"
+              v-show="problemData.problem[field]"
+            >
+              <h4>
+                {{
+                  { input: "输入说明", output: "输出说明", hint: "提示" }[field]
+                }}
+              </h4>
+              <Markdown
+                :content="problemData.problem[field] || ''"
+                :isAvoidXss="true"
+              />
+            </section>
+            <section
+              v-for="(ex, i) in problemData.problem.examples || []"
+              :key="i"
+            >
+              <h4>样例 {{ i + 1 }}</h4>
+              <pre>{{ ex.input }}</pre>
+              <pre>{{ ex.output }}</pre>
+            </section></template
+          >
         </div>
       </el-col>
       <el-col :span="24" :md="12">
@@ -34,8 +59,12 @@
           <div class="embed-actions">
             <div v-if="statusVisible" class="status-line">
               <span>状态：</span>
-              <el-tag :type="statusTagType" size="small">{{ statusText }}</el-tag>
-              <span v-if="displayScore !== null" class="score-text">得分 {{ displayScore }} / {{ maxScore }}</span>
+              <el-tag :type="statusTagType" size="small">{{
+                statusText
+              }}</el-tag>
+              <span v-if="displayScore !== null" class="score-text"
+                >得分 {{ displayScore }} / {{ maxScore }}</span
+              >
             </div>
             <el-button
               type="primary"
@@ -46,7 +75,9 @@
             >
               提交评测
             </el-button>
-            <span v-if="!isAuthenticated" class="muted hint">请先登录后提交</span>
+            <span v-if="!isAuthenticated" class="muted hint"
+              >请先登录后提交</span
+            >
           </div>
         </div>
       </el-col>
@@ -55,15 +86,15 @@
 </template>
 
 <script>
-import Markdown from '@/components/oj/common/Markdown';
-import CodeMirror from '@/components/oj/common/CodeMirror.vue';
-import api from '@/common/api';
-import utils from '@/common/utils';
-import { JUDGE_STATUS, JUDGE_STATUS_RESERVE } from '@/common/constants';
-import { mapGetters } from 'vuex';
+import Markdown from "@/components/oj/common/Markdown";
+import CodeMirror from "@/components/oj/common/CodeMirror.vue";
+import api from "@/common/api";
+import utils from "@/common/utils";
+import { JUDGE_STATUS, JUDGE_STATUS_RESERVE } from "@/common/constants";
+import { mapGetters } from "vuex";
 
 export default {
-  name: 'QuizProblemEmbed',
+  name: "QuizProblemEmbed",
   components: { Markdown, CodeMirror },
   props: {
     problemId: { type: String, required: true },
@@ -73,15 +104,16 @@ export default {
   data() {
     return {
       loading: false,
+      request: 0,
       submitting: false,
       problemData: { problem: null, languages: [] },
-      code: '',
-      language: '',
-      theme: 'solarized',
+      code: "",
+      language: "",
+      theme: "solarized",
       height: 360,
       fontSize: 14,
       tabSize: 4,
-      submissionId: '',
+      submissionId: "",
       result: { status: -10 },
       statusVisible: false,
       refreshStatus: null,
@@ -90,14 +122,14 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['isAuthenticated']),
+    ...mapGetters(["isAuthenticated"]),
     statusText() {
       const key = String(this.result.status);
-      return (JUDGE_STATUS[key] && JUDGE_STATUS[key].name) || 'Unknown';
+      return (JUDGE_STATUS[key] && JUDGE_STATUS[key].name) || "Unknown";
     },
     statusTagType() {
       const key = String(this.result.status);
-      return (JUDGE_STATUS[key] && JUDGE_STATUS[key].type) || 'info';
+      return (JUDGE_STATUS[key] && JUDGE_STATUS[key].type) || "info";
     },
   },
   watch: {
@@ -109,6 +141,7 @@ export default {
     },
   },
   beforeDestroy() {
+    this.request++;
     if (this.refreshStatus) {
       clearTimeout(this.refreshStatus);
     }
@@ -116,6 +149,12 @@ export default {
   methods: {
     loadProblem() {
       if (!this.problemId) return;
+      const token = ++this.request;
+      if (this.refreshStatus) clearTimeout(this.refreshStatus);
+      this.submissionId = "";
+      this.submitting = false;
+      this.code = "";
+      this.problemData = { problem: null, languages: [] };
       this.loading = true;
       this.hasSubmittedInThisSession = false;
       this.statusVisible = false;
@@ -123,29 +162,43 @@ export default {
       api
         .getProblem(this.problemId)
         .then((res) => {
+          if (token !== this.request) return;
           const result = res.data.data || {};
           if (result.problem && result.problem.examples) {
-            result.problem.examples = utils.stringToExamples(result.problem.examples);
+            result.problem.examples = utils.stringToExamples(
+              result.problem.examples
+            );
           }
           this.problemData = result;
           this.initLanguageAndTemplate();
           this.loadStatus();
         })
+        .catch(() => {})
         .finally(() => {
-          this.loading = false;
+          if (token === this.request) this.loading = false;
         });
     },
     loadStatus() {
       if (!this.isAuthenticated || !this.problemData.problem) return;
+      const token = this.request;
       const pid = this.problemData.problem.id;
-      api.getUserProblemStatus([pid], false, null, null, true).then((res) => {
-        const map = res.data.data || {};
-        const st = map[pid];
-        if (st && st.status != null && st.status !== -10) {
-          this.result.status = st.status;
-          this.statusVisible = true;
-        }
-      });
+      api
+        .getUserProblemStatus([pid], false, null, null, true)
+        .then((res) => {
+          if (
+            token !== this.request ||
+            this.submitting ||
+            this.hasSubmittedInThisSession
+          )
+            return;
+          const map = res.data.data || {};
+          const st = map[pid];
+          if (st && st.status != null && st.status !== -10) {
+            this.result.status = st.status;
+            this.statusVisible = true;
+          }
+        })
+        .catch(() => {});
     },
     initLanguageAndTemplate() {
       const langs = this.problemData.languages || [];
@@ -161,8 +214,8 @@ export default {
     },
     onChangeLang(newLang) {
       const tpl = this.problemData.codeTemplate || {};
-      if (this.code === (tpl[this.language] || '')) {
-        this.code = tpl[newLang] || '';
+      if (this.code === (tpl[this.language] || "")) {
+        this.code = tpl[newLang] || "";
       }
       this.language = newLang;
     },
@@ -178,25 +231,30 @@ export default {
       api.getProblemCodeTemplate(this.problemData.problem.id).then((res) => {
         const list = res.data.data || [];
         const found = list.find((t) => t.language === this.language);
-        if (found) this.code = found.code || '';
+        if (found) this.code = found.code || "";
       });
     },
     submitCode() {
       if (!this.isAuthenticated) {
-        this.$message.warning('请先登录');
+        this.$message.warning("请先登录");
         return;
       }
       if (!this.code || !this.code.trim()) {
-        this.$message.error('代码不能为空');
+        this.$message.error("代码不能为空");
         return;
       }
       if (!this.language) {
-        this.$message.error('请选择编程语言');
+        this.$message.error("请选择编程语言");
         return;
       }
+      const token = this.request;
       this.submitting = true;
       this.statusVisible = true;
-      this.result = { status: 9 };
+      this.result = { status: 5 };
+      this.submissionId = "";
+      this.displayScore = null;
+      this.hasSubmittedInThisSession = false;
+      this.emitStatus(5, 0);
       api
         .submitCode({
           pid: this.problemId,
@@ -206,53 +264,83 @@ export default {
           isRemote: this.problemData.problem.isRemote,
         })
         .then((res) => {
+          if (token !== this.request) return;
           this.submissionId = res.data.data && res.data.data.submitId;
+          this.emitStatus(5, 0);
           this.checkSubmissionStatus();
         })
         .catch(() => {
+          if (token !== this.request) return;
           this.submitting = false;
           this.statusVisible = false;
+          this.emitStatus(-10, 0);
         });
     },
     checkSubmissionStatus() {
       if (this.refreshStatus) clearTimeout(this.refreshStatus);
+      const token = this.request;
       const check = () => {
-        api.getSubmission(this.submissionId).then((res) => {
-          const sub = res.data.data.submission;
-          this.result.status = sub.status;
-          const pending = [
-            JUDGE_STATUS_RESERVE.Pending,
-            JUDGE_STATUS_RESERVE.Compiling,
-            JUDGE_STATUS_RESERVE.Judging,
-          ];
-          if (!pending.includes(sub.status)) {
+        if (token !== this.request) return;
+        api
+          .getSubmission(this.submissionId)
+          .then((res) => {
+            if (token !== this.request) return;
+            const sub = res.data.data.submission;
+            this.result.status = sub.status;
+            const pending = [
+              9,
+              JUDGE_STATUS_RESERVE.Pending,
+              JUDGE_STATUS_RESERVE.Compiling,
+              JUDGE_STATUS_RESERVE.Judging,
+            ];
+            if (!pending.includes(sub.status)) {
+              this.submitting = false;
+              clearTimeout(this.refreshStatus);
+              this.hasSubmittedInThisSession = true;
+              const score = this.calcScore(sub);
+              this.displayScore = score;
+              this.emitStatus(sub.status, score);
+            } else {
+              this.refreshStatus = setTimeout(check, 2000);
+            }
+          })
+          .catch(() => {
+            if (token !== this.request) return;
             this.submitting = false;
-            clearTimeout(this.refreshStatus);
-            this.hasSubmittedInThisSession = true;
-            const score = this.calcScore(sub);
-            this.displayScore = score;
-            this.emitStatus(sub.status, score);
-          } else {
-            this.refreshStatus = setTimeout(check, 2000);
-          }
-        });
+            this.hasSubmittedInThisSession = false;
+            this.statusVisible = false;
+            this.emitStatus(-10, 0);
+            this.$message.warning("获取评测结果失败，请重新提交评测");
+          });
       };
       check();
     },
     calcScore(sub) {
-      const max = this.maxScore || 100;
+      const max = this.maxScore == null ? 100 : this.maxScore;
       if (sub.status === 0) return max;
-      if (sub.score != null && sub.score > 0) return sub.score;
+      if (
+        this.problemData.problem &&
+        this.problemData.problem.type === 1 &&
+        sub.score != null &&
+        sub.score > 0
+      )
+        return Math.round(
+          Math.min(1, sub.score / (this.problemData.problem.ioScore || 100)) *
+            max
+        );
       return 0;
     },
     emitStatus(status, score) {
-      this.$emit('status-change', {
+      this.$emit("status-change", {
         problemId: this.problemId,
-        pid: this.pid || (this.problemData.problem && this.problemData.problem.id),
+        pid:
+          this.pid || (this.problemData.problem && this.problemData.problem.id),
         language: this.language,
         status,
         score: score != null ? score : this.calcScore({ status, score }),
-        maxScore: this.maxScore || 100,
+        maxScore: this.maxScore,
+        submitId: this.hasSubmittedInThisSession ? this.submissionId : null,
+        pending: this.submitting,
         submittedInThisSession: this.hasSubmittedInThisSession,
       });
     },

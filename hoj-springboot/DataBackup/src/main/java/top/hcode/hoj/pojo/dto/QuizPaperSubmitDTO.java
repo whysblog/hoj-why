@@ -18,6 +18,7 @@ public class QuizPaperSubmitDTO {
 
     @Data
     public static class ProblemSnapshotDTO {
+        private Long submitId;
         private Integer status;
         private Integer score;
         private String language;

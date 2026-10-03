@@ -7,4 +7,5 @@ public class QuizPaperListVO {
     private Long id;
     private String title;
     private String author;
+    private String langCategory;
 }

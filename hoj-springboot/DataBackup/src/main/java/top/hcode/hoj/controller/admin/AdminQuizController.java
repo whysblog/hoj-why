@@ -11,12 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import top.hcode.hoj.common.result.CommonResult;
 import top.hcode.hoj.pojo.entity.quiz.QuizQuestion;
+import top.hcode.hoj.pojo.entity.quiz.QuizPaperItem;
+import top.hcode.hoj.mapper.QuizPaperItemMapper;
 import top.hcode.hoj.service.oj.QuizQuestionService;
 import top.hcode.hoj.utils.QuizAnswerUtils;
 
 @RestController
 @RequestMapping("/api/admin/quiz")
 public class AdminQuizController {
+
+    @Autowired private QuizPaperItemMapper paperItemMapper;
 
     @Autowired
     private QuizQuestionService quizQuestionService;
@@ -28,7 +32,9 @@ public class AdminQuizController {
                                                  @RequestParam(value = "currentPage", required = false) Integer currentPage,
                                                  @RequestParam(value = "keyword", required = false) String keyword,
                                                  @RequestParam(value = "status", required = false) Integer status,
-                                                 @RequestParam(value = "langCategory", required = false) String langCategory) {
+                                                 @RequestParam(value = "langCategory", required = false) String langCategory,
+                                                 @RequestParam(required = false) Integer difficulty,
+                                                 @RequestParam(required = false) Integer questionType) {
         int size = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         int page = currentPage == null || currentPage <= 0 ? 1 : currentPage;
         QueryWrapper<QuizQuestion> qw = new QueryWrapper<>();
@@ -41,6 +47,8 @@ public class AdminQuizController {
         if (StrUtil.isNotBlank(langCategory)) {
             qw.eq("lang_category", langCategory.toLowerCase());
         }
+        if (difficulty != null) qw.eq("difficulty", difficulty);
+        if (questionType != null) qw.eq("question_type", questionType);
         qw.orderByDesc("id");
         return CommonResult.successResponse(quizQuestionService.page(new Page<>(page, size), qw));
     }
@@ -74,7 +82,8 @@ public class AdminQuizController {
         if (body.getQuestionType() == null) {
             body.setQuestionType(0);
         }
-        quizQuestionService.save(body);
+        body.setGmtCreate(null); body.setGmtModified(null);
+        if (!quizQuestionService.save(body)) return CommonResult.errorResponse("保存失败");
         return CommonResult.successResponse(body.getId());
     }
 
@@ -90,7 +99,8 @@ public class AdminQuizController {
             return CommonResult.errorResponse(err);
         }
         body.setId(id);
-        quizQuestionService.updateById(body);
+        body.setGmtCreate(null); body.setGmtModified(null);
+        if (!quizQuestionService.updateById(body)) return CommonResult.errorResponse("保存失败");
         return CommonResult.successResponse();
     }
 
@@ -98,11 +108,19 @@ public class AdminQuizController {
     @RequiresAuthentication
     @RequiresRoles(value = {"root", "admin", "problem_admin"}, logical = Logical.OR)
     public CommonResult<Void> delete(@PathVariable Long id) {
-        quizQuestionService.removeById(id);
+        if (paperItemMapper.selectCount(new QueryWrapper<QuizPaperItem>()
+                .eq("question_id", id).eq("item_type", "quiz")) > 0) return CommonResult.errorResponse("题目已被套卷引用，请先在套卷中移除，或将题目设为隐藏");
+        if (!quizQuestionService.removeById(id)) return CommonResult.errorResponse("题目不存在或删除失败");
         return CommonResult.successResponse();
     }
 
     private String validate(QuizQuestion q) {
+        if (q == null) return "题目数据不能为空";
+        if (q.getTitle() != null && q.getTitle().trim().length() > 255) return "标题不能超过255字";
+        if (q.getAuthor() != null && q.getAuthor().length() > 255) return "作者不能超过255字";
+        for (String option : new String[]{q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()}) {
+            if (option != null && option.length() > 2000) return "选项不能超过2000字";
+        }
         if (StrUtil.isBlank(q.getTitle())) {
             return "标题不能为空";
         }
@@ -146,6 +164,7 @@ public class AdminQuizController {
         if (StrUtil.isNotBlank(q.getLangCategory())) {
             q.setLangCategory(q.getLangCategory().toLowerCase());
         }
+        q.setTitle(q.getTitle().trim());
         return null;
     }
 }

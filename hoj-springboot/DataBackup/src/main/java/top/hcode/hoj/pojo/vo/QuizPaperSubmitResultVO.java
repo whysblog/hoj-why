@@ -6,6 +6,9 @@ import java.util.List;
 
 @Data
 public class QuizPaperSubmitResultVO {
+    private Long attemptId;
+    private Integer score;
+    private Integer maxScore;
     private Long paperId;
     private String paperTitle;
     private Integer totalQuestions;

@@ -49,7 +49,7 @@
               </div>
               <div v-if="row.explanation" class="explanation-box">
                 <div class="explanation-label">解析</div>
-                <Markdown :content="row.explanation" :isAvoidXss="false" />
+                <Markdown :content="row.explanation" :isAvoidXss="true" />
               </div>
               <div v-else class="muted explanation-empty">暂无解析</div>
             </template>

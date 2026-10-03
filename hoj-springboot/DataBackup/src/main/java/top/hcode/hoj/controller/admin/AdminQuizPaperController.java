@@ -1,5 +1,6 @@
 package top.hcode.hoj.controller.admin;
 
+import top.hcode.hoj.pojo.dto.QuizPaperSaveDTO;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,15 +11,12 @@ import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import top.hcode.hoj.common.result.CommonResult;
-import top.hcode.hoj.mapper.ProblemMapper;
+import top.hcode.hoj.common.exception.StatusFailException;
 import top.hcode.hoj.pojo.dto.QuizPaperItemDTO;
 import top.hcode.hoj.pojo.dto.QuizPaperItemsDTO;
-import top.hcode.hoj.pojo.entity.problem.Problem;
 import top.hcode.hoj.pojo.entity.quiz.QuizPaper;
-import top.hcode.hoj.pojo.entity.quiz.QuizQuestion;
 import top.hcode.hoj.pojo.vo.QuizPaperAdminDetailVO;
 import top.hcode.hoj.service.oj.QuizPaperService;
-import top.hcode.hoj.service.oj.QuizQuestionService;
 
 import java.util.List;
 
@@ -28,12 +26,6 @@ public class AdminQuizPaperController {
 
     @Autowired
     private QuizPaperService quizPaperService;
-
-    @Autowired
-    private QuizQuestionService quizQuestionService;
-
-    @Autowired
-    private ProblemMapper problemMapper;
 
     @GetMapping("/list")
     @RequiresAuthentication
@@ -78,101 +70,62 @@ public class AdminQuizPaperController {
     @RequiresAuthentication
     @RequiresRoles(value = {"root", "admin", "problem_admin"}, logical = Logical.OR)
     public CommonResult<Long> create(@RequestBody QuizPaper body) {
-        String err = validatePaper(body);
-        if (err != null) {
-            return CommonResult.errorResponse(err);
-        }
+        if (body == null) return CommonResult.errorResponse("请提供套卷信息");
         body.setId(null);
-        if (body.getStatus() == null) {
-            body.setStatus(1);
-        }
-        quizPaperService.save(body);
-        return CommonResult.successResponse(body.getId());
+        if (body.getStatus() == null) body.setStatus(0);
+        QuizPaperSaveDTO dto = new QuizPaperSaveDTO();
+        dto.setPaper(body); dto.setItems(java.util.Collections.emptyList());
+        return save(dto);
     }
 
     @PutMapping("/{id}")
     @RequiresAuthentication
     @RequiresRoles(value = {"root", "admin", "problem_admin"}, logical = Logical.OR)
     public CommonResult<Void> update(@PathVariable Long id, @RequestBody QuizPaper body) {
-        if (quizPaperService.getById(id) == null) {
-            return CommonResult.errorResponse("套卷不存在");
-        }
-        String err = validatePaper(body);
-        if (err != null) {
-            return CommonResult.errorResponse(err);
-        }
+        if (body == null) return CommonResult.errorResponse("请提供套卷信息");
+        QuizPaper existing = quizPaperService.getById(id);
+        if (existing == null) return CommonResult.errorResponse("套卷不存在");
         body.setId(id);
-        quizPaperService.updateById(body);
-        return CommonResult.successResponse();
+        if (body.getStatus() == null) body.setStatus(existing.getStatus());
+        QuizPaperSaveDTO dto = new QuizPaperSaveDTO();
+        dto.setPaper(body);
+        dto.setItems(quizPaperService.listPaperItemsByPaperId(id).stream().map(item -> {
+            QuizPaperItemDTO row = new QuizPaperItemDTO();
+            row.setItemType(item.getItemType()); row.setQuestionId(item.getQuestionId()); row.setScore(item.getScore());
+            return row;
+        }).collect(java.util.stream.Collectors.toList()));
+        try { quizPaperService.savePaperWithItems(dto); return CommonResult.successResponse(); }
+        catch (StatusFailException e) { return CommonResult.errorResponse(e.getMessage()); }
     }
 
     @PutMapping("/{id}/items")
     @RequiresAuthentication
     @RequiresRoles(value = {"root", "admin", "problem_admin"}, logical = Logical.OR)
     public CommonResult<Void> saveItems(@PathVariable Long id, @RequestBody QuizPaperItemsDTO dto) {
-        if (quizPaperService.getById(id) == null) {
-            return CommonResult.errorResponse("套卷不存在");
-        }
-        if (dto != null && dto.getItems() != null) {
-            for (QuizPaperItemDTO item : dto.getItems()) {
-                if (item == null || item.getQuestionId() == null) {
-                    continue;
-                }
-                String itemType = "problem".equalsIgnoreCase(item.getItemType()) ? "problem" : "quiz";
-                if ("problem".equals(itemType)) {
-                    Problem p = problemMapper.selectById(item.getQuestionId());
-                    if (p == null) {
-                        return CommonResult.errorResponse("编程题不存在：" + item.getQuestionId());
-                    }
-                } else {
-                    QuizQuestion q = quizQuestionService.getById(item.getQuestionId());
-                    if (q == null) {
-                        return CommonResult.errorResponse("客观题不存在：" + item.getQuestionId());
-                    }
-                }
-            }
-            quizPaperService.replacePaperMixedItems(id, dto.getItems());
+        try {
+            if (dto == null) return CommonResult.errorResponse("请提供题目列表");
+            if (dto.getItems() != null) quizPaperService.replacePaperMixedItems(id, dto.getItems());
+            else quizPaperService.replacePaperItems(id, dto.getQuestionIds());
             return CommonResult.successResponse();
+        } catch (StatusFailException e) {
+            return CommonResult.errorResponse(e.getMessage());
         }
-        List<Long> qids = dto == null ? null : dto.getQuestionIds();
-        if (qids != null) {
-            for (Long qid : qids) {
-                if (qid == null) {
-                    continue;
-                }
-                QuizQuestion q = quizQuestionService.getById(qid);
-                if (q == null) {
-                    return CommonResult.errorResponse("题目不存在: " + qid);
-                }
-            }
-        }
-        quizPaperService.replacePaperItems(id, qids);
-        return CommonResult.successResponse();
+    }
+
+    @PostMapping("/save")
+    @RequiresAuthentication
+    @RequiresRoles(value = {"root", "admin", "problem_admin"}, logical = Logical.OR)
+    public CommonResult<Long> save(@RequestBody QuizPaperSaveDTO dto) {
+        try { return CommonResult.successResponse(quizPaperService.savePaperWithItems(dto)); }
+        catch (StatusFailException e) { return CommonResult.errorResponse(e.getMessage()); }
     }
 
     @DeleteMapping("/{id}")
     @RequiresAuthentication
     @RequiresRoles(value = {"root", "admin", "problem_admin"}, logical = Logical.OR)
     public CommonResult<Void> delete(@PathVariable Long id) {
-        quizPaperService.removeById(id);
+        if (!quizPaperService.removeById(id)) return CommonResult.errorResponse("套卷不存在或删除失败");
         return CommonResult.successResponse();
     }
 
-    private String validatePaper(QuizPaper p) {
-        if (StrUtil.isBlank(p.getTitle())) {
-            return "套卷标题不能为空";
-        }
-        if (p.getStatus() != null && p.getStatus() != 0 && p.getStatus() != 1) {
-            return "状态取值 0 或 1";
-        }
-        if (StrUtil.isNotBlank(p.getLangCategory())
-                && !"cpp".equalsIgnoreCase(p.getLangCategory())
-                && !"python".equalsIgnoreCase(p.getLangCategory())) {
-            return "分类仅支持 cpp 或 python";
-        }
-        if (StrUtil.isNotBlank(p.getLangCategory())) {
-            p.setLangCategory(p.getLangCategory().toLowerCase());
-        }
-        return null;
-    }
 }

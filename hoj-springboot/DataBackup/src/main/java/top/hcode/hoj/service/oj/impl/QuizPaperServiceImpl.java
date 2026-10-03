@@ -1,5 +1,6 @@
 package top.hcode.hoj.service.oj.impl;
 
+import top.hcode.hoj.pojo.dto.QuizPaperSaveDTO;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import top.hcode.hoj.common.exception.StatusFailException;
 import top.hcode.hoj.mapper.ProblemMapper;
+import top.hcode.hoj.dao.judge.JudgeEntityService;
+import top.hcode.hoj.pojo.entity.judge.Judge;
+import top.hcode.hoj.service.oj.QuizHistoryService;
 import top.hcode.hoj.mapper.QuizPaperItemMapper;
 import top.hcode.hoj.mapper.QuizPaperMapper;
 import top.hcode.hoj.shiro.AccountProfile;
@@ -40,6 +44,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper> implements QuizPaperService {
+
+    @Autowired private JudgeEntityService judgeEntityService;
+    @Autowired private QuizHistoryService historyService;
 
     @Autowired
     private QuizPaperItemMapper quizPaperItemMapper;
@@ -82,7 +89,11 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         int seq = 0;
         for (QuizPaperItem it : items) {
             seq++;
+            if (it.getScore() != null && (it.getScore() < 0 || it.getScore() > 1000)) throw new StatusFailException("套卷题目分值配置无效");
             QuizPaperItemVO itemVO = buildItemVO(it, seq, true);
+            if (itemVO.getTitle() == null || ("quiz".equals(itemVO.getItemType()) && itemVO.getQuizQuestion() == null)) {
+                throw new StatusFailException("套卷包含已删除或未公开的题目，请联系管理员");
+            }
             if ("quiz".equals(itemVO.getItemType()) && itemVO.getQuizQuestion() != null) {
                 questions.add(itemVO.getQuizQuestion());
             }
@@ -124,7 +135,6 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         int unanswered = 0;
         int problemCount = 0;
         int problemScored = 0;
-        int problemTotalScore = 0;
         int problemMaxScore = 0;
 
         List<QuizPaperItemResultVO> itemResults = new ArrayList<>();
@@ -132,8 +142,9 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         int seq = 0;
         for (QuizPaperItem it : items) {
             seq++;
+            if (it.getScore() != null && (it.getScore() < 0 || it.getScore() > 1000)) throw new StatusFailException("套卷题目分值配置无效");
             if ("problem".equals(normalizeItemType(it.getItemType()))) {
-                itemResults.add(buildProblemItemResult(seq, it, problemSnapshots));
+                itemResults.add(buildProblemItemResult(seq, it, problemSnapshots, uid));
                 QuizPaperItemResultVO pr = itemResults.get(itemResults.size() - 1);
                 problemCount++;
                 if (pr.getScore() != null) {
@@ -159,10 +170,18 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
             row.setQuestionId(qid);
             row.setTitle(q.getTitle());
             int qType = q.getQuestionType() == null ? 0 : q.getQuestionType();
+            if (qType != 0 && qType != 1) throw new StatusFailException("题目类型配置无效");
             row.setQuestionType(qType);
             row.setExplanation(q.getExplanation());
+            row.setQuestion(quizQuestionService.buildPublicInfo(q));
+            row.setMaxScore(it.getScore() == null ? 100 : it.getScore());
+            row.setScore(0);
             String nc = QuizAnswerUtils.normalize(q.getAnswer());
-            row.setCorrectAnswer(StrUtil.isBlank(nc) ? "" : nc);
+            if ((qType == 0 && !QuizAnswerUtils.isValidSingle(nc))
+                    || (qType == 1 && !QuizAnswerUtils.isValidMultiple(nc))) {
+                throw new StatusFailException("题目答案配置无效：" + q.getTitle());
+            }
+            row.setCorrectAnswer(nc);
 
             String raw = answers.get(String.valueOf(qid));
             if (raw == null) {
@@ -178,12 +197,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
             }
             String nu = QuizAnswerUtils.normalize(raw);
             if (StrUtil.isBlank(nu)) {
-                row.setOutcome("UNANSWERED");
-                row.setUserAnswer(raw.trim());
-                unanswered++;
-                itemResults.add(row);
-                questionResults.add(toLegacyQuestionRow(row));
-                continue;
+                throw new StatusFailException("答案格式错误：" + q.getTitle());
             }
             if (qType == 0) {
                 if (!QuizAnswerUtils.isValidSingle(nu)) {
@@ -204,6 +218,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
             }
             if (nu.equals(nc)) {
                 row.setOutcome("CORRECT");
+                row.setScore(row.getMaxScore());
                 row.setUserAnswer(nu);
                 correct++;
             } else {
@@ -229,7 +244,11 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         if (problemCount > 0) {
             msg.append(String.format("；编程题 %d 道，得分合计 %d / %d", problemCount, problemScored, problemMaxScore));
         }
+        vo.setScore(itemResults.stream().mapToInt(row -> row.getScore() == null ? 0 : row.getScore()).sum());
+        vo.setMaxScore(itemResults.stream().mapToInt(row -> row.getMaxScore() == null ? 0 : row.getMaxScore()).sum());
         vo.setMessage(msg.toString());
+        vo.setAttemptId(historyService.record("paper", paperId, paper.getTitle(), vo.getScore(), vo.getMaxScore(),
+                correct, quizTotal, vo));
         return vo;
     }
 
@@ -245,47 +264,39 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         return legacy;
     }
 
-    private QuizPaperItemResultVO buildProblemItemResult(int no, QuizPaperItem it, Map<String, QuizPaperSubmitDTO.ProblemSnapshotDTO> problemSnapshots) {
-        QuizPaperItemResultVO row = new QuizPaperItemResultVO();
-        row.setNo(no);
-        row.setItemType("problem");
-        row.setPid(it.getQuestionId());
+    private QuizPaperItemResultVO buildProblemItemResult(int no, QuizPaperItem it,
+            Map<String, QuizPaperSubmitDTO.ProblemSnapshotDTO> snapshots, String uid) throws StatusFailException {
         Problem p = problemMapper.selectById(it.getQuestionId());
-        if (p == null) {
-            row.setTitle("编程题");
-            row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
-            row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
-            row.setScore(0);
-            row.setMaxScore(100);
-            return row;
+        if (p == null || !Integer.valueOf(1).equals(p.getAuth()) || Boolean.TRUE.equals(p.getIsGroup()) || p.getGid() != null) {
+            throw new StatusFailException("编程题不存在或未公开");
         }
-        row.setTitle(p.getTitle());
-        row.setProblemId(p.getProblemId());
-        int maxScore = p.getIoScore() != null && p.getIoScore() > 0 ? p.getIoScore() : 100;
-        row.setMaxScore(maxScore);
-
-        QuizPaperSubmitDTO.ProblemSnapshotDTO snap = problemSnapshots.get(String.valueOf(it.getQuestionId()));
-        if (snap == null) {
-            row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
-            row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
-            row.setScore(0);
-            return row;
+        QuizPaperItemResultVO row = new QuizPaperItemResultVO();
+        row.setNo(no); row.setItemType("problem"); row.setPid(p.getId());
+        row.setTitle(p.getTitle()); row.setProblemId(p.getProblemId());
+        int max = it.getScore() == null ? 100 : it.getScore();
+        row.setMaxScore(max); row.setScore(0);
+        row.setJudgeStatus(Constants.Judge.STATUS_NOT_SUBMITTED.getStatus());
+        row.setJudgeStatusName(Constants.Judge.STATUS_NOT_SUBMITTED.getName());
+        QuizPaperSubmitDTO.ProblemSnapshotDTO snapshot = snapshots.get(String.valueOf(it.getQuestionId()));
+        if (snapshot == null || snapshot.getSubmitId() == null) return row;
+        Judge submission = judgeEntityService.getById(snapshot.getSubmitId());
+        if (submission == null || uid == null || !uid.equals(submission.getUid())
+                || !it.getQuestionId().equals(submission.getPid())
+                || (submission.getCid() != null && submission.getCid() != 0)
+                || submission.getGid() != null) {
+            throw new StatusFailException("编程题提交记录无效或不属于当前用户");
         }
-        boolean isAcm = p.getType() != null && p.getType().equals(Constants.ProblemType.ACM.getType());
-        int latestStatus = snap.getStatus() == null ? Constants.Judge.STATUS_NOT_SUBMITTED.getStatus() : snap.getStatus();
-        int latestScore;
-        if (isAcm) {
-            latestScore = latestStatus == Constants.Judge.STATUS_ACCEPTED.getStatus() ? maxScore : 0;
-        } else {
-            latestScore = snap.getScore() != null ? snap.getScore() : 0;
-            if (latestStatus == Constants.Judge.STATUS_ACCEPTED.getStatus() && latestScore < maxScore) {
-                latestScore = maxScore;
-            }
+        int status = submission.getStatus() == null ? 5 : submission.getStatus();
+        if (status == 5 || status == 6 || status == 7 || status == 9) throw new StatusFailException("编程题仍在评测中，请等待评测完成后交卷");
+        int score = 0;
+        if (status == Constants.Judge.STATUS_ACCEPTED.getStatus()) score = max;
+        else if (Integer.valueOf(1).equals(p.getType())) {
+            int rawMax = p.getIoScore() == null || p.getIoScore() <= 0 ? 100 : p.getIoScore();
+            score = (int) Math.round(Math.max(0, Math.min(rawMax, submission.getScore() == null ? 0 : submission.getScore()))
+                    * (double) max / rawMax);
         }
-        row.setJudgeStatus(latestStatus);
-        row.setJudgeStatusName(resolveJudgeStatusName(latestStatus));
-        row.setLanguage(snap.getLanguage());
-        row.setScore(latestScore);
+        row.setSubmitId(submission.getSubmitId()); row.setJudgeStatus(status);
+        row.setJudgeStatusName(resolveJudgeStatusName(status)); row.setLanguage(submission.getLanguage()); row.setScore(score);
         return row;
     }
 
@@ -300,44 +311,73 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void replacePaperItems(Long paperId, List<Long> questionIds) {
-        quizPaperItemMapper.delete(new QueryWrapper<QuizPaperItem>().eq("paper_id", paperId));
-        if (questionIds == null || questionIds.isEmpty()) {
-            return;
-        }
-        int order = 0;
-        for (Long qid : questionIds) {
-            if (qid == null) {
-                continue;
+    public Long savePaperWithItems(QuizPaperSaveDTO dto) throws StatusFailException {
+        if (dto == null || dto.getPaper() == null || dto.getItems() == null) throw new StatusFailException("请提交完整的套卷信息与题目列表");
+        QuizPaper paper = dto.getPaper();
+        if (StrUtil.isBlank(paper.getTitle()) || paper.getTitle().trim().length() > 255) throw new StatusFailException("标题不能为空且不得超过255字");
+        if (paper.getStatus() == null) paper.setStatus(0);
+        if (paper.getStatus() != 0 && paper.getStatus() != 1) throw new StatusFailException("状态无效");
+        if (StrUtil.isNotBlank(paper.getLangCategory()) && !"cpp".equals(paper.getLangCategory()) && !"python".equals(paper.getLangCategory())) throw new StatusFailException("分类仅支持cpp或python");
+        if (paper.getAuthor() != null && paper.getAuthor().length() > 255) throw new StatusFailException("作者长度超限");
+        validateItems(dto.getItems(), paper.getStatus() == 1);
+        paper.setTitle(paper.getTitle().trim()); paper.setGmtCreate(null); paper.setGmtModified(null);
+        if (paper.getId() != null && getById(paper.getId()) == null) throw new StatusFailException("套卷不存在");
+        if (!saveOrUpdate(paper)) throw new StatusFailException("套卷保存失败");
+        replacePaperMixedItems(paper.getId(), dto.getItems());
+        return paper.getId();
+    }
+
+    private void validateItems(List<QuizPaperItemDTO> items, boolean published) throws StatusFailException {
+        if (items == null) throw new StatusFailException("题目列表不能为空");
+        if (items.size() > 200) throw new StatusFailException("一份套卷最多200道题");
+        if (published && items.isEmpty()) throw new StatusFailException("公开套卷至少需要一道题");
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        for (QuizPaperItemDTO item : items) {
+            if (item == null || item.getQuestionId() == null || item.getQuestionId() <= 0) throw new StatusFailException("题目ID无效");
+            String type = item.getItemType() == null ? "quiz" : item.getItemType();
+            if (!"quiz".equals(type) && !"problem".equals(type)) throw new StatusFailException("题目类型无效");
+            if (!keys.add(type + ":" + item.getQuestionId())) throw new StatusFailException("套卷不能重复添加同一道题");
+            if (item.getScore() != null && (item.getScore() < 0 || item.getScore() > 1000)) throw new StatusFailException("分值范围为0~1000");
+            if ("quiz".equals(type)) {
+                QuizQuestion q = quizQuestionService.getById(item.getQuestionId());
+                if (q == null || (published && !Integer.valueOf(1).equals(q.getStatus()))) throw new StatusFailException("客观题不存在或未公开：" + item.getQuestionId());
+                if (q.getQuestionType() != null && q.getQuestionType() != 0 && q.getQuestionType() != 1) throw new StatusFailException("题目类型配置无效");
+                String answer = QuizAnswerUtils.normalize(q.getAnswer());
+                if (published && ((Integer.valueOf(1).equals(q.getQuestionType()) && !QuizAnswerUtils.isValidMultiple(answer))
+                        || (!Integer.valueOf(1).equals(q.getQuestionType()) && !QuizAnswerUtils.isValidSingle(answer)))) throw new StatusFailException("题目答案配置无效");
+            } else {
+                Problem p = problemMapper.selectById(item.getQuestionId());
+                if (p == null || !Integer.valueOf(1).equals(p.getAuth()) || Boolean.TRUE.equals(p.getIsGroup()) || p.getGid() != null) throw new StatusFailException("编程题必须来自公开题库");
             }
-            QuizPaperItem row = new QuizPaperItem();
-            row.setPaperId(paperId);
-            row.setQuestionId(qid);
-            row.setItemType("quiz");
-            row.setSortOrder(order++);
-            quizPaperItemMapper.insert(row);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void replacePaperMixedItems(Long paperId, List<QuizPaperItemDTO> items) {
-        quizPaperItemMapper.delete(new QueryWrapper<QuizPaperItem>().eq("paper_id", paperId));
-        if (items == null || items.isEmpty()) {
-            return;
+    public void replacePaperItems(Long paperId, List<Long> questionIds) throws StatusFailException {
+        if (questionIds == null) throw new StatusFailException("请提供题目列表");
+        List<QuizPaperItemDTO> items = new ArrayList<>();
+        for (Long id : questionIds) {
+            QuizPaperItemDTO item = new QuizPaperItemDTO();
+            item.setItemType("quiz"); item.setQuestionId(id); item.setScore(100); items.add(item);
         }
+        replacePaperMixedItems(paperId, items);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void replacePaperMixedItems(Long paperId, List<QuizPaperItemDTO> items) throws StatusFailException {
+        QuizPaper paper = getById(paperId);
+        if (paper == null) throw new StatusFailException("套卷不存在");
+        validateItems(items, Integer.valueOf(1).equals(paper.getStatus()));
+        quizPaperItemMapper.delete(new QueryWrapper<QuizPaperItem>().eq("paper_id", paperId));
         int order = 0;
         for (QuizPaperItemDTO item : items) {
-            if (item == null || item.getQuestionId() == null) {
-                continue;
-            }
             QuizPaperItem row = new QuizPaperItem();
-            row.setPaperId(paperId);
-            row.setQuestionId(item.getQuestionId());
-            row.setItemType(normalizeItemType(item.getItemType()));
-            row.setSortOrder(order++);
-            row.setScore(item.getScore() == null ? 100 : Math.max(item.getScore(), 0));
-            quizPaperItemMapper.insert(row);
+            row.setPaperId(paperId); row.setQuestionId(item.getQuestionId());
+            row.setItemType(normalizeItemType(item.getItemType())); row.setSortOrder(order++);
+            row.setScore(item.getScore() == null ? 100 : item.getScore());
+            if (quizPaperItemMapper.insert(row) != 1) throw new StatusFailException("保存题目列表失败");
         }
     }
 
@@ -372,7 +412,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         vo.setScore(item.getScore() == null ? 100 : item.getScore());
         if ("problem".equals(itemType)) {
             Problem p = problemMapper.selectById(item.getQuestionId());
-            if (p != null && (!publicOnly || (p.getAuth() != null && p.getAuth() == 1))) {
+            if (p != null && (!publicOnly || (Integer.valueOf(1).equals(p.getAuth()) && !Boolean.TRUE.equals(p.getIsGroup()) && p.getGid() == null))) {
                 vo.setProblemId(p.getProblemId());
                 vo.setTitle(p.getTitle());
             }
@@ -402,6 +442,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         vo.setId(p.getId());
         vo.setTitle(p.getTitle());
         vo.setAuthor(p.getAuthor());
+        vo.setLangCategory(p.getLangCategory());
         return vo;
     }
 }

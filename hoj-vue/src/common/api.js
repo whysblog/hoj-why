@@ -457,6 +457,9 @@ const ojApi = {
   getTrainingCategoryList() {
     return ajax('/api/get-training-category', 'get')
   },
+  getQuizHistory(params) { return ajax('/api/quiz/history', 'get', { params }) },
+  getQuizAttempt(id) { return ajax('/api/quiz/history/' + id, 'get') },
+  admin_saveQuizPaper(data) { return ajax('/api/admin/quiz/paper/save', 'post', { data }) },
   getQuizList(params) {
     return ajax('/api/quiz/list', 'get', { params })
   },
