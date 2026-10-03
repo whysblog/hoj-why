@@ -1,6 +1,7 @@
 package top.hcode.hoj.service.oj;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,14 +10,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.hcode.hoj.common.exception.StatusFailException;
 import top.hcode.hoj.mapper.QuizAttemptMapper;
+import top.hcode.hoj.mapper.QuizQuestionMapper;
 import top.hcode.hoj.pojo.entity.quiz.QuizAttempt;
+import top.hcode.hoj.pojo.entity.quiz.QuizQuestion;
 import top.hcode.hoj.shiro.AccountProfile;
 import java.util.Date;
+import java.util.*;
 
 @Service
 public class QuizHistoryService {
     @Autowired
     private QuizAttemptMapper mapper;
+    @Autowired
+    private QuizQuestionMapper questionMapper;
 
     private String uid() throws StatusFailException {
         AccountProfile user = (AccountProfile) SecurityUtils.getSubject().getPrincipal();
@@ -49,7 +55,41 @@ public class QuizHistoryService {
     public JSONObject detail(Long id) throws StatusFailException {
         QuizAttempt row = mapper.selectOne(new QueryWrapper<QuizAttempt>().eq("id", id).eq("uid", uid()));
         if (row == null) throw new StatusFailException("作答记录不存在或无权查看");
-        return JSONUtil.parseObj(row.getResultJson()).set("attemptId", row.getId()).set("kind", row.getKind())
+        JSONObject result = JSONUtil.parseObj(row.getResultJson());
+        // Only refresh explanations after ownership has been verified; answers and grades stay frozen.
+        Map<Long, List<JSONObject>> targets = new HashMap<>();
+        if ("quiz".equals(row.getKind())) {
+            addExplanationTarget(targets, row.getResourceId(), result);
+        } else if ("paper".equals(row.getKind())) {
+            collectExplanationTargets(targets, result.getJSONArray("itemResults"));
+            collectExplanationTargets(targets, result.getJSONArray("questionResults"));
+        }
+        if (!targets.isEmpty()) {
+            List<QuizQuestion> questions = questionMapper.selectList(new QueryWrapper<QuizQuestion>()
+                    .select("id", "explanation").in("id", targets.keySet()));
+            for (QuizQuestion question : questions) {
+                List<JSONObject> rows = targets.get(question.getId());
+                if (rows != null) for (JSONObject target : rows) {
+                    target.set("explanation", question.getExplanation() == null ? "" : question.getExplanation());
+                }
+            }
+        }
+        // Deleted questions retain their saved explanation. Never rewrite the stored attempt.
+        return result.set("attemptId", row.getId()).set("kind", row.getKind())
                 .set("resourceId", row.getResourceId()).set("submittedAt", row.getGmtCreate());
+    }
+
+    private void collectExplanationTargets(Map<Long, List<JSONObject>> targets, JSONArray rows) {
+        if (rows == null) return;
+        for (int i = 0; i < rows.size(); i++) {
+            JSONObject item = rows.getJSONObject(i);
+            if (item != null && !"problem".equals(item.getStr("itemType"))) {
+                addExplanationTarget(targets, item.getLong("questionId"), item);
+            }
+        }
+    }
+
+    private void addExplanationTarget(Map<Long, List<JSONObject>> targets, Long id, JSONObject target) {
+        if (id != null) targets.computeIfAbsent(id, key -> new ArrayList<>()).add(target);
     }
 }

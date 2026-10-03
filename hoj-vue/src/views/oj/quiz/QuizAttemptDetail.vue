@@ -6,7 +6,7 @@
       '作答复盘'
     "
     active="history"
-    subtitle="查看本次提交时的题目、答案与解析。"
+    subtitle="题目、答案与成绩保留提交记录；解析显示题库最新内容，题目已删除时显示原解析。"
     ><section class="quiz-panel" v-loading="loading">
       <template v-if="loaded"
         ><div class="quiz-score-summary">
