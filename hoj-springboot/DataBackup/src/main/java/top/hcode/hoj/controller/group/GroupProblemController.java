@@ -3,9 +3,11 @@ package top.hcode.hoj.controller.group;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import top.hcode.hoj.common.result.CommonResult;
 import top.hcode.hoj.pojo.dto.ProblemDTO;
+import top.hcode.hoj.pojo.dto.AddGroupProblemFromPublicDTO;
 import top.hcode.hoj.pojo.dto.CompileDTO;
 import top.hcode.hoj.pojo.entity.problem.Problem;
 import top.hcode.hoj.pojo.entity.problem.ProblemCase;
@@ -50,6 +52,11 @@ public class GroupProblemController {
     @PostMapping("/problem")
     public CommonResult<Void> addProblem(@RequestBody ProblemDTO problemDto) {
         return groupProblemService.addProblem(problemDto);
+    }
+
+    @PostMapping("/problem/add-from-public")
+    public CommonResult<Void> addProblemFromPublic(@Validated @RequestBody AddGroupProblemFromPublicDTO data) {
+        return groupProblemService.addProblemFromPublic(data);
     }
 
     @PutMapping("/problem")

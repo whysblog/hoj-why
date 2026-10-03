@@ -2,6 +2,7 @@ package top.hcode.hoj.service.group.problem;
 
 import top.hcode.hoj.common.result.CommonResult;
 import top.hcode.hoj.pojo.dto.ProblemDTO;
+import top.hcode.hoj.pojo.dto.AddGroupProblemFromPublicDTO;
 import top.hcode.hoj.pojo.dto.CompileDTO;
 import top.hcode.hoj.pojo.entity.problem.Problem;
 import top.hcode.hoj.pojo.entity.problem.ProblemCase;
@@ -25,6 +26,8 @@ public interface GroupProblemService {
     public CommonResult<Problem> getProblem(Long pid);
 
     public CommonResult<Void> addProblem(ProblemDTO problemDto);
+
+    public CommonResult<Void> addProblemFromPublic(AddGroupProblemFromPublicDTO data);
 
     public CommonResult<Void> updateProblem(ProblemDTO problemDto);
 

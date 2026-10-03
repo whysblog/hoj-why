@@ -22,6 +22,7 @@ import top.hcode.hoj.dao.problem.TagEntityService;
 import top.hcode.hoj.judge.Dispatcher;
 import top.hcode.hoj.pojo.dto.CompileDTO;
 import top.hcode.hoj.pojo.dto.ProblemDTO;
+import top.hcode.hoj.pojo.dto.AddGroupProblemFromPublicDTO;
 import top.hcode.hoj.pojo.entity.group.Group;
 import top.hcode.hoj.pojo.entity.judge.Judge;
 import top.hcode.hoj.pojo.entity.problem.Problem;
@@ -204,6 +205,36 @@ public class GroupProblemManager {
         if (!isOk) {
             throw new StatusFailException("添加失败");
         }
+    }
+
+    public void addProblemFromPublic(AddGroupProblemFromPublicDTO data)
+            throws StatusForbiddenException, StatusNotFoundException, StatusFailException {
+        AccountProfile profile = (AccountProfile) SecurityUtils.getSubject().getPrincipal();
+        boolean isRoot = SecurityUtils.getSubject().hasRole("root");
+        Group group = groupEntityService.getById(data.getGid());
+        if (group == null || group.getStatus() == 1 && !isRoot) {
+            throw new StatusNotFoundException("添加失败，该团队不存在或已被封禁！");
+        }
+        if (!isRoot && !groupValidator.isGroupAdmin(profile.getUid(), data.getGid())) {
+            throw new StatusForbiddenException("对不起，您无权限操作！");
+        }
+        Problem source = problemEntityService.getById(data.getPid());
+        if (source == null) {
+            throw new StatusNotFoundException("该题目不存在！");
+        }
+        if (!Integer.valueOf(1).equals(source.getAuth()) || Boolean.TRUE.equals(source.getIsGroup())
+                || source.getGid() != null) {
+            throw new StatusForbiddenException("只能复制公共题库中公开的题目！");
+        }
+        // Remote judging resolves the OJ from problem_id; a team prefix would break it.
+        if (Boolean.TRUE.equals(source.getIsRemote())) {
+            throw new StatusFailException("远程题目请通过团队比赛或训练引用，不支持复制到团队题库！");
+        }
+        String problemId = (group.getShortName() + source.getProblemId()).toUpperCase(java.util.Locale.ROOT);
+        if (problemEntityService.count(new QueryWrapper<Problem>().eq("problem_id", problemId)) > 0) {
+            throw new StatusFailException("该题目的Problem ID已存在，请勿重复添加！");
+        }
+        problemEntityService.copyPublicProblemToGroup(source, data.getGid(), problemId, profile.getUsername());
     }
 
     public void updateProblem(ProblemDTO problemDto) throws StatusForbiddenException, StatusNotFoundException, StatusFailException {

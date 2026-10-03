@@ -28,5 +28,7 @@ public interface ProblemEntityService extends IService<Problem> {
 
     boolean adminAddProblem(ProblemDTO problemDto);
 
+    void copyPublicProblemToGroup(Problem source, Long gid, String problemId, String author);
+
     ImportProblemVO buildExportProblem(Long pid, List<HashMap<String, Object>> problemCaseList, HashMap<Long, String> languageMap, HashMap<Long, String> tagMap);
 }

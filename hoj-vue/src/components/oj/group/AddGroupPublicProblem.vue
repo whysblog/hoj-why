@@ -29,7 +29,8 @@
             <el-button
               icon="el-icon-plus"
               size="mini"
-              @click.native="addPublicProblem(row.id, row.problemId)"
+              @click.native="addPublicProblem(row.pid)"
+              :disabled="adding"
               type="primary"
             >
             </el-button>
@@ -71,6 +72,7 @@ export default {
       limit: 10,
       total: 0,
       loading: false,
+      adding: false,
       problemList: [],
       keyword: '',
     };
@@ -84,6 +86,7 @@ export default {
     },
     onPageSizeChange(pageSize) {
       this.limit = pageSize;
+      this.currentPage = 1;
       this.init();
     },
     currentChange(page) {
@@ -94,7 +97,9 @@ export default {
       this.loading = true;
       let params = {
         keyword: this.keyword,
-        queryExisted: false,
+        currentPage: this.currentPage,
+        limit: this.limit,
+        oj: 'Mine',
       };
       api.getProblemList(params)
         .then((res) => {
@@ -106,19 +111,21 @@ export default {
           this.loading = false;
         });
     },
-    addPublicProblem(id, problemId) {
+    addPublicProblem(id) {
+      if (this.adding) return;
+      this.adding = true;
       let data = {
         pid: id,
         gid: this.groupId,
-        displayId: problemId,
       };
       api.addGroupProblemFromPublic(data).then(
         (res) => {
+          this.adding = false;
           mMessage.success(this.$i18n.t('m.Add_Successfully'));
           this.$emit('currentChangeProblem');
           this.currentChange(1);
         },
-        () => {}
+        () => { this.adding = false; }
       );
     },
     filterByKeyword() {
