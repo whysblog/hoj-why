@@ -261,6 +261,7 @@ public class QuizPaperServiceImpl extends ServiceImpl<QuizPaperMapper, QuizPaper
         legacy.setOutcome(row.getOutcome());
         legacy.setUserAnswer(row.getUserAnswer());
         legacy.setCorrectAnswer(row.getCorrectAnswer());
+        legacy.setExplanation(row.getExplanation());
         return legacy;
     }
 

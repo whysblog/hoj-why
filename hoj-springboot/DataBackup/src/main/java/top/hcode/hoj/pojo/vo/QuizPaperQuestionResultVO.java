@@ -23,4 +23,6 @@ public class QuizPaperQuestionResultVO {
     private String userAnswer;
     /** 标准答案（规范化后） */
     private String correctAnswer;
+    /** 提交时的答案解析，兼容读取 questionResults 的客户端 */
+    private String explanation;
 }

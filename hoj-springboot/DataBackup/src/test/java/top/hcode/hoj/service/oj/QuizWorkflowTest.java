@@ -72,6 +72,8 @@ class QuizWorkflowTest {
         assertFalse(cn.hutool.json.JSONUtil.toJsonStr(info).contains("correctAnswer"));
         QuizSubmitResultVO result = questions.submitAnswer(10L,"a");
         assertTrue(result.getCorrect()); assertEquals(1,result.getScore());
+        assertEquals("why", result.getExplanation());
+        assertEquals("why", cn.hutool.json.JSONUtil.parseObj(cn.hutool.json.JSONUtil.toJsonStr(result)).getStr("explanation"));
         assertEquals("one",result.getQuestion().getOptions().get(0).getText());
         verify(history).record(eq("quiz"),eq(10L),eq("Question"),eq(1),eq(1),eq(1),eq(1),same(result));
     }
@@ -99,6 +101,19 @@ class QuizWorkflowTest {
     @Test void malformedPaperAnswerDoesNotCreateAttempt() {
         paperItems(item("quiz",10,35)); request.getAnswers().put("10","Agarbage");
         assertThrows(StatusFailException.class,()->papers.submitPaper(20L,request)); verifyNoInteractions(history);
+    }
+    @Test void paperExplanationSurvivesBothResultFormatsAndHistorySerialization() throws Exception {
+        question.setExplanation("**解析**：选择 A。\n第二行");
+        paperItems(item("quiz",10,35));
+        for (String answer : Arrays.asList("A", "B", "")) {
+            request.getAnswers().put("10", answer);
+            QuizPaperSubmitResultVO result = papers.submitPaper(20L, request);
+            assertEquals(question.getExplanation(), result.getItemResults().get(0).getExplanation());
+            assertEquals(question.getExplanation(), result.getQuestionResults().get(0).getExplanation());
+            cn.hutool.json.JSONObject snapshot = cn.hutool.json.JSONUtil.parseObj(cn.hutool.json.JSONUtil.toJsonStr(result));
+            assertEquals(question.getExplanation(), snapshot.getJSONArray("itemResults").getJSONObject(0).getStr("explanation"));
+            assertEquals(question.getExplanation(), snapshot.getJSONArray("questionResults").getJSONObject(0).getStr("explanation"));
+        }
     }
     @Test void paperMultiPartialIsWrongRatherThanUnanswered() throws Exception {
         question.setQuestionType(1).setAnswer("AB"); paperItems(item("quiz",10,25)); request.getAnswers().put("10","A");
