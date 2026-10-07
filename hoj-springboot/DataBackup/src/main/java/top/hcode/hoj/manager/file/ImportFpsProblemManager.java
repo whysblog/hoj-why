@@ -119,7 +119,12 @@ public class ImportFpsProblemManager {
         Document document = null;
         try {
             DocumentBuilderFactory documentBuilderFactory = XmlUtil.createDocumentBuilderFactory();
-            documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            documentBuilderFactory.setXIncludeAware(false);
+            documentBuilderFactory.setExpandEntityReferences(false);
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
             document = documentBuilder.parse(inputStream);
         } catch (ParserConfigurationException e) {

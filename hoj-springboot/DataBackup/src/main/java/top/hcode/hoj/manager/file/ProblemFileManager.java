@@ -28,6 +28,7 @@ import top.hcode.hoj.pojo.entity.problem.*;
 import top.hcode.hoj.pojo.vo.ImportProblemVO;
 import top.hcode.hoj.shiro.AccountProfile;
 import top.hcode.hoj.utils.Constants;
+import top.hcode.hoj.utils.SecurityFileUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -82,7 +83,7 @@ public class ProblemFileManager {
         }
 
         // 将压缩包压缩到指定文件夹
-        ZipUtil.unzip(filePath, fileDir);
+        SecurityFileUtils.safeUnzip(new File(filePath), new File(fileDir));
 
         // 删除zip文件
         FileUtil.del(filePath);
