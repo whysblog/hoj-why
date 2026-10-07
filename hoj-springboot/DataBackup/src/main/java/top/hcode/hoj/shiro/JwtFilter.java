@@ -11,6 +11,7 @@ import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.WebApplicationContext;
@@ -45,6 +46,9 @@ public class JwtFilter extends AuthenticatingFilter {
 
     @Autowired
     private RedisUtils redisUtils;
+
+    @Value("${hoj.security.allowed-origins:http://localhost:8080}")
+    private String allowedOrigins;
 
     @Override
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
@@ -194,7 +198,11 @@ public class JwtFilter extends AuthenticatingFilter {
     protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
         HttpServletRequest httpServletRequest = WebUtils.toHttp(request);
         HttpServletResponse httpServletResponse = WebUtils.toHttp(response);
-        httpServletResponse.setHeader("Access-control-Allow-Origin", httpServletRequest.getHeader("Origin"));
+        String origin = httpServletRequest.getHeader("Origin");
+        if (origin != null && java.util.Arrays.asList(allowedOrigins.split(",")).contains(origin)) {
+            httpServletResponse.setHeader("Access-Control-Allow-Origin", origin);
+            httpServletResponse.setHeader("Vary", "Origin");
+        }
         httpServletResponse.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
         httpServletResponse.setHeader("Access-Control-Allow-Headers", httpServletRequest.getHeader("Access-Control-Request-Headers"));
         httpServletResponse.setHeader("Access-Control-Expose-Headers",

@@ -315,13 +315,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         DateTime dateTime = DateUtil.offsetMonth(new Date(), -6);
         String strTime = DateFormatUtils.format(dateTime, "yyyy-MM-dd HH:mm:ss");
         sessionQueryWrapper.select("distinct uid");
-        sessionQueryWrapper.apply("UNIX_TIMESTAMP(gmt_create) >= UNIX_TIMESTAMP('" + strTime + "')");
+        sessionQueryWrapper.ge("gmt_create", dateTime);
         List<Session> sessionList = sessionEntityService.list(sessionQueryWrapper);
         if (sessionList.size() > 0) {
             List<String> uidList = sessionList.stream().map(Session::getUid).collect(Collectors.toList());
             QueryWrapper<Session> queryWrapper = new QueryWrapper<>();
             queryWrapper.in("uid", uidList)
-                    .apply("UNIX_TIMESTAMP('" + strTime + "') > UNIX_TIMESTAMP(gmt_create)");
+                    .lt("gmt_create", dateTime);
             List<Session> needDeletedSessionList = sessionEntityService.list(queryWrapper);
             if (needDeletedSessionList.size() > 0) {
                 List<Long> needDeletedIdList = needDeletedSessionList.stream().map(Session::getId).collect(Collectors.toList());
@@ -403,7 +403,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         QueryWrapper<Judge> judgeQueryWrapper = new QueryWrapper<>();
         judgeQueryWrapper.select("distinct submit_id");
         judgeQueryWrapper.eq("status", Constants.Judge.STATUS_PENDING.getStatus());
-        judgeQueryWrapper.apply("UNIX_TIMESTAMP('" + strTime + "') > UNIX_TIMESTAMP(gmt_modified)");
+        judgeQueryWrapper.lt("gmt_modified", dateTime);
         List<Judge> judgeList = judgeEntityService.list(judgeQueryWrapper);
         if (!CollectionUtils.isEmpty(judgeList)) {
             log.info("Half An Hour Check Pending Submission to Rejudge:" + Arrays.toString(judgeList.toArray()));

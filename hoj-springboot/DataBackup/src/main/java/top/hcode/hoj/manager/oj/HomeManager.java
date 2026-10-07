@@ -215,7 +215,7 @@ public class HomeManager {
             String strTime = DateFormatUtils.format(dateTime, "yyyy-MM-dd") + " 00:00:00";
             QueryWrapper<Judge> judgeQueryWrapper = new QueryWrapper<>();
             judgeQueryWrapper.select("submit_id", "status", "gmt_create");
-            judgeQueryWrapper.apply("UNIX_TIMESTAMP(gmt_create) >= UNIX_TIMESTAMP('" + strTime + "')");
+            judgeQueryWrapper.ge("gmt_create", dateTime);
             List<Judge> judgeList = judgeEntityService.list(judgeQueryWrapper);
             submissionStatisticsVO = buildSubmissionStatisticsVo(judgeList);
             redisUtils.set(SUBMISSION_STATISTICS_KEY, submissionStatisticsVO, 60 * 30);
