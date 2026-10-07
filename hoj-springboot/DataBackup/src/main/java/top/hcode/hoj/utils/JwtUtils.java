@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 import top.hcode.hoj.shiro.ShiroConstant;
 
 import java.util.Date;
@@ -30,6 +32,14 @@ public class JwtUtils {
     @Autowired
     private RedisUtils redisUtils;
 
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.length() < 32 || "hoj-secret-init".equals(secret)
+                || "default".equalsIgnoreCase(secret)) {
+            throw new IllegalStateException("JWT secret must be configured with at least 32 random characters");
+        }
+    }
+
     /**
      * 生成jwt token
      */
@@ -51,6 +61,7 @@ public class JwtUtils {
     }
 
     public Claims getClaimByToken(String token) {
+        if (token == null || token.trim().isEmpty()) return null;
         try {
             return Jwts.parser()
                     .setSigningKey(secret)
