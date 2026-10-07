@@ -48,7 +48,6 @@
         <lombok.version>1.16.10</lombok.version>
         <oshi.version>5.6.1</oshi.version>
         <hutool.version>5.8.38</hutool.version>
-        <log4j.version>2.24.3</log4j.version>
         <mysql.version>8.0.19</mysql.version>
         <druid.version>1.2.23</druid.version>
         <mybatis.spring.boot.version>2.1.1</mybatis.spring.boot.version>
@@ -100,12 +99,6 @@
                 <groupId>org.crazycake</groupId>
                 <artifactId>shiro-redis-spring-boot-starter</artifactId>
                 <version>3.2.1</version>
-            </dependency>
-            <!--log4j日志-->
-            <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>${log4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
