@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.*;
+import io.jsonwebtoken.Claims;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -75,7 +76,11 @@ public class AccountRealm extends AuthorizingRealm {
 
         JwtToken jwt = (JwtToken) token;
 
-        String userId = jwtUtils.getClaimByToken((String) jwt.getPrincipal()).getSubject();
+        Claims claims = jwtUtils.getClaimByToken((String) jwt.getPrincipal());
+        if (claims == null || claims.getSubject() == null) {
+            throw new AuthenticationException("无效的登录令牌");
+        }
+        String userId = claims.getSubject();
 
         QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("uuid", userId)
