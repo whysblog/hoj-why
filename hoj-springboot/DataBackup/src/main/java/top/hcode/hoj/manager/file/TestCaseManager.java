@@ -29,6 +29,7 @@ import top.hcode.hoj.pojo.entity.problem.Problem;
 import top.hcode.hoj.pojo.entity.problem.ProblemCase;
 import top.hcode.hoj.shiro.AccountProfile;
 import top.hcode.hoj.utils.Constants;
+import top.hcode.hoj.utils.SecurityFileUtils;
 import top.hcode.hoj.validator.GroupValidator;
 
 import javax.servlet.http.HttpServletResponse;
@@ -91,7 +92,7 @@ public class TestCaseManager {
         }
 
         // 将压缩包压缩到指定文件夹
-        ZipUtil.unzip(filePath, fileDir);
+        SecurityFileUtils.safeUnzip(new File(filePath), new File(fileDir));
         // 删除zip文件
         FileUtil.del(filePath);
         // 检查文件是否存在
