@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /hoj-springboot
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: npm
+    directory: /hoj-vue
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
