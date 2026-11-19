@@ -28,6 +28,7 @@ import top.hcode.hoj.pojo.entity.problem.ProblemCase;
 import top.hcode.hoj.pojo.entity.problem.Tag;
 import top.hcode.hoj.shiro.AccountProfile;
 import top.hcode.hoj.utils.Constants;
+import top.hcode.hoj.utils.SecurityFileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,7 +80,7 @@ public class ImportQDUOJProblemManager {
         }
 
         // 将压缩包压缩到指定文件夹
-        ZipUtil.unzip(filePath, fileDir);
+        SecurityFileUtils.safeUnzip(new File(filePath), new File(fileDir));
 
         // 删除zip文件
         FileUtil.del(filePath);
